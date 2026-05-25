@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="225" viewBox="0 0 400 225">
+  <rect width="400" height="225" fill="#16161f"/>
+  <rect x="1" y="1" width="398" height="223" fill="none" stroke="#2d2d40" stroke-width="1"/>
+  <circle cx="200" cy="100" r="36" fill="none" stroke="#475569" stroke-width="2" opacity="0.5"/>
+  <polygon points="190,85 190,115 220,100" fill="#475569" opacity="0.5"/>
+  <text x="200" y="155" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#475569">ویدیو</text>
+</svg>

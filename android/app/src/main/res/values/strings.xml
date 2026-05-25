@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SignageCMS</string>
+    <string name="setup_title">تنظیمات اولیه</string>
+    <string name="server_hint">آدرس سرور</string>
+    <string name="code_hint">کد صفحه</string>
+    <string name="connect">اتصال به سرور</string>
+    <string name="connecting">در حال اتصال...</string>
+</resources>

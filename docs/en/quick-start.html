@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Quick Start — SignageCMS</title>
+<style>body{font-family:Arial,sans-serif;background:#09090f;color:#e2e8f0;padding:40px;} pre{background:#111;border-radius:8px;padding:16px;font-family:monospace;color:#f97316;overflow-x:auto;} h1{color:#f97316;} h2{color:#fff;border-bottom:1px solid #334155;padding-bottom:8px;} a{color:#f97316;} .note{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:12px;margin:12px 0;}</style>
+</head>
+<body>
+<h1>📺 SignageCMS — Quick Start</h1>
+<p><a href="../index.html">← Full Documentation</a></p>
+<h2>1. Install</h2>
+<pre>cd D:\duc
+Expand-Archive signage-cms-final.zip -DestinationPath . -Force
+cd signage-cms
+docker compose up -d --build</pre>
+<h2>2. Run Migrations</h2>
+<pre>Get-Content "database\migrations\001_complete_schema.sql" -Raw -Encoding UTF8 | docker exec -i signage_mysql mysql -u signage_user -pStrongPassword123! signage_cms
+Get-Content "database\migrations\003_module_tables_only.sql" -Raw -Encoding UTF8 | docker exec -i signage_mysql mysql -u signage_user -pStrongPassword123! signage_cms</pre>
+<h2>3. Login</h2>
+<p>URL: <code>http://localhost</code><br>Email: <code>admin@signagecms.com</code><br>Password: <code>Admin@123456</code></p>
+<div class="note">⚠ Change password after first login</div>
+<h2>Key URLs</h2>
+<ul>
+<li>Admin Panel: <code>http://localhost</code></li>
+<li>Documentation: <code>http://localhost/docs</code></li>
+<li>Player: <code>http://localhost/player/SCR001</code></li>
+<li>WebSocket: <code>ws://localhost:8080</code></li>
+</ul>
+<h2>TV Activation</h2>
+<ol>
+<li>Open <code>http://[SERVER-IP]/player/[SCREEN-CODE]</code> on TV browser</li>
+<li>From admin panel → Screens → Screen → Activation tab → Get new code</li>
+<li>Enter 6-digit code on TV</li>
+</ol>
+</body></html>

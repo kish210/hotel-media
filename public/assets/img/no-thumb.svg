@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="225" viewBox="0 0 400 225">
+  <rect width="400" height="225" fill="#16161f"/>
+  <rect x="1" y="1" width="398" height="223" fill="none" stroke="#2d2d40" stroke-width="1"/>
+  <g opacity="0.4">
+    <rect x="160" y="75" width="80" height="60" rx="4" fill="none" stroke="#475569" stroke-width="2"/>
+    <circle cx="178" cy="95" r="8" fill="#475569"/>
+    <polyline points="160,135 185,108 205,120 225,100 240,135" fill="none" stroke="#475569" stroke-width="2"/>
+  </g>
+  <text x="200" y="165" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#475569">بدون تصویر</text>
+</svg>

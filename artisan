@@ -1,0 +1,118 @@
+#!/usr/bin/env php
+<?php
+define('ROOT_PATH',   __DIR__);
+define('APP_PATH',    ROOT_PATH . '/app');
+define('CONFIG_PATH', ROOT_PATH . '/config');
+define('VIEWS_PATH',  ROOT_PATH . '/resources/views');
+define('STORAGE_PATH',ROOT_PATH . '/storage');
+define('PUBLIC_PATH', ROOT_PATH . '/public');
+
+spl_autoload_register(function(string $class): void {
+    $path = APP_PATH . '/' . str_replace(['App\\','\\'], ['','/'], $class) . '.php';
+    if (file_exists($path)) require $path;
+});
+
+// Load env
+$envFile = ROOT_PATH . '/.env';
+if (file_exists($envFile)) {
+    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
+        [$k,$v] = explode('=', $line, 2);
+        $_ENV[trim($k)] = trim($v, " \t\n\r\"'");
+    }
+}
+function env(string $k, mixed $d=null): mixed { $v=$_ENV[$k]??getenv($k)?:$d; if($v==='true')return true; if($v==='false')return false; return $v; }
+function request(): object { return new class { public function ip():string{return '127.0.0.1';} public function userAgent():string{return 'CLI';} public function isJson():bool{return false;} public function isAjax():bool{return false;} }; }
+
+$command = $argv[1] ?? 'help';
+
+match ($command) {
+    'monitor:screens' => (function() {
+        $svc = new \App\Services\ScreenMonitorService();
+        $svc->run();
+    })(),
+
+    'db:migrate' => (function() {
+        $db = \App\Core\Database::getInstance();
+        $sql = file_get_contents(ROOT_PATH . '/database/migrations/001_complete_schema.sql');
+        foreach (array_filter(array_map('trim', explode(';', $sql))) as $stmt) {
+            if ($stmt) {
+                try { $db->query($stmt); echo "  ✓\n"; }
+                catch (\Throwable $e) { echo "  ✗ " . $e->getMessage() . "\n"; }
+            }
+        }
+        echo "Migration done.\n";
+    })(),
+
+    'db:seed' => (function() {
+        $db = \App\Core\Database::getInstance();
+        $sql = file_get_contents(ROOT_PATH . '/database/seeds/seed.sql');
+        foreach (array_filter(array_map('trim', explode(';', $sql))) as $stmt) {
+            if ($stmt) {
+                try { $db->query($stmt); }
+                catch (\Throwable $e) { echo "  ✗ " . $e->getMessage() . "\n"; }
+            }
+        }
+        echo "Seed done.\n";
+    })(),
+
+    'user:create' => (function() use ($argv) {
+        $name  = $argv[2] ?? readline('Name: ');
+        $email = $argv[3] ?? readline('Email: ');
+        $pwd   = $argv[4] ?? readline('Password: ');
+        $role  = $argv[5] ?? 'admin';
+        $db    = \App\Core\Database::getInstance();
+        $hash  = password_hash($pwd, PASSWORD_BCRYPT, ['cost' => 12]);
+        $db->insert('users', ['tenant_id'=>1,'name'=>$name,'email'=>$email,'password'=>$hash,'role'=>$role,'is_active'=>1]);
+        echo "User created: $email\n";
+    })(),
+
+    'key:generate' => (function() {
+        $key = 'base64:' . base64_encode(random_bytes(32));
+        echo "APP_KEY=$key\n";
+        echo "Add this to your .env file\n";
+    })(),
+
+    'ws:start' => (function() {
+        passthru('php ' . ROOT_PATH . '/websocket/server.php');
+    })(),
+
+    'storage:clean' => (function() {
+        $db   = \App\Core\Database::getInstance();
+        $rows = $db->rows("SELECT file_path,thumbnail_path FROM media WHERE deleted_at IS NOT NULL");
+        $n = 0;
+        foreach ($rows as $r) {
+            foreach ([$r['file_path'],$r['thumbnail_path']] as $f) {
+                if ($f && file_exists(PUBLIC_PATH.$f)) { unlink(PUBLIC_PATH.$f); $n++; }
+            }
+        }
+        $db->query("DELETE FROM media WHERE deleted_at IS NOT NULL AND deleted_at < DATE_SUB(NOW(), INTERVAL 7 DAY)");
+        echo "Cleaned $n files.\n";
+    })(),
+
+    'cache:clear' => (function() {
+        array_map('unlink', glob(STORAGE_PATH.'/cache/*'));
+        echo "Cache cleared.\n";
+    })(),
+
+    default => (function() {
+        echo "\033[36mSignageCMS Artisan CLI\033[0m\n\n";
+        echo "\033[33mUsage:\033[0m php artisan <command>\n\n";
+        echo "\033[33mCommands:\033[0m\n";
+        $cmds = [
+            'db:migrate'      => 'Run database migrations',
+            'db:seed'         => 'Seed database with sample data',
+            'user:create'     => 'Create a new user [name email password role]',
+            'key:generate'    => 'Generate APP_KEY for .env',
+            'monitor:screens' => 'Check screen online status & send alerts',
+            'ws:start'        => 'Start WebSocket server',
+            'storage:clean'   => 'Remove soft-deleted media files',
+            'cache:clear'     => 'Clear application cache',
+        ];
+        foreach ($cmds as $cmd => $desc) {
+            printf("  \033[32m%-20s\033[0m %s\n", $cmd, $desc);
+        }
+        echo "\n";
+    })(),
+};
+// در artisan، کیس جدید

@@ -1,0 +1,17 @@
+.env
+vendor/
+node_modules/
+storage/logs/*.log
+storage/cache/*
+storage/temp/*
+public/uploads/media/*
+public/uploads/thumbnails/*
+!public/uploads/media/.gitkeep
+!public/uploads/thumbnails/.gitkeep
+*.DS_Store
+Thumbs.db
+*.swp
+
+nul
+
+push-to-github.ps1

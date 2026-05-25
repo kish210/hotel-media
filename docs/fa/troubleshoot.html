@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><meta charset="UTF-8"><title>رفع مشکلات — SignageCMS</title>
+<style>body{font-family:Arial,sans-serif;background:#09090f;color:#e2e8f0;padding:40px;direction:rtl;max-width:900px;} pre{background:#111;border-radius:8px;padding:16px;font-family:monospace;color:#f97316;overflow-x:auto;font-size:13px;} h1{color:#f97316;} h2{color:#fff;border-bottom:1px solid #334155;padding-bottom:8px;margin-top:32px;} .q{background:#16161f;border:1px solid #334155;border-radius:10px;padding:16px;margin:12px 0;} .q h3{color:#f97316;margin-bottom:8px;} .q p,.q ul{color:#94a3b8;font-size:13px;} .ok{color:#22c55e;} .err{color:#ef4444;} .warn{color:#f59e0b;} a{color:#f97316;} ul{padding-right:20px;}</style>
+</head>
+<body>
+<h1>🔧 رفع مشکلات SignageCMS</h1>
+<p><a href="../index.html">← مستندات کامل</a></p>
+
+<h2>مشکلات نصب Docker</h2>
+
+<div class="q">
+<h3>❌ Container ها start نمی‌شوند</h3>
+<pre>docker ps -a
+docker logs signage_php --tail 20
+docker logs signage_mysql --tail 20</pre>
+<ul>
+<li>پورت 80 اشغال است → در .env پورت را عوض کنید: <code>APP_PORT=8081</code></li>
+<li>RAM کافی نیست → Docker Desktop → Settings → Resources → 4GB+</li>
+<li>راه‌حل کامل: <pre>docker compose down -v
+docker compose up -d --build</pre></li>
+</ul>
+</div>
+
+<div class="q">
+<h3>❌ خطای 500 بعد از نصب</h3>
+<pre>docker logs signage_php --tail 30</pre>
+<ul>
+<li>Migration اجرا نشده → دوباره migration را اجرا کنید</li>
+<li>فایل .env ندارد → کپی از .env.example</li>
+</ul>
+</div>
+
+<h2>مشکلات TV و فعال‌سازی</h2>
+
+<div class="q">
+<h3>❌ «ارتباط قطع است» در TV</h3>
+<ul>
+<li>IP سرور را پیدا کنید: <pre>ipconfig | findstr "IPv4"</pre></li>
+<li>TV باید از همان شبکه باشد</li>
+<li>آدرس با IP واقعی باز کنید: <code>http://192.168.1.10/player/SCR001</code></li>
+<li>Firewall پورت 80 را باز کنید:<pre>netsh advfirewall firewall add rule name="SignageCMS" dir=in action=allow protocol=TCP localport=80</pre></li>
+</ul>
+</div>
+
+<div class="q">
+<h3>❌ «کد نامعتبر یا منقضی شده»</h3>
+<ul>
+<li>کد اعتبار ۲۴ ساعت دارد — از پنل «کد جدید» بگیرید</li>
+<li>کد را با دقت وارد کنید (بدون فاصله)</li>
+<li>پروفایل پلیر صفحه را به «Android TV» یا «LG/Samsung» تغییر دهید</li>
+</ul>
+</div>
+
+<h2>مشکلات پلیر</h2>
+
+<div class="q">
+<h3>❌ ویدیو پخش نمی‌شود</h3>
+<ul>
+<li>پروفایل را به <strong>Android TV</strong> یا <strong>LG WebOS</strong> یا <strong>Samsung Tizen</strong> تغییر دهید</li>
+<li>فرمت MP4 (H.264) بیشترین سازگاری دارد</li>
+<li>URL فایل باید با IP سرور باشد نه localhost</li>
+</ul>
+</div>
+
+<div class="q">
+<h3>❌ تصویر 404 می‌دهد</h3>
+<pre>docker exec signage_php ls /var/www/html/public/uploads/media/</pre>
+<ul>
+<li>فایل آپلود شده؟ → بررسی از پنل رسانه‌ها</li>
+<li>جدیدترین نسخه routes/web.php باشد</li>
+</ul>
+</div>
+
+<div class="q">
+<h3>❌ WebSocket کار نمی‌کند</h3>
+<pre>docker logs signage_ws --tail 5</pre>
+<ul>
+<li>باید ببینید: <code class="ok">WebSocket Server running on ws://0.0.0.0:8080</code></li>
+<li>WebSocket اختیاری است — heartbeat هر ۱۵ ثانیه جایگزین است</li>
+<li>restart: <code>docker restart signage_ws</code></li>
+</ul>
+</div>
+
+<div class="q">
+<h3>❌ ماژول FIDS خطا می‌دهد</h3>
+<pre>Get-Content "database\migrations\003_module_tables_only.sql" -Raw -Encoding UTF8 | docker exec -i signage_mysql mysql -u signage_user -pStrongPassword123! signage_cms</pre>
+</div>
+
+<h2>ریست کامل</h2>
+<div class="q">
+<h3>⚠ حذف همه داده‌ها و شروع مجدد</h3>
+<pre>cd D:\duc\signage-cms
+docker compose down -v
+docker compose up -d --build
+# سپس migration را دوباره اجرا کنید</pre>
+</div>
+</body></html>

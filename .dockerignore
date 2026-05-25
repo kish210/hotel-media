@@ -1,0 +1,12 @@
+.git
+.gitignore
+node_modules
+.env.example
+*.md
+docker-compose*.yml
+tests/
+.idea/
+*.log
+storage/sessions/*
+storage/logs/*
+storage/cache/*

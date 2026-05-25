@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="#09090f">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:gravity="center_horizontal" android:orientation="vertical" android:padding="48dp">
+        <TextView android:text="📺" android:textSize="56sp"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"/>
+        <TextView android:text="SignageCMS" android:textSize="26sp"
+            android:textColor="#ffffff" android:textStyle="bold"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"/>
+        <EditText android:id="@+id/etServer"
+            android:hint="آدرس سرور: http://192.168.1.10"
+            android:inputType="textUri" android:textColor="#ffffff"
+            android:textColorHint="#475569" android:padding="14dp"
+            android:background="@drawable/input_bg"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"/>
+        <EditText android:id="@+id/etCode"
+            android:hint="کد صفحه (از پنل مدیریت)"
+            android:inputType="textCapCharacters" android:textColor="#ffffff"
+            android:textColorHint="#475569" android:padding="14dp"
+            android:background="@drawable/input_bg"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"/>
+        <Button android:id="@+id/btnSave" android:text="اتصال به سرور"
+            android:background="@drawable/btn_primary"
+            android:textColor="#ffffff" android:textSize="16sp" android:padding="16dp"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"/>
+        <TextView android:id="@+id/tvStatus" android:textSize="13sp"
+            android:textColor="#ef4444"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:gravity="center"/>
+    </LinearLayout>
+</ScrollView>

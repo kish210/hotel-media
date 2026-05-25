@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><meta charset="UTF-8"><title>شروع سریع — SignageCMS</title>
+<style>body{font-family:Arial,sans-serif;background:#09090f;color:#e2e8f0;padding:40px;direction:rtl;} pre{background:#111;border-radius:8px;padding:16px;font-family:monospace;color:#f97316;overflow-x:auto;} h1{color:#f97316;} h2{color:#fff;border-bottom:1px solid #334155;padding-bottom:8px;} a{color:#f97316;} .note{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:12px;margin:12px 0;}</style>
+</head>
+<body>
+<h1>📺 SignageCMS — شروع سریع</h1>
+<p><a href="../index.html">← مستندات کامل</a></p>
+<h2>۱. نصب</h2>
+<pre>cd D:\duc
+Expand-Archive signage-cms-final.zip -DestinationPath . -Force
+cd signage-cms
+docker compose up -d --build</pre>
+<h2>۲. Migration</h2>
+<pre>Get-Content "database\migrations\001_complete_schema.sql" -Raw -Encoding UTF8 | docker exec -i signage_mysql mysql -u signage_user -pStrongPassword123! signage_cms
+Get-Content "database\migrations\003_module_tables_only.sql" -Raw -Encoding UTF8 | docker exec -i signage_mysql mysql -u signage_user -pStrongPassword123! signage_cms
+Get-Content "database\migrations\004_iptv_channels.sql" -Raw -Encoding UTF8 | docker exec -i signage_mysql mysql -u signage_user -pStrongPassword123! signage_cms
+Get-Content "database\migrations\005_apk_versions.sql" -Raw -Encoding UTF8 | docker exec -i signage_mysql mysql -u signage_user -pStrongPassword123! signage_cms</pre>
+<h2>۳. ورود</h2>
+<p>آدرس: <code>http://localhost</code><br>ایمیل: <code>admin@signagecms.com</code><br>رمز: <code>Admin@123456</code></p>
+<div class="note">⚠ بعد از اولین ورود رمز را تغییر دهید</div>
+<h2>آدرس‌های مهم</h2>
+<ul>
+<li>پنل: <code>http://localhost</code></li>
+<li>مستندات: <code>http://localhost/docs</code></li>
+<li>پلیر: <code>http://localhost/player/SCR001</code></li>
+<li>WebSocket: <code>ws://localhost:8080</code></li>
+</ul>
+</body></html>

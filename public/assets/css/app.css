@@ -1,0 +1,93 @@
+/* SignageCMS - Additional styles (beyond Tailwind inline) */
+
+/* ── RTL Utilities ── */
+[dir="rtl"] .flip-rtl { transform: scaleX(-1); }
+[dir="rtl"] input, [dir="rtl"] textarea, [dir="rtl"] select {
+  text-align: right;
+}
+
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #111118; }
+::-webkit-scrollbar-thumb { background: #32324e; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #f97316; }
+
+/* ── Table ── */
+table { width: 100%; border-collapse: collapse; }
+th    { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+td, th { vertical-align: middle; }
+
+/* ── Drag handle ── */
+.drag-handle { cursor: grab; }
+.drag-handle:active { cursor: grabbing; }
+.sortable-ghost { opacity: 0.3; }
+
+/* ── Skeleton loader ── */
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+@keyframes shimmer { from{background-position:200% 0} to{background-position:-200% 0} }
+
+/* ── Line clamp ── */
+.line-clamp-1 { overflow:hidden; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
+.line-clamp-2 { overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.line-clamp-3 { overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
+
+/* ── Media type badges ── */
+.media-type-image  { background: rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.3); }
+.media-type-video  { background: rgba(168,85,247,0.15); color:#c084fc; border:1px solid rgba(168,85,247,0.3); }
+.media-type-url    { background: rgba(34,197,94,0.15);  color:#4ade80; border:1px solid rgba(34,197,94,0.3); }
+
+/* ── Range input styling ── */
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.1);
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #f97316;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(249,115,22,0.5);
+}
+
+/* ── Color input ── */
+input[type="color"] {
+  -webkit-appearance: none;
+  padding: 2px;
+  cursor: pointer;
+}
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"]::-webkit-color-swatch         { border: none; border-radius: 8px; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .sidebar { position: fixed; z-index: 50; transform: translateX(100%); transition: transform 0.3s; }
+  .sidebar.open { transform: translateX(0); }
+  .stat-card { padding: 14px; }
+}
+
+/* ── Print styles ── */
+@media print {
+  .sidebar, .topbar, button, .btn-primary, .btn-ghost, .btn-danger { display: none !important; }
+  body { background: #fff; color: #000; }
+}
+
+/* ── Player transition animations ── */
+@keyframes slideInRight { from{transform:translateX(100%)} to{transform:translateX(0)} }
+@keyframes slideInLeft  { from{transform:translateX(-100%)} to{transform:translateX(0)} }
+@keyframes zoomIn       { from{transform:scale(1.1);opacity:0} to{transform:scale(1);opacity:1} }
+@keyframes flipIn       { from{transform:rotateY(90deg);opacity:0} to{transform:rotateY(0);opacity:1} }
+
+.anim-slide-right { animation: slideInRight 0.6s ease; }
+.anim-slide-left  { animation: slideInLeft  0.6s ease; }
+.anim-zoom-in     { animation: zoomIn       0.6s ease; }
+.anim-flip        { animation: flipIn       0.6s ease; }

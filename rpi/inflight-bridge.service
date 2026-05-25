@@ -1,0 +1,18 @@
+[Unit]
+Description=SignageCMS In-Flight Bridge
+Documentation=https://github.com/your-repo/signage-cms
+After=network.target gpsd.service
+Wants=gpsd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/inflight-bridge/inflight_bridge.py
+Restart=on-failure
+RestartSec=5
+User=root
+Environment=BRIDGE_CONFIG=/etc/inflight-bridge/config.json
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

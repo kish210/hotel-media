@@ -1,0 +1,4 @@
+# SignageCMS Cron Jobs
+* * * * * php /var/www/html/artisan monitor:screens >> /var/log/monitor.log 2>&1
+0 3 * * * php /var/www/html/artisan storage:clean >> /var/log/storage.log 2>&1
+0 */6 * * * php /var/www/html/artisan cache:clear >> /dev/null 2>&1

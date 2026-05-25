@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SignageCMS — راهنمای کامل</title>
+<style>
+:root {
+  --orange:#f97316; --bg:#09090f; --surface:#16161f; --border:rgba(255,255,255,.08);
+  --text:#e2e8f0; --muted:#64748b; --green:#22c55e; --blue:#3b82f6; --red:#ef4444;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;direction:rtl;}
+a{color:var(--orange);text-decoration:none;}
+a:hover{text-decoration:underline;}
+
+/* Layout */
+.container{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+aside{background:var(--surface);border-left:1px solid var(--border);position:sticky;top:0;height:100vh;overflow-y:auto;padding:20px 0;}
+main{padding:40px;max-width:860px;}
+
+/* Sidebar */
+.sidebar-logo{padding:16px 20px 24px;border-bottom:1px solid var(--border);margin-bottom:12px;}
+.sidebar-logo h1{font-size:18px;font-weight:800;color:var(--orange);}
+.sidebar-logo p{font-size:11px;color:var(--muted);margin-top:2px;}
+.nav-section{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 20px 4px;}
+.nav-item{display:block;padding:8px 20px;font-size:13px;color:#94a3b8;cursor:pointer;border-right:3px solid transparent;transition:all .15s;}
+.nav-item:hover,.nav-item.active{color:var(--orange);background:rgba(249,115,22,.07);border-right-color:var(--orange);}
+.nav-sub{padding:6px 20px 6px 32px;font-size:12px;color:var(--muted);}
+.nav-sub:hover{color:var(--text);}
+
+/* Content */
+.page{display:none;} .page.active{display:block;}
+h1.page-title{font-size:28px;font-weight:900;color:#fff;margin-bottom:8px;}
+h1.page-title .en{font-size:16px;font-weight:400;color:var(--muted);display:block;margin-top:4px;}
+.page-desc{color:var(--muted);font-size:14px;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+
+h2{font-size:20px;font-weight:700;color:#fff;margin:32px 0 12px;}
+h2 .en-small{font-size:13px;color:var(--muted);font-weight:400;}
+h3{font-size:16px;font-weight:600;color:#e2e8f0;margin:20px 0 8px;}
+p{margin-bottom:12px;font-size:14px;color:#94a3b8;}
+
+/* Screen mockup */
+.mockup{background:#0d0d14;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:20px 0;}
+.mockup-bar{background:#1a1a2e;padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);}
+.mockup-dot{width:10px;height:10px;border-radius:50%;}
+.mockup-url{flex:1;background:#0d0d14;border-radius:6px;padding:4px 10px;font-size:11px;color:var(--muted);font-family:monospace;}
+.mockup-body{padding:20px;}
+
+/* UI Preview */
+.ui-preview{background:#16161f;border:1px solid var(--border);border-radius:10px;padding:20px;margin:16px 0;}
+.ui-nav{display:flex;gap:4px;background:#0d0d14;border-radius:8px;padding:4px;margin-bottom:16px;}
+.ui-nav-item{padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;color:var(--muted);}
+.ui-nav-item.on{background:rgba(249,115,22,.2);color:var(--orange);}
+.ui-card{background:#0d0d14;border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;}
+.ui-stat{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.ui-stat-box{background:#0d0d14;border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+.ui-stat-num{font-size:28px;font-weight:900;color:var(--orange);}
+.ui-stat-lbl{font-size:10px;color:var(--muted);margin-top:4px;}
+.screen-card{background:#111;border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;}
+.screen-preview{height:90px;background:linear-gradient(135deg,#0d0d2e,#1a1a3e);display:flex;align-items:center;justify-content:center;}
+.screen-info{padding:10px 12px;}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;}
+.pill.green{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.3);}
+.pill.yellow{background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.3);}
+.pill.red{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.3);}
+
+/* Timeline mockup */
+.timeline-bar{display:flex;height:48px;border-radius:8px;overflow:hidden;gap:2px;margin:16px 0;}
+.tl-item{display:flex;align-items:center;padding:0 10px;font-size:10px;font-weight:700;color:rgba(255,255,255,.9);}
+
+/* Code block */
+pre{background:#0a0a14;border:1px solid var(--border);border-radius:10px;padding:16px;overflow-x:auto;font-size:13px;color:#e2e8f0;font-family:'Consolas',monospace;margin:12px 0;}
+code{background:#1a1a2e;padding:2px 6px;border-radius:4px;font-size:12px;font-family:monospace;color:#f97316;}
+
+/* Alert boxes */
+.alert{border-radius:10px;padding:14px 16px;margin:16px 0;font-size:13px;}
+.alert-info{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);color:#93c5fd;}
+.alert-warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:#fcd34d;}
+.alert-success{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);color:#86efac;}
+.alert-error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#fca5a5;}
+.alert i{margin-left:8px;}
+
+/* Steps */
+.steps{counter-reset:step;}
+.step{display:flex;gap:14px;margin-bottom:20px;}
+.step-num{width:28px;height:28px;border-radius:50%;background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.4);color:var(--orange);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.step-content h4{font-size:14px;font-weight:600;color:#fff;margin-bottom:4px;}
+.step-content p{font-size:13px;color:var(--muted);margin:0;}
+
+/* Table */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px;}
+th{text-align:right;padding:10px 14px;background:#0d0d14;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:#94a3b8;}
+tr:hover td{background:rgba(255,255,255,.02);}
+
+/* Troubleshoot */
+.trouble-item{border:1px solid var(--border);border-radius:10px;margin:12px 0;overflow:hidden;}
+.trouble-q{padding:14px 16px;background:#16161f;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;color:#e2e8f0;}
+.trouble-q:hover{background:#1a1a2e;}
+.trouble-a{padding:14px 16px;background:#0d0d14;border-top:1px solid var(--border);font-size:13px;color:var(--muted);display:none;}
+.trouble-item.open .trouble-a{display:block;}
+.trouble-item.open .trouble-q{color:var(--orange);}
+
+/* TV preview */
+.tv-frame{border:3px solid #334155;border-radius:8px;padding:3px;display:inline-block;}
+.tv-screen{background:#000;border-radius:4px;width:320px;height:180px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.tv-stand{width:60px;height:20px;background:#334155;margin:0 auto;border-radius:0 0 6px 6px;}
+
+/* Responsive */
+@media(max-width:768px){
+  .container{grid-template-columns:1fr;}
+  aside{position:fixed;left:-260px;top:0;height:100%;z-index:100;transition:left .3s;}
+  aside.open{left:0;}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<!-- ─── Sidebar ─── -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <h1>📺 SignageCMS</h1>
+    <p>راهنمای کامل · Full Documentation</p>
+  </div>
+
+  <span class="nav-section">شروع سریع</span>
+  <a class="nav-item active" onclick="show('start')">🚀 نصب و راه‌اندازی</a>
+  <a class="nav-item" onclick="show('login')">🔐 ورود به سیستم</a>
+
+  <span class="nav-section">مدیریت محتوا</span>
+  <a class="nav-item" onclick="show('screens')">📺 صفحات نمایش</a>
+  <a class="nav-item" onclick="show('activation')">🔑 فعال‌سازی صفحه</a>
+  <a class="nav-item" onclick="show('playlists')">🎬 پلی‌لیست‌ها</a>
+  <a class="nav-item" onclick="show('timeline')">⏱ Timeline محتوا</a>
+  <a class="nav-item" onclick="show('media')">🖼 رسانه‌ها</a>
+  <a class="nav-item" onclick="show('schedule')">📅 زمان‌بندی</a>
+
+  <span class="nav-section">پلیر</span>
+  <a class="nav-item" onclick="show('player-profiles')">📱 پروفایل‌های پلیر</a>
+  <a class="nav-item" onclick="show('player-overlay')">🎨 Overlay (لوگو، ساعت)</a>
+  <a class="nav-item" onclick="show('broadcast')">⚡ پخش فوری</a>
+
+  <span class="nav-section">ماژول‌ها</span>
+  <a class="nav-item" onclick="show('modules')">🧩 معرفی ماژول‌ها</a>
+  <a class="nav-item" onclick="show('fids')">✈ FIDS (پروازی)</a>
+  <a class="nav-item" onclick="show('hotel')">🏨 هتل</a>
+  <a class="nav-item" onclick="show('iptv')">📡 IPTV</a>
+  <a class="nav-item" onclick="show('iptv-rooms')">🚪 اتاق‌های IPTV + PMS</a>
+  <a class="nav-item" onclick="show('inflight')">🛫 In-Flight (هواپیما)</a>
+  <a class="nav-item" onclick="show('rpi')">🍓 Raspberry Pi Bridge</a>
+
+  <span class="nav-section">نصب شبکه‌ای</span>
+  <a class="nav-item" onclick="show('android')">📱 اپ Android</a>
+  <a class="nav-item" onclick="show('ota')">🔄 OTA Update</a>
+  <a class="nav-item" onclick="show('monitor')">🖥 مانیتورینگ</a>
+
+  <span class="nav-section">پشتیبانی</span>
+  <a class="nav-item" onclick="show('trouble')">🔧 رفع مشکلات</a>
+  <a class="nav-item" onclick="show('api')">🔌 API Reference</a>
+</aside>
+
+<!-- ─── Main ─── -->
+<main>
+
+<!-- ════════ نصب ════════ -->
+<div id="page-start" class="page active">
+<h1 class="page-title">نصب و راه‌اندازی
+  <span class="en">Installation & Setup</span>
+</h1>
+<p class="page-desc">SignageCMS یک سیستم مدیریت نمایش دیجیتال (Digital Signage) مبتنی بر PHP 8.2 و Docker است. در عرض ۵ دقیقه راه‌اندازی کنید.</p>
+
+<h2>پیش‌نیازها <span class="en-small">Prerequisites</span></h2>
+<table>
+  <tr><th>نرم‌افزار</th><th>نسخه</th><th>لینک</th></tr>
+  <tr><td>Docker Desktop</td><td>4.0+</td><td><a href="https://docker.com">docker.com</a></td></tr>
+  <tr><td>Windows / Linux / Mac</td><td>هر نسخه</td><td>—</td></tr>
+  <tr><td>RAM</td><td>حداقل 4GB</td><td>—</td></tr>
+  <tr><td>فضا</td><td>حداقل 5GB</td><td>—</td></tr>
+</table>
+
+<h2>نصب <span class="en-small">Installation</span></h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div>
+    <div class="step-content"><h4>دانلود و extract پروژه</h4>
+      <pre>cd C:\duc
+Expand-Archive signage-cms-final.zip -DestinationPath . -Force</pre>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">2</div>
+    <div class="step-content"><h4>اجرای Docker</h4>
+      <pre>cd signage-cms
+docker compose up -d --build</pre>
+      <p>اولین بار ۳-۵ دقیقه طول می‌کشد.</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">3</div>
+    <div class="step-content"><h4>اجرای Migration</h4>
+      <pre>Get-Content "database\migrations\001_complete_schema.sql" -Raw -Encoding UTF8 | `
+  docker exec -i signage_mysql mysql -u signage_user -pStrongPassword123! signage_cms
+
+Get-Content "database\migrations\003_module_tables_only.sql" -Raw -Encoding UTF8 | `
+  docker exec -i signage_mysql mysql -u signage_user -pStrongPassword123! signage_cms</pre>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">4</div>
+    <div class="step-content"><h4>باز کردن پنل</h4>
+      <p>مرورگر: <code>http://localhost</code></p>
+      <p>ایمیل: <code>admin@signagecms.com</code> · رمز: <code>Admin@123456</code></p>
+    </div>
+  </div>
+</div>
+
+<div class="alert alert-success"><i>✅</i> همه containers باید با <code>docker ps</code> وضعیت <strong>Up</strong> داشته باشند.</div>
+
+<h2>Containers <span class="en-small">Services</span></h2>
+<table>
+  <tr><th>Container</th><th>سرویس</th><th>پورت</th></tr>
+  <tr><td><code>signage_nginx</code></td><td>Web server</td><td>80</td></tr>
+  <tr><td><code>signage_php</code></td><td>PHP 8.2 FPM</td><td>—</td></tr>
+  <tr><td><code>signage_mysql</code></td><td>MySQL 8</td><td>3306</td></tr>
+  <tr><td><code>signage_ws</code></td><td>WebSocket</td><td>8080</td></tr>
+  <tr><td><code>signage_redis</code></td><td>Cache</td><td>6379</td></tr>
+</table>
+</div>
+
+<!-- ════════ ورود ════════ -->
+<div id="page-login" class="page">
+<h1 class="page-title">ورود به سیستم <span class="en">Login</span></h1>
+<p class="page-desc">صفحه ورود با احراز هویت ایمیل و رمزعبور. دسترسی multi-tenant پشتیبانی می‌شود.</p>
+
+<div class="mockup">
+  <div class="mockup-bar">
+    <div class="mockup-dot" style="background:#ef4444;"></div>
+    <div class="mockup-dot" style="background:#f59e0b;"></div>
+    <div class="mockup-dot" style="background:#22c55e;"></div>
+    <div class="mockup-url">localhost/login</div>
+  </div>
+  <div class="mockup-body" style="text-align:center;padding:40px;">
+    <div style="font-size:36px;margin-bottom:12px;">📺</div>
+    <h2 style="font-size:20px;color:#fff;margin-bottom:4px;">SignageCMS</h2>
+    <p style="color:#475569;font-size:13px;margin-bottom:24px;">سیستم مدیریت نمایش دیجیتال</p>
+    <div style="max-width:320px;margin:0 auto;">
+      <div style="background:#111;border:1px solid #334155;border-radius:10px;padding:12px 14px;margin-bottom:10px;text-align:right;color:#475569;font-size:13px;">admin@signagecms.com</div>
+      <div style="background:#111;border:1px solid #334155;border-radius:10px;padding:12px 14px;margin-bottom:16px;text-align:right;color:#475569;font-size:13px;">••••••••••</div>
+      <div style="background:linear-gradient(135deg,#f97316,#c2570b);border-radius:10px;padding:12px;color:#fff;font-weight:700;font-size:14px;">ورود به حساب</div>
+    </div>
+  </div>
+</div>
+
+<h2>اطلاعات پیش‌فرض</h2>
+<table>
+  <tr><th>فیلد</th><th>مقدار</th></tr>
+  <tr><td>ایمیل</td><td><code>admin@signagecms.com</code></td></tr>
+  <tr><td>رمزعبور</td><td><code>Admin@123456</code></td></tr>
+  <tr><td>آدرس</td><td><code>http://localhost</code></td></tr>
+</table>
+
+<div class="alert alert-warn"><i>⚠</i> بعد از اولین ورود حتماً رمزعبور را تغییر دهید: پروفایل ← تغییر رمز</div>
+</div>
+
+<!-- ════════ صفحات ════════ -->
+<div id="page-screens" class="page">
+<h1 class="page-title">مدیریت صفحات نمایش <span class="en">Screen Management</span></h1>
+<p class="page-desc">هر صفحه نمایش (TV، مانیتور، پروژکتور) یک رکورد در سیستم است با کد یکتا و ۵ تب مدیریتی.</p>
+
+<h2>لیست صفحات</h2>
+<div class="ui-preview">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <span style="font-size:14px;font-weight:700;color:#fff;">صفحات نمایش</span>
+    <div style="background:linear-gradient(135deg,#f97316,#c2570b);border-radius:8px;padding:7px 14px;font-size:12px;color:#fff;font-weight:600;">+ صفحه جدید</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+    <div class="screen-card">
+      <div class="screen-preview">
+        <div style="text-align:center;color:#22c55e;">
+          <div style="font-size:20px;">▶</div>
+          <div style="font-size:10px;margin-top:4px;">در حال پخش</div>
+        </div>
+      </div>
+      <div class="screen-info">
+        <div style="font-size:12px;font-weight:600;color:#fff;">لابی طبقه اول</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+          <span class="pill green">● آنلاین</span>
+          <span style="font-size:10px;color:#475569;">SCR001</span>
+        </div>
+      </div>
+    </div>
+    <div class="screen-card">
+      <div class="screen-preview"><div style="text-align:center;color:#475569;"><div style="font-size:20px;">🌙</div><div style="font-size:10px;margin-top:4px;">آفلاین</div></div></div>
+      <div class="screen-info">
+        <div style="font-size:12px;font-weight:600;color:#fff;">ورودی اصلی</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;"><span class="pill red">○ آفلاین</span><span style="font-size:10px;color:#475569;">SCR002</span></div>
+      </div>
+    </div>
+    <div class="screen-card">
+      <div class="screen-preview"><div style="text-align:center;color:#f59e0b;"><div style="font-size:20px;">⏳</div><div style="font-size:10px;margin-top:4px;">منتظر کد</div></div></div>
+      <div class="screen-info">
+        <div style="font-size:12px;font-weight:600;color:#fff;">رستوران</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;"><span class="pill yellow">⏳ فعال‌سازی</span><span style="font-size:10px;color:#475569;">SCR003</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>تب‌های مدیریت صفحه</h2>
+<div class="ui-preview">
+  <div class="ui-nav">
+    <div class="ui-nav-item on">اطلاعات</div>
+    <div class="ui-nav-item">فعال‌سازی</div>
+    <div class="ui-nav-item">پلیر</div>
+    <div class="ui-nav-item">پخش فوری</div>
+    <div class="ui-nav-item">وضعیت</div>
+  </div>
+  <div class="ui-card">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div><div style="font-size:10px;color:#64748b;margin-bottom:4px;">نام صفحه</div><div style="background:#111;border-radius:6px;padding:8px 10px;font-size:12px;color:#fff;">لابی طبقه اول</div></div>
+      <div><div style="font-size:10px;color:#64748b;margin-bottom:4px;">جهت</div><div style="background:#111;border-radius:6px;padding:8px 10px;font-size:12px;color:#fff;">افقی (Landscape)</div></div>
+      <div><div style="font-size:10px;color:#64748b;margin-bottom:4px;">رزولوشن</div><div style="background:#111;border-radius:6px;padding:8px 10px;font-size:12px;color:#fff;">1920×1080 (Full HD)</div></div>
+      <div><div style="font-size:10px;color:#64748b;margin-bottom:4px;">موقعیت</div><div style="background:#111;border-radius:6px;padding:8px 10px;font-size:12px;color:#fff;">ساختمان مرکزی</div></div>
+    </div>
+  </div>
+</div>
+
+<table>
+  <tr><th>تب</th><th>توضیح</th></tr>
+  <tr><td><strong>اطلاعات</strong></td><td>نام، جهت، رزولوشن، موقعیت، برچسب</td></tr>
+  <tr><td><strong>فعال‌سازی</strong></td><td>کد ۶ رقمی + آدرس پلیر + راهنمای قدم‌به‌قدم</td></tr>
+  <tr><td><strong>پلیر</strong></td><td>انتخاب پروفایل، لوگو، ticker، ساعت، روشنایی</td></tr>
+  <tr><td><strong>پخش فوری</strong></td><td>ارسال تصویر/ویدیو/متن/URL فوری</td></tr>
+  <tr><td><strong>وضعیت</strong></td><td>heartbeat، دستورات از راه دور، CPU/RAM</td></tr>
+</table>
+</div>
+
+<!-- ════════ فعال‌سازی ════════ -->
+<div id="page-activation" class="page">
+<h1 class="page-title">فعال‌سازی صفحه <span class="en">Screen Pairing (Cookie-Based)</span></h1>
+<p class="page-desc">همه صفحات‌نمایش از یک آدرس ثابت استفاده می‌کنند. اتصال با کد فعال‌سازی یک‌بار انجام می‌شود و با کوکی ۱ ساله حفظ می‌شود.</p>
+
+<div class="alert alert-success"><i>✅</i> <strong>آدرس ثابت برای همه دستگاه‌ها:</strong> <code>http://[IP-SERVER]/player/</code> — بدون نیاز به URL جداگانه برای هر صفحه</div>
+
+<h2>مراحل فعال‌سازی</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div>
+    <div class="step-content"><h4>پنل مدیریت → صفحات → انتخاب صفحه → تب «فعال‌سازی»</h4>
+      <p>روی <strong>«کد جدید»</strong> کلیک کنید — یک کد ۶ کاراکتری با اعتبار ۲۴ ساعت صادر می‌شود</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">2</div>
+    <div class="step-content"><h4>باز کردن آدرس پلیر در TV / مرورگر</h4>
+      <p>در TV یا مرورگر این آدرس را باز کنید:</p>
+      <pre>http://[IP-SERVER]/player/</pre>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">3</div>
+    <div class="step-content"><h4>وارد کردن کد فعال‌سازی</h4>
+      <p>کد ۶ کاراکتری را در فیلد وارد کنید و <strong>Enter</strong> بزنید</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">4</div>
+    <div class="step-content"><h4>✓ اتصال برقرار شد</h4>
+      <p>کوکی <code>signage_scr</code> با مدت ۱ سال ذخیره می‌شود. دفعات بعد پلیر مستقیم باز می‌شود.</p>
+    </div>
+  </div>
+</div>
+
+<div class="ui-preview" style="text-align:center;padding:30px;">
+  <div class="tv-frame" style="display:inline-block;">
+    <div class="tv-screen">
+      <div style="text-align:center;padding:12px;">
+        <div style="font-size:24px;margin-bottom:6px;">📺</div>
+        <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:4px;">راه‌اندازی صفحه‌نمایش</div>
+        <div style="background:#0d0d14;border:1.5px solid rgba(56,189,248,.4);border-radius:6px;padding:6px 10px;font-family:monospace;font-size:16px;font-weight:700;color:#38bdf8;letter-spacing:6px;margin:8px 0;">A3F7X2</div>
+        <div style="background:linear-gradient(135deg,#38bdf8,#0ea5e9);border-radius:6px;padding:5px 16px;font-size:10px;color:#fff;font-weight:600;">اتصال به صفحه‌نمایش</div>
+      </div>
+    </div>
+  </div>
+  <div class="tv-stand"></div>
+  <p style="font-size:12px;color:#475569;margin-top:12px;">صفحه pairing — یک‌بار برای همیشه</p>
+</div>
+
+<h2>جریان کوکی</h2>
+<table>
+  <tr><th>درخواست</th><th>رفتار</th></tr>
+  <tr><td><code>GET /player/</code> + کوکی معتبر</td><td>✅ مستقیم پلیر بارگذاری می‌شود</td></tr>
+  <tr><td><code>GET /player/</code> بدون کوکی</td><td>📋 صفحه ورود کد فعال‌سازی</td></tr>
+  <tr><td><code>GET /player/SCRXXXXX</code></td><td>🔗 کوکی ست شده + پلیر</td></tr>
+</table>
+
+<div class="alert alert-warn"><i>⚠</i> اگر کد منقضی شده (بعد از ۲۴ ساعت): از پنل «کد جدید» بگیرید</div>
+<div class="alert alert-info"><i>ℹ</i> برای ریست کوکی: در مرورگر Cookie های <code>/player/</code> را پاک کنید</div>
+</div>
+
+<!-- ════════ پلی‌لیست ════════ -->
+<div id="page-playlists" class="page">
+<h1 class="page-title">پلی‌لیست‌ها <span class="en">Playlists</span></h1>
+<p class="page-desc">پلی‌لیست مجموعه‌ای از محتواها است که به ترتیب روی صفحه پخش می‌شوند. هر صفحه از طریق زمان‌بندی به یک پلی‌لیست وصل می‌شود.</p>
+
+<h2>ساخت پلی‌لیست</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-content"><h4>پلی‌لیست‌ها ← پلی‌لیست جدید</h4><p>نام، transition (fade/slide/zoom)، مدت پیش‌فرض</p></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-content"><h4>افزودن محتوا با دکمه «+»</h4><p>انتخاب از رسانه‌های آپلودشده یا استریم URL</p></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-content"><h4>تنظیم مدت هر آیتم</h4><p>کلیک روی آیتم → ویرایش مدت + ساعت شروع/پایان روزانه</p></div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-content"><h4>اتصال به صفحه از زمان‌بندی</h4><p>زمان‌بندی ← صفحه ← پلی‌لیست ← روزهای هفته</p></div></div>
+</div>
+</div>
+
+<!-- ════════ Timeline ════════ -->
+<div id="page-timeline" class="page">
+<h1 class="page-title">Timeline محتوا <span class="en">Content Timeline</span></h1>
+<p class="page-desc">نوار زمانی بصری برای مشاهده و ویرایش ترتیب و مدت پخش هر محتوا.</p>
+
+<div class="ui-preview">
+  <div class="timeline-bar">
+    <div class="tl-item" style="flex:3;background:linear-gradient(135deg,#3b82f6,#1d4ed8);">🖼 ۳۰s</div>
+    <div class="tl-item" style="flex:6;background:linear-gradient(135deg,#a855f7,#7e22ce);">🎬 ویدیو ۶۰s</div>
+    <div class="tl-item" style="flex:2;background:linear-gradient(135deg,#ef4444,#b91c1c);">● LIVE</div>
+    <div class="tl-item" style="flex:4;background:linear-gradient(135deg,#f59e0b,#b45309);">📄 XML ۴۰s</div>
+    <div class="tl-item" style="flex:2;background:linear-gradient(135deg,#22c55e,#15803d);">🌐 ۲۰s</div>
+  </div>
+  <div style="display:flex;justify-content:space-between;font-size:10px;color:#475569;padding-top:6px;">
+    <span>0:00</span><span>0:30</span><span>1:30</span><span>2:00</span><span>2:40</span><span>3:00</span>
+  </div>
+</div>
+
+<h2>انواع محتوا در Timeline</h2>
+<table>
+  <tr><th>نوع</th><th>رنگ</th><th>توضیح</th></tr>
+  <tr><td>🖼 تصویر</td><td style="color:#3b82f6;">آبی</td><td>JPG, PNG, GIF, WebP</td></tr>
+  <tr><td>🎬 ویدیو</td><td style="color:#a855f7;">بنفش</td><td>MP4, WebM — تا پایان ویدیو</td></tr>
+  <tr><td>● استریم زنده</td><td style="color:#ef4444;">قرمز</td><td>HLS (m3u8)، RTSP</td></tr>
+  <tr><td>📄 XML/RSS</td><td style="color:#f59e0b;">زرد</td><td>Feed خبر، داده پروازی</td></tr>
+  <tr><td>🌐 وب</td><td style="color:#22c55e;">سبز</td><td>iframe از هر URL</td></tr>
+  <tr><td>🧩 ماژول</td><td style="color:#06b6d4;">فیروزه‌ای</td><td>FIDS، Hotel، Menu، ...</td></tr>
+</table>
+
+<h2>ویرایش آیتم</h2>
+<p>روی هر آیتم در timeline یا لیست کلیک کنید تا modal ویرایش باز شود:</p>
+<ul style="color:#94a3b8;font-size:13px;padding-right:20px;margin:8px 0;">
+  <li>مدت نمایش (ثانیه) با preset‌های ۵s، ۱۰s، ۳۰s، ۱m، ...</li>
+  <li>شروع از ساعت (مثلاً فقط ۸:۰۰ تا ۲۰:۰۰ پخش شود)</li>
+  <li>پایان در ساعت</li>
+</ul>
+</div>
+
+<!-- ════════ پروفایل پلیر ════════ -->
+<div id="page-player-profiles" class="page">
+<h1 class="page-title">پروفایل‌های پلیر <span class="en">Player Profiles</span></h1>
+<p class="page-desc">برای هر نوع دستگاه یک پروفایل بهینه وجود دارد. از تب «پلیر» در مدیریت صفحه انتخاب کنید.</p>
+
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:20px 0;">
+  <?php $profiles=[
+    ['🎬','مدرن (Modern)','کامپیوتر · Chrome · Firefox','HLS.js · Logo · Ticker · Instant broadcast','#f97316'],
+    ['📱','Android TV','TV Box · Android WebView','XMLHttpRequest · lightweight · autoplay fix','#22c55e'],
+    ['🔵','LG WebOS','تلویزیون LG Smart','Native HLS · 1280×720 · LG remote key (461)','#006eb6'],
+    ['⚫','Samsung Tizen','تلویزیون Samsung Smart','Tizen API · 1920×1080 · crossorigin · key 10009','#1428a0'],
+    ['🖥','سازگار (Legacy)','مرورگر قدیمی · Android 4+','ES5 · XMLHttpRequest · no animations','#60a5fa'],
+    ['⚡','حداقل (Minimal)','Raspberry Pi · CPU ضعیف','Ultra-light · minimal DOM · no transitions','#64748b'],
+    ['👆','کیوسک (Kiosk)','صفحه لمسی · تابلو اطلاعات','Idle mode · touch unlock · 2min timeout','#a855f7'],
+  ]; ?>
+</div>
+
+<table>
+  <tr><th>پروفایل</th><th>دستگاه</th><th>ویژگی کلیدی</th></tr>
+  <tr><td>🎬 مدرن</td><td>کامپیوتر / Chrome</td><td>HLS.js + همه امکانات</td></tr>
+  <tr><td>📱 Android TV</td><td>Android TV Box</td><td>XMLHttpRequest (نه fetch)</td></tr>
+  <tr><td>🔵 LG WebOS</td><td>تلویزیون LG</td><td>1280×720 · Native HLS</td></tr>
+  <tr><td>⚫ Samsung Tizen</td><td>تلویزیون Samsung</td><td>1920×1080 · vid.load() ضروری</td></tr>
+  <tr><td>🖥 سازگار</td><td>قدیمی</td><td>ES5 compatible</td></tr>
+  <tr><td>⚡ حداقل</td><td>Raspberry Pi</td><td>Ultra lightweight</td></tr>
+  <tr><td>👆 کیوسک</td><td>لمسی</td><td>Idle / touch unlock</td></tr>
+</table>
+
+<h2>تنظیم پروفایل</h2>
+<p>پنل مدیریت → صفحات → انتخاب صفحه → تب <strong>«پلیر»</strong> → انتخاب پروفایل → ذخیره</p>
+<div class="alert alert-info"><i>ℹ</i> پروفایل در JSON settings صفحه ذخیره می‌شود. اگه دستگاه متصل است، در heartbeat بعدی reload می‌کند.</div>
+</div>
+
+<!-- ════════ Overlay ════════ -->
+<div id="page-player-overlay" class="page">
+<h1 class="page-title">Overlay — لوگو، ساعت، Ticker <span class="en">Overlay Settings</span></h1>
+<p class="page-desc">روی محتوای در حال پخش می‌توانید لوگو، ساعت و نوار متنی اضافه کنید.</p>
+
+<div class="ui-preview" style="position:relative;height:200px;background:#000;border-radius:10px;overflow:hidden;">
+  <div style="position:absolute;inset:0;background:linear-gradient(135deg,#0d0d2e,#1a0a2e);display:flex;align-items:center;justify-content:center;color:#475569;font-size:13px;">محتوای در حال پخش</div>
+  <div style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,.5);border-radius:8px;padding:6px 14px;font-size:20px;font-weight:700;color:#fff;font-family:monospace;">14:35:22</div>
+  <div style="position:absolute;bottom:10px;right:12px;background:rgba(0,0,0,.7);border-radius:6px;padding:4px 10px;color:#fff;font-size:11px;">لوگو</div>
+  <div style="position:absolute;bottom:0;left:0;right:0;height:34px;background:rgba(0,0,0,.75);display:flex;align-items:center;padding:0 12px;overflow:hidden;">
+    <div style="white-space:nowrap;font-size:13px;color:#fff;font-weight:600;">📢 آخرین اخبار · اطلاعیه مهم · برنامه این هفته</div>
+  </div>
+</div>
+
+<table>
+  <tr><th>Overlay</th><th>تنظیمات</th><th>مسیر</th></tr>
+  <tr><td>🖼 لوگو</td><td>URL، موقعیت (۴ گوشه)، اندازه، شفافیت</td><td>تب پلیر ← تنظیمات نمایش</td></tr>
+  <tr><td>🕐 ساعت</td><td>روشن/خاموش، موقعیت، فرمت ۱۲/۲۴</td><td>تب پلیر ← ساعت</td></tr>
+  <tr><td>📜 Ticker</td><td>متن، سرعت، رنگ</td><td>تب پلیر ← Ticker</td></tr>
+</table>
+
+<div class="alert alert-info"><i>ℹ</i> ساعت از <strong>زمان سرور</strong> (نه زمان دستگاه) گرفته می‌شود و هر ۵ دقیقه sync می‌شود.</div>
+</div>
+
+<!-- ════════ پخش فوری ════════ -->
+<div id="page-broadcast" class="page">
+<h1 class="page-title">پخش فوری <span class="en">Instant Broadcast</span></h1>
+<p class="page-desc">بدون تأخیر محتوا را روی یک یا همه صفحات نمایش دهید — بدون تأثیر بر پلی‌لیست اصلی.</p>
+
+<h2>انواع محتوا</h2>
+<table>
+  <tr><th>نوع</th><th>توضیح</th><th>مثال</th></tr>
+  <tr><td>🖼 تصویر</td><td>از library یا URL مستقیم</td><td>بنر تبلیغاتی</td></tr>
+  <tr><td>🎬 ویدیو</td><td>از library یا URL</td><td>ویدیو اعلان</td></tr>
+  <tr><td>📝 متن</td><td>پیام با رنگ دلخواه</td><td>اطلاعیه اضطراری</td></tr>
+  <tr><td>🌐 وب</td><td>هر URL</td><td>داشبورد زنده</td></tr>
+</table>
+
+<h2>مدت نمایش</h2>
+<p>۱۵ ثانیه · ۳۰ ثانیه · ۱ دقیقه · ۵ دقیقه · <strong>تا توقف دستی</strong></p>
+
+<h2>هدف</h2>
+<p>فقط این صفحه ← یا ← <strong>همه صفحات فعال</strong> به یکباره</p>
+
+<div class="alert alert-success"><i>✅</i> پخش فوری از طریق <strong>heartbeat هر ۱۵ ثانیه</strong> یا <strong>WebSocket فوری</strong> به پلیر می‌رسد.</div>
+</div>
+
+<!-- ════════ ماژول‌ها ════════ -->
+<div id="page-modules" class="page">
+<h1 class="page-title">ماژول‌های سیستم <span class="en">System Modules</span></h1>
+<p class="page-desc">ماژول‌ها قابلیت‌های تخصصی هستند که می‌توانند به عنوان آیتم در پلی‌لیست اضافه شوند.</p>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0;">
+  <div class="ui-card" style="text-align:center;">
+    <div style="font-size:32px;margin-bottom:8px;">✈</div>
+    <div style="font-weight:700;color:#0ea5e9;">FIDS</div>
+    <div style="font-size:11px;color:#64748b;margin-top:4px;">تابلوی اطلاع‌رسانی پروازی</div>
+  </div>
+  <div class="ui-card" style="text-align:center;">
+    <div style="font-size:32px;margin-bottom:8px;">🏨</div>
+    <div style="font-weight:700;color:#d4af37;">Hotel</div>
+    <div style="font-size:11px;color:#64748b;margin-top:4px;">رویدادها و امکانات هتل</div>
+  </div>
+  <div class="ui-card" style="text-align:center;">
+    <div style="font-size:32px;margin-bottom:8px;">🍽</div>
+    <div style="font-weight:700;color:#22c55e;">Menu</div>
+    <div style="font-size:11px;color:#64748b;margin-top:4px;">منوی رستوران</div>
+  </div>
+  <div class="ui-card" style="text-align:center;">
+    <div style="font-size:32px;margin-bottom:8px;">📊</div>
+    <div style="font-weight:700;color:#6366f1;">Corporate</div>
+    <div style="font-size:11px;color:#64748b;margin-top:4px;">KPI و اطلاعات سازمانی</div>
+  </div>
+  <div class="ui-card" style="text-align:center;">
+    <div style="font-size:32px;margin-bottom:8px;">🛍</div>
+    <div style="font-weight:700;color:#f59e0b;">Retail</div>
+    <div style="font-size:11px;color:#64748b;margin-top:4px;">محصولات و پیشنهادات</div>
+  </div>
+  <div class="ui-card" style="text-align:center;">
+    <div style="font-size:32px;margin-bottom:8px;">📡</div>
+    <div style="font-weight:700;color:#ef4444;">IPTV</div>
+    <div style="font-size:11px;color:#64748b;margin-top:4px;">کانال‌های زنده HLS/RTSP</div>
+  </div>
+</div>
+
+<h2>افزودن ماژول به پلی‌لیست</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-content"><h4>پلی‌لیست → باز کردن modal افزودن محتوا</h4></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-content"><h4>تب «🧩 ماژول سیستم»</h4></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-content"><h4>انتخاب ماژول (FIDS، Hotel، ...)</h4><p>تنظیمات ماژول نمایش داده می‌شود</p></div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-content"><h4>تنظیم و افزودن</h4><p>مدت نمایش را تعیین کنید</p></div></div>
+</div>
+</div>
+
+<!-- ════════ FIDS ════════ -->
+<div id="page-fids" class="page">
+<h1 class="page-title">ماژول FIDS <span class="en">Flight Information Display System</span></h1>
+<p class="page-desc">دریافت خودکار اطلاعات پرواز از <strong>fids.airport.ir</strong> و نمایش روی صفحات. برای فرودگاه‌ها، هتل‌ها و مراکز عمومی.</p>
+
+<h2>راه‌اندازی اولیه</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div>
+    <div class="step-content"><h4>ماژول‌ها → FIDS → تنظیمات</h4>
+      <p>فرودگاه، نوع پرواز (ورود/خروج/همه)، و حداکثر تعداد را تنظیم کنید</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">2</div>
+    <div class="step-content"><h4>دکمه «دریافت الآن» را بزنید</h4>
+      <p>اطلاعات از fids.airport.ir دریافت و در دیتابیس ذخیره می‌شود</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">3</div>
+    <div class="step-content"><h4>Cron Job تنظیم کنید</h4>
+      <p>توکن Cron را تولید کنید و دستور crontab را روی سرور اجرا کنید</p>
+    </div>
+  </div>
+</div>
+
+<h2>دریافت خودکار با Cron</h2>
+<pre># هر ۵ دقیقه
+*/5 * * * * curl -s "http://your-server/api/v1/fids/cron-sync?token=YOUR_TOKEN" > /dev/null 2>&1</pre>
+
+<h2>فرودگاه‌های پشتیبانی‌شده</h2>
+<table>
+  <tr><th>ID</th><th>فرودگاه</th><th>ID</th><th>فرودگاه</th></tr>
+  <tr><td>2</td><td>مهرآباد (تهران)</td><td>102</td><td>مشهد</td></tr>
+  <tr><td>1</td><td>شیراز</td><td>103</td><td>تبریز</td></tr>
+  <tr><td>114</td><td>اصفهان</td><td>401</td><td>اهواز</td></tr>
+  <tr><td>117</td><td>بندرعباس</td><td>203</td><td>رشت</td></tr>
+</table>
+
+<h2>تنظیمات .env</h2>
+<pre>FIDS_TIMEOUT=10          # timeout به ثانیه
+FIDS_CACHE_TTL=60        # کش به ثانیه
+FIDS_HTTP_PROXY=         # اگه سرور خارج ایران است: http://proxy-ip:port</pre>
+
+<h2>API Endpoints</h2>
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>توضیح</th></tr>
+  <tr><td>GET</td><td><code>/api/v1/fids/ping?airport_id=2</code></td><td>بررسی اتصال به fids.airport.ir</td></tr>
+  <tr><td>POST</td><td><code>/api/v1/fids/sync-live</code></td><td>دریافت + ذخیره پروازها (نیاز به Auth)</td></tr>
+  <tr><td>GET</td><td><code>/api/v1/fids/cron-sync?token=...</code></td><td>sync برای cron (بدون Auth)</td></tr>
+  <tr><td>GET</td><td><code>/api/v1/fids/live?airport_id=2</code></td><td>خواندن پروازها از cache</td></tr>
+  <tr><td>GET</td><td><code>/api/v1/fids/airports</code></td><td>لیست فرودگاه‌ها</td></tr>
+</table>
+
+<h2>انواع نمایش پلیر</h2>
+<table>
+  <tr><th>نوع (direction)</th><th>توضیح</th></tr>
+  <tr><td><code>all</code></td><td>ورود + خروج</td></tr>
+  <tr><td><code>departure</code></td><td>فقط پروازهای خروجی</td></tr>
+  <tr><td><code>arrival</code></td><td>فقط پروازهای ورودی</td></tr>
+</table>
+
+<div class="alert alert-warn"><i>⚠</i> اگر سرور خارج ایران است: <code>FIDS_HTTP_PROXY</code> را در <code>.env</code> تنظیم کنید</div>
+<div class="alert alert-info"><i>ℹ</i> برای بررسی اتصال: <code>GET /api/v1/fids/ping?airport_id=2</code> → latency نشان می‌دهد</div>
+</div>
+
+<!-- ════════ IPTV ════════ -->
+<div id="page-iptv" class="page">
+<h1 class="page-title">IPTV + Transcoder <span class="en">Live TV Channels</span></h1>
+<p class="page-desc">پخش کانال‌های زنده IPTV در پلی‌لیست. پشتیبانی از HLS، RTSP، RTMP.</p>
+
+<h2>پروتکل‌ها</h2>
+<table>
+  <tr><th>پروتکل</th><th>پشتیبانی</th><th>نیاز</th></tr>
+  <tr><td>HLS (m3u8)</td><td>✅ کامل</td><td>—</td></tr>
+  <tr><td>HTTP Stream</td><td>✅ کامل</td><td>—</td></tr>
+  <tr><td>RTSP</td><td>⚠ نیاز به FFmpeg</td><td>FFmpeg در سرور</td></tr>
+  <tr><td>RTMP</td><td>⚠ نیاز به FFmpeg</td><td>FFmpeg در سرور</td></tr>
+</table>
+
+<h2>ایمپورت M3U</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-content"><h4>IPTV ← «ایمپورت M3U»</h4></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-content"><h4>وارد کردن URL یا آپلود فایل .m3u</h4></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-content"><h4>تا ۵۰۰ کانال ایمپورت می‌شود</h4></div></div>
+</div>
+
+<h2>نصب FFmpeg (برای RTSP)</h2>
+<pre>docker exec signage_php apt-get install -y ffmpeg</pre>
+<p>یا در docker-compose.yml به image PHP اضافه کنید.</p>
+</div>
+
+<!-- ════════ Android ════════ -->
+<div id="page-android" class="page">
+<h1 class="page-title">اپ Android <span class="en">Android App</span></h1>
+<p class="page-desc">اپ بومی Android با WebView برای نمایش محتوا روی TV Box و Android TV.</p>
+
+<h2>ویژگی‌ها</h2>
+<table>
+  <tr><th>ویژگی</th><th>توضیح</th></tr>
+  <tr><td>✅ Auto-start</td><td>بعد از روشن شدن دستگاه خودکار اجرا می‌شود</td></tr>
+  <tr><td>✅ Kiosk Mode</td><td>تمام صفحه، بدون navigation bar</td></tr>
+  <tr><td>✅ Screen ON</td><td>صفحه خاموش نمی‌شود</td></tr>
+  <tr><td>✅ OTA Update</td><td>بروزرسانی خودکار از سرور</td></tr>
+  <tr><td>✅ Network Recovery</td><td>وقتی اینترنت برقرار شد reload می‌کند</td></tr>
+  <tr><td>✅ Autoplay Video</td><td>بدون نیاز به تعامل کاربر</td></tr>
+</table>
+
+<h2>ساخت APK</h2>
+<pre># با Android Studio:
+# 1. پوشه android/ را باز کنید
+# 2. Build → Generate Signed APK
+# 3. Release
+
+# با command line:
+cd signage-cms/android
+./gradlew assembleRelease</pre>
+
+<h2>نصب روی TV Box</h2>
+<pre># با ADB:
+adb connect 192.168.1.X
+adb install -r SignageCMS.apk
+
+# یا از طریق USB:
+# Settings → Security → Unknown Sources: ON</pre>
+
+<h2>تنظیم اولیه</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-content"><h4>اولین بار صفحه Setup نمایش داده می‌شود</h4></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-content"><h4>آدرس سرور را وارد کنید</h4><p>مثال: <code>http://192.168.1.10</code></p></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-content"><h4>کد صفحه را وارد کنید</h4><p>از پنل مدیریت → صفحه → تب فعال‌سازی</p></div></div>
+</div>
+</div>
+
+<!-- ════════ OTA ════════ -->
+<div id="page-ota" class="page">
+<h1 class="page-title">OTA Update — نصب شبکه‌ای <span class="en">Over The Air Update</span></h1>
+<p class="page-desc">بروزرسانی اپ Android روی همه دستگاه‌های متصل از طریق پنل مدیریت، بدون دسترسی فیزیکی.</p>
+
+<h2>فرآیند OTA</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-content"><h4>پنل مدیریت → اپ Android → آپلود نسخه جدید</h4></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-content"><h4>دستگاه‌ها هر ۱۰ دقیقه API را چک می‌کنند</h4><pre>GET /api/v1/app/version</pre></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-content"><h4>در صورت نسخه جدیدتر، APK دانلود می‌شود</h4></div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-content"><h4>نصب فوری (Force) یا notification برای نصب</h4></div></div>
+</div>
+
+<h2>Force Update</h2>
+<div class="alert alert-warn"><i>⚠</i> با فعال کردن «بروزرسانی اجباری»، دستگاه‌ها بدون تأیید کاربر APK را نصب می‌کنند. مناسب برای کیوسک‌های بدون نظارت.</div>
+</div>
+
+<!-- ════════ مانیتورینگ ════════ -->
+<div id="page-monitor" class="page">
+<h1 class="page-title">مانیتورینگ <span class="en">Real-time Monitoring</span></h1>
+<p class="page-desc">مشاهده وضعیت همه صفحات به صورت زنده — آنلاین/آفلاین، محتوای در حال پخش، CPU و RAM.</p>
+
+<h2>دسترسی</h2>
+<p>پنل مدیریت → مانیتورینگ <em>یا</em> آدرس: <code>http://localhost/admin/screens/monitor</code></p>
+
+<h2>اطلاعات نمایش داده شده</h2>
+<table>
+  <tr><th>اطلاعات</th><th>توضیح</th><th>بروزرسانی</th></tr>
+  <tr><td>وضعیت</td><td>آنلاین/آفلاین/در انتظار</td><td>هر ۱۵ ثانیه</td></tr>
+  <tr><td>در حال پخش</td><td>نام محتوای فعلی</td><td>هر heartbeat</td></tr>
+  <tr><td>آخرین ارتباط</td><td>زمان آخرین heartbeat</td><td>—</td></tr>
+  <tr><td>CPU</td><td>درصد مصرف CPU</td><td>هر heartbeat</td></tr>
+  <tr><td>RAM</td><td>درصد مصرف حافظه</td><td>هر heartbeat</td></tr>
+</table>
+</div>
+
+<!-- ════════ رفع مشکلات ════════ -->
+<div id="page-trouble" class="page">
+<h1 class="page-title">رفع مشکلات <span class="en">Troubleshooting</span></h1>
+<p class="page-desc">راهنمای حل سریع رایج‌ترین مشکلات</p>
+
+<h2>مشکلات نصب</h2>
+
+<div class="trouble-item" onclick="this.classList.toggle('open')">
+  <div class="trouble-q">❌ Docker containers راه‌اندازی نمی‌شوند <span>▼</span></div>
+  <div class="trouble-a">
+    <pre>docker ps -a           # بررسی وضعیت
+docker logs signage_php  # بررسی خطا</pre>
+    <strong>راه‌حل‌های رایج:</strong>
+    <ul style="padding-right:16px;margin-top:8px;">
+      <li>پورت 80 توسط نرم‌افزار دیگر اشغال شده → در .env پورت را تغییر دهید</li>
+      <li>RAM کافی نیست → Docker Desktop را به حداقل 4GB تنظیم کنید</li>
+      <li><code>docker compose down -v && docker compose up -d --build</code></li>
+    </ul>
+  </div>
+</div>
+
+<div class="trouble-item" onclick="this.classList.toggle('open')">
+  <div class="trouble-q">❌ صفحه 500 Internal Server Error <span>▼</span></div>
+  <div class="trouble-a">
+    <pre>docker logs signage_php --tail 20</pre>
+    <strong>دلایل رایج:</strong>
+    <ul style="padding-right:16px;margin-top:8px;">
+      <li>Migration اجرا نشده → مراحل migration را دوباره اجرا کنید</li>
+      <li>PHP syntax error → لاگ را بررسی کنید</li>
+    </ul>
+  </div>
+</div>
+
+<h2>مشکلات فعال‌سازی TV</h2>
+
+<div class="trouble-item" onclick="this.classList.toggle('open')">
+  <div class="trouble-q">❌ «ارتباط قطع است» در TV <span>▼</span></div>
+  <div class="trouble-a">
+    <p><strong>علت:</strong> TV از IP سرور دسترسی ندارد.</p>
+    <ol style="padding-right:16px;margin-top:8px;">
+      <li>IP سرور را در cmd بررسی کنید: <code>ipconfig</code></li>
+      <li>آدرس پلیر را با IP واقعی باز کنید: <code>http://192.168.1.10/player/SCR001</code></li>
+      <li>TV و سرور در <strong>یک شبکه</strong> باشند</li>
+      <li>Firewall ویندوز پورت 80 را باز کنید</li>
+    </ol>
+    <pre># باز کردن پورت 80 در PowerShell (Admin)
+netsh advfirewall firewall add rule name="SignageCMS" dir=in action=allow protocol=TCP localport=80</pre>
+  </div>
+</div>
+
+<div class="trouble-item" onclick="this.classList.toggle('open')">
+  <div class="trouble-q">❌ «کد نامعتبر یا منقضی شده» <span>▼</span></div>
+  <div class="trouble-a">
+    <ul style="padding-right:16px;">
+      <li>کد اعتبار ۲۴ ساعت دارد — اگه گذشته از پنل «کد جدید» بگیرید</li>
+      <li>کد را با کپی/پیست وارد کنید تا اشتباه تایپی نباشد</li>
+    </ul>
+  </div>
+</div>
+
+<h2>مشکلات Player</h2>
+
+<div class="trouble-item" onclick="this.classList.toggle('open')">
+  <div class="trouble-q">❌ ویدیو پخش نمی‌شود <span>▼</span></div>
+  <div class="trouble-a">
+    <strong>برای Android TV / LG / Samsung:</strong>
+    <ul style="padding-right:16px;margin-top:8px;">
+      <li>پروفایل پلیر را به <strong>Android TV</strong> یا <strong>LG/Samsung</strong> تغییر دهید</li>
+      <li>فرمت MP4 (H.264) بیشترین سازگاری را دارد</li>
+      <li>WebM ممکن است در TV قدیمی کار نکند</li>
+    </ul>
+    <strong>برای همه:</strong>
+    <ul style="padding-right:16px;margin-top:8px;">
+      <li>URL فایل را بررسی کنید: <code>http://192.168.1.10/uploads/...</code></li>
+      <li>نه <code>localhost</code> — باید IP واقعی باشد</li>
+    </ul>
+  </div>
+</div>
+
+<div class="trouble-item" onclick="this.classList.toggle('open')">
+  <div class="trouble-q">❌ تصاویر لود نمی‌شوند (404) <span>▼</span></div>
+  <div class="trouble-a">
+    <pre>docker exec signage_php ls /var/www/html/public/uploads/media/1/</pre>
+    <ul style="padding-right:16px;margin-top:8px;">
+      <li>اگه فایل وجود دارد اما 404 می‌گیرد: uploads route فعال است</li>
+      <li>اطمینان حاصل کنید که <code>routes/web.php</code> جدیدترین نسخه است</li>
+    </ul>
+  </div>
+</div>
+
+<div class="trouble-item" onclick="this.classList.toggle('open')">
+  <div class="trouble-q">❌ WebSocket کار نمی‌کند <span>▼</span></div>
+  <div class="trouble-a">
+    <pre>docker logs signage_ws --tail 10
+# باید ببینید: WebSocket Server running on ws://0.0.0.0:8080</pre>
+    <ul style="padding-right:16px;margin-top:8px;">
+      <li>container در حال اجراست؟ <code>docker ps | grep signage_ws</code></li>
+      <li>پورت 8080 باز است؟</li>
+      <li>WebSocket اختیاری است — heartbeat هر ۱۵ ثانیه جایگزین می‌شود</li>
+    </ul>
+  </div>
+</div>
+
+<h2>مشکلات دیگر</h2>
+
+<div class="trouble-item" onclick="this.classList.toggle('open')">
+  <div class="trouble-q">❌ FIDS module خطای PHP می‌دهد <span>▼</span></div>
+  <div class="trouble-a">
+    <p>Migration جداول ماژول را اجرا کنید:</p>
+    <pre>Get-Content "database\migrations\003_module_tables_only.sql" -Raw -Encoding UTF8 | `
+  docker exec -i signage_mysql mysql -u signage_user -pStrongPassword123! signage_cms</pre>
+  </div>
+</div>
+
+<div class="trouble-item" onclick="this.classList.toggle('open')">
+  <div class="trouble-q">❌ صفحه کند است یا لود نمی‌شود <span>▼</span></div>
+  <div class="trouble-a">
+    <ul style="padding-right:16px;">
+      <li>Cache Redis: <code>docker restart signage_redis</code></li>
+      <li>RAM Docker را افزایش دهید (Docker Desktop → Settings → Resources)</li>
+      <li>پروفایل <strong>Minimal</strong> را برای دستگاه‌های ضعیف انتخاب کنید</li>
+    </ul>
+  </div>
+</div>
+
+<h2>ریست کامل</h2>
+<div class="alert alert-error"><i>⚠</i> این دستور همه داده‌ها را پاک می‌کند!</div>
+<pre>cd D:\duc\signage-cms
+docker compose down -v    # حذف containers و volumes
+docker compose up -d --build   # شروع دوباره</pre>
+</div>
+
+<!-- ════════ اتاق‌های IPTV + PMS ════════ -->
+<div id="page-iptv-rooms" class="page">
+<h1 class="page-title">اتاق‌های IPTV + PMS <span class="en">IPTV Rooms & Hotel PMS</span></h1>
+<p class="page-desc">مدیریت اتاق‌های هتل، چک‌این/چک‌اوت مهمان، ارسال پیام به TV اتاق، و یکپارچه‌سازی با سیستم PMS هتلداری.</p>
+
+<h2>معماری <span class="en-small">Architecture</span></h2>
+<div class="ui-preview">
+  <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;padding:10px 0;">
+    <div style="text-align:center;padding:14px 18px;background:#0d0d14;border:1px solid rgba(239,68,68,.3);border-radius:12px;">
+      <div style="font-size:22px;margin-bottom:4px;">🏨</div>
+      <div style="font-size:11px;color:#f87171;font-weight:700;">PMS هتل</div>
+      <div style="font-size:10px;color:#475569;margin-top:2px;">Opera / Fidelio / ...</div>
+    </div>
+    <div style="font-size:20px;color:#475569;">→</div>
+    <div style="text-align:center;padding:14px 18px;background:#0d0d14;border:1px solid rgba(249,115,22,.3);border-radius:12px;">
+      <div style="font-size:22px;margin-bottom:4px;">⚙️</div>
+      <div style="font-size:11px;color:#f97316;font-weight:700;">SignageCMS API</div>
+      <div style="font-size:10px;color:#475569;margin-top:2px;">/api/v1/pms/*</div>
+    </div>
+    <div style="font-size:20px;color:#475569;">→</div>
+    <div style="text-align:center;padding:14px 18px;background:#0d0d14;border:1px solid rgba(34,197,94,.3);border-radius:12px;">
+      <div style="font-size:22px;margin-bottom:4px;">📺</div>
+      <div style="font-size:11px;color:#4ade80;font-weight:700;">TV اتاق مهمان</div>
+      <div style="font-size:10px;color:#475569;margin-top:2px;">IPTV Player</div>
+    </div>
+  </div>
+</div>
+
+<h2>مدیریت اتاق‌ها</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div>
+    <div class="step-content"><h4>ایجاد اتاق‌ها</h4>
+      <p>پنل مدیریت → <strong>اتاق‌های IPTV</strong> → دکمه «اتاق جدید»</p>
+      <p>شماره اتاق، نام، طبقه، و نوع اتاق را وارد کنید.</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">2</div>
+    <div class="step-content"><h4>اتصال TV به اتاق</h4>
+      <p>صفحات نمایش → انتخاب TV → نوع «IPTV» → بخش «اتاق / واحد» → انتخاب اتاق</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">3</div>
+    <div class="step-content"><h4>چک‌این مهمان</h4>
+      <p>اتاق‌های IPTV → انتخاب اتاق → تب «مهمان» → فرم چک‌این</p>
+      <p>می‌توانید پیام خوش‌آمد خودکار هم فعال کنید.</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">4</div>
+    <div class="step-content"><h4>ارسال پیام به TV</h4>
+      <p>تب «پیام‌ها» → نوع پیام → متن → ارسال. پیام بلافاصله روی TV مهمان نمایش داده می‌شود.</p>
+    </div>
+  </div>
+</div>
+
+<h2>انواع پیام</h2>
+<table>
+  <tr><th>نوع</th><th>نمایش</th><th>توضیح</th></tr>
+  <tr><td><code>banner</code></td><td>نوار پایین</td><td>برای اعلانات کم‌اهمیت</td></tr>
+  <tr><td><code>popup</code></td><td>مرکز صفحه</td><td>برای پیام‌های مهم</td></tr>
+  <tr><td><code>ticker</code></td><td>نوار متحرک</td><td>برای اطلاعات مداوم</td></tr>
+</table>
+
+<h2>یکپارچه‌سازی PMS</h2>
+<div class="alert alert-info"><i>ℹ</i> سیستم PMS هتل می‌تواند مستقیماً چک‌این/چک‌اوت انجام دهد بدون نیاز به ورود به پنل.</div>
+
+<div class="steps">
+  <div class="step"><div class="step-num">1</div>
+    <div class="step-content"><h4>ایجاد API Key</h4>
+      <p>اتاق‌های IPTV → دکمه «PMS Integration» → «کلید جدید»</p>
+      <p>API Key را کپی کنید و در تنظیمات PMS وارد کنید.</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">2</div>
+    <div class="step-content"><h4>فراخوانی از PMS</h4>
+      <pre>POST /api/v1/pms/checkin
+X-PMS-Key: YOUR_API_KEY
+{"room_number":"101","guest_name":"علی محمدی","language":"fa"}</pre>
+    </div>
+  </div>
+</div>
+
+<h2>API های PMS (بدون JWT)</h2>
+<table>
+  <tr><th>Endpoint</th><th>عملکرد</th></tr>
+  <tr><td><code>POST /api/v1/pms/checkin</code></td><td>چک‌این مهمان</td></tr>
+  <tr><td><code>POST /api/v1/pms/checkout</code></td><td>چک‌اوت مهمان</td></tr>
+  <tr><td><code>POST /api/v1/pms/message</code></td><td>ارسال پیام به TV اتاق</td></tr>
+</table>
+<pre>Header: X-PMS-Key: YOUR_API_KEY
+
+POST /api/v1/pms/checkin
+{
+  "room_number": "101",
+  "guest_name":  "علی محمدی",
+  "language":    "fa",
+  "nights":      3
+}
+
+POST /api/v1/pms/message
+{
+  "room_number": "101",
+  "title":       "پیام از پذیرش",
+  "body":        "کابل برق شما آماده است",
+  "mode":        "popup",
+  "expires_hours": 1
+}</pre>
+</div>
+
+<!-- ════════ In-Flight ════════ -->
+<div id="page-inflight" class="page">
+<h1 class="page-title">In-Flight Display <span class="en">Airplane Screens</span></h1>
+<p class="page-desc">سیستم نمایش اطلاعات پرواز برای مانیتورهای داخل هواپیما — شامل نقشه مسیر، ارتفاع، سرعت، ساعت مبدأ/مقصد و ETA.</p>
+
+<div class="tv-frame" style="margin:20px auto;display:block;width:fit-content;">
+  <div class="tv-screen" style="width:380px;height:215px;background:radial-gradient(ellipse at center,#070d2a 0%,#000 70%);">
+    <div style="width:100%;height:100%;position:relative;font-family:monospace;">
+      <!-- Top bar -->
+      <div style="position:absolute;top:6px;left:10px;right:10px;display:flex;justify-content:space-between;font-size:8px;color:rgba(255,255,255,.6);">
+        <div style="background:rgba(0,0,0,.5);border:1px solid rgba(0,180,216,.3);border-radius:5px;padding:3px 8px;">
+          <span style="color:#fff;font-weight:700;font-size:9px;letter-spacing:1px;">IRA711</span>
+          <span style="color:#64748b;margin-right:4px;font-size:7px;">Iran Air</span>
+        </div>
+        <div style="background:rgba(0,180,216,.12);border:1px solid rgba(0,180,216,.3);border-radius:5px;padding:3px 8px;color:#00b4d8;font-size:7px;">✈ CRUISE</div>
+      </div>
+      <!-- Map area -->
+      <div style="position:absolute;top:28px;left:60px;right:60px;bottom:44px;background:rgba(0,30,60,.4);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+        <div style="text-align:center;color:rgba(255,255,255,.15);font-size:8px;">🗺 نقشه مسیر (Canvas)</div>
+      </div>
+      <!-- Origin panel -->
+      <div style="position:absolute;top:28px;right:4px;width:56px;background:rgba(0,0,0,.5);border:1px solid rgba(0,180,216,.2);border-radius:6px;padding:5px;font-size:7px;">
+        <div style="color:#00b4d8;font-size:6px;">✈ مبدأ</div>
+        <div style="color:#fff;font-weight:900;font-size:11px;">IKA</div>
+        <div style="color:#94a3b8;">Tehran</div>
+        <div style="color:#fff;font-size:9px;margin-top:3px;">14:32</div>
+      </div>
+      <!-- Dest panel -->
+      <div style="position:absolute;top:28px;left:4px;width:56px;background:rgba(0,0,0,.5);border:1px solid rgba(168,85,247,.2);border-radius:6px;padding:5px;font-size:7px;">
+        <div style="color:#a78bfa;font-size:6px;">🛬 مقصد</div>
+        <div style="color:#fff;font-weight:900;font-size:11px;">DXB</div>
+        <div style="color:#94a3b8;">Dubai</div>
+        <div style="color:#fff;font-size:9px;margin-top:3px;">16:05</div>
+      </div>
+      <!-- Bottom bar -->
+      <div style="position:absolute;bottom:4px;left:4px;right:4px;display:flex;justify-content:space-around;font-size:7px;color:rgba(255,255,255,.7);">
+        <div style="text-align:center;"><div style="color:#fff;font-weight:700;">36,000</div><div style="color:#00b4d8;">ft</div></div>
+        <div style="text-align:center;"><div style="color:#fff;font-weight:700;">870</div><div style="color:#00b4d8;">km/h</div></div>
+        <div style="text-align:center;"><div style="color:#fff;font-weight:700;">435</div><div style="color:#00b4d8;">km</div></div>
+        <div style="text-align:center;"><div style="color:#fff;font-weight:700;">29m</div><div style="color:#00b4d8;">ETA</div></div>
+        <div style="text-align:center;"><div style="color:#fff;font-weight:700;">65%</div><div style="color:#00b4d8;">مسیر</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="tv-stand"></div>
+</div>
+
+<h2>راه‌اندازی</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div>
+    <div class="step-content"><h4>ایجاد پرواز</h4>
+      <p>پنل مدیریت → <strong>نمایش پرواز</strong> → «پرواز جدید»</p>
+      <p>شماره پرواز، کد IATA مبدأ/مقصد، مختصات جغرافیایی، منطقه زمانی را وارد کنید.</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">2</div>
+    <div class="step-content"><h4>تنظیم نوع صفحه</h4>
+      <p>صفحات نمایش → انتخاب مانیتور → نوع «✈ In-Flight» → انتخاب پرواز</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">3</div>
+    <div class="step-content"><h4>کنترل زنده پرواز</h4>
+      <p>از پنل In-Flight می‌توانید در لحظه: فاز پرواز، ارتفاع، سرعت، و درصد مسیر را تغییر دهید.</p>
+      <p>یا Raspberry Pi را متصل کنید تا داده‌ها خودکار از GPS دریافت شوند.</p>
+    </div>
+  </div>
+</div>
+
+<h2>فازهای پرواز</h2>
+<table>
+  <tr><th>فاز</th><th>شرط خودکار (RPi)</th><th>توضیح</th></tr>
+  <tr><td>preflight</td><td>ارتفاع &lt; 50ft، سرعت &lt; 20km/h</td><td>قبل از پرواز</td></tr>
+  <tr><td>taxi</td><td>ارتفاع &lt; 200ft، سرعت &lt; 120km/h</td><td>حرکت روی باند</td></tr>
+  <tr><td>takeoff</td><td>ارتفاع &lt; 2000ft</td><td>برخاستن</td></tr>
+  <tr><td>climb</td><td>ارتفاع &lt; 8000ft</td><td>صعود</td></tr>
+  <tr><td>cruise</td><td>ارتفاع ≥ 25000ft</td><td>پرواز معمول</td></tr>
+  <tr><td>descent</td><td>ارتفاع &lt; 25000ft در حال کاهش</td><td>نزول</td></tr>
+  <tr><td>approach</td><td>ارتفاع &lt; 5000ft</td><td>نزدیک شدن</td></tr>
+  <tr><td>landed</td><td>ارتفاع &lt; 50ft، سرعت &lt; 30km/h</td><td>فرود</td></tr>
+</table>
+
+<h2>پس‌زمینه‌های موجود</h2>
+<table>
+  <tr><th>نام</th><th>توضیح</th></tr>
+  <tr><td>🌌 space</td><td>فضا با ستاره‌های متحرک (پیش‌فرض)</td></tr>
+  <tr><td>☁️ clouds</td><td>آسمان ابری / فضای روز</td></tr>
+  <tr><td>🌊 ocean</td><td>اقیانوس آبی عمیق</td></tr>
+  <tr><td>🌅 dusk</td><td>غروب آفتاب</td></tr>
+</table>
+
+<div class="alert alert-info"><i>ℹ</i> نقشه جهان به‌صورت Canvas آفلاین رسم می‌شود — به اینترنت نیاز ندارد. مناسب برای هواپیما.</div>
+</div>
+
+<!-- ════════ Raspberry Pi ════════ -->
+<div id="page-rpi" class="page">
+<h1 class="page-title">Raspberry Pi Bridge <span class="en">GPS + ADS-B Integration</span></h1>
+<p class="page-desc">با یک Raspberry Pi مجهز به GPS و گیرنده ADS-B، داده‌های پرواز را به‌صورت زنده و خودکار به سیستم ارسال کنید.</p>
+
+<h2>معماری سخت‌افزار</h2>
+<div class="ui-preview">
+  <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:center;text-align:center;font-size:11px;">
+    <div style="padding:12px;background:#0d0d14;border:1px solid rgba(0,180,216,.25);border-radius:10px;">
+      <div style="font-size:24px;">🛰</div>
+      <div style="font-weight:700;color:#00b4d8;margin-top:4px;">GPS Module</div>
+      <div style="color:#475569;">NEO-6M / 8M</div>
+      <div style="color:#475569;font-size:10px;">UART / USB</div>
+    </div>
+    <div style="color:#475569;font-size:20px;">+</div>
+    <div style="padding:12px;background:#0d0d14;border:1px solid rgba(168,85,247,.25);border-radius:10px;">
+      <div style="font-size:24px;">📡</div>
+      <div style="font-weight:700;color:#a78bfa;margin-top:4px;">RTL-SDR</div>
+      <div style="color:#475569;">ADS-B Receiver</div>
+      <div style="color:#475569;font-size:10px;">USB Dongle</div>
+    </div>
+    <div style="color:#475569;font-size:20px;">→</div>
+    <div style="padding:12px;background:#0d0d14;border:1px solid rgba(34,197,94,.25);border-radius:10px;">
+      <div style="font-size:24px;">🍓</div>
+      <div style="font-weight:700;color:#4ade80;margin-top:4px;">Raspberry Pi</div>
+      <div style="color:#475569;">gpsd + dump1090</div>
+      <div style="color:#475569;font-size:10px;">Bridge API :5055</div>
+    </div>
+  </div>
+</div>
+
+<h2>نصب خودکار</h2>
+<div class="alert alert-warn"><i>⚠</i> فایل‌های RPi در پوشه <code>rpi/</code> پروژه قرار دارند.</div>
+<pre>git clone https://github.com/your-repo/signage-cms.git /tmp/cms
+cd /tmp/cms/rpi
+sudo bash setup.sh</pre>
+
+<p>اسکریپت setup.sh به‌طور خودکار نصب می‌کند:</p>
+<table>
+  <tr><th>پکیج</th><th>وظیفه</th></tr>
+  <tr><td><code>gpsd</code></td><td>دریافت داده از ماژول GPS</td></tr>
+  <tr><td><code>rtl-sdr</code></td><td>درایور گیرنده RTL-SDR</td></tr>
+  <tr><td><code>dump1090-fa</code></td><td>دیکد سیگنال‌های ADS-B (1090 MHz)</td></tr>
+  <tr><td><code>inflight-bridge</code></td><td>سرویس Python که API را expose می‌کند</td></tr>
+</table>
+
+<h2>API Bridge (روی RPi)</h2>
+<table>
+  <tr><th>Endpoint</th><th>توضیح</th></tr>
+  <tr><td><code>GET :5055/api/status</code></td><td>وضعیت کامل: GPS + ADS-B + Push</td></tr>
+  <tr><td><code>GET :5055/api/gps</code></td><td>فقط داده GPS (lat, lng, alt, speed, heading)</td></tr>
+  <tr><td><code>GET :5055/api/adsb</code></td><td>هواپیماهای دریافتی از ADS-B</td></tr>
+  <tr><td><code>GET :5055/api/health</code></td><td>health check سریع</td></tr>
+  <tr><td><code>POST :5055/api/config</code></td><td>ذخیره تنظیمات (push, SignageCMS URL)</td></tr>
+</table>
+
+<pre>curl http://192.168.1.100:5055/api/gps
+{
+  "fix": true,
+  "mode": 3,
+  "lat": 32.4,
+  "lng": 53.6,
+  "alt_m": 10972.5,
+  "alt_ft": 36000,
+  "speed_kmh": 870.0,
+  "heading": 142.3,
+  "satellites_used": 12
+}</pre>
+
+<h2>اتصال از پنل مدیریت</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div>
+    <div class="step-content"><h4>باز کردن بخش RPi</h4>
+      <p>پنل → نمایش پرواز → انتخاب پرواز → بخش <strong>«🍓 Raspberry Pi»</strong></p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">2</div>
+    <div class="step-content"><h4>ورود IP</h4>
+      <p>آدرس IP Raspberry Pi را وارد کنید (مثلاً <code>192.168.1.100</code>) و «ذخیره» کنید.</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">3</div>
+    <div class="step-content"><h4>بررسی وضعیت</h4>
+      <p>دکمه «بررسی وضعیت» — وضعیت GPS، تعداد ماهواره، و ADS-B را نشان می‌دهد.</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">4</div>
+    <div class="step-content"><h4>همگام‌سازی</h4>
+      <p>«همگام GPS» — یک‌بار داده را می‌خواند و تله‌متری پرواز را به‌روز می‌کند.</p>
+      <p>یا «همگام‌سازی خودکار» را فعال کنید تا هر ۱۰ ثانیه خودکار اجرا شود.</p>
+    </div>
+  </div>
+  <div class="step"><div class="step-num">5</div>
+    <div class="step-content"><h4>Push خودکار از RPi (اختیاری)</h4>
+      <p>دکمه «تنظیم Push» → URL سرور، API token، و بازه زمانی را وارد کنید.</p>
+      <p>RPi مستقیماً داده را به SignageCMS می‌فرستد — بدون نیاز به باز بودن مرورگر.</p>
+    </div>
+  </div>
+</div>
+
+<h2>دستورات مفید RPi</h2>
+<pre>sudo systemctl status inflight-bridge   # وضعیت سرویس
+sudo journalctl -u inflight-bridge -f   # لاگ زنده
+sudo systemctl restart inflight-bridge  # ری‌استارت
+
+# تست GPS
+cgps -s
+
+# تست ADS-B
+curl http://localhost:8080/data/aircraft.json | python3 -m json.tool | head -30</pre>
+
+<div class="alert alert-success"><i>✅</i> RTL-SDR رایگان است و معمولاً زیر ۵۰ هزار تومان در بازار موجود است. ماژول GPS NEO-6M هم قیمت مشابهی دارد.</div>
+</div>
+
+<!-- ════════ API ════════ -->
+<div id="page-api" class="page">
+<h1 class="page-title">API Reference <span class="en">REST API</span></h1>
+<p class="page-desc">API کامل برای یکپارچه‌سازی با سیستم‌های خارجی.</p>
+
+<h2>Authentication</h2>
+<pre>POST /api/v1/auth/login
+Content-Type: application/json
+{"email":"admin@signagecms.com","password":"Admin@123456"}
+
+Response: {"token": "JWT_TOKEN"}</pre>
+
+<pre>Authorization: Bearer JWT_TOKEN</pre>
+
+<h2>Endpoints اصلی</h2>
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>توضیح</th></tr>
+  <tr><td>POST</td><td><code>/api/v1/auth/login</code></td><td>—</td><td>ورود و دریافت JWT</td></tr>
+  <tr><td>GET</td><td><code>/api/v1/screens</code></td><td>JWT</td><td>لیست صفحات</td></tr>
+  <tr><td>GET</td><td><code>/api/v1/screens/{code}/playlist</code></td><td>—</td><td>پلی‌لیست صفحه</td></tr>
+  <tr><td>POST</td><td><code>/api/v1/screens/{code}/heartbeat</code></td><td>—</td><td>heartbeat پلیر</td></tr>
+  <tr><td>GET</td><td><code>/api/v1/media</code></td><td>JWT</td><td>لیست رسانه‌ها</td></tr>
+  <tr><td>GET</td><td><code>/api/v1/iptv/menus</code></td><td>JWT</td><td>منوهای IPTV</td></tr>
+  <tr><td>GET</td><td><code>/api/v1/player/iptv-menu/{id}</code></td><td>—</td><td>منو برای پلیر</td></tr>
+  <tr><td>GET</td><td><code>/api/v1/player/room-info/{code}</code></td><td>—</td><td>اطلاعات اتاق برای IPTV</td></tr>
+  <tr><td>GET</td><td><code>/api/v1/iptv/rooms</code></td><td>JWT</td><td>لیست اتاق‌ها</td></tr>
+  <tr><td>POST</td><td><code>/api/v1/iptv/rooms/{id}/checkin</code></td><td>JWT</td><td>چک‌این مهمان</td></tr>
+  <tr><td>POST</td><td><code>/api/v1/iptv/rooms/{id}/message</code></td><td>JWT</td><td>ارسال پیام به TV</td></tr>
+  <tr><td>POST</td><td><code>/api/v1/pms/checkin</code></td><td>X-PMS-Key</td><td>چک‌این از PMS</td></tr>
+  <tr><td>POST</td><td><code>/api/v1/pms/checkout</code></td><td>X-PMS-Key</td><td>چک‌اوت از PMS</td></tr>
+  <tr><td>POST</td><td><code>/api/v1/pms/message</code></td><td>X-PMS-Key</td><td>پیام از PMS</td></tr>
+  <tr><td>GET</td><td><code>/api/v1/inflight</code></td><td>JWT</td><td>لیست پروازها</td></tr>
+  <tr><td>PUT</td><td><code>/api/v1/inflight/{id}/live</code></td><td>JWT</td><td>به‌روز تله‌متری</td></tr>
+  <tr><td>GET</td><td><code>/api/v1/inflight/player/{id}</code></td><td>—</td><td>اطلاعات پرواز برای پلیر</td></tr>
+  <tr><td>GET</td><td><code>/api/v1/inflight/{id}/rpi-status</code></td><td>JWT</td><td>وضعیت RPi</td></tr>
+  <tr><td>POST</td><td><code>/api/v1/inflight/{id}/rpi-sync</code></td><td>JWT</td><td>همگام GPS از RPi</td></tr>
+</table>
+
+<h2>In-Flight API</h2>
+<pre>GET /api/v1/inflight/player/{id}    # بدون نیاز به auth
+
+Response: {
+  "flight_number": "IRA711",
+  "phase": "cruise",
+  "progress_pct": 65,
+  "altitude_ft": 36000,
+  "speed_kmh": 870,
+  "heading_deg": 142,
+  "origin_iata": "IKA",  "origin_city": "Tehran",  "origin_timezone": "Asia/Tehran",
+  "dest_iata":   "DXB",  "dest_city":   "Dubai",   "dest_timezone":   "Asia/Dubai",
+  "dist_km": 1200,
+  "eta_mins": 29,
+  "accent_color": "#00b4d8",
+  "bg_style": "space"
+}
+
+PUT /api/v1/inflight/{id}/live    # Authorization: Bearer JWT
+{
+  "phase": "cruise",
+  "progress_pct": 70,
+  "altitude_ft": 36000,
+  "speed_kmh": 870,
+  "heading_deg": 145
+}</pre>
+
+<h2>IPTV Rooms + PMS API</h2>
+<pre>POST /api/v1/iptv/rooms/{id}/checkin   # JWT
+{
+  "guest_name": "علی محمدی",
+  "language": "fa",
+  "nights": 3,
+  "send_welcome": true
+}
+
+POST /api/v1/pms/checkin   # X-PMS-Key: YOUR_KEY
+{ "room_number": "101", "guest_name": "John Smith" }
+
+POST /api/v1/iptv/rooms/{id}/message   # JWT
+{
+  "title": "پیام",
+  "body": "لطفاً با پذیرش تماس بگیرید",
+  "mode": "popup",
+  "expires_hours": 2
+}</pre>
+
+<h2>Heartbeat</h2>
+<pre>POST /api/v1/screens/{code}/heartbeat
+{"version": "1.0", "current_item": "ویدیو خوش‌آمد"}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "commands": [
+      {"command": "instant_media", "data": {...}},
+      {"command": "reload"}
+    ]
+  }
+}</pre>
+
+<div class="alert alert-info"><i>ℹ</i> مستندات کامل API در فایل <code>docs/API.md</code> موجود است.</div>
+</div>
+
+</main>
+</div>
+
+<script>
+function show(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const el = document.getElementById('page-' + page);
+  if (el) el.classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
