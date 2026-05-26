@@ -1,12 +1,25 @@
+<div align="center">
+
+<img src="public/assets/img/sama-logo.svg" alt="سماع رایانه کیش" height="60"/>
+
+**ساخته شده توسط [سماع رایانه کیش](https://kishwifi.com)**
+
+</div>
+
+---
+
 # 🖥️ SignageCMS — Digital Signage Management System
 
 > سیستم مدیریت تابلوی دیجیتال حرفه‌ای برای فرودگاه‌ها، هتل‌ها، رستوران‌ها، فروشگاه‌ها و محیط‌های شرکتی
+>
+> Developed by **[سماع رایانه کیش — Sama Rayaneh Kish](https://kishwifi.com)** | 🌐 [kishwifi.com](https://kishwifi.com)
 
 [![PHP](https://img.shields.io/badge/PHP-8.1%2B-blue?logo=php)](https://php.net)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-orange?logo=mysql)](https://mysql.com)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](docker-compose.yml)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/kish210/hotel-media?label=Latest%20Release&color=brightgreen)](https://github.com/kish210/hotel-media/releases/latest)
+[![Website](https://img.shields.io/badge/Website-kishwifi.com-orange?logo=google-chrome)](https://kishwifi.com)
 
 ---
 
@@ -351,5 +364,19 @@ MIT License — See [LICENSE](LICENSE)
 ---
 
 <div align="center">
-Made with ❤️ for digital signage professionals
+
+---
+
+<img src="public/assets/img/sama-logo.svg" alt="سماع رایانه کیش" height="50"/>
+
+**[سماع رایانه کیش — Sama Rayaneh Kish](https://kishwifi.com)**
+
+Digital Solutions Provider | Kish Island, Iran
+
+🌐 [kishwifi.com](https://kishwifi.com)
+
+---
+
+*Made with ❤️ for digital signage professionals*
+
 </div>

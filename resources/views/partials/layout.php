@@ -137,17 +137,32 @@ body { font-family: var(--ui-font) !important; }
 <!-- ═══ Sidebar ════════════════════════════════════════════════════════════ -->
 <nav class="sidebar">
 
-  <!-- Logo -->
-  <div style="padding:18px 16px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:8px;">
+  <!-- Logo + Brand -->
+  <div style="padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:8px;">
     <div style="display:flex;align-items:center;gap:10px;">
-      <div style="width:34px;height:34px;background:linear-gradient(135deg,#f97316,#c2570b);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+      <div style="width:36px;height:36px;background:linear-gradient(135deg,#f97316,#c2570b);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <i class="fas fa-tv" style="color:#fff;font-size:15px;"></i>
       </div>
       <div>
-        <div style="font-size:14px;font-weight:800;color:#fff;">SignageCMS</div>
-        <div style="font-size:10px;color:#475569;">v1.4.1</div>
+        <div style="font-size:14px;font-weight:800;color:#fff;line-height:1.2;">SignageCMS</div>
+        <div style="font-size:10px;color:#475569;">v1.6.0</div>
       </div>
     </div>
+    <!-- Sama Rayaneh Kish branding -->
+    <a href="https://kishwifi.com" target="_blank" rel="noopener"
+       style="display:flex;align-items:center;gap:7px;margin-top:10px;padding:7px 10px;
+              background:rgba(44,74,140,0.12);border:1px solid rgba(44,74,140,0.25);
+              border-radius:8px;text-decoration:none;transition:background .2s;"
+       onmouseover="this.style.background='rgba(44,74,140,0.22)'"
+       onmouseout="this.style.background='rgba(44,74,140,0.12)'">
+      <img src="/assets/img/sama-logo.svg" alt="سماع رایانه کیش"
+           style="height:26px;width:auto;object-fit:contain;"
+           onerror="this.style.display='none'">
+      <div style="line-height:1.3;">
+        <div style="font-size:10px;font-weight:700;color:#7ba4e0;">سماع رایانه کیش</div>
+        <div style="font-size:9px;color:#c8943a;letter-spacing:0.3px;">kishwifi.com</div>
+      </div>
+    </a>
   </div>
 
   <!-- ── اصلی ── -->

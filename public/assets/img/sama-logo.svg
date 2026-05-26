@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 80" fill="none">
+  <!-- Cloud shape -->
+  <ellipse cx="52" cy="38" rx="30" ry="22" fill="#2c4a8c" opacity="0.15"/>
+  <path d="M22 44 Q18 44 18 38 Q18 30 26 28 Q26 18 36 18 Q42 14 50 18 Q56 12 66 16 Q76 18 76 28 Q84 28 84 36 Q84 44 76 44 Z"
+        fill="none" stroke="#2c4a8c" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- WiFi signal arcs on cloud -->
+  <path d="M44 22 Q51 18 58 22" stroke="#2c4a8c" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M47 26 Q51 23 55 26" stroke="#2c4a8c" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <circle cx="51" cy="30" r="1.5" fill="#2c4a8c"/>
+  <!-- Persian letter ع stylized -->
+  <text x="38" y="50" font-family="Vazirmatn,Tahoma,serif" font-size="22" font-weight="700"
+        fill="#2c4a8c" text-anchor="middle">ع</text>
+  <!-- Company name in Persian -->
+  <text x="125" y="38" font-family="Vazirmatn,Tahoma,serif" font-size="16" font-weight="700"
+        fill="#2c4a8c" text-anchor="middle">سماع رایانه کیش</text>
+  <!-- Website -->
+  <text x="125" y="56" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="400"
+        fill="#c8943a" text-anchor="middle" letter-spacing="0.5">kishwifi.com</text>
+</svg>
