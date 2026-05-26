@@ -14,11 +14,13 @@
 
 | پلتفرم | فایل | توضیح |
 |--------|------|-------|
-| 🤖 **Android / Android TV** | [دانلود APK](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-v1.5.1-android.apk) | Android 5.0+ — نصب مستقیم |
-| 🖥️ **Windows Player** | [دانلود EXE](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-v1.5.1-windows-player-setup.exe) | Windows 10/11 — نصب‌کننده خودکار |
-| 🐳 **Server (Docker)** | [دانلود ZIP](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-v1.5.1-server.zip) | همه سیستم‌عامل‌ها |
+| 🤖 **Android / Android TV** | [⬇️ دانلود APK](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-v1.5.1-android.apk) | Android 5.0+ — نصب مستقیم |
+| 🖥️ **Windows Player** | [⬇️ دانلود EXE](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-v1.5.1-windows-player-setup.exe) | Windows 10/11 — نصب‌کننده خودکار |
+| 🐳 **Server (Docker)** | [⬇️ دانلود ZIP](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-v1.5.1-server.zip) | همه سیستم‌عامل‌ها |
 
-> 📦 همه نسخه‌ها: **[github.com/kish210/hotel-media/releases](https://github.com/kish210/hotel-media/releases)**
+> 📦 **همه نسخه‌ها و تاریخچه:** [github.com/kish210/hotel-media/releases](https://github.com/kish210/hotel-media/releases)
+>
+> ✅ **آخرین build موفق:** v1.5.1 — Android APK + Windows Player EXE + Server ZIP
 
 ---
 
