@@ -103,12 +103,13 @@ jobs:
 
       - name: Rename installer
         shell: pwsh
-        working-directory: windows-player
         run: |
           $tag = "${{ github.ref_name }}"
-          $exe = Get-ChildItem dist -Filter "*.exe" | Select-Object -First 1
+          $distDir = Join-Path $env:GITHUB_WORKSPACE "windows-player\dist"
+          $exe = Get-ChildItem $distDir -Filter "*.exe" -Recurse | Select-Object -First 1
           if ($exe) {
-            Rename-Item $exe.FullName "dist\SignageCMS-$tag-windows-player-setup.exe"
+            $dest = Join-Path $distDir "SignageCMS-$tag-windows-player-setup.exe"
+            Rename-Item $exe.FullName $dest
           }
 
       - name: Upload EXE artifact

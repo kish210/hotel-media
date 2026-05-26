@@ -9,6 +9,7 @@ import android.os.Looper;
 import android.view.*;
 import android.webkit.*;
 import android.widget.*;
+import com.signagecms.player.service.UpdateService;
 
 public class MainActivity extends Activity {
 
@@ -141,7 +142,7 @@ public class MainActivity extends Activity {
 
     // ─── OTA Update Check ─────────────────────────────────────
     private void checkForUpdate(String server) {
-        Intent i = new Intent(this, service.UpdateService.class);
+        Intent i = new Intent(this, UpdateService.class);
         i.putExtra("server", server);
         startService(i);
     }

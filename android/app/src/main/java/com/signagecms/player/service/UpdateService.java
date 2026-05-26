@@ -6,6 +6,7 @@ import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.*;
 import androidx.core.content.FileProvider;
+import com.signagecms.player.MainActivity;
 import java.io.*;
 import java.net.*;
 
