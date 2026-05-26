@@ -106,9 +106,10 @@ include VIEWS_PATH . '/partials/layout.php';
           <label class="form-label">نوع صفحه</label>
           <select name="screen_type" id="screen_type_sel" class="form-input"
                   onchange="toggleIptvFields(this.value)">
-            <option value="signage"  <?=($screen['screen_type']??'signage')==='signage'?'selected':''?>>📺 Signage (محتوای دیجیتال)</option>
-            <option value="iptv"     <?=($screen['screen_type']??'')==='iptv'?'selected':''?>>📡 IPTV (کانال زنده)</option>
-            <option value="inflight" <?=($screen['screen_type']??'')==='inflight'?'selected':''?>>✈ In-Flight (داخل هواپیما)</option>
+            <option value="signage"    <?=($screen['screen_type']??'signage')==='signage'?'selected':''?>>📺 Signage (محتوای دیجیتال)</option>
+            <option value="iptv"       <?=($screen['screen_type']??'')==='iptv'?'selected':''?>>📡 IPTV (کانال زنده)</option>
+            <option value="inflight"   <?=($screen['screen_type']??'')==='inflight'?'selected':''?>>✈ In-Flight (داخل هواپیما)</option>
+            <option value="monitor_3d" <?=($screen['screen_type']??'')==='monitor_3d'?'selected':''?>>⬡ Monitor 3D (نمایشگر سه‌بعدی)</option>
           </select>
         </div>
         <div>
@@ -229,6 +230,33 @@ include VIEWS_PATH . '/partials/layout.php';
         </div>
       </div>
 
+      <!-- ── بخش Monitor 3D ──────────────────────────────────────────── -->
+      <?php $is3d = ($screen['screen_type'] ?? 'signage') === 'monitor_3d'; ?>
+      <div id="monitor3d-section" style="<?= $is3d ? '' : 'display:none;' ?>
+           margin-bottom:14px;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.2);
+           border-radius:12px;padding:14px;">
+        <h3 style="font-size:12px;font-weight:700;color:#00e5ff;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+          <span>⬡</span> مانیتور ۳D — تنظیمات عمق و جلوه
+        </h3>
+        <div style="font-size:11px;color:#475569;margin-bottom:10px;line-height:1.7;">
+          برای تنظیمات پیشرفته مانیتور ۳D (فرمت، عمق، رنگ هولوگرام، parallax) به صفحه اختصاصی مراجعه کنید.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <a href="/admin/monitor3d"
+             style="padding:8px 14px;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.3);
+                    border-radius:10px;color:#00e5ff;font-size:12px;text-decoration:none;
+                    display:inline-flex;align-items:center;gap:5px;">
+            <i class="fas fa-sliders text-xs"></i> تنظیمات پیشرفته ۳D
+          </a>
+          <a href="/admin/monitor3d/<?= $screen['id'] ?>/preview" target="_blank"
+             style="padding:8px 14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);
+                    border-radius:10px;color:#67e8f9;font-size:12px;text-decoration:none;
+                    display:inline-flex;align-items:center;gap:5px;">
+            <i class="fas fa-eye text-xs"></i> پیش‌نمایش پلیر ۳D
+          </a>
+        </div>
+      </div>
+
       <button type="submit" class="btn-primary text-sm px-6 py-2.5">
         <i class="fas fa-save text-xs ml-1"></i> ذخیره اطلاعات
       </button>
@@ -253,6 +281,8 @@ include VIEWS_PATH . '/partials/layout.php';
       if (appr) appr.style.display = type === 'iptv' ? '' : 'none';
       const ifSec = document.getElementById('inflight-section');
       if (ifSec) ifSec.style.display = type === 'inflight' ? '' : 'none';
+      const m3dSec = document.getElementById('monitor3d-section');
+      if (m3dSec) m3dSec.style.display = type === 'monitor_3d' ? '' : 'none';
       // فیلتر گروه‌ها بر اساس نوع
       const grpSel = document.getElementById('group_id_sel');
       Array.from(grpSel.options).forEach(opt => {

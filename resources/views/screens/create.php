@@ -15,9 +15,10 @@
     <label class="form-label">نوع صفحه</label>
     <select name="screen_type" class="form-input" id="screen_type_sel"
             onchange="toggleIptvCreate(this.value)">
-      <option value="signage"  <?= ($_GET["type"]??"signage")==="signage"?"selected":"" ?>>📺 Signage — محتوای دیجیتال</option>
-      <option value="iptv"     <?= ($_GET["type"]??"")==="iptv"?"selected":"" ?>>📡 IPTV — کانال زنده</option>
-      <option value="inflight" <?= ($_GET["type"]??"")==="inflight"?"selected":"" ?>>✈ In-Flight — داخل هواپیما</option>
+      <option value="signage"    <?= ($_GET["type"]??"signage")==="signage"?"selected":"" ?>>📺 Signage — محتوای دیجیتال</option>
+      <option value="iptv"       <?= ($_GET["type"]??"")==="iptv"?"selected":"" ?>>📡 IPTV — کانال زنده</option>
+      <option value="inflight"   <?= ($_GET["type"]??"")==="inflight"?"selected":"" ?>>✈ In-Flight — داخل هواپیما</option>
+      <option value="monitor_3d" <?= ($_GET["type"]??"")==="monitor_3d"?"selected":"" ?>>⬡ Monitor 3D — نمایشگر سه‌بعدی</option>
     </select>
   </div>
 
@@ -109,6 +110,20 @@
       </select>
     </div>
 
+    <!-- ── Monitor 3D ───────────────────────────────────────────── -->
+    <?php $createIs3d = ($_GET['type'] ?? 'signage') === 'monitor_3d'; ?>
+    <div id="monitor3d-create-section" style="<?= $createIs3d ? '' : 'display:none;' ?>
+         background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.2);
+         border-radius:12px;padding:14px;margin-top:4px;">
+      <div style="font-size:11px;font-weight:700;color:#00e5ff;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+        <span>⬡</span> مانیتور ۳D
+      </div>
+      <div style="font-size:11px;color:#475569;line-height:1.7;">
+        پس از ایجاد صفحه، از منوی <strong style="color:#fff;">مانیتورهای ۳D</strong> در سایدبار،
+        تنظیمات عمق، فرمت و جلوه‌های بصری را اعمال کنید.
+      </div>
+    </div>
+
     <div class="flex gap-3 pt-2">
       <button type="submit" class="btn-primary flex-1 py-3">ایجاد صفحه</button>
       <a href="/admin/screens" class="btn-ghost px-6">لغو</a>
@@ -121,6 +136,8 @@ function toggleIptvCreate(type) {
   if (sec) sec.style.display = type === 'iptv' ? '' : 'none';
   const ifsec = document.getElementById('inflight-create-section');
   if (ifsec) ifsec.style.display = type === 'inflight' ? '' : 'none';
+  const m3dsec = document.getElementById('monitor3d-create-section');
+  if (m3dsec) m3dsec.style.display = type === 'monitor_3d' ? '' : 'none';
 }
 toggleIptvCreate(document.getElementById('screen_type_sel').value);
 </script>

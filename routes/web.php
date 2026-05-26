@@ -290,6 +290,11 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     $r->get('/iptv/tvheadend/{id}/test',          [\App\Controllers\Web\TvheadendController::class, 'testConnection']);
     $r->post('/iptv/tvheadend/{id}/sync',         [\App\Controllers\Web\TvheadendController::class, 'syncChannels']);
     $r->post('/iptv/tvheadend/{id}/m3u',          [\App\Controllers\Web\TvheadendController::class, 'importM3u']);
+    // ── Monitor 3D ─────────────────────────────────────────────
+    $r->get('/monitor3d',                [\App\Controllers\Web\Monitor3dController::class, 'index']);
+    $r->get('/monitor3d/stats',          [\App\Controllers\Web\Monitor3dController::class, 'stats']);
+    $r->post('/monitor3d/{id}/config',   [\App\Controllers\Web\Monitor3dController::class, 'saveConfig']);
+    $r->get('/monitor3d/{id}/preview',   [\App\Controllers\Web\Monitor3dController::class, 'preview']);
     // ── Help ───────────────────────────────────────────────────
     $r->get('/help',                              [\App\Controllers\Web\HelpController::class, 'index']);
     // ── In-Flight Display ──────────────────────────────────────

@@ -88,6 +88,18 @@ class PlayerController extends Controller
             $profile = 'iptv';
         } elseif (($screen['screen_type'] ?? 'signage') === 'inflight') {
             $profile = 'inflight';
+        } elseif (($screen['screen_type'] ?? 'signage') === 'monitor_3d') {
+            $profile = 'monitor_3d';
+            // بارگذاری تنظیمات 3D از دیتابیس
+            try {
+                $cfg3d = $this->db->row(
+                    "SELECT * FROM monitor_3d_configs WHERE screen_id=?",
+                    [$screen['id']]
+                );
+                $screen['cfg_3d'] = $cfg3d ?: [];
+            } catch (\Throwable $e) {
+                $screen['cfg_3d'] = [];
+            }
         } else {
             $profile  = $settings['player_profile'] ?? 'modern';
             $profiles = ['modern', 'android_tv', 'lg_tv', 'samsung_tv', 'legacy', 'minimal', 'kiosk'];

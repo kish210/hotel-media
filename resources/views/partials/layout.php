@@ -231,6 +231,11 @@ function modOn(string $id): bool {
   </a>
   <?php endif; ?>
 
+  <!-- Monitor 3D -->
+  <a href="/admin/monitor3d" class="sidebar-link <?= isActive('/admin/monitor3d') ?>">
+    <span class="icon" style="font-size:14px;color:#00e5ff;">⬡</span> مانیتورهای ۳D
+  </a>
+
   <!-- VOD -->
   <?php if (modOn('vod')): ?>
   <a href="/admin/vod" class="sidebar-link <?= isActive('/admin/vod') ?>">

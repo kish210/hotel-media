@@ -7,7 +7,7 @@
 
 // ─── داده‌ها ───────────────────────────────────────────────────
 $tab     = $_GET['tab'] ?? 'signage';
-$tab     = in_array($tab, ['signage','iptv']) ? $tab : 'signage';
+$tab     = in_array($tab, ['signage','iptv','monitor_3d']) ? $tab : 'signage';
 $screens = array_values(array_filter(is_array($screens ?? []) ? $screens : [], 'is_array'));
 $groups  = is_array($groups  ?? []) ? $groups  : [];
 
@@ -56,6 +56,7 @@ include VIEWS_PATH . '/partials/layout.php';
 <?php
 $allSig = count(array_filter($screens, fn($s) => ($s['screen_type']??'signage')==='signage'));
 $allIpt = count(array_filter($screens, fn($s) => ($s['screen_type']??'signage')==='iptv'));
+$all3d  = count(array_filter($screens, fn($s) => ($s['screen_type']??'signage')==='monitor_3d'));
 ?>
 <div style="display:flex;gap:3px;background:rgba(0,0,0,.4);border-radius:12px;padding:4px;
             margin-bottom:20px;width:fit-content;">
@@ -76,6 +77,15 @@ $allIpt = count(array_filter($screens, fn($s) => ($s['screen_type']??'signage')=
               : 'color:#64748b;' ?>">
     <i class="fas fa-satellite-dish text-xs"></i> IPTV
     <span style="background:rgba(255,255,255,.1);border-radius:20px;padding:1px 8px;font-size:10px;"><?= $allIpt ?></span>
+  </a>
+  <a href="?tab=monitor_3d"
+     style="padding:9px 22px;border-radius:9px;font-size:13px;font-weight:700;
+            text-decoration:none;display:flex;align-items:center;gap:7px;transition:all .2s;
+            <?= $tab==='monitor_3d'
+              ? 'background:rgba(0,229,255,.18);color:#00e5ff;box-shadow:0 2px 8px rgba(0,229,255,.15);'
+              : 'color:#64748b;' ?>">
+    <span style="font-size:14px;">⬡</span> Monitor 3D
+    <span style="background:rgba(255,255,255,.1);border-radius:20px;padding:1px 8px;font-size:10px;"><?= $all3d ?></span>
   </a>
 </div>
 

@@ -84,11 +84,25 @@ class ScreenController extends Controller
             $iptvMenuId = (int)$screen['iptv_menu_id'];
         }
 
+        // تنظیمات 3D
+        $cfg3d = null;
+        if (($screen['screen_type'] ?? 'signage') === 'monitor_3d') {
+            try {
+                $cfg3d = $this->db->row(
+                    "SELECT format_3d, depth_level, depth_color, bg_color, is_outdoor,
+                            auto_rotate, rotate_speed, parallax_intensity, show_depth_badge
+                     FROM monitor_3d_configs WHERE screen_id=?",
+                    [$screen['id']]
+                );
+            } catch (\Throwable $e) {}
+        }
+
         Response::success([
             'commands'      => $cmds,
             'playlist_id'   => $playlist['id'] ?? null,
             'screen_type'   => $screen['screen_type'] ?? 'signage',
             'iptv_menu_id'  => $iptvMenuId,
+            'cfg_3d'        => $cfg3d,
             'sync_interval' => 30,
         ]);
     }
