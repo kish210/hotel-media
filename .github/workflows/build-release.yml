@@ -10,20 +10,15 @@ on:
         required: true
         default: '1.5.0'
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build-zip:
     name: Build Windows Package
     runs-on: windows-latest
 
     steps:
-      # ── Checkout ─────────────────────────────────────────────
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      # ── تعیین ورژن ───────────────────────────────────────────
       - name: Set version
         id: version
         shell: pwsh
@@ -36,22 +31,19 @@ jobs:
           echo "VERSION=$v" >> $env:GITHUB_OUTPUT
           echo "Version: $v"
 
-      # ── Build Release ZIP ────────────────────────────────────
       - name: Build Release ZIP
         shell: pwsh
         run: |
           $version = "${{ steps.version.outputs.VERSION }}"
           .\scripts\build-release.ps1 -Version $version -Output "$env:GITHUB_WORKSPACE\dist"
 
-      # ── آپلود ZIP ────────────────────────────────────────────
       - name: Upload Windows ZIP
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SignageCMS-Windows-v${{ steps.version.outputs.VERSION }}
           path: dist/SignageCMS-v*.zip
           retention-days: 90
 
-      # ── نمایش اطلاعات ────────────────────────────────────────
       - name: Package info
         shell: pwsh
         run: |

@@ -6,108 +6,76 @@ on:
     tags: ['v*']
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     name: Build Windows EXE Installer
     runs-on: windows-latest
 
     steps:
-      # ── Checkout ─────────────────────────────────────────────
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      # ── Node.js ──────────────────────────────────────────────
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: windows-player/package.json
 
-      # ── ساخت آیکون پیش‌فرض اگه نبود ────────────────────────
       - name: Create default icon if missing
         shell: pwsh
         run: |
           $iconDir = "windows-player\assets"
+          New-Item -ItemType Directory -Force $iconDir | Out-Null
           if (-not (Test-Path "$iconDir\icon.ico")) {
-            Write-Host "Creating placeholder icon..."
-            # دانلود یه آیکون ساده
-            $url = "https://raw.githubusercontent.com/electron/electron/main/shell/common/resources/mac/electron.icns"
-            # فایل dummy ico می‌سازیم (1x1 pixel ICO)
-            $icoBytes = [Convert]::FromBase64String(
-              "AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
-              "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
-              "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
-              "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
-              "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
-              "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABkZGT/ZGRk/2RkZP9kZGT/ZGRk/2Rk" +
-              "ZP9kZGT/ZGRk/2RkZP9kZGT/ZGRk/2RkZP9kZGT/ZGRk/2RkZP9kZGT/ZGRk/2RkZP9kZGT/ZGRk" +
-              "/2RkZP9kZGT/ZGRk/2RkZP9kZGT/ZGRk/2RkZP9kZGT/ZGRk/2RkZP9kZGT/ZGRk/2RkZP9kZGT/" +
-              "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-            )
-            [System.IO.File]::WriteAllBytes("$iconDir\icon.ico", $icoBytes)
-            Write-Host "Placeholder icon created"
+            $b = [byte[]](0,0,1,0,1,0,1,1,0,0,1,0,32,0,40,0,0,0,22,0,0,0,40,0,
+                          0,0,1,0,0,0,2,0,0,0,1,0,32,0,0,0,0,0,4,0,0,0,0,0,0,0,
+                          0,0,0,0,0,0,0,0,0,0,0,0,10,119,184,255,0,0,0,0)
+            [System.IO.File]::WriteAllBytes("$iconDir\icon.ico", $b)
           }
-          # tray icon (PNG) هم می‌سازیم
           if (-not (Test-Path "$iconDir\tray.png")) {
-            Copy-Item "$iconDir\icon.ico" "$iconDir\tray.png" -ErrorAction SilentlyContinue
+            Copy-Item "$iconDir\icon.ico" "$iconDir\tray.png"
           }
 
-      # ── نصب وابستگی‌ها ───────────────────────────────────────
+      - name: Set version
+        shell: pwsh
+        working-directory: windows-player
+        run: |
+          $tag = "${{ github.ref_name }}" -replace '^v', ''
+          if ($tag -match '^\d+\.\d+\.\d+$') {
+            $pkg = Get-Content package.json -Raw | ConvertFrom-Json
+            $pkg.version = $tag
+            $pkg | ConvertTo-Json -Depth 10 | Set-Content package.json -Encoding utf8
+            Write-Host "Version → $tag"
+          }
+
       - name: Install dependencies
         working-directory: windows-player
         run: npm install
 
-      # ── تعیین ورژن ───────────────────────────────────────────
-      - name: Set version in package.json
-        shell: pwsh
-        working-directory: windows-player
-        run: |
-          $tag = "${{ github.ref_name }}"
-          if ($tag -match '^v(\d+\.\d+\.\d+)') {
-            $ver = $Matches[1]
-            $pkg = Get-Content package.json | ConvertFrom-Json
-            $pkg.version = $ver
-            $pkg | ConvertTo-Json -Depth 10 | Set-Content package.json -Encoding utf8
-            Write-Host "Version set to $ver"
-          }
-
-      # ── Build EXE ────────────────────────────────────────────
-      - name: Build Windows installer
+      - name: Build EXE
         working-directory: windows-player
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run build
 
-      # ── لیست خروجی‌ها ────────────────────────────────────────
-      - name: List dist files
+      - name: Rename installer
         shell: pwsh
         working-directory: windows-player
         run: |
-          Get-ChildItem dist -Recurse -File | ForEach-Object {
-            $mb = [math]::Round($_.Length / 1MB, 2)
-            Write-Host "$($_.Name)  ($mb MB)"
+          $tag = "${{ github.ref_name }}"
+          $exe = Get-ChildItem dist -Filter "*.exe" | Select-Object -First 1
+          if ($exe) {
+            $dest = "dist\SignageCMS-$tag-windows-player-setup.exe"
+            Rename-Item $exe.FullName $dest
+            Write-Host "Renamed → $dest"
           }
 
-      # ── آپلود Installer ──────────────────────────────────────
       - name: Upload Windows Installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SignageCMS-Windows-Player-Installer
           path: |
             windows-player/dist/*.exe
             windows-player/dist/*.msi
           retention-days: 90
-
-      # ── آپلود Portable (اگه بود) ─────────────────────────────
-      - name: Upload Portable EXE
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: SignageCMS-Windows-Player-Portable
-          path: windows-player/dist/*portable*.exe
-          retention-days: 90
-          if-no-files-found: ignore

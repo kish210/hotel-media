@@ -8,38 +8,30 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     name: Build APK
     runs-on: ubuntu-latest
 
     steps:
-      # ── Checkout ─────────────────────────────────────────────
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      # ── JDK ──────────────────────────────────────────────────
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: gradle
 
-      # ── Gradle permission ────────────────────────────────────
       - name: Grant execute permission to gradlew
         working-directory: android
         run: chmod +x gradlew
 
-      # ── Build Debug APK (همیشه) ──────────────────────────────
       - name: Build Debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
-      # ── Build Release APK (فقط روی tag) ─────────────────────
       - name: Build Release APK
         if: startsWith(github.ref, 'refs/tags/')
         working-directory: android
@@ -57,28 +49,25 @@ jobs:
               -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
               -Pandroid.injected.signing.key.password=$KEY_PASSWORD
           else
-            echo "⚠ No keystore secrets found — building unsigned release"
+            echo "⚠ No keystore secrets — building unsigned release"
             ./gradlew assembleRelease --no-daemon
           fi
 
-      # ── آپلود Debug APK ──────────────────────────────────────
       - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SignageCMS-Debug-APK
           path: android/app/build/outputs/apk/debug/*.apk
           retention-days: 30
 
-      # ── آپلود Release APK ────────────────────────────────────
       - name: Upload Release APK
         if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SignageCMS-Release-APK
           path: android/app/build/outputs/apk/release/*.apk
           retention-days: 90
 
-      # ── نمایش اطلاعات APK ───────────────────────────────────
       - name: APK info
         run: |
           echo "=== Debug APK ==="
