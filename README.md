@@ -68,8 +68,8 @@
 
 ```bash
 # 1. Clone
-git clone https://github.com/mohammadgh/signage-cms.git
-cd signage-cms
+git clone https://github.com/kish210/hotel-media.git
+cd hotel-media
 
 # 2. Environment
 cp .env.example .env
