@@ -211,7 +211,8 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: windows-server-zip
-          path: dist/SignageCMS-*-server.zip
+          # match BOTH versioned (…-v1.6.2-server.zip) and stable (…-server.zip)
+          path: dist/SignageCMS-*server.zip
 
   # ── ساخت Windows Server Installer (Inno Setup / ISCC) ────────
   windows-installer:
@@ -279,7 +280,8 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: windows-server-installer
-          path: dist/SignageCMS-*-server-setup.exe
+          # match BOTH versioned (…-v1.6.2-server-setup.exe) and stable (…-server-setup.exe)
+          path: dist/SignageCMS-*server-setup.exe
 
   # ── ساخت GitHub Release ───────────────────────────────────────
   create-release:
