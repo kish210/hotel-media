@@ -60,7 +60,41 @@
 
 ---
 
-## 🚀 نصب سریع
+## ⚡ نصب یکپارچه (پیشنهادی) — یک فایل، همه سیستم‌عامل‌ها
+
+یک نصب‌کننده هوشمند که **سیستم‌عامل شما را خودش تشخیص می‌دهد**، همه پیش‌نیازها (Docker / WSL2) را **دانلود، نصب و بررسی** می‌کند و سپس استک کامل را بالا می‌آورد. نیازی به انتخاب دستی اسکریپت نیست.
+
+| سیستم‌عامل | دستور | پشت صحنه چه می‌شود |
+|-----------|-------|--------------------|
+| 🪟 **Windows (هر نسخه)** | روی **`INSTALL.bat`** دوبار کلیک کنید (یا Run as administrator) | تشخیص Server / ۱۰ / ۱۱ و انتخاب خودکار اسکریپت درست + بالا بردن UAC |
+| 🪟 **Windows (PowerShell)** | `Set-ExecutionPolicy Bypass -Scope Process -Force; .\install.ps1` | همان منطق بالا |
+| 🐧 **Linux** | `sudo ./install` | نصب خودکار Docker (در صورت نبود) + اجرای کامل |
+| 🍎 **macOS** | `./install` | بررسی Docker Desktop + اجرای کامل |
+
+```powershell
+# Windows — PowerShell as Administrator
+git clone https://github.com/kish210/hotel-media.git
+cd hotel-media
+.\install.ps1
+```
+
+```bash
+# Linux / macOS
+git clone https://github.com/kish210/hotel-media.git
+cd hotel-media
+chmod +x install && ./install
+```
+
+نصب‌کننده یکپارچه به‌صورت خودکار به اسکریپت درست هدایت می‌کند:
+- **Windows Server 2019/2022/2025** → [`setup-server2022.ps1`](setup-server2022.ps1) (WSL2 + Docker Engine)
+- **Windows 10 / 11** → [`setup-windows.ps1`](setup-windows.ps1) (Docker Desktop — دانلود/نصب خودکار)
+- **Linux / macOS** → [`setup.sh`](setup.sh) (Docker Compose)
+
+گزینه‌ها روی همه پلتفرم‌ها یکسان‌اند: `-Port 8080 -WsPort 9090 -Silent -Uninstall`.
+
+---
+
+## 🚀 نصب سریع (دستی)
 
 ### پیش‌نیاز
 - [Docker Desktop](https://www.docker.com/products/docker-desktop) (Windows/Mac)  

@@ -1,0 +1,15 @@
+# Normalize line endings.
+# Shell scripts MUST stay LF or the shebang breaks on Linux/macOS.
+*.sh        text eol=lf
+install     text eol=lf
+setup.sh    text eol=lf
+docker-start.sh text eol=lf
+*.bash      text eol=lf
+
+# Windows scripts stay CRLF.
+*.ps1       text eol=crlf
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# Let Git auto-detect the rest.
+*           text=auto

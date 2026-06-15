@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# ============================================================
+#  SignageCMS — Universal Installer (Linux / macOS)
+#  سماع رایانه کیش | kishwifi.com
+#
+#  یک نصب‌کننده واحد که سیستم‌عامل را تشخیص می‌دهد، Docker را در
+#  صورت نبود نصب می‌کند، و سپس استک کامل را با setup.sh بالا می‌آورد.
+#
+#  Usage:  ./install            (interactive)
+#          sudo ./install       (auto-install Docker on Linux if missing)
+# ============================================================
+set -e
+
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
+ok()   { echo -e "  ${GREEN}[OK]${NC}   $1"; }
+info() { echo -e "  ${CYAN}[INFO]${NC} $1"; }
+warn() { echo -e "  ${YELLOW}[WARN]${NC} $1"; }
+err()  { echo -e "  ${RED}[ERROR]${NC} $1"; exit 1; }
+
+cd "$(dirname "$0")"
+
+echo ""
+echo -e "${BOLD}  +==========================================================+${NC}"
+echo -e "${BOLD}  |   SignageCMS — Universal Installer (Linux / macOS)       |${NC}"
+echo -e "${BOLD}  |   سماع رایانه کیش  |  kishwifi.com            v1.6.0      |${NC}"
+echo -e "${BOLD}  +==========================================================+${NC}"
+echo ""
+
+# ── تشخیص سیستم‌عامل ─────────────────────────────────────────
+OS="$(uname -s)"
+case "$OS" in
+    Linux*)  PLATFORM="Linux";  ;;
+    Darwin*) PLATFORM="macOS";  ;;
+    *)       err "سیستم‌عامل پشتیبانی‌نشده: $OS — این نصب‌کننده برای Linux/macOS است. روی ویندوز از install.ps1 استفاده کنید." ;;
+esac
+info "سیستم‌عامل: $PLATFORM ($OS)"
+
+# ── بررسی / نصب Docker ───────────────────────────────────────
+if command -v docker &>/dev/null; then
+    ok "Docker نصب است ($(docker --version 2>/dev/null | awk '{print $3}' | tr -d ','))"
+else
+    warn "Docker نصب نشده است."
+    if [ "$PLATFORM" = "Linux" ]; then
+        if [ "$(id -u)" -ne 0 ] && ! command -v sudo &>/dev/null; then
+            err "برای نصب خودکار Docker به دسترسی root نیاز است. دستی نصب کنید: https://docs.docker.com/engine/install/"
+        fi
+        info "نصب Docker از get.docker.com ..."
+        SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo"
+        curl -fsSL https://get.docker.com | $SUDO sh
+        $SUDO systemctl enable --now docker 2>/dev/null || $SUDO service docker start 2>/dev/null || true
+        ok "Docker نصب شد"
+    else
+        err "روی macOS لطفاً Docker Desktop را نصب کنید: https://www.docker.com/products/docker-desktop سپس دوباره اجرا کنید."
+    fi
+fi
+
+# ── بررسی اجرای daemon ───────────────────────────────────────
+if ! docker info &>/dev/null; then
+    if [ "$PLATFORM" = "Linux" ]; then
+        warn "Docker daemon اجرا نمی‌کند — تلاش برای راه‌اندازی ..."
+        SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo"
+        $SUDO systemctl start docker 2>/dev/null || $SUDO service docker start 2>/dev/null || true
+    fi
+    docker info &>/dev/null || err "Docker daemon در دسترس نیست. آن را اجرا کنید و دوباره تلاش کنید."
+fi
+ok "Docker daemon در حال اجراست"
+
+# ── بررسی Docker Compose ─────────────────────────────────────
+if docker compose version &>/dev/null || docker-compose version &>/dev/null; then
+    ok "Docker Compose در دسترس است"
+else
+    err "Docker Compose v2 پیدا نشد — Docker را به‌روزرسانی کنید."
+fi
+
+# ── تحویل به setup.sh (ساخت .env، build، up، نصب دیتابیس) ─────
+echo ""
+info "اجرای راه‌اندازی کامل (setup.sh) ..."
+echo ""
+chmod +x ./setup.sh 2>/dev/null || true
+exec ./setup.sh
