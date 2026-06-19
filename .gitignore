@@ -15,3 +15,7 @@ Thumbs.db
 nul
 
 push-to-github.ps1
+
+# Native installer build artifacts (PHP/MariaDB/NSSM are downloaded at build time)
+dist/
+installer/native/Output/
