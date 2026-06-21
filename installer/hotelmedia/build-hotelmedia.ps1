@@ -177,7 +177,8 @@ $g.FillRectangle($brush, $rect)
 $font = New-Object System.Drawing.Font 'Segoe UI', 150, ([System.Drawing.FontStyle]::Bold)
 $sf = New-Object System.Drawing.StringFormat
 $sf.Alignment = 'Center'; $sf.LineAlignment = 'Center'
-$g.DrawString('H', $font, [System.Drawing.Brushes]::White, $rect, $sf)
+$rectF = New-Object System.Drawing.RectangleF 16, 16, 224, 224
+$g.DrawString('H', $font, [System.Drawing.Brushes]::White, $rectF, $sf)
 $g.Dispose()
 $ico = [System.Drawing.Icon]::FromHandle($bmp.GetHicon())
 $fs = [System.IO.File]::Create($icoPath)
