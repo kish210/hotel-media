@@ -1,4 +1,4 @@
-# SignageCMS Module Migration
+﻿# SignageCMS Module Migration
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host " SignageCMS - Module Migration" -ForegroundColor Cyan
 Write-Host "=====================================" -ForegroundColor Cyan

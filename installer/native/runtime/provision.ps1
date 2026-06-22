@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     SignageCMS — Native (no-Docker) provisioning.
@@ -107,9 +107,9 @@ function Remove-ServiceIfExists {
     if ($svc) {
         INFO "Removing existing service: $Name"
         if ($svc.Status -ne 'Stopped') { Stop-Service -Name $Name -Force -ErrorAction SilentlyContinue }
-        & $NssmExe stop   $Name 2>$null | Out-Null
-        & $NssmExe remove $Name confirm 2>$null | Out-Null
-        & sc.exe delete   $Name 2>$null | Out-Null
+        try { $null = & $NssmExe stop   $Name 2>&1 } catch {}
+        try { $null = & $NssmExe remove $Name confirm 2>&1 } catch {}
+        try { $null = & sc.exe delete   $Name 2>&1 } catch {}
         Start-Sleep -Seconds 1
     }
 }
@@ -202,13 +202,8 @@ OK "MariaDB service started"
 INFO "Waiting for the database to come online..."
 $ready = $false
 foreach ($i in 1..30) {
-    if ($MysqlAdmin) {
-        & $MysqlAdmin "--host=127.0.0.1" "--port=3306" "--user=root" 'ping' 2>$null | Out-Null
-        if ($LASTEXITCODE -eq 0) { $ready = $true; break }
-    } else {
-        $t = Test-NetConnection -ComputerName 127.0.0.1 -Port 3306 -WarningAction SilentlyContinue
-        if ($t.TcpTestSucceeded) { $ready = $true; break }
-    }
+    $t = Test-NetConnection -ComputerName 127.0.0.1 -Port 3306 -WarningAction SilentlyContinue
+    if ($t.TcpTestSucceeded) { $ready = $true; break }
     Start-Sleep -Seconds 1
 }
 if (-not $ready) { FAIL "Database did not become ready in time — see $LogFile" }

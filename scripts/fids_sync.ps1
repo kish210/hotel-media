@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     FIDS Sync — دریافت داده پرواز از fids.airport.ir و ذخیره در cache

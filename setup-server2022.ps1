@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     SignageCMS — Windows Server 2022 Setup (WSL2 + Docker Engine)

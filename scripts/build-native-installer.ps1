@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     SignageCMS — build the NATIVE (no-Docker) Windows installer .exe.

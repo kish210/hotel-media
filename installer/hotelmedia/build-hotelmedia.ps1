@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     Build Setup-HotelMedia.exe — the Persian, offline, no-Docker installer.
