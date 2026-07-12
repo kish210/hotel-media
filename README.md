@@ -23,19 +23,36 @@
 
 ---
 
-## 📥 دانلود پلیرها
+## 📥 دانلود
+
+### 🏨 برای نصب سرور (پیشنهادی — بدون هیچ دانش فنی)
+
+<div align="center">
+
+### [⬇️ دانلود Setup-HotelMedia.exe](https://github.com/kish210/hotel-media/releases/latest/download/Setup-HotelMedia.exe)
+
+**نصب‌کننده‌ی فارسی تک‌فایل — فقط دابل‌کلیک کنید**
+
+</div>
+
+بدون Docker، بدون دیتابیس، بدون تنظیمات. همه‌چیز (وب‌سرور، دیتابیس، سرور real-time) داخل خود
+فایل بسته‌بندی شده و به‌صورت **سرویس ویندوز** خودکار نصب می‌شود. بعد از پایان، آیکون روی دسکتاپ
+ساخته می‌شود و پنل خودکار باز می‌شود. مناسب کاربری که حتی نمی‌داند دیتابیس چیست.
+
+### همه‌ی فایل‌ها
 
 | پلتفرم | فایل | توضیح |
 |--------|------|-------|
-| ⭐ **Server (All-in-One — بدون Docker)** | [⬇️ دانلود Setup EXE](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-setup.exe) | Windows 10/11 / Server — فقط دابل‌کلیک، بدون نیاز به Docker یا دانش فنی |
-| 🤖 **Android / Android TV** | [⬇️ دانلود APK](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-android.apk) | Android 5.0+ — نصب مستقیم |
-| 🖥️ **Windows Player** | [⬇️ دانلود EXE](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-windows-player-setup.exe) | Windows 10/11 — نصب‌کننده خودکار |
-| 🟦 **Server (Docker Installer)** | [⬇️ دانلود Setup EXE](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-server-setup.exe) | Windows 10/11 / Server — نصب‌کننده Docker/WSL2 (Inno Setup) |
-| 🐳 **Server (Docker ZIP)** | [⬇️ دانلود ZIP](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-server.zip) | همه سیستم‌عامل‌ها |
+| 🏨 **Server — هتل مدیا (فارسی، بدون Docker)** | [⬇️ Setup-HotelMedia.exe](https://github.com/kish210/hotel-media/releases/latest/download/Setup-HotelMedia.exe) | ⭐ Windows — تک‌فایل، UI فارسی، کاملاً خودکار |
+| 🟢 **Server — All-in-One (بدون Docker)** | [⬇️ SignageCMS-setup.exe](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-setup.exe) | Windows 10/11 / Server — دابل‌کلیک، انگلیسی |
+| 🤖 **Android / Android TV** | [⬇️ APK](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-android.apk) | Android 5.0+ — نصب مستقیم |
+| 🖥️ **Windows Player** | [⬇️ EXE](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-windows-player-setup.exe) | Windows 10/11 — پلیر |
+| 🟦 **Server — Docker Installer** | [⬇️ EXE](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-server-setup.exe) | Windows / Server — نصب‌کننده Docker/WSL2 |
+| 🐳 **Server — Docker ZIP** | [⬇️ ZIP](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-server.zip) | همه سیستم‌عامل‌ها |
 
 > 📦 **همه نسخه‌ها و تاریخچه:** [github.com/kish210/hotel-media/releases](https://github.com/kish210/hotel-media/releases)
 >
-> ✅ **آخرین نسخه:** v1.6.2 — Android APK + Windows Player EXE + **Server Setup EXE (Inno Setup)** + Server ZIP
+> ✅ **آخرین نسخه:** ![Release](https://img.shields.io/github/v/release/kish210/hotel-media?label=&color=brightgreen) — نصب‌کننده‌ی فارسی هتل مدیا + All-in-One بدون Docker + Android + Windows Player + Docker
 
 ---
 
@@ -64,14 +81,22 @@
 
 ## ⭐ نصب بدون Docker (ساده‌ترین راه برای کاربر غیرفنی)
 
-اگر نمی‌خواهید با Docker درگیر شوید، **دو راه بدون Docker** دارید — هیچ‌کدام به Docker، WSL2 یا تنظیم دستی دیتابیس نیاز ندارند:
+سه راه بدون Docker دارید — هیچ‌کدام به Docker، WSL2 یا تنظیم دستی دیتابیس نیاز ندارند:
 
 | روش | چه‌کاری بکنید | مناسب چه‌کسی |
 |-----|--------------|--------------|
-| 🟢 **نصب‌کننده All-in-One** | فایل [`SignageCMS-setup.exe`](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-setup.exe) را دانلود و دابل‌کلیک کنید | کاربر نهایی بدون دانش فنی — همه‌چیز داخل فایل هست |
+| 🏨 **نصب‌کننده هتل مدیا (فارسی)** | [`Setup-HotelMedia.exe`](https://github.com/kish210/hotel-media/releases/latest/download/Setup-HotelMedia.exe) را دابل‌کلیک کنید | کاربر کاملاً غیرفنی — UI فارسی، نام هتل، آیکون دسکتاپ، Tray فارسی |
+| 🟢 **نصب‌کننده All-in-One (انگلیسی)** | [`SignageCMS-setup.exe`](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-setup.exe) را دابل‌کلیک کنید | همان تجربه، بدون برند هتل |
 | 🟢 **اجرا روی همین پوشه** | فایل سرور را extract کنید و روی **`SETUP-NO-DOCKER.bat`** دابل‌کلیک کنید | وقتی فایل‌های سرور را دارید و می‌خواهید همین‌جا نصب شود |
 
-> ⚠️ **نکته مهم:** فایل‌های `START.bat`، `INSTALL.bat`، `setup-windows.ps1` و `install.ps1` **روش Docker** هستند — اگر Docker نصب نباشد خطا می‌دهند. برای نصب بدون Docker از `SignageCMS-setup.exe` یا `SETUP-NO-DOCKER.bat` استفاده کنید.
+**نصب‌کننده‌ها چه می‌کنند؟** یک PHP + MariaDB قابل‌حمل را بسته‌بندی/دانلود می‌کنند، پورت آزاد را
+خودکار پیدا می‌کنند، دیتابیس و اسکیما و کاربر ادمین را می‌سازند، و وب‌سرور + وب‌سوکت + دیتابیس را
+به‌عنوان **سرویس ویندوز** (اجرای خودکار هنگام بوت) ثبت می‌کنند. تمام خطاها فقط در فایل لاگ ذخیره
+می‌شوند و در صورت شکست، نصب به‌طور خودکار پاک‌سازی (rollback) می‌شود.
+
+> ⚠️ **نکته مهم:** فایل‌های `START.bat`، `INSTALL.bat`، `setup-windows.ps1` و `install.ps1` **روش Docker** هستند — اگر Docker نصب نباشد خطا می‌دهند. برای نصب بدون Docker از نصب‌کننده‌های بالا استفاده کنید.
+
+جزئیات ساخت نصب‌کننده‌ها: [نصب‌کننده هتل مدیا](installer/hotelmedia/README.md) · [نصب‌کننده All-in-One](installer/native/README.md)
 
 `SETUP-NO-DOCKER.bat` به‌صورت خودکار یک PHP + MariaDB قابل‌حمل را دانلود می‌کند، دیتابیس را می‌سازد و وب‌سرور + وب‌سوکت + دیتابیس را به‌عنوان **سرویس ویندوز** (با اجرای خودکار هنگام بوت) نصب می‌کند. بعد از نصب، داشبورد روی `http://localhost/admin` باز می‌شود.
 
@@ -443,6 +468,13 @@ FIDS_HTTP_PROXY=          # http://proxy-ip:port (برای سرور خارج ا�
 ---
 
 ## 📋 Changelog
+
+### v1.8.0 — نسخه‌ی کامل (Complete Package)
+- 🏨 **نصب‌کننده‌ی فارسی هتل مدیا** — `Setup-HotelMedia.exe`: تک‌فایل، UI فارسی RTL، صفحه‌ی نام هتل، بدون هیچ پیش‌نیاز، سرویس‌های خودکار، Tray فارسی، صفحه‌ی welcome، rollback و uninstaller با سوال «حذف داده‌ها؟»
+- 🟢 **نصب‌کننده‌ی All-in-One بدون Docker** — `SignageCMS-setup.exe`: PHP + MariaDB بسته‌بندی‌شده، بدون Docker/WSL2
+- 🖥️ **نصب درجا بدون Docker** — `SETUP-NO-DOCKER.bat` / `setup-native.ps1`
+- 🔧 پایداری نصب: رفع باگ بحرانی `$Args` (سرویس‌ها حالا واقعاً روی پورت listen می‌کنند)، سازگاری کامل PowerShell 5.1 / Windows Server (UTF-8 BOM)، مدیریت خطای native commands، ریدایرکت `/admin`
+- 🌐 یافتن خودکار پورت آزاد + Windows Firewall خودکار
 
 ### v1.6.0
 - ✅ **نصب سریع Windows Server 2022** — اسکریپت `setup-server2022.ps1` (WSL2 + Docker Engine، بدون Docker Desktop)
