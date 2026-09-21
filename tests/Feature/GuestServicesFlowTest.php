@@ -20,6 +20,8 @@ foreach (file(ROOT_PATH . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
     $ENV[trim($k)] = trim($v, " \t\"'");
 }
 function env(string $k, mixed $d = null): mixed { global $ENV; return $ENV[$k] ?? $d; }
+
+date_default_timezone_set((string)env('APP_TIMEZONE', 'Asia/Tehran'));
 function request(): object { return new class { public function ip(): string { return '127.0.0.1'; } public function userAgent(): string { return 'test'; } }; }
 
 spl_autoload_register(function (string $c): void {

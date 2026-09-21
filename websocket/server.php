@@ -5,6 +5,17 @@
  */
 declare(strict_types=1);
 
+// منطقه زمانی از .env — تا زمان لاگ‌ها با پنل و دیتابیس یکی باشد
+$wsEnvFile = dirname(__DIR__) . '/.env';
+if (is_file($wsEnvFile)) {
+    foreach (file($wsEnvFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        if (str_starts_with(trim($line), 'APP_TIMEZONE=')) {
+            date_default_timezone_set(trim(explode('=', $line, 2)[1], " \t\"'"));
+            break;
+        }
+    }
+}
+
 $host = '0.0.0.0';
 $port = (int)(getenv('WS_PORT') ?: 8080);
 
