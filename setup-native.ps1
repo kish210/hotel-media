@@ -1,11 +1,11 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    SignageCMS — In-place native setup (NO Docker).
+    SignageCMS — In-place native setup.
     سماع رایانه کیش | kishwifi.com
 
 .DESCRIPTION
-    Installs and runs SignageCMS directly in THIS folder, with no Docker / WSL2.
+    Installs and runs SignageCMS directly in THIS folder.
     Use this when you extracted the server files (SignageCMS-server.zip) and just
     want it running on the machine. It:
 
@@ -66,7 +66,7 @@ if (-not $isAdmin) {
 
 Write-Host ""
 Write-Host "  ====================================================" -ForegroundColor Cyan
-Write-Host "    SignageCMS — Native setup (no Docker)" -ForegroundColor Cyan
+Write-Host "    SignageCMS — Native setup" -ForegroundColor Cyan
 Write-Host "    سماع رایانه کیش | kishwifi.com" -ForegroundColor Cyan
 Write-Host "  ====================================================" -ForegroundColor Cyan
 Write-Host "    Folder: $App" -ForegroundColor Gray
@@ -209,6 +209,6 @@ $code = $LASTEXITCODE
 if ($code -ne 0) { throw "Provisioning failed (exit $code). See storage\logs\install.log" }
 
 Write-Host ""
-Write-Host "  SignageCMS is set up WITHOUT Docker. You can close this window." -ForegroundColor Green
+Write-Host "  SignageCMS is set up. You can close this window." -ForegroundColor Green
 Write-Host ""
 Read-Host "  Press Enter to exit" | Out-Null

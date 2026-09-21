@@ -37,9 +37,9 @@
     </div>
     <?php else: ?>
     <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">
-      برای فعال کردن Transcoder باید Docker را rebuild کنید:
+      برای فعال کردن Transcoder باید FFmpeg را روی سرور نصب کنید:
     </div>
-    <pre style="background:#0a0a14;border-radius:8px;padding:10px;font-size:12px;color:#f97316;margin:0;direction:ltr;text-align:left;">docker compose down && docker compose up -d --build</pre>
+    <pre style="background:#0a0a14;border-radius:8px;padding:10px;font-size:12px;color:#f97316;margin:0;direction:ltr;text-align:left;">winget install Gyan.FFmpeg</pre>
     <?php endif; ?>
   </div>
 </div>
@@ -146,17 +146,15 @@
   </h2>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
     <div style="background:#0d0d14;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;">
-      <h3 style="font-size:12px;font-weight:700;color:#f97316;margin-bottom:10px;">روش ۱: Rebuild Docker (پیشنهادی)</h3>
-      <pre style="font-size:11px;color:#e2e8f0;direction:ltr;text-align:left;margin:0;background:transparent;">cd D:\duc\signage-cms
-docker compose down
-docker compose up -d --build</pre>
-      <p style="font-size:11px;color:#64748b;margin-top:8px;">Dockerfile به‌روز شده FFmpeg دارد ✅</p>
+      <h3 style="font-size:12px;font-weight:700;color:#f97316;margin-bottom:10px;">روش ۱: ویندوز (پیشنهادی)</h3>
+      <pre style="font-size:11px;color:#e2e8f0;direction:ltr;text-align:left;margin:0;background:transparent;">winget install Gyan.FFmpeg</pre>
+      <p style="font-size:11px;color:#64748b;margin-top:8px;">بعد از نصب، سرویس SignageCMS را restart کنید ✅</p>
     </div>
     <div style="background:#0d0d14;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;">
-      <h3 style="font-size:12px;font-weight:700;color:#60a5fa;margin-bottom:10px;">روش ۲: نصب سریع (بدون rebuild)</h3>
-      <pre style="font-size:11px;color:#e2e8f0;direction:ltr;text-align:left;margin:0;background:transparent;">docker exec signage_php \
-  apk add --no-cache ffmpeg</pre>
-      <p style="font-size:11px;color:#64748b;margin-top:8px;">موقت است — بعد از restart از بین می‌رود</p>
+      <h3 style="font-size:12px;font-weight:700;color:#60a5fa;margin-bottom:10px;">روش ۲: لینوکس</h3>
+      <pre style="font-size:11px;color:#e2e8f0;direction:ltr;text-align:left;margin:0;background:transparent;">sudo apt install ffmpeg
+# یا: sudo dnf install ffmpeg</pre>
+      <p style="font-size:11px;color:#64748b;margin-top:8px;">مسیر ffmpeg باید در PATH باشد</p>
     </div>
   </div>
 </div>

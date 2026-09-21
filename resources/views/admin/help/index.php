@@ -47,7 +47,7 @@
   </h2>
   <div class="card" style="padding:20px;">
     <ol style="padding-right:20px;color:#94a3b8;font-size:13px;line-height:2.2;">
-      <li>سرور را نصب کنید: <code style="background:#0f0f17;padding:2px 8px;border-radius:6px;color:#f87171;">docker compose up -d --build</code></li>
+      <li>سرور را نصب کنید: <code style="background:#0f0f17;padding:2px 8px;border-radius:6px;color:#f87171;">Setup-HotelMedia.exe</code> را اجرا کنید</li>
       <li>از <strong style="color:#fff;">Admin → Screens → Add Screen</strong> صفحه جدید بسازید</li>
       <li>پلیر را به آدرس <code style="background:#0f0f17;padding:2px 8px;border-radius:6px;color:#f87171;">http://server/player/</code> ببرید</li>
       <li>کد فعال‌سازی را در Admin دریافت و در پلیر وارد کنید</li>
@@ -135,33 +135,26 @@
   <!-- نصب TVHeadend -->
   <div class="card" style="padding:20px;margin-bottom:14px;">
     <h3 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:12px;">
-      <i class="fas fa-docker" style="color:#06b6d4;margin-left:6px;"></i>نصب TVHeadend با Docker
+      <i class="fas fa-broadcast-tower" style="color:#06b6d4;margin-left:6px;"></i>نصب TVHeadend
     </h3>
-    <pre style="background:#0a0a12;border-radius:10px;padding:16px;font-size:12px;color:#a3e635;overflow-x:auto;direction:ltr;text-align:left;line-height:1.8;"><code># docker-compose.yml برای TVHeadend
-version: "3.8"
-services:
-  tvheadend:
-    image: linuxserver/tvheadend:latest
-    container_name: tvheadend
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Asia/Tehran
-      - RUN_OPTS=--nosatip  # اختیاری
-    volumes:
-      - ./tvh-config:/config
-      - ./tvh-recordings:/recordings
-    ports:
-      - 9981:9981   # Web UI
-      - 9982:9982   # HTSP
-    restart: unless-stopped</code></pre>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">
+      TVHeadend یک سرویس جداگانه است که کانال‌های Live TV را تأمین می‌کند.
+      آن را روی همان سرور یا یک سرور دیگر نصب کنید:
+    </div>
+    <pre style="background:#0a0a12;border-radius:10px;padding:16px;font-size:12px;color:#a3e635;overflow-x:auto;direction:ltr;text-align:left;line-height:1.8;"><code># Windows — نصب‌کننده رسمی
+https://tvheadend.org/projects/tvheadend/wiki/Windows
+
+# Debian / Ubuntu
+sudo apt install tvheadend
+
+# Fedora / RHEL
+sudo dnf install tvheadend</code></pre>
     <div style="margin-top:10px;font-size:12px;color:#64748b;">
-      پس از نصب، Web UI TVHeadend روی پورت
+      پس از نصب، Web UI تی‌وی‌هدند روی پورت
       <code style="background:#0f0f17;padding:2px 6px;border-radius:4px;color:#f87171;">9981</code>
       در دسترس است.
     </div>
   </div>
-
   <!-- تنظیم TVHeadend -->
   <div class="card" style="padding:20px;margin-bottom:14px;">
     <h3 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:12px;">
