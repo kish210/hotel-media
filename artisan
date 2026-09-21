@@ -227,6 +227,25 @@ match ($command) {
         if ($failed) exit(1);
     })(),
 
+    'pms:push' => (function() use ($argv) {
+        // اقلام صورتحساب را به سیستم هتلداری می‌فرستد.
+        // برای cron: هر ۵ دقیقه — قلم‌هایی که PMS در دسترس نبوده در صف
+        // مانده‌اند و اینجا دوباره تلاش می‌شوند.
+        //   php artisan pms:push        همه tenant ها
+        //   php artisan pms:push 3      فقط tenant شماره ۳
+        $tenantId = isset($argv[2]) ? (int)$argv[2] : null;
+
+        $res = (new \App\Services\PmsChargeService())->pushPending($tenantId);
+
+        printf(
+            "  ارسال‌شده: %d   ناموفق: %d   رد‌شده: %d\n",
+            $res['sent'], $res['failed'], $res['skipped']
+        );
+        echo "  {$res['message']}\n";
+
+        if ($res['failed'] > 0) exit(1);
+    })(),
+
     'test' => (function() {
         // تست‌های Feature اسکریپت‌های مستقل PHP هستند و به دیتابیس زنده وصل می‌شوند.
         // قبل از اجرا مطمئن شوید .env به یک دیتابیس تست اشاره می‌کند، نه production.
@@ -291,6 +310,8 @@ match ($command) {
             'storage:clean'   => 'Remove soft-deleted media files',
             'cache:clear'     => 'Clear application cache',
             'epg:sync'        => 'Sync EPG from TVHeadend / XMLTV sources [tenantId]',
+            'pms:push'        => 'Push room charges to the hotel PMS [tenantId]',
+            'pms:push'        => 'Push room charges to the hotel PMS [tenantId]',
             'test'            => 'Run feature tests (needs a TEST database in .env)',
         ];
         foreach ($cmds as $cmd => $desc) {

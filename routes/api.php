@@ -310,3 +310,42 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
     $r->post('/devices/{id}/assign-room',     [\App\Controllers\Api\DeviceController::class, 'assignRoom']);
     $r->post('/devices/{id}/command',         [\App\Controllers\Api\DeviceController::class, 'command']);
 });
+
+// ── Folio / مینی‌بار / PPV / خروج سریع — مهمان (بدون JWT) ────────
+$router->get('/api/v1/guest/{code}/folio',                [\App\Controllers\Api\FolioController::class, 'guestFolio']);
+$router->get('/api/v1/guest/{code}/menus',                [\App\Controllers\Api\FolioController::class, 'guestMenus']);
+$router->post('/api/v1/guest/{code}/checkout',            [\App\Controllers\Api\FolioController::class, 'guestCheckout']);
+$router->get('/api/v1/guest/{code}/vod/{id}/access',      [\App\Controllers\Api\FolioController::class, 'guestAccess']);
+$router->post('/api/v1/guest/{code}/vod/{id}/purchase',   [\App\Controllers\Api\FolioController::class, 'guestPurchase']);
+
+// ── Folio — کارکنان (protected) ─────────────────────────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    // صورتحساب
+    $r->get('/rooms/{id}/folio',        [\App\Controllers\Api\FolioController::class, 'roomFolio']);
+    $r->post('/rooms/{id}/charges',     [\App\Controllers\Api\FolioController::class, 'addCharge']);
+    $r->post('/charges/{id}/void',      [\App\Controllers\Api\FolioController::class, 'voidCharge']);
+    // مینی‌بار
+    $r->get('/minibar/items',           [\App\Controllers\Api\FolioController::class, 'minibarItems']);
+    $r->post('/minibar/items',          [\App\Controllers\Api\FolioController::class, 'storeMinibarItem']);
+    $r->put('/minibar/items/{id}',      [\App\Controllers\Api\FolioController::class, 'updateMinibarItem']);
+    $r->delete('/minibar/items/{id}',   [\App\Controllers\Api\FolioController::class, 'destroyMinibarItem']);
+    $r->post('/rooms/{id}/minibar',     [\App\Controllers\Api\FolioController::class, 'recordMinibar']);
+    // خروج سریع
+    $r->get('/checkout-requests',       [\App\Controllers\Api\FolioController::class, 'checkoutRequests']);
+    $r->post('/checkout-requests/{id}', [\App\Controllers\Api\FolioController::class, 'handleCheckout']);
+    // ارسال به PMS
+    $r->post('/pms/push',               [\App\Controllers\Api\FolioController::class, 'pmsPush']);
+    $r->post('/pms/test',               [\App\Controllers\Api\FolioController::class, 'pmsTest']);
+    $r->post('/charges/{id}/pms-retry', [\App\Controllers\Api\FolioController::class, 'pmsRetry']);
+});
+
+// ── منوهای تصویری (protected) ───────────────────────────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    $r->get('/menu-boards',                       [\App\Controllers\Api\MenuBoardController::class, 'index']);
+    $r->post('/menu-boards',                      [\App\Controllers\Api\MenuBoardController::class, 'store']);
+    $r->put('/menu-boards/{id}',                  [\App\Controllers\Api\MenuBoardController::class, 'update']);
+    $r->delete('/menu-boards/{id}',               [\App\Controllers\Api\MenuBoardController::class, 'destroy']);
+    $r->post('/menu-boards/{id}/pages',           [\App\Controllers\Api\MenuBoardController::class, 'uploadPage']);
+    $r->post('/menu-boards/{id}/pages/sort',      [\App\Controllers\Api\MenuBoardController::class, 'sortPages']);
+    $r->delete('/menu-board-pages/{pageId}',      [\App\Controllers\Api\MenuBoardController::class, 'destroyPage']);
+});

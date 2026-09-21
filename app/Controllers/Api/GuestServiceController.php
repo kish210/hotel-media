@@ -265,8 +265,68 @@ class GuestServiceController extends Controller
             'note'        => $fields['staff_note'] ?? null,
         ]);
 
+        // سفارش انجام‌شده باید روی صورتحساب اتاق بنشیند، وگرنه مهمان
+        // روم‌سرویس می‌گیرد و هتل هیچ‌وقت پولش را نمی‌بیند.
+        $billed = 0;
+        if ($to === 'done' && (float)$r['total_price'] > 0) {
+            $billed = $this->billRequest($tid, $r);
+        }
+
         $this->log('guest_request.status', 'guest_request', $id, ['status' => $from], ['status' => $to]);
-        Response::success(null, 'وضعیت به‌روزرسانی شد');
+        Response::success(
+            $billed ? ['billed' => true] : null,
+            $billed ? 'انجام شد و به صورتحساب اتاق اضافه شد' : 'وضعیت به‌روزرسانی شد'
+        );
+    }
+
+    /**
+     * اقلام سفارش را روی صورتحساب اتاق می‌نشاند.
+     * @param array<string,mixed> $request ردیف guest_requests
+     * @return int تعداد اقلام ثبت‌شده
+     */
+    private function billRequest(int $tenantId, array $request): int
+    {
+        $requestId = (int)$request['id'];
+
+        // ثبت دوباره‌ی همان سفارش نباید مهمان را دوبار بدهکار کند
+        $already = (int)$this->db->value(
+            "SELECT COUNT(*) FROM room_charges
+              WHERE tenant_id = ? AND source IN ('room_service','laundry','service')
+                AND reference_id = ? AND status <> 'void'",
+            [$tenantId, $requestId]
+        );
+        if ($already > 0) return 0;
+
+        $source = match ($request['category']) {
+            'room_service', 'breakfast' => 'room_service',
+            'laundry'                   => 'laundry',
+            default                     => 'service',
+        };
+
+        $items = $this->db->rows(
+            'SELECT name_snapshot, qty, unit_price FROM guest_request_items WHERE request_id = ?',
+            [$requestId]
+        );
+
+        $folio  = new \App\Services\FolioService($this->db);
+        $userId = Auth::user()['id'] ?? null;
+        $n      = 0;
+
+        foreach ($items as $item) {
+            if ((float)$item['unit_price'] <= 0) continue;
+
+            $res = $folio->post($tenantId, (int)$request['room_id'], [
+                'source'       => $source,
+                'reference_id' => $requestId,
+                'title'        => (string)$item['name_snapshot'],
+                'qty'          => (int)$item['qty'],
+                'unit_price'   => (float)$item['unit_price'],
+            ], $userId);
+
+            if ($res['ok']) $n++;
+        }
+
+        return $n;
     }
 
     /** GET /guest/requests/stats */
