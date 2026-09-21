@@ -40,12 +40,14 @@ class PortalController extends Controller
 
         Response::success([
             'screen' => [
-                'code' => $ctx['code'],
-                'name' => $ctx['name'],
+                'code'     => $ctx['code'],
+                'name'     => $ctx['name'],
+                'platform' => $ctx['platform'] ?? 'unknown',
             ],
             'room'     => $this->roomBlock($ctx, $menu),
             'branding' => $this->brandingBlock($menu),
             'menu'     => $this->menuBlock($menu, $lang),
+            'channels' => $this->channelsBlock($tid, (string)($ctx['platform'] ?? 'unknown')),
             'header'   => ['widgets' => $widgets, 'data' => $live],
             'lang'     => $lang,
             'strings'  => $this->translations($tid, $lang),
@@ -193,6 +195,79 @@ class PortalController extends Controller
     }
 
     /**
+     * کانال‌های زنده با آدرسی که **این پلتفرم واقعا می‌تواند پخش کند**.
+     *
+     * ‏HTML5 و تگ <video> نمی‌توانند UDP multicast بخوانند. پس:
+     *  • اپ بومی Android TV و ویندوز → آدرس multicast مستقیم (بار صفر روی سرور)
+     *  • پورتال HTML5 روی webOS و Tizen → udpxy اگر تنظیم شده، وگرنه HTTP
+     * ‏playable=false یعنی کانال روی این دستگاه فقط از تیونر خود تلویزیون
+     * قابل دیدن است، نه از داخل پورتال.
+     *
+     * @return list<array<string,mixed>>
+     */
+    private function channelsBlock(int $tenantId, string $platform): array
+    {
+        $rows = $this->db->rows(
+            'SELECT id, name, name_en, logo_url, category, channel_no, sort_order,
+                    stream_url, multicast_url, delivery, protocol
+               FROM iptv_channels
+              WHERE tenant_id = ? AND is_active = 1
+              ORDER BY channel_no IS NULL, channel_no, sort_order, id',
+            [$tenantId]
+        );
+        if (!$rows) return [];
+
+        $udpxy = (string)($this->db->value(
+            'SELECT udpxy_url FROM multicast_config WHERE tenant_id = ? AND is_active = 1',
+            [$tenantId]
+        ) ?? '');
+
+        // فقط اپ بومی می‌تواند سوکت UDP باز کند
+        $nativeMulticast = in_array($platform, ['android', 'windows'], true);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $multicast = (string)($r['multicast_url'] ?? '');
+            $http      = (string)$r['stream_url'];
+            $isMulti   = in_array($r['delivery'], ['multicast', 'both'], true) && $multicast !== '';
+
+            if ($isMulti && $nativeMulticast) {
+                $url = $multicast;  $via = 'multicast';
+            } elseif ($isMulti && $udpxy !== '') {
+                $url = $this->udpxy($udpxy, $multicast);  $via = 'udpxy';
+            } elseif ($r['delivery'] === 'multicast') {
+                // فقط multicast دارد و این دستگاه نمی‌تواند — تیونر تلویزیون باید بگیرد
+                $url = '';  $via = 'tv_tuner';
+            } else {
+                $url = $http;  $via = 'unicast';
+            }
+
+            $out[] = [
+                'id'         => (int)$r['id'],
+                'name'       => $r['name'],
+                'name_en'    => $r['name_en'],
+                'logo_url'   => $r['logo_url'],
+                'category'   => $r['category'],
+                'channel_no' => $r['channel_no'] !== null ? (int)$r['channel_no'] : null,
+                'url'        => $url,
+                'via'        => $via,
+                'playable'   => $url !== '',
+            ];
+        }
+
+        return $out;
+    }
+
+    /** udp://@239.1.1.5:5000 → http://10.0.0.5:4022/udp/239.1.1.5:5000 */
+    private function udpxy(string $base, string $multicast): string
+    {
+        if (!preg_match('#^(udp|rtp)://@?([\d.]+):(\d+)#', $multicast, $m)) return '';
+
+        $proto = $m[1] === 'rtp' ? 'rtp' : 'udp';
+        return rtrim($base, '/') . "/$proto/{$m[2]}:{$m[3]}";
+    }
+
+    /**
      * متن‌های رابط. کلیدهایی که در زبان مهمان ترجمه ندارند از فارسی پر می‌شوند،
      * تا رابط نیمه‌خالی نماند.
      * @return array<string,string>
@@ -232,7 +307,7 @@ class PortalController extends Controller
         if ($code === '') return null;
 
         return $this->db->row(
-            'SELECT s.id, s.code, s.name, s.tenant_id, s.iptv_menu_id, s.group_id,
+            'SELECT s.id, s.code, s.name, s.tenant_id, s.iptv_menu_id, s.group_id, s.platform,
                     r.room_number, r.room_name, r.status AS room_status,
                     r.guest_name, r.guest_lang
                FROM screens s

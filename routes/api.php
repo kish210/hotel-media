@@ -349,3 +349,11 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
     $r->post('/menu-boards/{id}/pages/sort',      [\App\Controllers\Api\MenuBoardController::class, 'sortPages']);
     $r->delete('/menu-board-pages/{pageId}',      [\App\Controllers\Api\MenuBoardController::class, 'destroyPage']);
 });
+
+// ── Multicast — پخش زنده یک‌باره روی شبکه ────────────────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    $r->get('/multicast/config',       [\App\Controllers\Api\MulticastController::class, 'config']);
+    $r->post('/multicast/config',      [\App\Controllers\Api\MulticastController::class, 'saveConfig']);
+    $r->post('/multicast/assign',      [\App\Controllers\Api\MulticastController::class, 'assign']);
+    $r->get('/multicast/playlist.m3u', [\App\Controllers\Api\MulticastController::class, 'playlist']);
+});
