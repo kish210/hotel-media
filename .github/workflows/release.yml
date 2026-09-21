@@ -68,15 +68,15 @@ jobs:
           mkdir -p dist
           # APK — versioned + stable name (for /releases/latest/download/)
           if ls android/app/build/outputs/apk/release/*.apk 2>/dev/null; then
-            cp android/app/build/outputs/apk/release/*.apk dist/SignageCMS-${TAG}-android.apk
+            cp android/app/build/outputs/apk/release/*.apk dist/Hotel Media-${TAG}-android.apk
           else
-            cp android/app/build/outputs/apk/debug/*.apk   dist/SignageCMS-${TAG}-android.apk
+            cp android/app/build/outputs/apk/debug/*.apk   dist/Hotel Media-${TAG}-android.apk
           fi
-          cp dist/SignageCMS-${TAG}-android.apk dist/SignageCMS-android.apk
+          cp dist/Hotel Media-${TAG}-android.apk dist/HotelMedia-android.apk
           # AAB (Google Play Store)
           if ls android/app/build/outputs/bundle/release/*.aab 2>/dev/null; then
             cp android/app/build/outputs/bundle/release/*.aab \
-               dist/SignageCMS-${TAG}-android-playstore.aab
+               dist/Hotel Media-${TAG}-android-playstore.aab
           fi
           ls -lh dist/
 
@@ -84,13 +84,13 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: android-apk
-          path: dist/SignageCMS-*.apk
+          path: dist/Hotel Media-*.apk
 
       - name: Upload AAB artifact (Play Store)
         uses: actions/upload-artifact@v7
         with:
           name: android-aab
-          path: dist/SignageCMS-*-playstore.aab
+          path: dist/Hotel Media-*-playstore.aab
           if-no-files-found: ignore
 
   # ── ساخت Windows Player (Electron) ───────────────────────────
@@ -147,8 +147,8 @@ jobs:
           $distDir = Join-Path $env:GITHUB_WORKSPACE "windows-player\dist"
           $exe = Get-ChildItem $distDir -Filter "*.exe" -Recurse | Select-Object -First 1
           if ($exe) {
-            $versioned = Join-Path $distDir "SignageCMS-$tag-windows-player-setup.exe"
-            $stable    = Join-Path $distDir "SignageCMS-windows-player-setup.exe"
+            $versioned = Join-Path $distDir "Hotel Media-$tag-windows-player-setup.exe"
+            $stable    = Join-Path $distDir "HotelMedia-windows-player-setup.exe"
             Rename-Item $exe.FullName $versioned
             Copy-Item $versioned $stable
             Write-Host "Versioned: $versioned"
@@ -162,130 +162,11 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: windows-player-exe
-          path: windows-player/dist/SignageCMS-*.exe
+          path: windows-player/dist/Hotel Media-*.exe
 
-  # ── ساخت Windows Server ZIP ──────────────────────────────────
-  windows-server:
-    name: Build Windows Server ZIP
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set version output
-        id: ver
-        shell: pwsh
-        run: |
-          $v = "${{ github.ref_name }}" -replace '^v', ''
-          Write-Host "VERSION=$v"
-          echo "VERSION=$v" >> $env:GITHUB_OUTPUT
-
-      - name: Build ZIP
-        shell: pwsh
-        run: |
-          $outDir = Join-Path $env:GITHUB_WORKSPACE "dist"
-          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-          .\scripts\build-release.ps1 -Version "${{ steps.ver.outputs.VERSION }}" -Output $outDir
-          Write-Host "=== dist contents ==="
-          Get-ChildItem $outDir | ForEach-Object { Write-Host $_.FullName }
-
-      - name: Rename ZIP (versioned + stable)
-        shell: pwsh
-        run: |
-          $tag = "${{ github.ref_name }}"
-          $outDir = Join-Path $env:GITHUB_WORKSPACE "dist"
-          $src = Get-ChildItem $outDir -Filter "SignageCMS-v*.zip" | Select-Object -First 1
-          if ($src) {
-            $versioned = Join-Path $outDir "SignageCMS-$tag-server.zip"
-            $stable    = Join-Path $outDir "SignageCMS-server.zip"
-            Rename-Item $src.FullName $versioned
-            Copy-Item $versioned $stable
-            Write-Host "Versioned: $versioned"
-            Write-Host "Stable:    $stable"
-          } else {
-            Write-Error "No server ZIP found in $outDir"
-            Get-ChildItem $outDir | ForEach-Object { Write-Host $_.FullName }
-            exit 1
-          }
-
-      - name: Upload ZIP artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: windows-server-zip
-          # match BOTH versioned (…-v1.6.2-server.zip) and stable (…-server.zip)
-          path: dist/SignageCMS-*server.zip
-
-  # ── ساخت Windows Server Installer (Inno Setup / ISCC) ────────
-  windows-installer:
-    name: Build Windows Server Installer (ISCC)
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set version output
-        id: ver
-        shell: pwsh
-        run: |
-          $v = "${{ github.ref_name }}" -replace '^v', ''
-          Write-Host "VERSION=$v"
-          echo "VERSION=$v" >> $env:GITHUB_OUTPUT
-
-      - name: Build clean server payload
-        shell: pwsh
-        run: |
-          $ver = "${{ steps.ver.outputs.VERSION }}"
-          $dist = Join-Path $env:GITHUB_WORKSPACE "dist"
-          New-Item -ItemType Directory -Force -Path $dist | Out-Null
-          # تولید بسته تمیز سرور (بدون .git / vendor / .env)
-          .\scripts\build-release.ps1 -Version $ver -Output $dist
-          $zip = Get-ChildItem $dist -Filter "SignageCMS-v*.zip" | Select-Object -First 1
-          if (-not $zip) { Write-Error "Server ZIP not found"; exit 1 }
-          $payload = Join-Path $dist "server-files"
-          Expand-Archive -Path $zip.FullName -DestinationPath $payload -Force
-          Write-Host "Payload: $payload"
-          Get-ChildItem $payload | Select-Object Name | Format-Table
-
-      - name: Install Inno Setup
-        shell: pwsh
-        run: choco install innosetup -y --no-progress
-
-      - name: Compile installer with ISCC
-        shell: pwsh
-        run: |
-          $ver = "${{ steps.ver.outputs.VERSION }}"
-          $src = Join-Path $env:GITHUB_WORKSPACE "dist\server-files"
-          $iss = Join-Path $env:GITHUB_WORKSPACE "installer\SignageCMS.iss"
-          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          if (-not (Test-Path $iscc)) { $iscc = "$env:ProgramFiles\Inno Setup 6\ISCC.exe" }
-          Write-Host "ISCC: $iscc"
-          & $iscc "/DMyAppVersion=$ver" "/DSourceDir=$src" $iss
-          if ($LASTEXITCODE -ne 0) { Write-Error "ISCC failed"; exit 1 }
-
-      - name: Rename installer (versioned + stable)
-        shell: pwsh
-        run: |
-          $tag = "${{ github.ref_name }}"
-          $outDir = Join-Path $env:GITHUB_WORKSPACE "installer\Output"
-          $exe = Get-ChildItem $outDir -Filter "*.exe" | Select-Object -First 1
-          if (-not $exe) { Write-Error "No installer EXE produced"; Get-ChildItem $outDir; exit 1 }
-          $dist = Join-Path $env:GITHUB_WORKSPACE "dist"
-          New-Item -ItemType Directory -Force -Path $dist | Out-Null
-          $versioned = Join-Path $dist "SignageCMS-$tag-server-setup.exe"
-          $stable    = Join-Path $dist "SignageCMS-server-setup.exe"
-          Copy-Item $exe.FullName $versioned -Force
-          Copy-Item $exe.FullName $stable -Force
-          Write-Host "Versioned: $versioned"
-          Write-Host "Stable:    $stable"
-
-      - name: Upload installer artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: windows-server-installer
-          # match BOTH versioned (…-v1.6.2-server-setup.exe) and stable (…-server-setup.exe)
-          path: dist/SignageCMS-*server-setup.exe
-
-  # ── ساخت نصب‌کننده All-in-One ویندوز (بدون Docker) ───────────
+  # ── ساخت نصب‌کننده All-in-One ویندوز ─────────────────────────
   windows-native-installer:
-    name: Build All-in-One Windows Installer (no Docker)
+    name: Build All-in-One Windows Installer
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
@@ -325,8 +206,8 @@ jobs:
           if (-not $exe) { Write-Error "No all-in-one installer produced"; Get-ChildItem $outDir; exit 1 }
           $dist = Join-Path $env:GITHUB_WORKSPACE "dist"
           New-Item -ItemType Directory -Force -Path $dist | Out-Null
-          $versioned = Join-Path $dist "SignageCMS-$tag-setup.exe"
-          $stable    = Join-Path $dist "SignageCMS-setup.exe"
+          $versioned = Join-Path $dist "Hotel Media-$tag-setup.exe"
+          $stable    = Join-Path $dist "HotelMedia-setup.exe"
           Copy-Item $exe.FullName $versioned -Force
           Copy-Item $exe.FullName $stable -Force
           Write-Host "Versioned: $versioned"
@@ -338,10 +219,10 @@ jobs:
           name: windows-native-installer
           # match BOTH versioned (…-v1.7.0-setup.exe) and stable (…-setup.exe)
           path: |
-            dist/SignageCMS-*-setup.exe
-            dist/SignageCMS-setup.exe
+            dist/Hotel Media-*-setup.exe
+            dist/HotelMedia-setup.exe
 
-  # ── ساخت نصب‌کننده فارسی هتل مدیا (تک‌فایل، بدون Docker) ──────
+  # ── ساخت نصب‌کننده فارسی هتل مدیا (تک‌فایل) ──────────────────
   hotelmedia-installer:
     name: Build HotelMedia Persian Installer
     runs-on: windows-latest
@@ -395,7 +276,7 @@ jobs:
   # ── ساخت GitHub Release ───────────────────────────────────────
   create-release:
     name: Create GitHub Release
-    needs: [android, windows-player, windows-server, windows-installer, windows-native-installer, hotelmedia-installer]
+    needs: [android, windows-player, windows-native-installer, hotelmedia-installer]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -418,19 +299,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: "SignageCMS ${{ github.ref_name }}"
+          name: "Hotel Media ${{ github.ref_name }}"
           body: |
-            ## SignageCMS ${{ github.ref_name }}
+            ## Hotel Media ${{ github.ref_name }}
 
-            ### ⭐ جدید: نصب‌کننده All-in-One ویندوز (بدون Docker)
+            ### ⭐ جدید: نصب‌کننده All-in-One ویندوز
 
-            دیگه نیازی به Docker، WSL2 یا دانش فنی نیست. فایل **`SignageCMS-setup.exe`**
+            دیگه نیازی به دانش فنی نیست. فایل **`HotelMedia-setup.exe`**
             را دانلود کنید، دابل‌کلیک کنید و چند بار Next بزنید — همه‌چیز (وب‌سرور، دیتابیس
             MariaDB و سرور realtime) داخل نصب‌کننده هست و خودکار به‌صورت سرویس ویندوز نصب
             و راه‌اندازی می‌شود. بعد از نصب، داشبورد خودکار روی `http://localhost/admin` باز می‌شود.
 
             > 💡 **لینک ثابت آخرین نسخه:**
-            > `https://github.com/${{ github.repository }}/releases/latest/download/SignageCMS-setup.exe`
+            > `https://github.com/${{ github.repository }}/releases/latest/download/HotelMedia-setup.exe`
 
             ---
 
@@ -466,12 +347,11 @@ jobs:
             | فایل | توضیح | سیستم‌عامل |
             |------|-------|------------|
             | **`Setup-HotelMedia.exe`** | 🏨 **نصب‌کننده فارسی هتل مدیا — تک‌فایل، بدون Docker، کاملاً خودکار** | Windows 10/11 / Server |
-            | **`SignageCMS-setup.exe`** | ⭐ **سرور All-in-One — بدون Docker، فقط دابل‌کلیک** | Windows 10/11 / Server |
+            | **`HotelMedia-setup.exe`** | ⭐ **سرور All-in-One — بدون Docker، فقط دابل‌کلیک** | Windows 10/11 / Server |
             | `*-android.apk` | اپلیکیشن Android / Android TV — نصب مستقیم | Android 5.0+ |
             | `*-android-playstore.aab` | Android App Bundle — آپلود در Google Play Store | Google Play |
             | `*-windows-player-setup.exe` | پلیر Windows (نصب‌کننده) | Windows 10/11 |
-            | `*-server-setup.exe` | سرور SignageCMS — نصب‌کننده Docker/WSL2 (Inno Setup) | Windows 10/11 / Server |
-            | `*-server.zip` | سرور SignageCMS (Docker / Linux) | Windows / Linux |
+
 
             ### 🖥️ نصب Windows Player
             1. فایل `*-windows-player-setup.exe` را دانلود کنید
@@ -479,24 +359,13 @@ jobs:
             3. آدرس سرور را وارد کنید و متصل شوید
 
             ### 🖥️ نصب سرور (ساده‌ترین راه — بدون Docker)
-            فایل **`SignageCMS-setup.exe`** را دانلود و اجرا کنید. نصب‌کننده All-in-One همه‌چیز
+            فایل **`HotelMedia-setup.exe`** را دانلود و اجرا کنید. نصب‌کننده All-in-One همه‌چیز
             (PHP، MariaDB، سرور realtime) را به‌صورت سرویس ویندوز نصب می‌کند و داشبورد را باز می‌کند.
             هیچ پیش‌نیازی لازم نیست.
 
-            ### 🐳 نصب سرور (روش Docker — اختیاری)
-            فایل `*-server-setup.exe` یا `*-server.zip` را دانلود کنید —
-            نصب‌کننده در صورت تمایل، Docker/WSL2 را خودکار نصب و استک را بالا می‌آورد.
-
-            ```bash
-            # Linux
-            unzip SignageCMS-*-server.zip && bash setup.sh
-
-            # Windows (ZIP) — extract و روی INSTALL.bat دابل‌کلیک کنید
-            ```
-
             ### 🔑 ورود پیش‌فرض
             - URL: `http://your-server/admin`
-            - Email: `admin@signagecms.com`
+            - Email: `admin@hotelmedia.com`
             - Password: `Admin@123456`
           files: release-files/*
           fail_on_unmatched_files: false

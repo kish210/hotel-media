@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    SignageCMS — Native (no-Docker) provisioning.
+    Hotel Media — Native (no-Docker) provisioning.
     سماع رایانه کیش | kishwifi.com
 
 .DESCRIPTION
@@ -21,8 +21,8 @@
     except three auto-start services. Designed to be safe to re-run.
 
 .NOTES
-    Invoked by SignageCMS-Native.iss. Not meant to be run by hand, but it can be:
-        powershell -ExecutionPolicy Bypass -File provision.ps1 -InstallDir C:\SignageCMS
+    Invoked by HotelMedia-Native.iss. Not meant to be run by hand, but it can be:
+        powershell -ExecutionPolicy Bypass -File provision.ps1 -InstallDir "C:\Program Files\HotelMedia"
 #>
 param(
     [Parameter(Mandatory = $true)]
@@ -36,9 +36,9 @@ $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
 # ── Service names (single source of truth, shared with uninstall.ps1) ─────────
-$SVC_DB  = 'SignageCMS-MySQL'
-$SVC_WEB = 'SignageCMS-Web'
-$SVC_WS  = 'SignageCMS-WS'
+$SVC_DB  = 'HotelMedia-MySQL'
+$SVC_WEB = 'HotelMedia-Web'
+$SVC_WS  = 'HotelMedia-WS'
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 $App      = $InstallDir.TrimEnd('\')
@@ -66,7 +66,7 @@ function FAIL ($m) { Log $m 'Red'    '[X]  '; throw $m }
 
 Write-Host ""
 Write-Host "  ====================================================" -ForegroundColor Cyan
-Write-Host "    SignageCMS  -  Native setup (no Docker)" -ForegroundColor Cyan
+Write-Host "    Hotel Media  -  Native setup (no Docker)" -ForegroundColor Cyan
 Write-Host "    سماع رایانه کیش | kishwifi.com" -ForegroundColor Cyan
 Write-Host "  ====================================================" -ForegroundColor Cyan
 Write-Host ""
@@ -118,8 +118,8 @@ function Remove-ServiceIfExists {
 # 1. Generate .env (idempotent — keep an existing one)
 # ══════════════════════════════════════════════════════════════════════════════
 $EnvFile = Join-Path $App '.env'
-$DbName  = 'signage_cms'
-$DbUser  = 'signage_user'
+$DbName  = 'hotel_media'
+$DbUser  = 'hotel_media'
 
 if (Test-Path $EnvFile) {
     INFO ".env already present — reusing existing credentials"
@@ -191,6 +191,12 @@ if (-not $dbInitialized) {
 # ══════════════════════════════════════════════════════════════════════════════
 # 3. Register + start the MariaDB service
 # ══════════════════════════════════════════════════════════════════════════════
+# سرویس‌های نصب‌های قبل از تغییر نام پروژه — اگر بمانند، پورت را گرفته‌اند
+# و سرویس جدید بالا نمی‌آید.
+foreach ($legacy in @('SignageCMS-Web', 'SignageCMS-WS', 'SignageCMS-MySQL')) {
+    Remove-ServiceIfExists $legacy
+}
+
 Remove-ServiceIfExists $SVC_DB
 INFO "Registering service: $SVC_DB"
 & $Mysqld "--install" $SVC_DB "--defaults-file=$MyIni" 2>&1 | Add-Content $LogFile
@@ -223,7 +229,7 @@ GRANT ALL PRIVILEGES ON ``$DbName``.* TO '$DbUser'@'localhost';
 GRANT ALL PRIVILEGES ON ``$DbName``.* TO '$DbUser'@'127.0.0.1';
 FLUSH PRIVILEGES;
 "@
-    $sqlFile = Join-Path $env:TEMP "signage_init_$([guid]::NewGuid().ToString('N')).sql"
+    $sqlFile = Join-Path $env:TEMP "hotelmedia_init_$([guid]::NewGuid().ToString('N')).sql"
     Set-Content -Path $sqlFile -Value $sql -Encoding ASCII
     & $MysqlCli "--host=127.0.0.1" "--port=3306" "--user=root" "--execute=source $sqlFile" 2>&1 | Add-Content $LogFile
     $dbExit = $LASTEXITCODE
@@ -254,7 +260,7 @@ function Register-NssmService {
     & $NssmExe install $Name $Exe 2>&1 | Add-Content $LogFile
     & $NssmExe set $Name AppParameters       $CmdArgs         | Out-Null
     & $NssmExe set $Name AppDirectory         $App             | Out-Null
-    & $NssmExe set $Name DisplayName          "SignageCMS - $Name" | Out-Null
+    & $NssmExe set $Name DisplayName          "Hotel Media - $Name" | Out-Null
     & $NssmExe set $Name Description           $Desc            | Out-Null
     & $NssmExe set $Name Start                SERVICE_AUTO_START | Out-Null
     & $NssmExe set $Name AppStdout            $Out             | Out-Null
@@ -269,13 +275,13 @@ function Register-NssmService {
 # Web server (PHP built-in server with the front-controller router).
 Register-NssmService -Name $SVC_WEB -Exe $PhpExe `
     -CmdArgs "-c `"$PhpIni`" -S 0.0.0.0:$Port -t `"$App\public`" `"$App\public\server-router.php`"" `
-    -Desc "SignageCMS web dashboard / API (PHP built-in server)" `
+    -Desc "Hotel Media web dashboard / API (PHP built-in server)" `
     -Out (Join-Path $LogDir 'web.log') -Err (Join-Path $LogDir 'web.err.log')
 
 # WebSocket server (pure-PHP streams).
 Register-NssmService -Name $SVC_WS -Exe $PhpExe `
     -CmdArgs "-c `"$PhpIni`" `"$App\websocket\server.php`"" `
-    -Desc "SignageCMS realtime WebSocket server" `
+    -Desc "Hotel Media realtime WebSocket server" `
     -Out (Join-Path $LogDir 'ws.log') -Err (Join-Path $LogDir 'ws.err.log')
 
 # Make the WS service see the right port.
@@ -287,7 +293,7 @@ Restart-Service -Name $SVC_WS -ErrorAction SilentlyContinue
 # ══════════════════════════════════════════════════════════════════════════════
 INFO "Opening Windows Firewall ports..."
 foreach ($p in @($Port, $WsPort)) {
-    $rule = "SignageCMS TCP $p"
+    $rule = "Hotel Media TCP $p"
     Get-NetFirewallRule -DisplayName $rule -ErrorAction SilentlyContinue | Remove-NetFirewallRule -ErrorAction SilentlyContinue
     New-NetFirewallRule -DisplayName $rule -Direction Inbound -Action Allow `
         -Protocol TCP -LocalPort $p -Profile Any -ErrorAction SilentlyContinue | Out-Null
@@ -304,13 +310,13 @@ $base = if ($Port -eq 80) { 'http://localhost' } else { "http://localhost:$Port"
 
 Write-Host ""
 Write-Host "  ====================================================" -ForegroundColor Green
-Write-Host "    SignageCMS is installed and running!" -ForegroundColor Green
+Write-Host "    Hotel Media is installed and running!" -ForegroundColor Green
 Write-Host "  ====================================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "    Dashboard : $base/admin" -ForegroundColor White
 if ($ip) { Write-Host "    On network: http://$ip$(if($Port -ne 80){":$Port"})/admin" -ForegroundColor White }
 Write-Host ""
-Write-Host "    Login     : admin@signagecms.com" -ForegroundColor White
+Write-Host "    Login     : admin@hotelmedia.com" -ForegroundColor White
 Write-Host "    Password  : Admin@123456   (change it after first login)" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "    Services  : $SVC_DB, $SVC_WEB, $SVC_WS (auto-start on boot)" -ForegroundColor Gray

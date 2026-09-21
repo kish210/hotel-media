@@ -141,7 +141,7 @@ if (Test-Path $EnvFile) {
         'DB_PASSWORD'    = $DbPass
         'JWT_SECRET'     = $jwt
         'WS_PORT'        = "$WsPort"
-        'ADMIN_EMAIL'    = 'admin@signagecms.com'
+        'ADMIN_EMAIL'    = 'admin@hotelmedia.com'
         'ADMIN_PASSWORD' = 'Admin@123456'
     }
     foreach ($k in $repl.Keys) {

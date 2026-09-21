@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 /**
- * SignageCMS Installer v5
+ * Hotel Media Installer v5
  * ========================
  * • اگر دیتابیس وجود نداشت → می‌سازه
  * • اگر جداول نبودن → می‌سازه
@@ -11,7 +11,7 @@ declare(strict_types=1);
  * CLI:        php public/install.php
  *
  * بعد از نصب حذف کنید:
- *   docker exec signage_php rm /var/www/html/public/install.php
+ *   این فایل را بعد از نصب حذف کنید: public/install.php
  */
 
 define('INSTALLER_VER', '5.0');
@@ -106,25 +106,23 @@ function doInstall(PDO $pdo, array $cfg): array
     $pdo->exec("SET FOREIGN_KEY_CHECKS=0; SET sql_mode='';");
 
     // ── 2. اجرای فایل‌های migration ──────────────────────────────────────
-    $migrations = [
-        '001_complete_schema.sql',
-        '003_module_tables_only.sql',
-        '004_iptv_channels.sql',
-        '005_apk_versions.sql',
-        '006_screen_groups.sql',
-        '007_vod_tables.sql',
-        '008_iptv_menus.sql',
-        '009_iptv_menu_appearance.sql',
-        '010_iptv_rooms.sql',
-        '011_inflight.sql',
-        '012_inflight_rpi.sql',
-        '013_screen_type_inflight.sql',
-    ];
+    // به‌جای فهرست دستی، همه فایل‌های پوشه به ترتیب شماره اجرا می‌شوند تا
+    // migration های جدید بدون ویرایش این فایل هم در نصب اعمال شوند.
+    $files = glob(ROOT . '/database/migrations/*.sql') ?: [];
+    sort($files, SORT_NATURAL);
 
-    foreach ($migrations as $mf) {
-        $path = ROOT . '/database/migrations/' . $mf;
-        if (!file_exists($path)) {
-            addLog($log, 'skip', "فایل migration نیست: {$mf}");
+    // نسخه قدیمی 001 که با 001_complete_schema جایگزین شده
+    $skip = ['001_initial_schema.sql'];
+
+    if (!$files) {
+        addLog($log, 'err', 'هیچ فایل migration پیدا نشد');
+        return $log;
+    }
+
+    foreach ($files as $path) {
+        $mf = basename($path);
+        if (in_array($mf, $skip, true)) {
+            addLog($log, 'skip', "نسخه قدیمی — رد شد: {$mf}");
             continue;
         }
         runSqlFile($pdo, $path, $mf, $log);
@@ -155,7 +153,7 @@ function doInstall(PDO $pdo, array $cfg): array
     try {
         $pdo->exec("INSERT IGNORE INTO `tenants`
             (id,slug,name,plan,storage_limit,screen_limit,is_active)
-            VALUES (1,'main','SignageCMS','pro',53687091200,50,1)");
+            VALUES (1,'main','Hotel Media','pro',53687091200,50,1)");
         addLog($log, 'ok', 'Tenant پیش‌فرض آماده است');
     } catch (PDOException $e) {
         addLog($log, 'warn', 'Tenant: ' . $e->getMessage());
@@ -163,15 +161,19 @@ function doInstall(PDO $pdo, array $cfg): array
 
     // ── 6. Admin user ────────────────────────────────────────────────────
     try {
+        // ایمیل قدیمی هم بررسی می‌شود: نصب‌هایی که قبل از تغییر نام پروژه
+        // انجام شده‌اند ادمینشان admin@signagecms.com است و بدون این شرط،
+        // ارتقاء یک ادمین دوم می‌ساخت.
         $exists = $pdo->query(
-            "SELECT COUNT(*) FROM `users` WHERE email='admin@signagecms.com'"
+            "SELECT COUNT(*) FROM `users`
+              WHERE email IN ('admin@hotelmedia.com','admin@signagecms.com')"
         )->fetchColumn();
         if (!$exists) {
             $hash = password_hash('Admin@123456', PASSWORD_BCRYPT, ['cost' => 12]);
             $st   = $pdo->prepare(
                 "INSERT INTO `users`
                  (tenant_id,name,email,password,role,language,is_active)
-                 VALUES (1,'مدیر سیستم','admin@signagecms.com',?,'super_admin','fa',1)"
+                 VALUES (1,'مدیر سیستم','admin@hotelmedia.com',?,'super_admin','fa',1)"
             );
             $st->execute([$hash]);
             addLog($log, 'ok', 'Admin user ساخته شد  (Admin@123456)');
@@ -291,8 +293,8 @@ function readEnv(): array
     $cfg = [
         'DB_HOST'     => 'mysql',
         'DB_PORT'     => '3306',
-        'DB_DATABASE' => 'signage_cms',
-        'DB_USERNAME' => 'signage_user',
+        'DB_DATABASE' => 'hotel_media',
+        'DB_USERNAME' => 'hotel_media',
         'DB_PASSWORD' => 'StrongPassword123!',
     ];
     $envFile = ROOT . '/.env';
@@ -324,7 +326,7 @@ function runCli(): void
 {
     $cfg = readEnv();
     echo "\n╔══════════════════════════════════════╗\n";
-    echo "║  SignageCMS Installer v" . INSTALLER_VER . "          ║\n";
+    echo "║  Hotel Media Installer v" . INSTALLER_VER . "          ║\n";
     echo "╚══════════════════════════════════════╝\n\n";
     echo "  DB_HOST     = {$cfg['DB_HOST']}\n";
     echo "  DB_DATABASE = {$cfg['DB_DATABASE']}\n";
@@ -352,7 +354,7 @@ function runCli(): void
         echo "❌  نصب با خطا مواجه شد.\n\n"; exit(1);
     }
     echo "✅  نصب کامل!\n";
-    echo "   ایمیل: admin@signagecms.com\n";
+    echo "   ایمیل: admin@hotelmedia.com\n";
     echo "   رمز:   Admin@123456\n\n";
     echo "⚠  فایل public/install.php را حذف کنید\n\n";
 }
@@ -367,7 +369,7 @@ function renderForm(array $cfg, array $errors): void
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SignageCMS — نصب</title>
+<title>Hotel Media — نصب</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Tahoma,sans-serif;background:#09090f;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -391,7 +393,7 @@ code{background:#0f172a;padding:2px 6px;border-radius:4px;font-family:monospace;
 </head>
 <body>
 <div class="card">
-<div class="hd"><h1>🖥️ SignageCMS Installer</h1><p>v<?= INSTALLER_VER ?> — راه‌اندازی اولیه سیستم</p></div>
+<div class="hd"><h1>🖥️ Hotel Media Installer</h1><p>v<?= INSTALLER_VER ?> — راه‌اندازی اولیه سیستم</p></div>
 <div class="bd">
 <h2>🔌 تنظیمات اتصال MySQL</h2>
 <?php if (!empty($errors)): ?>
@@ -408,7 +410,7 @@ code{background:#0f172a;padding:2px 6px;border-radius:4px;font-family:monospace;
   </div>
 </div>
 <div class="fld"><label>نام دیتابیس</label>
-  <input name="DB_DATABASE" value="<?= htmlspecialchars($cfg['DB_DATABASE']) ?>" placeholder="signage_cms">
+  <input name="DB_DATABASE" value="<?= htmlspecialchars($cfg['DB_DATABASE']) ?>" placeholder="hotel_media">
 </div>
 <div class="fld"><label>نام کاربری MySQL</label>
   <input name="DB_USERNAME" value="<?= htmlspecialchars($cfg['DB_USERNAME']) ?>">
@@ -420,7 +422,7 @@ code{background:#0f172a;padding:2px 6px;border-radius:4px;font-family:monospace;
 </form>
 <p class="note">
   مقادیر از فایل <code>.env</code> بارگذاری شدند<br>
-  کاربر پیش‌فرض بعد از نصب: <code>admin@signagecms.com</code> / <code>Admin@123456</code>
+  کاربر پیش‌فرض بعد از نصب: <code>admin@hotelmedia.com</code> / <code>Admin@123456</code>
 </p>
 </div>
 </div>
@@ -438,7 +440,7 @@ function renderResult(array $cfg, array $log): void
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SignageCMS — <?= $title ?></title>
+<title>Hotel Media — <?= $title ?></title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Tahoma,sans-serif;background:#09090f;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -476,7 +478,7 @@ code{background:#111;padding:2px 6px;border-radius:4px;font-family:monospace;col
   <?php if (!$hasError): ?>
   <div class="box box-ok">
     ✅ <strong>سیستم آماده است</strong><br>
-    📧 ایمیل: <code>admin@signagecms.com</code><br>
+    📧 ایمیل: <code>admin@hotelmedia.com</code><br>
     🔑 رمز: <code>Admin@123456</code><br>
     ⚠ بعد از ورود، رمز را تغییر دهید
   </div>
@@ -490,7 +492,7 @@ code{background:#111;padding:2px 6px;border-radius:4px;font-family:monospace;col
 
   <div class="del">
     ⚠ بعد از ورود موفق این فایل را حذف کنید:<br>
-    <code>docker exec signage_php rm /var/www/html/public/install.php</code>
+    <code>public/install.php</code> را حذف کنید
   </div>
 </div>
 </div>

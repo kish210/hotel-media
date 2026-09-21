@@ -22,7 +22,61 @@ if (file_exists($envFile)) {
     }
 }
 function env(string $k, mixed $d=null): mixed { $v=$_ENV[$k]??getenv($k)?:$d; if($v==='true')return true; if($v==='false')return false; return $v; }
+
+// همان منطقه زمانی که public/index.php اعمال می‌کند — تا date() در CLI و وب یکی باشد
+date_default_timezone_set((string)env('APP_TIMEZONE', 'Asia/Tehran'));
 function request(): object { return new class { public function ip():string{return '127.0.0.1';} public function userAgent():string{return 'CLI';} public function isJson():bool{return false;} public function isAjax():bool{return false;} }; }
+
+/**
+ * تقسیم فایل SQL به دستورهای مجزا — نقطه‌ویرگول داخل رشته و کامنت نادیده گرفته می‌شود
+ * @return string[]
+ */
+function splitSqlStatements(string $sql): array
+{
+    $statements = [];
+    $current    = '';
+    $len        = strlen($sql);
+    $quote      = null;   // ' یا " یا ` وقتی داخل رشته هستیم
+    $comment    = null;   // 'line' یا 'block'
+
+    for ($i = 0; $i < $len; $i++) {
+        $ch   = $sql[$i];
+        $next = $sql[$i + 1] ?? '';
+
+        if ($comment === 'line') {
+            if ($ch === "\n") { $comment = null; $current .= $ch; }
+            continue;
+        }
+        if ($comment === 'block') {
+            if ($ch === '*' && $next === '/') { $comment = null; $i++; }
+            continue;
+        }
+
+        if ($quote === null) {
+            if (($ch === '-' && $next === '-') || $ch === '#') { $comment = 'line';  continue; }
+            if ($ch === '/' && $next === '*')                  { $comment = 'block'; $i++; continue; }
+
+            if ($ch === "'" || $ch === '"' || $ch === '`') { $quote = $ch; }
+            elseif ($ch === ';') {
+                $stmt = trim($current);
+                if ($stmt !== '') $statements[] = $stmt;
+                $current = '';
+                continue;
+            }
+        } else {
+            // فرار با بک‌اسلش فقط داخل رشته‌های ' و " معنا دارد
+            if ($ch === '\\' && $quote !== '`') { $current .= $ch . $next; $i++; continue; }
+            if ($ch === $quote) { $quote = null; }
+        }
+
+        $current .= $ch;
+    }
+
+    $last = trim($current);
+    if ($last !== '') $statements[] = $last;
+
+    return $statements;
+}
 
 $command = $argv[1] ?? 'help';
 
@@ -34,14 +88,70 @@ match ($command) {
 
     'db:migrate' => (function() {
         $db = \App\Core\Database::getInstance();
-        $sql = file_get_contents(ROOT_PATH . '/database/migrations/001_complete_schema.sql');
-        foreach (array_filter(array_map('trim', explode(';', $sql))) as $stmt) {
-            if ($stmt) {
-                try { $db->query($stmt); echo "  ✓\n"; }
-                catch (\Throwable $e) { echo "  ✗ " . $e->getMessage() . "\n"; }
+
+        // جدول ردیابی — هر فایل فقط یک‌بار اجرا می‌شود
+        $db->query("CREATE TABLE IF NOT EXISTS schema_migrations (
+            filename   VARCHAR(190) NOT NULL,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (filename)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $applied = array_column(
+            $db->rows('SELECT filename FROM schema_migrations') ?: [],
+            'filename'
+        );
+
+        $files = glob(ROOT_PATH . '/database/migrations/*.sql') ?: [];
+        sort($files, SORT_NATURAL);
+
+        $ran = 0;
+        foreach ($files as $file) {
+            $name = basename($file);
+
+            // 001_initial_schema نسخه قدیمی 001_complete_schema است — رد می‌شود
+            if ($name === '001_initial_schema.sql') continue;
+            if (in_array($name, $applied, true)) continue;
+
+            echo "\033[36m→ $name\033[0m\n";
+            $sql    = (string)file_get_contents($file);
+            $failed = false;
+
+            foreach (splitSqlStatements($sql) as $stmt) {
+                try {
+                    $db->query($stmt);
+                } catch (\Throwable $e) {
+                    $msg = $e->getMessage();
+
+                    // فقط خطاهای «از قبل ساخته شده» روی نصب‌های قدیمی بی‌ضررند.
+                    // با کد SQLSTATE تشخیص داده می‌شوند، نه با متن پیام — وگرنه
+                    // خطاهای واقعی (مثل «Duplicate column name» در یک SELECT معیوب)
+                    // هم به‌اشتباه نادیده گرفته می‌شوند.
+                    $benign = [
+                        '42S01',  // Base table or view already exists
+                        '42000',  // ... CREATE INDEX روی ایندکس موجود
+                    ];
+                    $isDuplicateColumn = str_contains($msg, '1060 Duplicate column name')
+                        && preg_match('/^\s*ALTER\s+TABLE/i', $stmt);
+
+                    if (in_array($e->getCode(), $benign, true) || $isDuplicateColumn) {
+                        continue;
+                    }
+
+                    $failed = true;
+                    echo "  \033[31m✗ " . $msg . "\033[0m\n";
+                }
+            }
+
+            if (!$failed) {
+                $db->query('INSERT IGNORE INTO schema_migrations (filename) VALUES (?)', [$name]);
+                echo "  \033[32m✓ اعمال شد\033[0m\n";
+                $ran++;
+            } else {
+                echo "  \033[33m! ناقص — دوباره تلاش خواهد شد\033[0m\n";
             }
         }
-        echo "Migration done.\n";
+
+        echo $ran ? "\nMigration done — $ran فایل اعمال شد.\n" : "\nهمه migration ها از قبل اعمال شده‌اند.\n";
     })(),
 
     'db:seed' => (function() {
@@ -90,6 +200,150 @@ match ($command) {
         echo "Cleaned $n files.\n";
     })(),
 
+    'epg:sync' => (function() use ($argv) {
+        // برای اجرای زمان‌بندی‌شده: روزی یک‌بار در Task Scheduler / cron
+        //   php artisan epg:sync          همه منابع فعال همه tenant ها
+        //   php artisan epg:sync 3        فقط tenant شماره ۳
+        $tenantId = isset($argv[2]) ? (int)$argv[2] : null;
+
+        $svc     = new \App\Services\EpgSyncService();
+        $results = $svc->syncAll($tenantId);
+
+        if (!$results) { echo "هیچ منبع EPG فعالی تعریف نشده است.\n"; return; }
+
+        $failed = 0;
+        foreach ($results as $r) {
+            if ($r['ok']) {
+                printf("  \033[32m✓\033[0m %-28s %s\n", $r['source'], $r['message']);
+            } else {
+                $failed++;
+                printf("  \033[31m✗\033[0m %-28s %s\n", $r['source'], $r['message']);
+            }
+        }
+
+        echo "\n" . count($results) . " منبع پردازش شد"
+           . ($failed ? "، \033[31m$failed ناموفق\033[0m" : '') . ".\n";
+
+        if ($failed) exit(1);
+    })(),
+
+    'tvheadend:setup' => (function() use ($argv) {
+        // ثبت خودکار TVHeadend و همگام‌سازی کانال‌ها.
+        // نصب‌کننده‌ی production بعد از نصب TVHeadend این را صدا می‌زند تا
+        // اپراتور هیچ کار دستی برای وصل کردنش نداشته باشد.
+        //   php artisan tvheadend:setup [url] [user] [pass] [tenantId]
+        $url  = $argv[2] ?? 'http://127.0.0.1:9981';
+        $user = $argv[3] ?? '';
+        $pass = $argv[4] ?? '';
+        $tid  = isset($argv[5]) ? (int)$argv[5] : 1;
+
+        $svc = new \App\Services\TvheadendService();
+
+        echo "  بررسی $url …\n";
+        $probe = $svc->probe($url, $user, $pass);
+        if (!$probe['ok']) {
+            echo "  \033[31m✗ {$probe['message']}\033[0m\n";
+            echo "    بررسی کنید سرویس بالا باشد:  systemctl status tvheadend\n";
+            exit(1);
+        }
+        echo "  \033[32m✓ {$probe['message']}\033[0m\n";
+
+        $res = $svc->autoRegister($tid, $url, $user, $pass);
+        if (!$res['ok']) {
+            echo "  \033[31m✗ {$res['message']}\033[0m\n";
+            exit(1);
+        }
+
+        echo "  \033[32m✓ {$res['message']}\033[0m\n";
+
+        if ($res['channels'] === 0) {
+            echo "\n  \033[33m! هنوز کانالی در TVHeadend تعریف نشده.\033[0m\n";
+            echo "    وارد http://<server>:9981 شوید، در Configuration → DVB Inputs\n";
+            echo "    شبکه و تیونر را تنظیم و اسکن کنید، سپس دوباره اجرا کنید.\n";
+        }
+    })(),
+
+    'tvheadend:health' => (function() {
+        $rows = (new \App\Services\TvheadendService())->health();
+        if (!$rows) { echo "هیچ منبع TVHeadend فعالی تعریف نشده.\n"; return; }
+
+        $down = 0;
+        foreach ($rows as $r) {
+            printf(
+                "  %s %-34s %s  (%d کانال)\n",
+                $r['online'] ? "\033[32m✓\033[0m" : "\033[31m✗\033[0m",
+                $r['name'], $r['url'], $r['channels']
+            );
+            if (!$r['online']) { $down++; echo "      {$r['message']}\n"; }
+        }
+
+        if ($down) exit(1);
+    })(),
+
+    'pms:push' => (function() use ($argv) {
+        // اقلام صورتحساب را به سیستم هتلداری می‌فرستد.
+        // برای cron: هر ۵ دقیقه — قلم‌هایی که PMS در دسترس نبوده در صف
+        // مانده‌اند و اینجا دوباره تلاش می‌شوند.
+        //   php artisan pms:push        همه tenant ها
+        //   php artisan pms:push 3      فقط tenant شماره ۳
+        $tenantId = isset($argv[2]) ? (int)$argv[2] : null;
+
+        $res = (new \App\Services\PmsChargeService())->pushPending($tenantId);
+
+        printf(
+            "  ارسال‌شده: %d   ناموفق: %d   رد‌شده: %d\n",
+            $res['sent'], $res['failed'], $res['skipped']
+        );
+        echo "  {$res['message']}\n";
+
+        if ($res['failed'] > 0) exit(1);
+    })(),
+
+    'test' => (function() {
+        // تست‌های Feature اسکریپت‌های مستقل PHP هستند و به دیتابیس زنده وصل می‌شوند.
+        // قبل از اجرا مطمئن شوید .env به یک دیتابیس تست اشاره می‌کند، نه production.
+        $files = glob(ROOT_PATH . '/tests/Feature/*Test.php') ?: [];
+        sort($files, SORT_NATURAL);
+
+        if (!$files) { echo "هیچ تستی پیدا نشد.\n"; return; }
+
+        $php    = PHP_BINARY;
+        $failed = [];
+
+        foreach ($files as $file) {
+            $name = basename($file);
+            echo "\n\033[36m══ $name ══\033[0m\n";
+
+            $cmd = escapeshellarg($php) . ' ' . escapeshellarg($file);
+            passthru($cmd, $code);
+
+            if ($code !== 0) $failed[] = $name;
+        }
+
+        // شبیه‌سازی APIهای تلویزیون (Tizen / webOS / Android) با Node
+        $sim = ROOT_PATH . '/tests/Support/tv-platform-sim.js';
+        if (is_file($sim)) {
+            echo "\n\033[36m══ tv-platform-sim.js ══\033[0m\n";
+
+            // Node ممکن است روی سرور هتل نصب نباشد — تست رد می‌شود نه شکست
+            exec('node --version 2>&1', $out, $hasNode);
+            if ($hasNode !== 0) {
+                echo "  \033[33m⏭ Node نصب نیست — این تست رد شد\033[0m\n";
+            } else {
+                passthru(escapeshellarg('node') . ' ' . escapeshellarg($sim), $code);
+                if ($code !== 0) $failed[] = 'tv-platform-sim.js';
+                $files[] = $sim;
+            }
+        }
+
+        echo "\n" . str_repeat('═', 50) . "\n";
+        if ($failed) {
+            echo "\033[31m✗ " . count($failed) . " تست شکست خورد: " . implode(', ', $failed) . "\033[0m\n";
+            exit(1);
+        }
+        echo "\033[32m✓ همه " . count($files) . " فایل تست پاس شدند\033[0m\n";
+    })(),
+
     'cache:clear' => (function() {
         array_map('unlink', glob(STORAGE_PATH.'/cache/*'));
         echo "Cache cleared.\n";
@@ -108,6 +362,11 @@ match ($command) {
             'ws:start'        => 'Start WebSocket server',
             'storage:clean'   => 'Remove soft-deleted media files',
             'cache:clear'     => 'Clear application cache',
+            'epg:sync'        => 'Sync EPG from TVHeadend / XMLTV sources [tenantId]',
+            'pms:push'        => 'Push room charges to the hotel PMS [tenantId]',
+            'tvheadend:setup' => 'Register TVHeadend and import its channels [url user pass]',
+            'tvheadend:health'=> 'Check every configured TVHeadend source',
+            'test'            => 'Run feature tests (needs a TEST database in .env)',
         ];
         foreach ($cmds as $cmd => $desc) {
             printf("  \033[32m%-20s\033[0m %s\n", $cmd, $desc);

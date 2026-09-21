@@ -106,6 +106,35 @@ class ScreenController extends Controller
             } catch (\Throwable $e) {}
         }
 
+        // ── صف فرمان جدید (screen_commands) ────────────────────────
+        // پرچم‌های بولی بالا برای پلیرهای قدیمی حفظ شده‌اند؛ دستگاه‌های
+        // جدید فرمان‌های دارای پارامتر و قابل‌تایید را از این صف می‌گیرند.
+        try {
+            $svc = new \App\Services\DeviceService($this->db);
+
+            // اطلاعات سخت‌افزاری که پلیر در heartbeat می‌فرستد را تازه نگه دار
+            $info = array_filter([
+                'platform'    => $req->post('platform'),
+                'model'       => $req->post('model'),
+                'firmware'    => $req->post('firmware'),
+                'serial'      => $req->post('serial'),
+                'mac'         => $req->post('mac'),
+                'app_version' => $req->post('app_version'),
+                'resolution'  => $req->post('resolution'),
+                'user_agent'  => $req->userAgent(),
+            ], static fn($v) => $v !== null && $v !== '');
+
+            if (count($info) > 1) $svc->updateDeviceInfo((int)$screen['id'], $info);
+
+            foreach ($svc->pullCommands((int)$screen['id']) as $queued) {
+                $cmds[] = $queued;
+            }
+        } catch (\Throwable $e) {
+            // heartbeat هرگز نباید به‌خاطر صف فرمان شکست بخورد — پلیر
+            // در این صورت کل پخش را از دست می‌دهد.
+            error_log('[HEARTBEAT COMMANDS] ' . $e->getMessage());
+        }
+
         Response::success([
             'commands'         => $cmds,
             'playlist_id'      => $playlist['id'] ?? null,
@@ -113,7 +142,10 @@ class ScreenController extends Controller
             'iptv_menu_id'     => $iptvMenuId,
             'cfg_3d'           => $cfg3d,
             'messages'         => $pendingMessages,
-            'sync_interval'    => 30,
+            // پلیرها این مقدار را می‌خوانند و فاصله‌ی heartbeat خود را با آن
+            // تنظیم می‌کنند. در هتل ۳۰۰ اتاقه، هر ثانیه کم‌کردن این عدد
+            // مستقیم به بار وب‌سرور اضافه می‌شود، پس از .env قابل تنظیم است.
+            'sync_interval'    => max(10, min(300, (int)env('PLAYER_SYNC_INTERVAL', 30))),
         ]);
     }
 

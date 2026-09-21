@@ -8,15 +8,14 @@
 
 ---
 
-# 🖥️ SignageCMS — Digital Signage Management System
+# 🖥️ Hotel Media — Digital Signage Management System
 
-> سیستم مدیریت تابلوی دیجیتال حرفه‌ای برای فرودگاه‌ها، هتل‌ها، رستوران‌ها، فروشگاه‌ها و محیط‌های شرکتی
+> سیستم مدیریت تلویزیون و تابلوی دیجیتال هتل حرفه‌ای برای فرودگاه‌ها، هتل‌ها، رستوران‌ها، فروشگاه‌ها و محیط‌های شرکتی
 >
 > Developed by **[سماع رایانه کیش — Sama Rayaneh Kish](https://kishwifi.com)** | 🌐 [kishwifi.com](https://kishwifi.com)
 
 [![PHP](https://img.shields.io/badge/PHP-8.1%2B-blue?logo=php)](https://php.net)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-orange?logo=mysql)](https://mysql.com)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](docker-compose.yml)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/kish210/hotel-media?label=Latest%20Release&color=brightgreen)](https://github.com/kish210/hotel-media/releases/latest)
 [![Website](https://img.shields.io/badge/Website-kishwifi.com-orange?logo=google-chrome)](https://kishwifi.com)
@@ -35,7 +34,7 @@
 
 </div>
 
-بدون Docker، بدون دیتابیس، بدون تنظیمات. همه‌چیز (وب‌سرور، دیتابیس، سرور real-time) داخل خود
+بدون دیتابیس، بدون تنظیمات. همه‌چیز (وب‌سرور، دیتابیس، سرور real-time) داخل خود
 فایل بسته‌بندی شده و به‌صورت **سرویس ویندوز** خودکار نصب می‌شود. بعد از پایان، آیکون روی دسکتاپ
 ساخته می‌شود و پنل خودکار باز می‌شود. مناسب کاربری که حتی نمی‌داند دیتابیس چیست.
 
@@ -43,200 +42,201 @@
 
 | پلتفرم | فایل | توضیح |
 |--------|------|-------|
-| 🏨 **Server — هتل مدیا (فارسی، بدون Docker)** | [⬇️ Setup-HotelMedia.exe](https://github.com/kish210/hotel-media/releases/latest/download/Setup-HotelMedia.exe) | ⭐ Windows — تک‌فایل، UI فارسی، کاملاً خودکار |
-| 🟢 **Server — All-in-One (بدون Docker)** | [⬇️ SignageCMS-setup.exe](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-setup.exe) | Windows 10/11 / Server — دابل‌کلیک، انگلیسی |
-| 🤖 **Android / Android TV** | [⬇️ APK](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-android.apk) | Android 5.0+ — نصب مستقیم |
-| 🖥️ **Windows Player** | [⬇️ EXE](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-windows-player-setup.exe) | Windows 10/11 — پلیر |
-| 🟦 **Server — Docker Installer** | [⬇️ EXE](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-server-setup.exe) | Windows / Server — نصب‌کننده Docker/WSL2 |
-| 🐳 **Server — Docker ZIP** | [⬇️ ZIP](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-server.zip) | همه سیستم‌عامل‌ها |
+| 🏨 **Server — هتل مدیا (فارسی)** | [⬇️ Setup-HotelMedia.exe](https://github.com/kish210/hotel-media/releases/latest/download/Setup-HotelMedia.exe) | ⭐ Windows — تک‌فایل، UI فارسی، کاملاً خودکار |
+| 🟢 **Server — All-in-One** | [⬇️ HotelMedia-setup.exe](https://github.com/kish210/hotel-media/releases/latest/download/HotelMedia-setup.exe) | Windows 10/11 / Server — دابل‌کلیک، انگلیسی |
+| 🤖 **Android / Android TV** | [⬇️ APK](https://github.com/kish210/hotel-media/releases/latest/download/HotelMedia-android.apk) | Android 5.0+ — نصب مستقیم |
+| 🖥️ **Windows Player** | [⬇️ EXE](https://github.com/kish210/hotel-media/releases/latest/download/HotelMedia-windows-player-setup.exe) | Windows 10/11 — پلیر |
 
 > 📦 **همه نسخه‌ها و تاریخچه:** [github.com/kish210/hotel-media/releases](https://github.com/kish210/hotel-media/releases)
 >
-> ✅ **آخرین نسخه:** ![Release](https://img.shields.io/github/v/release/kish210/hotel-media?label=&color=brightgreen) — نصب‌کننده‌ی فارسی هتل مدیا + All-in-One بدون Docker + Android + Windows Player + Docker
+> ✅ **آخرین نسخه:** ![Release](https://img.shields.io/github/v/release/kish210/hotel-media?label=&color=brightgreen) — نصب‌کننده‌ی فارسی هتل مدیا + All-in-One + Android + Windows Player
 
 ---
 
 ## ✨ امکانات
 
-| ماژول | توضیح |
+### 🏨 تلویزیون هتلی (IPTV)
+
+| امکان | توضیح |
 |-------|-------|
-| 📺 **Multi-Screen** | مدیریت نامحدود صفحه‌نمایش با monitoring real-time |
-| 🎬 **Playlist Designer** | ساخت پلی‌لیست drag & drop با transition |
-| 🎨 **Layout Designer** | طراحی بصری multi-zone |
-| 🗓️ **Content Scheduling** | زمان‌بندی روزانه / هفتگی / همیشه |
-| ✈️ **FIDS Module** | دریافت خودکار اطلاعات پرواز از fids.airport.ir |
-| 🍽️ **Restaurant Menu** | تابلوی منوی دیجیتال |
-| 🏨 **Hotel Module** | اطلاعات هتل، خدمات، رویدادها |
-| 🏢 **Corporate Module** | اطلاعیه و KPI شرکتی |
-| 🛍️ **Retail Module** | تابلوهای فروشگاهی و تبلیغاتی |
-| 📡 **WebSocket Real-time** | دستورات آنی از سرور به پلیر |
-| 🚨 **Emergency Broadcast** | ارسال پیام اضطراری به همه صفحات |
-| 🔗 **Cookie Player Binding** | آدرس ثابت `/player/` برای همه دستگاه‌ها |
-| 👥 **Role-Based Access** | کنترل دسترسی ۵ سطح |
-| 🌐 **REST API** | API کامل برای Android TV و اپ موبایل |
-| 🐳 **Docker Ready** | استقرار آسان با یک دستور |
-| 🇮🇷 **Persian RTL** | پشتیبانی کامل فارسی و RTL |
+| 📡 **پخش زنده** | ماهواره و زمینی با TVHeadend (DVB-S/S2/T/T2/C) — **نصب و اتصال خودکار** |
+| 🛰️ **Multicast** | هر کانال **یک بار** روی شبکه — ۳۰۰ اتاق با ۲۴Mbps به‌جای ۲.۴Gbps |
+| 🗓️ **EPG** | راهنمای برنامه‌ها از TVHeadend یا XMLTV — «الان پخش / بعدی» با نوار پیشرفت |
+| 🎬 **VOD** | فیلم و سریال با دسته‌بندی |
+| 🖥️ **پورتال اتاق** | صفحه‌ی اصلی برندشده با نام مهمان، اسلایدشو، تیکر و میانبر عددی ریموت |
+| 🌡️ **نوار زنده** | ساعت، آب‌وهوا، نرخ ارز و اوقات شرعی — با کش سمت سرور |
+| 🌍 **چندزبانه** | فارسی، انگلیسی، عربی — بر اساس زبان مهمان |
+
+### 🛎️ خدمات مهمان
+
+| امکان | توضیح |
+|-------|-------|
+| 🍽️ **سفارش از تلویزیون** | روم‌سرویس، صبحانه، خشک‌شویی، تاکسی، خانه‌داری، تعمیرات |
+| 🖼️ **منوی تصویری** | بارگذاری عکس منوی چاپی — بدون نیاز به وارد کردن تک‌تک اقلام |
+| ⏰ **بیدارباش** | زمان‌بندی از روی تلویزیون |
+| ⭐ **نظرسنجی** | امتیازدهی مهمان با گزارش مدیریتی |
+| 👷 **پنل کارکنان** | صف کاری با تخصیص، تغییر وضعیت و سنجش SLA |
+
+### 💰 صورتحساب و PMS
+
+| امکان | توضیح |
+|-------|-------|
+| 🧾 **صورتحساب اتاق** | مشاهده روی تلویزیون — گره‌خورده به اقامت، نه اتاق |
+| 🥤 **مینی‌بار** | شمارش خانه‌داری و شارژ خودکار |
+| 🎟️ **محتوای پولی (PPV)** | خرید فیلم با دسترسی زمان‌دار |
+| 🚪 **خروج سریع** | تایید از تلویزیون، تسویه اقلام و آزادسازی اتاق |
+| 🔌 **اتصال دوطرفه PMS** | ورود/خروج از PMS + ارسال اقلام با صف، تلاش مجدد و نگاشت فیلد |
+
+### 🖥️ مدیریت ناوگان تلویزیون
+
+| امکان | توضیح |
+|-------|-------|
+| 🔗 **یک آدرس برای همه** | `/tv` — هر تلویزیون خودش را با MAC می‌شناساند |
+| 🏷️ **LG · Samsung · Android TV** | ثبت خودکار با تشخیص پلتفرم و قابلیت‌های واقعی هر برند |
+| 🎛️ **فرمان زنده** | تازه‌سازی، صدا، روشنایی، پیام، ریبوت — تکی یا گروهی |
+| 📊 **پایش** | آنلاین/آفلاین زنده، تاریخچه فرمان و رویداد |
+
+### 📺 دیجیتال ساینیج
+
+| امکان | توضیح |
+|-------|-------|
+| 🎬 **پلی‌لیست و چیدمان** | drag & drop با transition و طراحی multi-zone |
+| 🗓️ **زمان‌بندی محتوا** | روزانه / هفتگی / همیشه |
+| ✈️ **FIDS** | دریافت خودکار اطلاعات پرواز از fids.airport.ir |
+| 🏨 🏢 🛍️ **ماژول‌ها** | هتل، شرکتی، فروشگاهی، منوی رستوران |
+| 🚨 **پخش اضطراری** | ارسال آنی پیام به همه صفحات |
+| 📡 **WebSocket** | دستورات لحظه‌ای سرور به پلیر |
+
+### 🔒 زیرساخت
+
+| امکان | توضیح |
+|-------|-------|
+| 👥 **سطح دسترسی** | کنترل ۵ سطحی |
+| 🌐 **REST API** | کامل، مستندشده در [docs/API.md](docs/API.md) |
+| 🚀 **مقیاس ۳۰۰ اتاق** | nginx + PHP-FPM با نصب تک‌دستوری |
+| 📴 **بدون اینترنت** | همه‌ی فونت‌ها و کتابخانه‌ها محلی — مناسب VLAN بسته‌ی هتل |
+| 🇮🇷 **فارسی و RTL** | پشتیبانی کامل |
 
 ---
 
-## ⭐ نصب بدون Docker (ساده‌ترین راه برای کاربر غیرفنی)
+## ⭐ نصب
 
-سه راه بدون Docker دارید — هیچ‌کدام به Docker، WSL2 یا تنظیم دستی دیتابیس نیاز ندارند:
+**اول اندازه‌ی هتل را انتخاب کنید** — این مهم‌ترین تصمیم نصب است:
 
-| روش | چه‌کاری بکنید | مناسب چه‌کسی |
-|-----|--------------|--------------|
-| 🏨 **نصب‌کننده هتل مدیا (فارسی)** | [`Setup-HotelMedia.exe`](https://github.com/kish210/hotel-media/releases/latest/download/Setup-HotelMedia.exe) را دابل‌کلیک کنید | کاربر کاملاً غیرفنی — UI فارسی، نام هتل، آیکون دسکتاپ، Tray فارسی |
-| 🟢 **نصب‌کننده All-in-One (انگلیسی)** | [`SignageCMS-setup.exe`](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-setup.exe) را دابل‌کلیک کنید | همان تجربه، بدون برند هتل |
-| 🟢 **اجرا روی همین پوشه** | فایل سرور را extract کنید و روی **`SETUP-NO-DOCKER.bat`** دابل‌کلیک کنید | وقتی فایل‌های سرور را دارید و می‌خواهید همین‌جا نصب شود |
+| اندازه | روش | چرا |
+|-------|------|-----|
+| **تا ۳۰ اتاق** | نصب‌کننده‌ی ویندوزی (زیر) | ساده، دابل‌کلیک، بدون دانش فنی |
+| **۱۰۰ تا ۳۰۰+ اتاق** | [**Ubuntu + nginx + PHP-FPM**](docs/INSTALL-300-ROOMS.md) | نصب ویندوزی از `php -S` استفاده می‌کند که **تک‌نخی** است |
 
-**نصب‌کننده‌ها چه می‌کنند؟** یک PHP + MariaDB قابل‌حمل را بسته‌بندی/دانلود می‌کنند، پورت آزاد را
-خودکار پیدا می‌کنند، دیتابیس و اسکیما و کاربر ادمین را می‌سازند، و وب‌سرور + وب‌سوکت + دیتابیس را
-به‌عنوان **سرویس ویندوز** (اجرای خودکار هنگام بوت) ثبت می‌کنند. تمام خطاها فقط در فایل لاگ ذخیره
-می‌شوند و در صورت شکست، نصب به‌طور خودکار پاک‌سازی (rollback) می‌شود.
+> ⚠️ **چرا برای هتل بزرگ لینوکس؟** اندازه‌گیری واقعی روی همین پروژه: `php -S` روی
+> مسیر پورتال **۳۷ درخواست در ثانیه** با تأخیر ۵۴۶ms می‌دهد. بدتر اینکه یک دانلود
+> ویدیوی بزرگ **کل سرور را تا پایان دانلود قفل می‌کند**. با nginx، ویدیو مستقیم از
+> دیسک سرو می‌شود و اصلاً وارد PHP نمی‌شود.
+> جزئیات کامل: [راهنمای نصب ۳۰۰ اتاق](docs/INSTALL-300-ROOMS.md)
 
-> ⚠️ **نکته مهم:** فایل‌های `START.bat`، `INSTALL.bat`، `setup-windows.ps1` و `install.ps1` **روش Docker** هستند — اگر Docker نصب نباشد خطا می‌دهند. برای نصب بدون Docker از نصب‌کننده‌های بالا استفاده کنید.
+### 🐧 هتل بزرگ — Ubuntu Server LTS
 
-جزئیات ساخت نصب‌کننده‌ها: [نصب‌کننده هتل مدیا](installer/hotelmedia/README.md) · [نصب‌کننده All-in-One](installer/native/README.md)
+```bash
+git clone https://github.com/kish210/hotel-media.git
+cd hotel-media
+sudo bash deploy/install-production.sh
+```
 
-`SETUP-NO-DOCKER.bat` به‌صورت خودکار یک PHP + MariaDB قابل‌حمل را دانلود می‌کند، دیتابیس را می‌سازد و وب‌سرور + وب‌سوکت + دیتابیس را به‌عنوان **سرویس ویندوز** (با اجرای خودکار هنگام بوت) نصب می‌کند. بعد از نصب، داشبورد روی `http://localhost/admin` باز می‌شود.
+یک دستور، از سرور خالی تا سیستم آماده: nginx، PHP-FPM (با تعداد worker محاسبه‌شده
+از روی رم سرور)، MariaDB تنظیم‌شده برای بار هتل، سرویس WebSocket، کارهای زمان‌بندی‌شده،
+فایروال و غیرفعال‌سازی `install.php`.
+
+### 🪟 هتل کوچک — نصب‌کننده‌ی ویندوزی
+
+| روش | چه‌کاری بکنید |
+|-----|--------------|
+| 🏨 **فارسی (پیشنهادی)** | [`Setup-HotelMedia.exe`](https://github.com/kish210/hotel-media/releases/latest/download/Setup-HotelMedia.exe) را دابل‌کلیک کنید |
+| 🟢 **انگلیسی** | [`HotelMedia-setup.exe`](https://github.com/kish210/hotel-media/releases/latest/download/HotelMedia-setup.exe) را دابل‌کلیک کنید |
+| 📂 **روی همین پوشه** | فایل سرور را extract و روی **`SETUP-NO-DOCKER.bat`** دابل‌کلیک کنید |
+
+نصب‌کننده PHP و MariaDB قابل‌حمل را بسته‌بندی می‌کند، پورت آزاد پیدا می‌کند، دیتابیس و
+کاربر ادمین می‌سازد، و همه را به‌عنوان **سرویس ویندوز** ثبت می‌کند. در صورت شکست،
+نصب خودکار پاک‌سازی (rollback) می‌شود.
 
 ```powershell
-# یا از PowerShell (Run as Administrator):
+# یا از PowerShell با Run as Administrator:
 .\setup-native.ps1            # نصب
-.\setup-native.ps1 -Port 8080 # نصب روی پورت دلخواه
+.\setup-native.ps1 -Port 8080 # پورت دلخواه
 .\setup-native.ps1 -Uninstall # حذف سرویس‌ها
 ```
 
-جزئیات بیشتر: [installer/native/README.md](installer/native/README.md)
+جزئیات: [نصب‌کننده فارسی](installer/hotelmedia/README.md) · [نصب‌کننده All-in-One](installer/native/README.md)
 
----
+### 🔧 نصب دستی (توسعه‌دهنده)
 
-## ⚡ نصب یکپارچه با Docker — یک فایل، همه سیستم‌عامل‌ها
+<details>
+<summary>مراحل دستی</summary>
 
-یک نصب‌کننده هوشمند که **سیستم‌عامل شما را خودش تشخیص می‌دهد**، همه پیش‌نیازها (Docker / WSL2) را **دانلود، نصب و بررسی** می‌کند و سپس استک کامل را بالا می‌آورد. نیازی به انتخاب دستی اسکریپت نیست.
-
-| سیستم‌عامل | دستور | پشت صحنه چه می‌شود |
-|-----------|-------|--------------------|
-| 🪟 **Windows (هر نسخه)** | روی **`INSTALL.bat`** دوبار کلیک کنید (یا Run as administrator) | تشخیص Server / ۱۰ / ۱۱ و انتخاب خودکار اسکریپت درست + بالا بردن UAC |
-| 🪟 **Windows (PowerShell)** | `Set-ExecutionPolicy Bypass -Scope Process -Force; .\install.ps1` | همان منطق بالا |
-| 🐧 **Linux** | `sudo ./install` | نصب خودکار Docker (در صورت نبود) + اجرای کامل |
-| 🍎 **macOS** | `./install` | بررسی Docker Desktop + اجرای کامل |
-
-```powershell
-# Windows — PowerShell as Administrator
-git clone https://github.com/kish210/hotel-media.git
-cd hotel-media
-.\install.ps1
-```
+**پیش‌نیاز:** PHP 8.1+ (`pdo_mysql`، `mbstring`، `gd`، `zip`، `sockets`) · MySQL 8 یا MariaDB 10.6+ · Composer
 
 ```bash
-# Linux / macOS
-git clone https://github.com/kish210/hotel-media.git
-cd hotel-media
-chmod +x install && ./install
-```
-
-نصب‌کننده یکپارچه به‌صورت خودکار به اسکریپت درست هدایت می‌کند:
-- **Windows Server 2019/2022/2025** → [`setup-server2022.ps1`](setup-server2022.ps1) (WSL2 + Docker Engine)
-- **Windows 10 / 11** → [`setup-windows.ps1`](setup-windows.ps1) (Docker Desktop — دانلود/نصب خودکار)
-- **Linux / macOS** → [`setup.sh`](setup.sh) (Docker Compose)
-
-گزینه‌ها روی همه پلتفرم‌ها یکسان‌اند: `-Port 8080 -WsPort 9090 -Silent -Uninstall`.
-
----
-
-## 🚀 نصب سریع (دستی)
-
-### پیش‌نیاز
-- [Docker Desktop](https://www.docker.com/products/docker-desktop) (Windows/Mac)  
-- یا `curl -fsSL https://get.docker.com | sh` (Linux)
-
-```bash
-# 1. Clone
 git clone https://github.com/kish210/hotel-media.git
 cd hotel-media
 
-# 2. Environment
-cp .env.example .env
-# ویرایش .env — رمز DB، JWT secret و ...
+cp .env.example .env          # رمز DB و JWT_SECRET را ویرایش کنید
+composer install --no-dev --optimize-autoloader
 
-# 3. Start
-docker compose up -d --build
+php artisan db:migrate
+php artisan db:seed
 
-# 4. نصب database (یک‌بار)
-docker exec signage_php php /var/www/html/public/install.php
+php -S 0.0.0.0:8000 -t public public/index.php   # فقط برای توسعه
+php websocket/server.php                          # ترمینال جدا
 ```
+
+> `php -S` فقط برای توسعه است. برای هر نصب واقعی از
+> [`deploy/install-production.sh`](deploy/install-production.sh) یا نصب‌کننده‌ی ویندوزی استفاده کنید.
+
+</details>
 
 **آدرس‌ها پس از نصب:**
 
 | سرویس | آدرس |
 |-------|------|
-| 🎛️ Admin Panel | http://localhost/admin/dashboard |
-| 📺 Player | http://localhost/player/ |
-| 🗄️ phpMyAdmin | http://localhost:8081 |
-| 🔌 WebSocket | ws://localhost:8080 |
+| 🎛️ پنل مدیریت | `http://<server>/admin` |
+| 📺 آدرس تلویزیون‌ها | `http://<server>/tv` |
+| 🔌 WebSocket | `ws://<server>:8080` |
 
-**ورود پیش‌فرض:**
-- Email: `admin@signagecms.com`
-- Password: `Admin@123456`
+> ورود پیش‌فرض: `admin@hotelmedia.com` / `Admin@123456` — **فوراً عوض کنید**
 
 ---
 
-## 🪟 نصب سریع روی Windows Server 2022
+## 📺 راه‌اندازی تلویزیون‌های هتل
 
-روی **Windows Server 2022** کانتینرهای لینوکسی به‌صورت native و بدون Docker Desktop اجرا می‌شوند (از طریق **WSL2 + Docker Engine**). یک اسکریپت آماده همه‌چیز را خودکار نصب می‌کند: WSL2، Ubuntu، Docker Engine، استک کامل و اجرای خودکار هنگام بوت سرور.
+**یک آدرس برای همه‌ی تلویزیون‌ها:** `http://<IP سرور>/tv`
 
-### مرحله ۱ — اجرا
+هر تلویزیون خودش را با MAC می‌شناساند، کد اختصاصی می‌گیرد و از آن به بعد مستقیم به
+پورتال خودش می‌رود. برای ۳۰۰ اتاق، همان یک آدرس در همه وارد می‌شود.
 
-```powershell
-# PowerShell را با Run as Administrator باز کنید
-Set-ExecutionPolicy Bypass -Scope Process -Force
-.\setup-server2022.ps1
-```
+### LG — تلویزیون هتلی webOS
 
-یا فقط روی فایل **`START-SERVER-2022.bat`** راست‌کلیک کنید → **Run as administrator**.
+1. دکمه‌ی **MENU** را نگه دارید تا منو محو شود، سپس رها کنید
+2. **1105** را بزنید و **OK**
+3. **Manual Pro:Centric** → `Mode: HTML` · `Media Type: IP` · آدرس IP سرور · `Port: 80`
+4. ذخیره و ریبوت
 
-### مرحله ۲ — Restart (فقط بار اول)
+### Samsung — تلویزیون هتلی Tizen
 
-اگر WSL2 از قبل فعال نباشد، اسکریپت آن را فعال کرده و درخواست **Restart** می‌دهد. بعد از ری‌استارت، **دوباره همان اسکریپت را اجرا کنید** تا نصب ادامه پیدا کند.
+1. روی ریموت سریع بزنید: **MUTE → 1 → 1 → 9 → ENTER** (ظرف ۲ تا ۳ ثانیه)
+2. `Hospitality Mode` → **ON**
+3. `SI Vendor` → **URL Launcher** و آدرس بالا را در `URL Launcher Setting` وارد کنید
+4. ذخیره و ریبوت
 
-### اسکریپت چه می‌کند؟
+### Android TV
 
-| مرحله | کار |
-|------|------|
-| ۱ | فعال‌سازی WSL2 + VirtualMachinePlatform |
-| ۲ | نصب Ubuntu و Docker Engine + Compose |
-| ۳ | ساخت خودکار `.env` با رمزهای تصادفی امن |
-| ۴ | بالا آوردن استک با `docker compose up -d` |
-| ۵ | نصب دیتابیس (`install.php`) |
-| ۶ | باز کردن پورت‌ها در Firewall (وب، WebSocket، phpMyAdmin) |
-| ۷ | ساخت Scheduled Task برای **اجرای خودکار هنگام بوت سرور** |
+فایل APK را نصب کنید و در اولین اجرا آدرس سرور را وارد کنید.
 
-### گزینه‌ها
+> **محدودیت واقعی:** روی LG و Samsung، صفحه‌ی ما یک اپ HTML5 است. **ریبوت و خاموش/روشن
+> از راه دور** کار سرور Pro:Centric و LYNK REACH است، نه اپ — به همین دلیل این فرمان‌ها
+> برای این دو برند در پنل نمایش داده نمی‌شوند. روی Android TV همه‌ی فرمان‌ها کار می‌کنند.
 
-```powershell
-.\setup-server2022.ps1                       # نصب تعاملی
-.\setup-server2022.ps1 -Port 8080 -Silent    # نصب خودکار با پورت دلخواه
-.\setup-server2022.ps1 -Uninstall            # حذف استک و Scheduled Task
-```
-
-### مدیریت بعد از نصب
-
-```powershell
-# وضعیت سرویس‌ها
-wsl -d Ubuntu -u root -- bash -lc "cd /mnt/<drive>/<path-to-project> && docker compose ps"
-
-# مشاهده لاگ‌ها
-wsl -d Ubuntu -u root -- bash -lc "cd /mnt/<drive>/<path-to-project> && docker compose logs -f"
-
-# آپدیت
-wsl -d Ubuntu -u root -- bash -lc "cd /mnt/<drive>/<path-to-project> && docker compose pull && docker compose up -d"
-```
-
-> 💡 **چرا WSL2 و نه Docker Desktop؟** روی سرور headless، Docker Engine داخل WSL2 رایگان، سبک و بدون نیاز به لایسنس تجاری یا رابط گرافیکی است. دیتای دیتابیس روی named volume داخل ext4 ذخیره می‌شود (سریع و پایدار).
+سپس در پنل ← **مدیریت تلویزیون‌ها** هر دستگاه را به اتاقش وصل کنید.
 
 ---
-
 ## 📺 راه‌اندازی صفحه‌نمایش
 
 ### آدرس ثابت — همه دستگاه‌ها
@@ -291,7 +291,7 @@ FIDS_HTTP_PROXY=        # proxy ایران (اگه سرور خارج باشه)
 ## 📁 ساختار پروژه
 
 ```
-signage-cms/
+hotel-media/
 ├── app/
 │   ├── Controllers/
 │   │   ├── Api/              # REST API endpoints
@@ -305,7 +305,6 @@ signage-cms/
 ├── database/
 │   ├── migrations/           # SQL schema
 │   └── seeds/                # Sample data
-├── docker/                   # Nginx, PHP, MySQL configs
 ├── docs/                     # API documentation
 ├── public/                   # Web root
 │   ├── index.php
@@ -319,7 +318,6 @@ signage-cms/
 ├── routes/
 │   ├── web.php               # Web + player routes
 │   └── api.php               # API routes
-└── docker-compose.yml
 ```
 
 ---
@@ -352,19 +350,6 @@ GET  /api/v1/fids/live?airport_id=2    # خواندن از cache
 ```
 
 📄 **مستندات کامل API:** [`docs/API.md`](docs/API.md)
-
----
-
-## 🐳 سرویس‌های Docker
-
-| سرویس | Port | توضیح |
-|-------|------|-------|
-| nginx | 80 | Web server |
-| php-fpm | 9000 | PHP 8.2 |
-| mysql | 3306 | MySQL 8 |
-| redis | 6379 | Cache & Session |
-| websocket | 8080 | Real-time server |
-| phpmyadmin | 8081 | مدیریت DB |
 
 ---
 
@@ -414,7 +399,7 @@ GET  /api/v1/fids/live?airport_id=2    # خواندن از cache
 ## ⚙️ متغیرهای محیطی
 
 ```env
-APP_NAME=SignageCMS
+APP_NAME=Hotel Media
 APP_URL=http://localhost
 APP_DEBUG=false
 APP_TIMEZONE=Asia/Tehran
@@ -462,7 +447,7 @@ FIDS_HTTP_PROXY=          # http://proxy-ip:port (برای سرور خارج ا�
 - **Cache:** Redis
 - **Real-time:** Ratchet WebSocket
 - **Auth:** JWT + Session (dual)
-- **Container:** Docker + Nginx + PHP-FPM
+- **Runtime:** PHP built-in server / Nginx (سرویس ویندوز)
 - **Player Profiles:** modern, android_tv, lg_tv, samsung_tv, kiosk, minimal, legacy
 
 ---
@@ -471,13 +456,12 @@ FIDS_HTTP_PROXY=          # http://proxy-ip:port (برای سرور خارج ا�
 
 ### v1.8.0 — نسخه‌ی کامل (Complete Package)
 - 🏨 **نصب‌کننده‌ی فارسی هتل مدیا** — `Setup-HotelMedia.exe`: تک‌فایل، UI فارسی RTL، صفحه‌ی نام هتل، بدون هیچ پیش‌نیاز، سرویس‌های خودکار، Tray فارسی، صفحه‌ی welcome، rollback و uninstaller با سوال «حذف داده‌ها؟»
-- 🟢 **نصب‌کننده‌ی All-in-One بدون Docker** — `SignageCMS-setup.exe`: PHP + MariaDB بسته‌بندی‌شده، بدون Docker/WSL2
-- 🖥️ **نصب درجا بدون Docker** — `SETUP-NO-DOCKER.bat` / `setup-native.ps1`
+- 🟢 **نصب‌کننده‌ی All-in-One** — `HotelMedia-setup.exe`: PHP + MariaDB بسته‌بندی‌شده
+- 🖥️ **نصب درجا** — `SETUP-NO-DOCKER.bat` / `setup-native.ps1`
 - 🔧 پایداری نصب: رفع باگ بحرانی `$Args` (سرویس‌ها حالا واقعاً روی پورت listen می‌کنند)، سازگاری کامل PowerShell 5.1 / Windows Server (UTF-8 BOM)، مدیریت خطای native commands، ریدایرکت `/admin`
 - 🌐 یافتن خودکار پورت آزاد + Windows Firewall خودکار
 
 ### v1.6.0
-- ✅ **نصب سریع Windows Server 2022** — اسکریپت `setup-server2022.ps1` (WSL2 + Docker Engine، بدون Docker Desktop)
 - ✅ اجرای خودکار استک هنگام بوت سرور (Scheduled Task)
 - ✅ نصب‌کننده Windows 10/11 — `setup-windows.ps1` + `START.bat`
 - ✅ Sama Rayaneh Kish (سماع رایانه کیش) branding

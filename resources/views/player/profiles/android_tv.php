@@ -1,6 +1,6 @@
 <?php
 /**
- * SignageCMS Player — Android TV Profile
+ * Hotel Media Player — Android TV Profile
  * Optimized: lightweight, no heavy libs, compatible with WebView
  */
 $settings = json_decode($screen['settings'] ?? '{}', true) ?: [];
@@ -15,7 +15,7 @@ $showClock  = !empty($settings['show_clock']);
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>SignageCMS</title>
+<title>Hotel Media</title>
 <style>
 * { margin:0; padding:0; -webkit-box-sizing:border-box; box-sizing:border-box; }
 html, body { width:100%; height:100%; background:#000; overflow:hidden; }
@@ -104,7 +104,7 @@ html, body { width:100%; height:100%; background:#000; overflow:hidden; }
   <div id="act">
     <div id="act-box">
       <div style="font-size:36px;margin-bottom:12px;">📺</div>
-      <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;">SignageCMS</div>
+      <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;">Hotel Media</div>
       <div style="font-size:12px;color:#64748b;margin-bottom:20px;">کد فعال‌سازی را وارد کنید</div>
       <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;font-family:monospace;">
         <?= e($screen['code'] ?? '') ?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * SignageCMS Player — LG WebOS Profile
+ * Hotel Media Player — LG WebOS Profile
  * Optimized for LG Smart TV (webOS 3.x, 4.x, 5.x, 6.x)
  * Uses native HLS where available, minimal JS, no heavy libs
  */
@@ -16,7 +16,7 @@ $posMap  = ['bottom-right'=>'bottom:14px;right:14px','bottom-left'=>'bottom:14px
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1280">
-<title>SignageCMS — LG</title>
+<title>Hotel Media — LG</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body,html{width:1280px;height:720px;overflow:hidden;background:#000;}
@@ -44,7 +44,7 @@ body,html{width:1280px;height:720px;overflow:hidden;background:#000;}
   <div id="act">
     <div id="act-box">
       <div style="font-size:32px;margin-bottom:10px;">📺</div>
-      <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:4px;">SignageCMS</div>
+      <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:4px;">Hotel Media</div>
       <div style="font-size:11px;color:#64748b;margin-bottom:18px;">کد فعال‌سازی را وارد کنید</div>
       <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;font-family:monospace;"><?= e($screen['code']??'') ?></div>
       <input id="act-inp" type="text" maxlength="6" placeholder="______">

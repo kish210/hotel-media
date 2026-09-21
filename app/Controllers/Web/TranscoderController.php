@@ -64,7 +64,7 @@ class TranscoderController extends Controller
     public function start(Request $req): void
     {
         if (!$this->ffmpegBin) {
-            $this->flash('error', 'FFmpeg نصب نیست — docker compose up -d --build را اجرا کنید');
+            $this->flash('error', 'FFmpeg نصب نیست — آن را روی سرور نصب کنید (winget install Gyan.FFmpeg)');
             $this->redirect('/admin/transcoder');
             return;
         }

@@ -1,12 +1,12 @@
 #!/bin/bash
 # ╔══════════════════════════════════════════════════════════════════════════╗
-# ║   SignageCMS In-Flight Bridge — Raspberry Pi Setup Script               ║
+# ║   Hotel Media In-Flight Bridge — Raspberry Pi Setup Script               ║
 # ║   Tested on: Raspberry Pi OS Bullseye / Bookworm (32-bit & 64-bit)      ║
 # ║                                                                          ║
 # ║   Installs:                                                              ║
 # ║     • gpsd (GPS daemon)                                                  ║
 # ║     • rtl-sdr + dump1090-fa  (ADS-B receiver)                           ║
-# ║     • SignageCMS Bridge service (Python 3, no extra pip packages)        ║
+# ║     • Hotel Media Bridge service (Python 3, no extra pip packages)        ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
 
 set -euo pipefail
@@ -25,7 +25,7 @@ fi
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════╗"
-echo "║  SignageCMS In-Flight Bridge v${BRIDGE_VER} — Setup              ║"
+echo "║  Hotel Media In-Flight Bridge v${BRIDGE_VER} — Setup              ║"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -140,7 +140,7 @@ else
 fi
 
 # ── 6. Install bridge script ───────────────────────────────────────────────
-echo "[6/7] نصب SignageCMS Bridge..."
+echo "[6/7] نصب Hotel Media Bridge..."
 mkdir -p "$BRIDGE_DIR" "$CONFIG_DIR"
 
 # Copy the bridge script
@@ -162,7 +162,7 @@ if [ ! -f "${CONFIG_DIR}/config.json" ]; then
   "dump1090_url": "http://localhost:8080",
   "dump1090_enabled": true,
   "dump1090_interval": 5,
-  "signagecms_url": "",
+  "hotelmedia_url": "",
   "flight_id": null,
   "api_token": "",
   "push_enabled": false,
@@ -175,8 +175,8 @@ fi
 # Systemd service
 cat > "$SERVICE_FILE" <<EOF
 [Unit]
-Description=SignageCMS In-Flight Bridge
-Documentation=https://github.com/your-repo/signage-cms
+Description=Hotel Media In-Flight Bridge
+Documentation=https://github.com/your-repo/hotel-media
 After=network.target gpsd.service
 Wants=gpsd.service
 
@@ -235,7 +235,7 @@ echo "╠═══════════════════════�
 echo "║  آدرس این Raspberry Pi:                                   ║"
 echo "║    http://${IP}:5055/api/status"
 echo "║                                                           ║"
-echo "║  در پنل SignageCMS:                                       ║"
+echo "║  در پنل Hotel Media:                                       ║"
 echo "║    In-Flight → پرواز → Raspberry Pi → IP: ${IP}"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""

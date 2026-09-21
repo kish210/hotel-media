@@ -27,7 +27,11 @@ class Database
                 PDO::ATTR_EMULATE_PREPARES   => false,
                 PDO::ATTR_STRINGIFY_FETCHES  => false,
                 PDO::MYSQL_ATTR_FOUND_ROWS   => true,
-                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
+                // نشست را به همان منطقه زمانی PHP قفل می‌کنیم، وگرنه NOW() و
+                // date() به اندازه‌ی اختلاف ساعت سرور و PHP از هم فاصله می‌گیرند
+                // و هر مقایسه‌ی تاریخی (انقضا، در حال پخش، SLA) غلط می‌شود.
+                PDO::MYSQL_ATTR_INIT_COMMAND =>
+                    "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci, time_zone = '" . self::tzOffset() . "'",
             ]);
         } catch (PDOException $e) {
             error_log("DB connection failed: " . $e->getMessage());
@@ -39,6 +43,16 @@ class Database
     {
         if (self::$instance === null) self::$instance = new self();
         return self::$instance;
+    }
+
+    /** offset فعلی PHP به شکلی که MySQL می‌فهمد: «+03:30» */
+    private static function tzOffset(): string
+    {
+        $offset = (new \DateTime('now', new \DateTimeZone(date_default_timezone_get())))->getOffset();
+        $sign   = $offset < 0 ? '-' : '+';
+        $offset = abs($offset);
+
+        return sprintf('%s%02d:%02d', $sign, intdiv($offset, 3600), intdiv($offset % 3600, 60));
     }
 
     public function pdo(): PDO { return $this->pdo; }

@@ -40,8 +40,8 @@ jobs:
       - name: Upload Windows ZIP
         uses: actions/upload-artifact@v7
         with:
-          name: SignageCMS-Windows-v${{ steps.version.outputs.VERSION }}
-          path: dist/SignageCMS-v*.zip
+          name: Hotel Media-Windows-v${{ steps.version.outputs.VERSION }}
+          path: dist/HotelMedia-v*.zip
           retention-days: 90
 
       - name: Package info

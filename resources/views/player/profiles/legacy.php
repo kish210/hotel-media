@@ -1,6 +1,6 @@
 <?php
 /**
- * SignageCMS Player — Legacy Profile
+ * Hotel Media Player — Legacy Profile
  * Compatible: Android 4+, old TVs, basic browsers
  * No HLS.js, No CSS animations, No Flexbox
  */
@@ -12,7 +12,7 @@ $tickerText = $settings['ticker_text'] ?? '';
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
-<title>SignageCMS — <?= e($screen['name'] ?? '') ?></title>
+<title>Hotel Media — <?= e($screen['name'] ?? '') ?></title>
 <style>
 body,html { margin:0; padding:0; background:#000; overflow:hidden; width:100%; height:100%; }
 #wrap { position:relative; width:100%; height:100%; }
@@ -31,7 +31,7 @@ body,html { margin:0; padding:0; background:#000; overflow:hidden; width:100%; h
 <div id="wrap">
   <?php if (($screen['status'] ?? '') !== 'active'): ?>
   <div id="act">
-    <div style="color:#fff;font-size:20px;margin-bottom:20px;">SignageCMS · <?= e($screen['code'] ?? '') ?></div>
+    <div style="color:#fff;font-size:20px;margin-bottom:20px;">Hotel Media · <?= e($screen['code'] ?? '') ?></div>
     <input type="text" id="code" maxlength="6" placeholder="کد فعال‌سازی">
     <button onclick="activate()">فعال‌سازی</button>
     <div id="msg" style="color:#ef4444;margin-top:12px;"></div>

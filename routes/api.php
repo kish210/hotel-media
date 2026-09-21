@@ -251,3 +251,109 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
 
 // Heartbeat endpoint برای پلیر (پخش فوری رو برمی‌گردونه)
 $router->post('/api/v1/screens/{code}/heartbeat', [\App\Controllers\Api\ScreenController::class, 'heartbeat']);
+
+// ── Guest Services — خدمات مهمان (پنل کارکنان، protected) ────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    // کاتالوگ خدمات
+    $r->get('/guest/services',              [\App\Controllers\Api\GuestServiceController::class, 'services']);
+    $r->post('/guest/services',             [\App\Controllers\Api\GuestServiceController::class, 'storeService']);
+    $r->put('/guest/services/{id}',         [\App\Controllers\Api\GuestServiceController::class, 'updateService']);
+    $r->delete('/guest/services/{id}',      [\App\Controllers\Api\GuestServiceController::class, 'destroyService']);
+    // صف درخواست‌ها
+    $r->get('/guest/requests/stats',        [\App\Controllers\Api\GuestServiceController::class, 'stats']);
+    $r->get('/guest/requests',              [\App\Controllers\Api\GuestServiceController::class, 'requests']);
+    $r->get('/guest/requests/{id}',         [\App\Controllers\Api\GuestServiceController::class, 'showRequest']);
+    $r->put('/guest/requests/{id}/status',  [\App\Controllers\Api\GuestServiceController::class, 'updateStatus']);
+});
+
+// ── Guest Portal — تلویزیون اتاق (بدون JWT، هویت با کد صفحه‌نمایش)
+$router->get('/api/v1/guest/{code}/services',                 [\App\Controllers\Api\GuestPortalController::class, 'services']);
+$router->get('/api/v1/guest/{code}/requests',                 [\App\Controllers\Api\GuestPortalController::class, 'myRequests']);
+$router->post('/api/v1/guest/{code}/requests',                [\App\Controllers\Api\GuestPortalController::class, 'store']);
+$router->post('/api/v1/guest/{code}/requests/{id}/cancel',    [\App\Controllers\Api\GuestPortalController::class, 'cancel']);
+
+// ── EPG — راهنمای الکترونیکی برنامه‌ها (پنل، protected) ──────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    // منابع
+    $r->get('/epg/sources',                 [\App\Controllers\Api\EpgController::class, 'sources']);
+    $r->post('/epg/sources',                [\App\Controllers\Api\EpgController::class, 'storeSource']);
+    $r->delete('/epg/sources/{id}',         [\App\Controllers\Api\EpgController::class, 'destroySource']);
+    $r->post('/epg/sources/{id}/sync',      [\App\Controllers\Api\EpgController::class, 'syncSource']);
+    // جدول پخش
+    $r->get('/epg/now',                     [\App\Controllers\Api\EpgController::class, 'now']);
+    $r->get('/epg/grid',                    [\App\Controllers\Api\EpgController::class, 'grid']);
+    $r->get('/epg/channel/{id}',            [\App\Controllers\Api\EpgController::class, 'channel']);
+});
+
+// ── EPG عمومی — تلویزیون اتاق (بدون JWT، هویت با کد صفحه‌نمایش)
+$router->get('/api/v1/player/epg/{code}',   [\App\Controllers\Api\EpgController::class, 'playerNow']);
+
+// ── Portal — صفحه اصلی تلویزیون اتاق (بدون JWT، هویت با کد صفحه‌نمایش)
+$router->get('/api/v1/portal/{code}',      [\App\Controllers\Api\PortalController::class, 'home']);
+$router->get('/api/v1/portal/{code}/live', [\App\Controllers\Api\PortalController::class, 'live']);
+
+// ── Device — سمت تلویزیون (بدون JWT) ─────────────────────────────
+$router->post('/api/v1/device/enroll',            [\App\Controllers\Api\DeviceController::class, 'enroll']);
+$router->get('/api/v1/device/{code}/commands',    [\App\Controllers\Api\DeviceController::class, 'commands']);
+$router->post('/api/v1/device/{code}/ack',        [\App\Controllers\Api\DeviceController::class, 'ack']);
+
+// ── Device — پنل مدیریت (protected) ──────────────────────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    $r->get('/devices/stats',                 [\App\Controllers\Api\DeviceController::class, 'stats']);
+    $r->get('/devices/tokens',                [\App\Controllers\Api\DeviceController::class, 'tokens']);
+    $r->post('/devices/tokens',               [\App\Controllers\Api\DeviceController::class, 'storeToken']);
+    $r->delete('/devices/tokens/{id}',        [\App\Controllers\Api\DeviceController::class, 'destroyToken']);
+    $r->post('/devices/bulk-command',         [\App\Controllers\Api\DeviceController::class, 'bulkCommand']);
+    $r->get('/devices',                       [\App\Controllers\Api\DeviceController::class, 'index']);
+    $r->get('/devices/{id}/history',          [\App\Controllers\Api\DeviceController::class, 'history']);
+    $r->post('/devices/{id}/approve',         [\App\Controllers\Api\DeviceController::class, 'approve']);
+    $r->post('/devices/{id}/assign-room',     [\App\Controllers\Api\DeviceController::class, 'assignRoom']);
+    $r->post('/devices/{id}/command',         [\App\Controllers\Api\DeviceController::class, 'command']);
+});
+
+// ── Folio / مینی‌بار / PPV / خروج سریع — مهمان (بدون JWT) ────────
+$router->get('/api/v1/guest/{code}/folio',                [\App\Controllers\Api\FolioController::class, 'guestFolio']);
+$router->get('/api/v1/guest/{code}/menus',                [\App\Controllers\Api\FolioController::class, 'guestMenus']);
+$router->post('/api/v1/guest/{code}/checkout',            [\App\Controllers\Api\FolioController::class, 'guestCheckout']);
+$router->get('/api/v1/guest/{code}/vod/{id}/access',      [\App\Controllers\Api\FolioController::class, 'guestAccess']);
+$router->post('/api/v1/guest/{code}/vod/{id}/purchase',   [\App\Controllers\Api\FolioController::class, 'guestPurchase']);
+
+// ── Folio — کارکنان (protected) ─────────────────────────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    // صورتحساب
+    $r->get('/rooms/{id}/folio',        [\App\Controllers\Api\FolioController::class, 'roomFolio']);
+    $r->post('/rooms/{id}/charges',     [\App\Controllers\Api\FolioController::class, 'addCharge']);
+    $r->post('/charges/{id}/void',      [\App\Controllers\Api\FolioController::class, 'voidCharge']);
+    // مینی‌بار
+    $r->get('/minibar/items',           [\App\Controllers\Api\FolioController::class, 'minibarItems']);
+    $r->post('/minibar/items',          [\App\Controllers\Api\FolioController::class, 'storeMinibarItem']);
+    $r->put('/minibar/items/{id}',      [\App\Controllers\Api\FolioController::class, 'updateMinibarItem']);
+    $r->delete('/minibar/items/{id}',   [\App\Controllers\Api\FolioController::class, 'destroyMinibarItem']);
+    $r->post('/rooms/{id}/minibar',     [\App\Controllers\Api\FolioController::class, 'recordMinibar']);
+    // خروج سریع
+    $r->get('/checkout-requests',       [\App\Controllers\Api\FolioController::class, 'checkoutRequests']);
+    $r->post('/checkout-requests/{id}', [\App\Controllers\Api\FolioController::class, 'handleCheckout']);
+    // ارسال به PMS
+    $r->post('/pms/push',               [\App\Controllers\Api\FolioController::class, 'pmsPush']);
+    $r->post('/pms/test',               [\App\Controllers\Api\FolioController::class, 'pmsTest']);
+    $r->post('/charges/{id}/pms-retry', [\App\Controllers\Api\FolioController::class, 'pmsRetry']);
+});
+
+// ── منوهای تصویری (protected) ───────────────────────────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    $r->get('/menu-boards',                       [\App\Controllers\Api\MenuBoardController::class, 'index']);
+    $r->post('/menu-boards',                      [\App\Controllers\Api\MenuBoardController::class, 'store']);
+    $r->put('/menu-boards/{id}',                  [\App\Controllers\Api\MenuBoardController::class, 'update']);
+    $r->delete('/menu-boards/{id}',               [\App\Controllers\Api\MenuBoardController::class, 'destroy']);
+    $r->post('/menu-boards/{id}/pages',           [\App\Controllers\Api\MenuBoardController::class, 'uploadPage']);
+    $r->post('/menu-boards/{id}/pages/sort',      [\App\Controllers\Api\MenuBoardController::class, 'sortPages']);
+    $r->delete('/menu-board-pages/{pageId}',      [\App\Controllers\Api\MenuBoardController::class, 'destroyPage']);
+});
+
+// ── Multicast — پخش زنده یک‌باره روی شبکه ────────────────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    $r->get('/multicast/config',       [\App\Controllers\Api\MulticastController::class, 'config']);
+    $r->post('/multicast/config',      [\App\Controllers\Api\MulticastController::class, 'saveConfig']);
+    $r->post('/multicast/assign',      [\App\Controllers\Api\MulticastController::class, 'assign']);
+    $r->get('/multicast/playlist.m3u', [\App\Controllers\Api\MulticastController::class, 'playlist']);
+});

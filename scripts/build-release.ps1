@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    SignageCMS — ساخت بسته release (ZIP)
+    Hotel Media — ساخت بسته release (ZIP)
 .DESCRIPTION
     فایل‌های پروژه را بدون .git و فایل‌های بزرگ فشرده می‌کند.
 .EXAMPLE
@@ -17,14 +17,14 @@ $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ProjectDir = Split-Path $PSScriptRoot -Parent
-$ZipName    = "SignageCMS-v${Version}.zip"
+$ZipName    = "HotelMedia-v${Version}.zip"
 $OutDir     = if ($Output) { $Output } else { Split-Path $ProjectDir -Parent }
 $ZipPath    = Join-Path $OutDir $ZipName
 $TempDir    = Join-Path $env:TEMP "signage_release_$(Get-Random)"
 
 Write-Host ""
 Write-Host "╔══════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║   SignageCMS Release Builder v1.0       ║" -ForegroundColor Cyan
+Write-Host "║   Hotel Media Release Builder v1.0       ║" -ForegroundColor Cyan
 Write-Host "╚══════════════════════════════════════════╝" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  پروژه:  $ProjectDir"  -ForegroundColor Gray
@@ -169,8 +169,8 @@ Write-Host "  📂  فایل‌ها: $Copied فایل" -ForegroundColor White
 Write-Host ""
 Write-Host "  نحوه استفاده روی سیستم جدید:" -ForegroundColor Cyan
 Write-Host "    1. فایل ZIP را extract کنید"      -ForegroundColor Gray
-Write-Host "    2. Windows: روی START.bat دابل‌کلیک کنید (یا setup-windows.ps1)" -ForegroundColor Gray
-Write-Host "    3. Linux:   bash setup.sh"          -ForegroundColor Gray
+Write-Host "    2. Windows: روی SETUP-NO-DOCKER.bat دابل‌کلیک کنید (یا install.ps1)" -ForegroundColor Gray
+Write-Host "    3. Linux:   bash install.sh"        -ForegroundColor Gray
 Write-Host ""
 
 # بازکردن پوشه خروجی

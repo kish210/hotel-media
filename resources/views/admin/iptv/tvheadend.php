@@ -22,7 +22,7 @@
     <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:6px;">TVHeadend چیست؟</div>
     <div style="font-size:12px;color:#94a3b8;line-height:1.8;">
       TVHeadend یک سرور پخش زنده تلویزیون است که کانال‌های DVB-T، DVB-S، IPTV و HDHR را مدیریت می‌کند.
-      با اتصال SignageCMS به TVHeadend، کانال‌های زنده به‌صورت خودکار وارد بخش IPTV می‌شوند
+      با اتصال Hotel Media به TVHeadend، کانال‌های زنده به‌صورت خودکار وارد بخش IPTV می‌شوند
       و در پلیرها قابل نمایش خواهند بود.
     </div>
     <div style="margin-top:8px;font-size:11px;color:#64748b;">

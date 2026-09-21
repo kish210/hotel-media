@@ -13,8 +13,23 @@ CREATE TABLE IF NOT EXISTS `screen_groups` (
     KEY `idx_tenant` (`tenant_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- اضافه کردن ستون‌ها به screens (installer از addColIfMissing استفاده می‌کنه)
--- این فایل به عنوان reference نگه داشته می‌شه؛ installer جداگانه ستون‌ها رو چک می‌کنه
+-- ‏001_complete_schema این جدول را بدون type / sort_order / is_active می‌سازد،
+-- پس CREATE بالا روی نصب موجود no-op است و ستون‌ها باید جداگانه اضافه شوند.
+-- بدون این بلاک، INSERT پایین روی دیتابیس تازه با «Unknown column 'type'» شکست می‌خورد.
+SET @q = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='screen_groups' AND COLUMN_NAME='type')=0,
+  "ALTER TABLE `screen_groups` ADD COLUMN `type` ENUM('signage','iptv') NOT NULL DEFAULT 'signage'",
+  'SELECT 1');
+PREPARE s FROM @q; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @q = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='screen_groups' AND COLUMN_NAME='sort_order')=0,
+  'ALTER TABLE `screen_groups` ADD COLUMN `sort_order` SMALLINT UNSIGNED DEFAULT 0',
+  'SELECT 1');
+PREPARE s FROM @q; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @q = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='screen_groups' AND COLUMN_NAME='is_active')=0,
+  'ALTER TABLE `screen_groups` ADD COLUMN `is_active` TINYINT(1) NOT NULL DEFAULT 1',
+  'SELECT 1');
+PREPARE s FROM @q; EXECUTE s; DEALLOCATE PREPARE s;
 
 -- داده نمونه گروه‌ها
 INSERT IGNORE INTO `screen_groups` (id, tenant_id, name, type, color) VALUES

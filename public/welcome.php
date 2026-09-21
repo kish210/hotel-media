@@ -24,7 +24,7 @@ if (is_file($envFile)) {
         if ($k === 'ADMIN_PASSWORD' && $v !== '') $adminPass  = $v;
     }
 }
-$adminEmail = $adminEmail ?? 'admin@signagecms.com';
+$adminEmail = $adminEmail ?? 'admin@hotelmedia.com';
 $adminPass  = $adminPass  ?? 'Admin@123456';
 $e = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
 ?>

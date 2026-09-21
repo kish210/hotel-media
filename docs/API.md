@@ -1,4 +1,4 @@
-# SignageCMS REST API Documentation
+# Hotel Media REST API Documentation
 **Base URL:** `https://your-domain.com/api/v1`  
 **Auth:** Bearer token (JWT) in `Authorization` header  
 **Content-Type:** `application/json`
@@ -512,7 +512,7 @@ Returns all flights for the tenant.
 
 ## Raspberry Pi Bridge API
 
-> Runs on Raspberry Pi at port 5055 — called by SignageCMS backend (server-side proxy)
+> Runs on Raspberry Pi at port 5055 — called by Hotel Media backend (server-side proxy)
 
 ### GET :5055/api/status — Full status
 ```json
@@ -538,7 +538,7 @@ Returns all flights for the tenant.
 ### POST :5055/api/config — Update config
 ```json
 {
-  "signagecms_url":  "https://your-server.com",
+  "hotelmedia_url":  "https://your-server.com",
   "flight_id":       1,
   "api_token":       "JWT_TOKEN",
   "push_enabled":    true,
@@ -548,9 +548,9 @@ Returns all flights for the tenant.
 
 ---
 
-## SignageCMS → RPi Proxy Endpoints
+## Hotel Media → RPi Proxy Endpoints
 
-> Auth: JWT — SignageCMS fetches from RPi on behalf of admin
+> Auth: JWT — Hotel Media fetches from RPi on behalf of admin
 
 ### GET /inflight/{id}/rpi-status
 Proxies `GET :5055/api/status` from the flight's saved RPi IP.
@@ -565,7 +565,7 @@ Also auto-calculates `progress_pct` from GPS position on great-circle route.
 ```
 
 ### POST /inflight/{id}/rpi-push-config
-Sends SignageCMS connection config to RPi.
+Sends Hotel Media connection config to RPi.
 ```json
 {
   "cms_url":       "https://your-server.com",
@@ -574,3 +574,349 @@ Sends SignageCMS connection config to RPi.
   "push_interval": 10
 }
 ```
+
+---
+
+## Guest Services API — خدمات مهمان
+
+گردش‌کار کامل سفارش از تلویزیون اتاق تا صف کاری کارکنان.
+جدول‌ها: `guest_services`, `guest_requests`, `guest_request_items`, `guest_request_log`
+(migration `017_guest_services.sql`).
+
+**دسته‌ها:** `room_service` · `breakfast` · `housekeeping` · `laundry` · `taxi` ·
+`maintenance` · `wakeup` · `feedback` · `other`
+
+**وضعیت‌ها و گذارهای مجاز:**
+
+```
+pending  → accepted | cancelled
+accepted → in_progress | done | cancelled
+in_progress → done | cancelled
+done / cancelled → (نهایی)
+```
+
+### کاتالوگ خدمات (JWT یا session)
+
+### GET /guest/services
+پارامترها: `category`, `active`
+
+### POST /guest/services
+```json
+{ "name_fa": "صبحانه کامل", "category": "breakfast", "price": 450000,
+  "unit": "پرس", "available_from": "06:00", "available_to": "10:00" }
+```
+
+### PUT /guest/services/{id}
+### DELETE /guest/services/{id}
+حذف سرویس، اقلام سفارش‌های قبلی را خراب نمی‌کند (`service_id` خالی می‌شود، نام در `name_snapshot` می‌ماند).
+
+### صف درخواست‌ها (JWT یا session)
+
+### GET /guest/requests
+پارامترها: `status` (`open` = همه‌ی بازها), `category`, `room`, `from`, `to`, `page`, `per_page`
+
+### GET /guest/requests/stats
+```json
+{ "pending": 3, "in_progress": 2, "done_today": 14, "revenue_today": 8400000,
+  "avg_minutes": 11.4, "avg_rating": 4.6, "by_category": [...], "wakeups_next": [...] }
+```
+
+### GET /guest/requests/{id}
+شامل `items` و `log` (تاریخچه‌ی کامل تغییر وضعیت).
+
+### PUT /guest/requests/{id}/status
+```json
+{ "status": "accepted", "assigned_to": 5, "staff_note": "..." }
+```
+گذار نامعتبر → `422`.
+
+---
+
+## Guest Portal (Public) — تلویزیون اتاق
+
+بدون JWT. هویت با **کد صفحه‌نمایش** (`screens.code`) که به یک اتاق
+(`screens.iptv_room_id`) متصل است. اگر صفحه به اتاقی وصل نباشد → `404`.
+
+### GET /guest/{screen_code}/services
+```json
+{ "success": true, "data": {
+    "room_number": "101", "guest_name": "...", "guest_lang": "fa",
+    "categories": { "breakfast": [ { "id": 8, "name_fa": "صبحانه کامل",
+      "price": 450000, "available_now": true } ] } } }
+```
+`available_now` بازه‌ی سرویس‌دهی را (حتی بازه‌های عبوری از نیمه‌شب) محاسبه می‌کند.
+
+### POST /guest/{screen_code}/requests
+```json
+{ "category": "room_service",
+  "items": [ { "service_id": 8, "qty": 2 } ],
+  "note": "بدون نمک",
+  "scheduled_at": "2026-09-22 07:30" }
+```
+- فقط وقتی اتاق `occupied` است → در غیر این صورت `409`
+- `wakeup`: `scheduled_at` الزامی و باید در آینده باشد
+- `feedback`: `rating` بین ۱ تا ۵ الزامی
+- `room_service` / `laundry` / `breakfast`: حداقل یک قلم الزامی
+- قیمت‌ها **سمت سرور** از کاتالوگ خوانده می‌شود، نه از بدنه‌ی درخواست
+- محدودیت: حداکثر ۱۰ درخواست باز و ۵ درخواست در ۱۰ دقیقه برای هر اتاق → `429`
+
+### GET /guest/{screen_code}/requests
+فقط درخواست‌های **اقامت جاری** (از `check_in_at` به بعد) — مهمان قبلی دیده نمی‌شود.
+
+### POST /guest/{screen_code}/requests/{id}/cancel
+فقط وقتی هنوز `pending` است؛ بعد از پذیرش → `409`.
+
+---
+
+## EPG API — راهنمای الکترونیکی برنامه‌ها
+
+جدول‌ها: `epg_programs`, `epg_sources`, `epg_channel_map` (migration `018_epg.sql`).
+کلید تطبیق روی کانال، ستون موجود `iptv_channels.epg_id` است.
+
+**منابع پشتیبانی‌شده:** `tvheadend` (از `/api/epg/events/grid`) ·
+`xmltv_url` (آدرس اینترنتی) · `xmltv_file` (فایل داخل `storage/`)
+
+**ترتیب تطبیق کانال:** نگاشت دستی (`epg_channel_map`) ← `iptv_channels.epg_id`
+← `iptv_channels.tvh_uuid` ← نام یکسان کانال.
+
+### مدیریت منابع (JWT یا session)
+
+### GET /epg/sources
+هر منبع به‌همراه `last_sync_at`، `last_sync_msg` و تعداد برنامه‌های پیش‌رو.
+
+### POST /epg/sources
+```json
+{ "name": "تی‌وی‌هدند اصلی", "source_type": "tvheadend",
+  "tvh_source_id": 1, "days_ahead": 7 }
+```
+```json
+{ "name": "XMLTV ملی", "source_type": "xmltv_url",
+  "url": "https://example.com/epg.xml", "days_ahead": 3 }
+```
+
+### POST /epg/sources/{id}/sync
+همگام‌سازی دستی. منبع ناموفق → `502` با پیام خطا.
+
+### DELETE /epg/sources/{id}
+منبع و همه‌ی برنامه‌های آن را حذف می‌کند.
+
+### جدول پخش (JWT یا session)
+
+### GET /epg/grid
+پارامترها: `from` (پیش‌فرض الان)، `hours` (۱ تا ۴۸، پیش‌فرض ۶)،
+`channel_id` (اختیاری، چند شناسه با کاما).
+خروجی بر اساس کانال گروه‌بندی شده — همان شکلی که رابط جدول EPG می‌خواهد.
+
+### GET /epg/channel/{id}
+برنامه‌های یک کانال تا `days` روز جلوتر (۱ تا ۱۴، پیش‌فرض ۲).
+
+### GET /epg/now
+برای هر کانال: برنامه‌ی در حال پخش، برنامه‌ی بعدی و `progress` (درصد پیشرفت).
+
+---
+
+## EPG (Public) — تلویزیون اتاق
+
+### GET /player/epg/{screen_code}
+بدون JWT. `tenant` از روی خود صفحه‌نمایش گرفته می‌شود.
+با `?current_only=1` فقط کانالی که همین صفحه روی آن است برمی‌گردد.
+
+```json
+{ "success": true, "data": [
+  { "channel_id": 4, "channel_name": "شبکه یک", "logo_url": "...",
+    "now":  { "title": "اخبار ساعت ۲۰", "starts_at": "...", "ends_at": "...", "minutes": 60 },
+    "next": { "title": "فیلم سینمایی", "starts_at": "..." },
+    "progress": 42 } ] }
+```
+
+### همگام‌سازی خودکار
+
+```bash
+php artisan epg:sync        # همه منابع فعال همه tenant ها
+php artisan epg:sync 3      # فقط tenant شماره ۳
+```
+
+روی ویندوز با Task Scheduler و روی لینوکس با cron، روزی یک‌بار اجرا کنید.
+رویدادهای گذشته‌ی بیش از ۲ روز خودکار پاک می‌شوند تا جدول رشد بی‌پایان نکند.
+
+---
+
+## Portal API — صفحه اصلی تلویزیون اتاق
+
+همه‌چیزِ لازم برای رندر صفحه‌ی اصلی در **یک درخواست**. بدون JWT؛ هویت با
+کد صفحه‌نمایش، چون ست‌تاپ‌باکس چیزی جز کد خودش نمی‌داند.
+(migration `019_portal_experience.sql` — فاز ۳ نقشه‌راه)
+
+### GET /portal/{screen_code}
+
+پارامتر اختیاری `lang` زبان اتاق را override می‌کند.
+
+```json
+{ "success": true, "data": {
+  "screen":   { "code": "TV101", "name": "TV اتاق ۱۰۱" },
+  "room":     { "room_number": "101", "occupied": true, "guest_name": "آقای احمدی" },
+  "branding": { "logo_url": "...", "accent_color": "#0ea5e9",
+                "backgrounds": ["/uploads/s1.jpg", "/uploads/s2.jpg"],
+                "bg_dim": 0.4, "bg_blur": 4,
+                "welcome_title": "...", "welcome_sub": "...",
+                "ticker": { "text": "...", "color": "#fff", "bg": "#111", "speed": 30 } },
+  "menu":     [ { "id": 3, "type": "live", "label": "Live TV",
+                  "icon": "fas fa-tv", "color": "#ef4444", "shortcut_key": 1 } ],
+  "header":   { "widgets": ["clock","weather","prayer"],
+                "data": { "server_time": "...", "weather": {...}, "prayer": {...} } },
+  "lang":     "en",
+  "strings":  { "welcome": "Welcome", "live_tv": "Live TV" } } }
+```
+
+**انتخاب منو** به ترتیب: منوی مستقیم صفحه (`screens.iptv_menu_id`) ←
+منوی گروه صفحه ← اولین منوی فعال tenant. صفحه‌ای که به هیچ منویی وصل نیست
+هم با برندینگ پیش‌فرض رندر می‌شود، نه خطا.
+
+**زبان**: `lang` در query ← `iptv_rooms.guest_lang` ← فارسی.
+کلیدهایی که در زبان مهمان ترجمه ندارند از فارسی پر می‌شوند تا رابط
+نیمه‌خالی نماند. زبان‌های پایه: `fa`, `en`, `ar` (جدول `portal_translations`).
+
+**میانبر عددی** (`shortcut_key`): عدد ۰ تا ۹ روی ریموت. عدد تکراری یا
+خارج از بازه `null` برمی‌گردد — اولین آیتم مالک آن عدد است.
+
+### GET /portal/{screen_code}/live
+
+فقط داده‌های زنده‌ی نوار بالا. پلیر این را هر چند دقیقه صدا می‌زند بدون
+اینکه کل صفحه را دوباره بگیرد.
+
+**کش:** آب‌وهوا ۱۵ دقیقه، نرخ ارز ۱۰ دقیقه، اوقات شرعی ۱۲ ساعت
+(جدول `portal_live_cache`). بدون کش، یک هتل ۲۰۰ اتاقه صدها درخواست بیرونی
+در دقیقه می‌سازد. اگر واکشی تازه شکست بخورد، مقدار کش منقضی برگردانده
+می‌شود — نوار کمی کهنه بهتر از نوار خالی است.
+
+**تنظیمات `.env`:**
+
+| متغیر | کاربرد |
+|-------|--------|
+| `WEATHER_API_KEY` | OpenWeather — بدون آن ویجت آب‌وهوا نمایش داده نمی‌شود |
+| `WEATHER_DEFAULT_CITY` | شهر پیش‌فرض وقتی روی منو تعیین نشده |
+| `CURRENCY_API_URL` | آدرس JSON نرخ ارز به شکل `{"usd":000,"eur":000}` |
+| `PRAYER_COUNTRY` | کشور برای اوقات شرعی (پیش‌فرض `Iran`، منبع Aladhan با روش ۷ — ژئوفیزیک تهران) |
+
+---
+
+## Folio API — صورتحساب اتاق
+
+مینی‌بار، سفارش‌ها، خرید فیلم و خروج سریع همه به یک دفتر بدهکاری مشترک
+می‌نشینند (migration `022` و `023`).
+
+**قاعده‌ی محوری:** هر قلم به **اقامت** گره می‌خورد (`stay_started_at`)، نه فقط
+به اتاق. بدون این، مهمان تازه صورتحساب مهمان قبلی را روی تلویزیون می‌دید.
+
+### مهمان (بدون JWT، با کد صفحه‌نمایش)
+
+| مسیر | کار |
+|------|-----|
+| `GET /guest/{code}/folio` | صورتحساب اقامت جاری |
+| `POST /guest/{code}/checkout` | درخواست خروج سریع |
+| `GET /guest/{code}/vod/{id}/access` | آیا اجازه‌ی پخش دارد؟ |
+| `POST /guest/{code}/vod/{id}/purchase` | خرید فیلم → روی صورتحساب |
+| `GET /guest/{code}/menus` | منوهای تصویری |
+
+### کارکنان (JWT یا session)
+
+| مسیر | کار |
+|------|-----|
+| `GET /rooms/{id}/folio` | صورتحساب کامل با جزئیات |
+| `POST /rooms/{id}/charges` | ثبت قلم دستی |
+| `POST /charges/{id}/void` | ابطال (حذف نمی‌شود — حسابرسی) |
+| `POST /rooms/{id}/minibar` | ثبت شمارش خانه‌داری |
+| `GET|POST|PUT|DELETE /minibar/items` | کاتالوگ مینی‌بار |
+| `GET /checkout-requests` | صف خروج سریع |
+| `POST /checkout-requests/{id}` | تایید یا رد خروج |
+
+**مینی‌بار:** خانه‌دار موجودی **فعلی** یخچال را ثبت می‌کند؛ تفاضل با
+`par_level` مصرف است و خودکار روی صورتحساب می‌نشیند.
+
+```json
+POST /rooms/12/minibar
+{ "items": { "3": 0, "5": 2 } }
+```
+
+**خروج سریع:** با تایید پذیرش، اقلام `settled` می‌شوند، اتاق آزاد می‌شود و
+دسترسی فیلم‌های خریداری‌شده تمام می‌شود.
+
+---
+
+## اتصال خروجی به PMS
+
+تا نسخه‌ی قبل، اتصال PMS یک‌طرفه بود: هتل به ما checkin و checkout می‌فرستاد.
+حالا اقلام صورتحساب به **PMS فرستاده** می‌شوند.
+
+### تنظیم
+
+پنل ← اتاق‌های IPTV ← یکپارچه‌سازی PMS، یا مستقیم روی `pms_integrations`:
+
+| فیلد | توضیح |
+|------|-------|
+| `charge_url` | آدرس ثبت قلم در PMS |
+| `auth_type` | `none` · `bearer` · `basic` · `header` |
+| `auth_secret` | توکن یا `user:pass` |
+| `auth_header` | نام هدر وقتی `auth_type=header` |
+| `push_charges` | `1` تا ارسال خودکار فعال شود |
+| `field_map` | JSON نگاشت نام فیلدها |
+
+**نگاشت نام فیلد** — هر PMS اسم دیگری دارد:
+
+```json
+{ "room": "RoomNo", "amount": "Amount", "description": "Narrative" }
+```
+
+بدنه‌ی ارسالی پیش‌فرض:
+
+```json
+{ "room_number": "101", "amount": 150000, "description": "روم‌سرویس",
+  "quantity": 2, "currency": "IRR", "reference": "hm-charge-84",
+  "category": "room_service", "posted_at": "2026-09-21T20:14:00+03:30" }
+```
+
+`reference` یکتاست تا اگر پاسخ گم شد و دوباره فرستادیم، PMS بتواند تکراری را
+تشخیص دهد.
+
+### رفتار در قطعی
+
+ارسال **همیشه پس‌زمینه** است. اگر ثبت مینی‌بار منتظر PMS بماند، خانه‌دار
+پشت صفحه‌ی بارگذاری گیر می‌کند. قلمی که نرفته در صف می‌ماند و بعداً می‌رود؛
+هیچ قلمی به‌خاطر شبکه گم نمی‌شود. بعد از ۵ تلاش ناموفق، `failed` می‌شود تا
+اپراتور ببیند. جدول `pms_push_log` همه‌ی تلاش‌ها را نگه می‌دارد.
+
+```bash
+php artisan pms:push        # صف را می‌فرستد — cron هر ۵ دقیقه
+php artisan pms:push 3      # فقط tenant شماره ۳
+```
+
+| مسیر | کار |
+|------|-----|
+| `POST /pms/test` | آزمایش اتصال بدون ثبت قلم واقعی |
+| `POST /pms/push` | ارسال دستی صف |
+| `POST /charges/{id}/pms-retry` | تلاش دوباره روی یک قلم |
+
+---
+
+## Menu Board API — منوی تصویری
+
+‏IT هتل عکس منوی چاپی را بارگذاری می‌کند و همان روی تلویزیون نمایش داده
+می‌شود. برای هتلی که نمی‌خواهد تک‌تک اقلام را وارد سیستم کند، راه‌اندازی را
+از چند روز به چند دقیقه می‌رساند.
+
+| مسیر | کار |
+|------|-----|
+| `GET|POST /menu-boards` | فهرست و ساخت منو |
+| `PUT|DELETE /menu-boards/{id}` | ویرایش و حذف (با فایل‌ها) |
+| `POST /menu-boards/{id}/pages` | بارگذاری تصویر (multipart، چندفایلی با `image[]`) |
+| `POST /menu-boards/{id}/pages/sort` | ترتیب صفحه‌ها |
+| `DELETE /menu-board-pages/{pageId}` | حذف یک صفحه |
+
+**دسته‌ها:** `restaurant` · `room_service` · `laundry` · `minibar` ·
+`breakfast` · `spa` · `other`
+
+**محدودیت‌ها:** JPG، PNG یا WebP · حداکثر ۱۵ مگابایت هر صفحه · حداکثر ۳۰ فایل
+در هر بارگذاری. تصویر پهن‌تر از ۲۵۶۰ پیکسل خودکار کوچک می‌شود — عکس موبایل
+معمولاً ۴۰۰۰ پیکسل است و روی تلویزیون فقط بوت را کند می‌کند.
+
+> PDF عمداً پشتیبانی نمی‌شود: تلویزیون هتل نمی‌تواند آن را رندر کند.

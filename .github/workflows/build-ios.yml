@@ -25,11 +25,11 @@ jobs:
 
       # ── Debug build (every push) ────────────────────────────
       - name: Build (simulator — no signing needed)
-        working-directory: ios/SignageCMSPlayer
+        working-directory: ios/Hotel MediaPlayer
         run: |
           xcodebuild \
-            -project SignageCMSPlayer.xcodeproj \
-            -scheme  SignageCMSPlayer \
+            -project Hotel MediaPlayer.xcodeproj \
+            -scheme  Hotel MediaPlayer \
             -sdk     iphonesimulator \
             -configuration Debug \
             -derivedDataPath build \
@@ -41,7 +41,7 @@ jobs:
       # ── Release IPA (tags only, requires Apple Developer certs) ──
       - name: Build Release IPA
         if: startsWith(github.ref, 'refs/tags/')
-        working-directory: ios/SignageCMSPlayer
+        working-directory: ios/Hotel MediaPlayer
         env:
           APPLE_CERT_BASE64:      ${{ secrets.APPLE_CERT_BASE64 }}
           APPLE_CERT_PASSWORD:    ${{ secrets.APPLE_CERT_PASSWORD }}
@@ -72,10 +72,10 @@ jobs:
 
           # ── Archive ─────────────────────────────────────────
           xcodebuild archive \
-            -project SignageCMSPlayer.xcodeproj \
-            -scheme  SignageCMSPlayer \
+            -project Hotel MediaPlayer.xcodeproj \
+            -scheme  Hotel MediaPlayer \
             -sdk     iphoneos \
-            -archivePath build/SignageCMSPlayer.xcarchive \
+            -archivePath build/Hotel MediaPlayer.xcarchive \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
             | xcpretty
@@ -95,7 +95,7 @@ jobs:
           EOF
 
           xcodebuild -exportArchive \
-            -archivePath build/SignageCMSPlayer.xcarchive \
+            -archivePath build/Hotel MediaPlayer.xcarchive \
             -exportOptionsPlist ExportOptions.plist \
             -exportPath build/ipa \
             | xcpretty
@@ -104,15 +104,15 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           TAG="${{ github.ref_name }}"
-          find ios/SignageCMSPlayer/build/ipa -name "*.ipa" \
-            -exec mv {} "SignageCMS-${TAG}-ios.ipa" \;
+          find ios/Hotel MediaPlayer/build/ipa -name "*.ipa" \
+            -exec mv {} "Hotel Media-${TAG}-ios.ipa" \;
 
       - name: Upload IPA artifact
         if: startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v7
         with:
           name: ios-ipa
-          path: "SignageCMS-*-ios.ipa"
+          path: "Hotel Media-*-ios.ipa"
           retention-days: 90
 
       # ── Upload to TestFlight (optional, needs App Store Connect API key) ──
@@ -126,7 +126,7 @@ jobs:
           echo "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 -d > AuthKey.p8
           xcrun altool --upload-app \
             --type ios \
-            --file "SignageCMS-${{ github.ref_name }}-ios.ipa" \
+            --file "Hotel Media-${{ github.ref_name }}-ios.ipa" \
             --apiKey  "$APP_STORE_CONNECT_API_KEY_ID" \
             --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
             --privateKey AuthKey.p8

@@ -6,10 +6,10 @@
 
 ```bash
 keytool -genkey -v \
-  -keystore signagecms-release.jks \
-  -alias signagecms \
+  -keystore hotelmedia-release.jks \
+  -alias hotelmedia \
   -keyalg RSA -keysize 2048 -validity 10000 \
-  -dname "CN=SignageCMS, OU=Mobile, O=SignageCMS, L=-, S=-, C=IR"
+  -dname "CN=Hotel Media, OU=Mobile, O=Hotel Media, L=-, S=-, C=IR"
 ```
 
 > ⚠️ این فایل را هرگز از دست ندهید و در گیت commit نکنید!
@@ -20,8 +20,8 @@ Settings → Secrets → Actions → New repository secret:
 
 | Secret Name | مقدار |
 |---|---|
-| `KEYSTORE_BASE64` | `base64 -w 0 signagecms-release.jks` |
-| `KEY_ALIAS` | `signagecms` |
+| `KEYSTORE_BASE64` | `base64 -w 0 hotelmedia-release.jks` |
+| `KEY_ALIAS` | `hotelmedia` |
 | `KEY_PASSWORD` | رمز key شما |
 | `STORE_PASSWORD` | رمز store شما |
 
@@ -30,7 +30,7 @@ Settings → Secrets → Actions → New repository secret:
 1. برو به https://play.google.com/console
 2. پرداخت $25 (یک‌بار)
 3. اطلاعات Developer را تکمیل کن
-4. یک App جدید بساز: `com.signagecms.player`
+4. یک App جدید بساز: `com.hotelmedia.player`
 
 ### د) اولین بار — Upload دستی AAB
 
@@ -93,16 +93,16 @@ https://your-server.com/privacy/
 
 1. رفتن به https://appstoreconnect.apple.com
 2. My Apps → + → New App
-3. Bundle ID: `com.signagecms.player`
+3. Bundle ID: `com.hotelmedia.player`
 4. تکمیل Store listing (از `fastlane/metadata/android/en-US/` الگو بگیر)
 
 ### ج) Build از روی Mac
 
 ```bash
-cd ios/SignageCMSPlayer
+cd ios/Hotel MediaPlayer
 xcodebuild archive \
-  -scheme SignageCMSPlayer \
-  -archivePath build/SignageCMSPlayer.xcarchive
+  -scheme Hotel MediaPlayer \
+  -archivePath build/Hotel MediaPlayer.xcarchive
 ```
 
 ### د) آپلود به TestFlight (اتوماتیک)

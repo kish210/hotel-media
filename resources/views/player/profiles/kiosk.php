@@ -1,6 +1,6 @@
 <?php
 /**
- * SignageCMS Player — Kiosk Profile
+ * Hotel Media Player — Kiosk Profile
  * Touch screen optimized with idle/active states
  */
 ?>
@@ -10,8 +10,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kiosk — <?= e($screen['name'] ?? '') ?></title>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+<link href="/assets/vendor/vazirmatn/vazirmatn.css" rel="stylesheet">
+<script src="/assets/vendor/hls/hls.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Vazirmatn',sans-serif;cursor:none;}

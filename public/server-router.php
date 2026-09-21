@@ -1,6 +1,6 @@
 <?php
 /**
- * Router for the PHP built-in web server (no-Docker / native install).
+ * Router for the PHP built-in web server (native install).
  *
  * Used by the native Windows service:
  *   php -S 0.0.0.0:80 -t public public/server-router.php
@@ -10,7 +10,7 @@
  *   • Everything else is handed to the front controller (index.php).
  *
  * This mirrors the nginx "try_files $uri /index.php" rule used in the
- * Docker setup, so routing is identical with or without Docker.
+ * nginx setup, so routing is identical on either web server.
  */
 declare(strict_types=1);
 

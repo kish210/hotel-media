@@ -1,11 +1,11 @@
 @echo off
 chcp 65001 >nul
-title SignageCMS - Setup WITHOUT Docker - kishwifi.com
+title Hotel Media - Native Setup - kishwifi.com
 cd /d "%~dp0"
 
 echo.
 echo   ============================================================
-echo     SignageCMS - Native Setup (NO Docker)
+echo     Hotel Media - Native Setup
 echo     Installs PHP + MariaDB + services right here.
 echo     سماع رایانه کیش ^| kishwifi.com
 echo   ============================================================

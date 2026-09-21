@@ -88,6 +88,12 @@ if (file_exists($envFile)) {
 
 define('APP_DEBUG', filter_var(env('APP_DEBUG', false), FILTER_VALIDATE_BOOLEAN));
 
+// ─── Timezone ───────────────────────────────────────────
+// config/app.php منطقه زمانی را تعریف کرده بود ولی هیچ‌جا اعمال نمی‌شد، پس PHP
+// روی پیش‌فرض ini (معمولاً UTC) می‌ماند در حالی که MySQL با ساعت سیستم کار می‌کند.
+// نتیجه: هر مقایسه‌ی date() با NOW() به اندازه‌ی اختلاف منطقه زمانی غلط می‌شد.
+date_default_timezone_set((string)env('APP_TIMEZONE', 'Asia/Tehran'));
+
 // ─── Session با ذخیره‌سازی دائمی ────────────────────────
 $sessionPath = STORAGE_PATH . '/sessions';
 if (!is_dir($sessionPath)) @mkdir($sessionPath, 0755, true);

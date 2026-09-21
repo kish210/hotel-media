@@ -1,6 +1,6 @@
 <?php
 /**
- * SignageCMS — Monitor 3D Player Profile
+ * Hotel Media — Monitor 3D Player Profile
  * برای نمایشگرهای تبلیغاتی سه‌بعدی فضای باز (LED Fan Hologram / Glasses-free 3D)
  */
 $settings   = json_decode($screen['settings'] ?? '{}', true) ?: [];
@@ -30,8 +30,8 @@ $floatDuration = $depthLevels[$depthLevel] ?? '2.5s';
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Monitor — <?= e($screen['name'] ?? 'SignageCMS') ?></title>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+<title>3D Monitor — <?= e($screen['name'] ?? 'Hotel Media') ?></title>
+<script src="/assets/vendor/hls/hls.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -321,7 +321,7 @@ body::before {
   <div class="activate-card">
     <div style="font-size:48px;margin-bottom:16px;">⬡</div>
     <h2 style="font-size:20px;font-weight:800;margin-bottom:6px;color:<?= e($depthColor) ?>">3D Monitor</h2>
-    <p style="color:#64748b;font-size:13px;margin-bottom:20px;">SignageCMS — کد فعال‌سازی</p>
+    <p style="color:#64748b;font-size:13px;margin-bottom:20px;">Hotel Media — کد فعال‌سازی</p>
     <p style="color:#94a3b8;font-size:12px;margin-bottom:8px;">کد صفحه: <strong style="color:<?= e($depthColor) ?>;font-family:monospace;"><?= e($screen['code'] ?? '—') ?></strong></p>
     <input type="text" id="actCode" class="code-input" maxlength="6" placeholder="______"
       oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doActivate()">

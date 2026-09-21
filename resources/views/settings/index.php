@@ -57,7 +57,7 @@
   <div class="card">
     <h2 class="font-bold text-white mb-4 text-sm"><i class="fas fa-circle-info text-indigo-400 ml-2"></i> اطلاعات سیستم</h2>
     <?php foreach ([
-      'نسخه SignageCMS' => 'v1.1.0',
+      'نسخه Hotel Media' => 'v1.1.0',
       'PHP' => PHP_VERSION,
       'محیط' => env('APP_ENV','production'),
       'دیباگ' => env('APP_DEBUG',false) ? 'فعال ⚠' : 'غیرفعال ✅',

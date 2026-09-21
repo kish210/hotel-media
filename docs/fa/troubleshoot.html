@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-<head><meta charset="UTF-8"><title>رفع مشکلات — SignageCMS</title>
+<head><meta charset="UTF-8"><title>رفع مشکلات — Hotel Media</title>
 <style>body{font-family:Arial,sans-serif;background:#09090f;color:#e2e8f0;padding:40px;direction:rtl;max-width:900px;} pre{background:#111;border-radius:8px;padding:16px;font-family:monospace;color:#f97316;overflow-x:auto;font-size:13px;} h1{color:#f97316;} h2{color:#fff;border-bottom:1px solid #334155;padding-bottom:8px;margin-top:32px;} .q{background:#16161f;border:1px solid #334155;border-radius:10px;padding:16px;margin:12px 0;} .q h3{color:#f97316;margin-bottom:8px;} .q p,.q ul{color:#94a3b8;font-size:13px;} .ok{color:#22c55e;} .err{color:#ef4444;} .warn{color:#f59e0b;} a{color:#f97316;} ul{padding-right:20px;}</style>
 </head>
 <body>
-<h1>🔧 رفع مشکلات SignageCMS</h1>
+<h1>🔧 رفع مشکلات Hotel Media</h1>
 <p><a href="../index.html">← مستندات کامل</a></p>
 
 <h2>مشکلات نصب Docker</h2>
@@ -39,7 +39,7 @@ docker compose up -d --build</pre></li>
 <li>IP سرور را پیدا کنید: <pre>ipconfig | findstr "IPv4"</pre></li>
 <li>TV باید از همان شبکه باشد</li>
 <li>آدرس با IP واقعی باز کنید: <code>http://192.168.1.10/player/SCR001</code></li>
-<li>Firewall پورت 80 را باز کنید:<pre>netsh advfirewall firewall add rule name="SignageCMS" dir=in action=allow protocol=TCP localport=80</pre></li>
+<li>Firewall پورت 80 را باز کنید:<pre>netsh advfirewall firewall add rule name="Hotel Media" dir=in action=allow protocol=TCP localport=80</pre></li>
 </ul>
 </div>
 
@@ -90,7 +90,7 @@ docker compose up -d --build</pre></li>
 <h2>ریست کامل</h2>
 <div class="q">
 <h3>⚠ حذف همه داده‌ها و شروع مجدد</h3>
-<pre>cd D:\duc\signage-cms
+<pre>cd D:\duc\hotel-media
 docker compose down -v
 docker compose up -d --build
 # سپس migration را دوباره اجرا کنید</pre>

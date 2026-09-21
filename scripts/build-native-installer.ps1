@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    SignageCMS — build the NATIVE (no-Docker) Windows installer .exe.
+    Hotel Media — build the NATIVE (no-Docker) Windows installer .exe.
     سماع رایانه کیش | kishwifi.com
 
 .DESCRIPTION
@@ -10,9 +10,9 @@
         1. Downloads portable PHP, MariaDB and NSSM (cached in dist\downloads).
         2. Assembles dist\native-payload = app files + runtime\{php,mariadb,nssm,scripts}.
         3. Writes a production php.ini with all extensions the app needs.
-        4. Compiles installer\native\SignageCMS-Native.iss with Inno Setup (ISCC).
+        4. Compiles installer\native\HotelMedia-Native.iss with Inno Setup (ISCC).
 
-    Output: installer\native\Output\SignageCMS-v<version>-setup.exe
+    Output: installer\native\Output\HotelMedia-v<version>-setup.exe
 
     Run this on a Windows build machine that has Inno Setup 6 installed
     (https://jrsoftware.org/isdl.php). PHP / MariaDB / NSSM are downloaded
@@ -49,7 +49,7 @@ $DistDir     = Join-Path $ProjectDir 'dist'
 $DownloadDir = Join-Path $DistDir 'downloads'
 $StageDir    = Join-Path $DistDir 'stage'
 $Payload     = Join-Path $DistDir 'native-payload'
-$IssFile     = Join-Path $ProjectDir 'installer\native\SignageCMS-Native.iss'
+$IssFile     = Join-Path $ProjectDir 'installer\native\HotelMedia-Native.iss'
 $RuntimeSrc  = Join-Path $ProjectDir 'installer\native\runtime'
 
 function Hd  ($m) { Write-Host "`n== $m" -ForegroundColor Cyan }
@@ -58,7 +58,7 @@ function Info($m) { Write-Host "   [..] $m" -ForegroundColor Gray }
 
 Write-Host ""
 Write-Host "  =====================================================" -ForegroundColor Cyan
-Write-Host "    SignageCMS — Native installer builder  v$Version" -ForegroundColor Cyan
+Write-Host "    Hotel Media — Native installer builder  v$Version" -ForegroundColor Cyan
 Write-Host "  =====================================================" -ForegroundColor Cyan
 
 foreach ($d in @($DistDir, $DownloadDir, $StageDir)) {
@@ -227,7 +227,7 @@ Ok "Runtime scripts copied"
 # ══════════════════════════════════════════════════════════════════════════════
 Hd "Writing php.ini"
 $phpIni = @'
-; SignageCMS — bundled PHP configuration (native install)
+; Hotel Media — bundled PHP configuration (native install)
 extension_dir = "ext"
 
 extension=pdo_mysql
@@ -265,7 +265,7 @@ $payloadAbs = (Resolve-Path $Payload).Path
 & $Iscc "/DMyAppVersion=$Version" "/DPayloadDir=$payloadAbs" $IssFile
 if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
 
-$exe = Join-Path $ProjectDir "installer\native\Output\SignageCMS-v$Version-setup.exe"
+$exe = Join-Path $ProjectDir "installer\native\Output\HotelMedia-v$Version-setup.exe"
 Write-Host ""
 if (Test-Path $exe) {
     $mb = [math]::Round((Get-Item $exe).Length / 1MB, 1)
@@ -277,7 +277,7 @@ if (Test-Path $exe) {
     Write-Host "    Size: $mb MB" -ForegroundColor White
     Write-Host ""
     Write-Host "    Give this single .exe to the end user. They double-click it," -ForegroundColor Gray
-    Write-Host "    click Next a few times, and SignageCMS is installed and running." -ForegroundColor Gray
+    Write-Host "    click Next a few times, and Hotel Media is installed and running." -ForegroundColor Gray
     Write-Host ""
     Start-Process explorer.exe -ArgumentList "/select,`"$exe`"" -ErrorAction SilentlyContinue
 } else {

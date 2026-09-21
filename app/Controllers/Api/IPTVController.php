@@ -39,7 +39,7 @@ class IPTVController extends Controller
             Response::json([
                 'success' => false,
                 'message' => 'FFmpeg در دسترس نیست. برای RTSP نیاز به FFmpeg دارید.',
-                'install' => 'در docker-compose: image: jrottenberg/ffmpeg',
+                'install' => 'FFmpeg را روی سرور نصب کنید: winget install Gyan.FFmpeg',
                 'stream_url' => $url,
                 'workaround' => 'از VLC یا ffserver استفاده کنید تا RTSP رو به HLS تبدیل کنید.',
             ]);
