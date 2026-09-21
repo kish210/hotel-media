@@ -251,3 +251,23 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
 
 // Heartbeat endpoint برای پلیر (پخش فوری رو برمی‌گردونه)
 $router->post('/api/v1/screens/{code}/heartbeat', [\App\Controllers\Api\ScreenController::class, 'heartbeat']);
+
+// ── Guest Services — خدمات مهمان (پنل کارکنان، protected) ────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    // کاتالوگ خدمات
+    $r->get('/guest/services',              [\App\Controllers\Api\GuestServiceController::class, 'services']);
+    $r->post('/guest/services',             [\App\Controllers\Api\GuestServiceController::class, 'storeService']);
+    $r->put('/guest/services/{id}',         [\App\Controllers\Api\GuestServiceController::class, 'updateService']);
+    $r->delete('/guest/services/{id}',      [\App\Controllers\Api\GuestServiceController::class, 'destroyService']);
+    // صف درخواست‌ها
+    $r->get('/guest/requests/stats',        [\App\Controllers\Api\GuestServiceController::class, 'stats']);
+    $r->get('/guest/requests',              [\App\Controllers\Api\GuestServiceController::class, 'requests']);
+    $r->get('/guest/requests/{id}',         [\App\Controllers\Api\GuestServiceController::class, 'showRequest']);
+    $r->put('/guest/requests/{id}/status',  [\App\Controllers\Api\GuestServiceController::class, 'updateStatus']);
+});
+
+// ── Guest Portal — تلویزیون اتاق (بدون JWT، هویت با کد صفحه‌نمایش)
+$router->get('/api/v1/guest/{code}/services',                 [\App\Controllers\Api\GuestPortalController::class, 'services']);
+$router->get('/api/v1/guest/{code}/requests',                 [\App\Controllers\Api\GuestPortalController::class, 'myRequests']);
+$router->post('/api/v1/guest/{code}/requests',                [\App\Controllers\Api\GuestPortalController::class, 'store']);
+$router->post('/api/v1/guest/{code}/requests/{id}/cancel',    [\App\Controllers\Api\GuestPortalController::class, 'cancel']);

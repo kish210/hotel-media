@@ -574,3 +574,94 @@ Sends SignageCMS connection config to RPi.
   "push_interval": 10
 }
 ```
+
+---
+
+## Guest Services API — خدمات مهمان
+
+گردش‌کار کامل سفارش از تلویزیون اتاق تا صف کاری کارکنان.
+جدول‌ها: `guest_services`, `guest_requests`, `guest_request_items`, `guest_request_log`
+(migration `017_guest_services.sql`).
+
+**دسته‌ها:** `room_service` · `breakfast` · `housekeeping` · `laundry` · `taxi` ·
+`maintenance` · `wakeup` · `feedback` · `other`
+
+**وضعیت‌ها و گذارهای مجاز:**
+
+```
+pending  → accepted | cancelled
+accepted → in_progress | done | cancelled
+in_progress → done | cancelled
+done / cancelled → (نهایی)
+```
+
+### کاتالوگ خدمات (JWT یا session)
+
+### GET /guest/services
+پارامترها: `category`, `active`
+
+### POST /guest/services
+```json
+{ "name_fa": "صبحانه کامل", "category": "breakfast", "price": 450000,
+  "unit": "پرس", "available_from": "06:00", "available_to": "10:00" }
+```
+
+### PUT /guest/services/{id}
+### DELETE /guest/services/{id}
+حذف سرویس، اقلام سفارش‌های قبلی را خراب نمی‌کند (`service_id` خالی می‌شود، نام در `name_snapshot` می‌ماند).
+
+### صف درخواست‌ها (JWT یا session)
+
+### GET /guest/requests
+پارامترها: `status` (`open` = همه‌ی بازها), `category`, `room`, `from`, `to`, `page`, `per_page`
+
+### GET /guest/requests/stats
+```json
+{ "pending": 3, "in_progress": 2, "done_today": 14, "revenue_today": 8400000,
+  "avg_minutes": 11.4, "avg_rating": 4.6, "by_category": [...], "wakeups_next": [...] }
+```
+
+### GET /guest/requests/{id}
+شامل `items` و `log` (تاریخچه‌ی کامل تغییر وضعیت).
+
+### PUT /guest/requests/{id}/status
+```json
+{ "status": "accepted", "assigned_to": 5, "staff_note": "..." }
+```
+گذار نامعتبر → `422`.
+
+---
+
+## Guest Portal (Public) — تلویزیون اتاق
+
+بدون JWT. هویت با **کد صفحه‌نمایش** (`screens.code`) که به یک اتاق
+(`screens.iptv_room_id`) متصل است. اگر صفحه به اتاقی وصل نباشد → `404`.
+
+### GET /guest/{screen_code}/services
+```json
+{ "success": true, "data": {
+    "room_number": "101", "guest_name": "...", "guest_lang": "fa",
+    "categories": { "breakfast": [ { "id": 8, "name_fa": "صبحانه کامل",
+      "price": 450000, "available_now": true } ] } } }
+```
+`available_now` بازه‌ی سرویس‌دهی را (حتی بازه‌های عبوری از نیمه‌شب) محاسبه می‌کند.
+
+### POST /guest/{screen_code}/requests
+```json
+{ "category": "room_service",
+  "items": [ { "service_id": 8, "qty": 2 } ],
+  "note": "بدون نمک",
+  "scheduled_at": "2026-09-22 07:30" }
+```
+- فقط وقتی اتاق `occupied` است → در غیر این صورت `409`
+- `wakeup`: `scheduled_at` الزامی و باید در آینده باشد
+- `feedback`: `rating` بین ۱ تا ۵ الزامی
+- `room_service` / `laundry` / `breakfast`: حداقل یک قلم الزامی
+- قیمت‌ها **سمت سرور** از کاتالوگ خوانده می‌شود، نه از بدنه‌ی درخواست
+- محدودیت: حداکثر ۱۰ درخواست باز و ۵ درخواست در ۱۰ دقیقه برای هر اتاق → `429`
+
+### GET /guest/{screen_code}/requests
+فقط درخواست‌های **اقامت جاری** (از `check_in_at` به بعد) — مهمان قبلی دیده نمی‌شود.
+
+### POST /guest/{screen_code}/requests/{id}/cancel
+فقط وقتی هنوز `pending` است؛ بعد از پذیرش → `409`.

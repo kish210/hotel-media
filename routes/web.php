@@ -47,7 +47,7 @@ $router->get('/player/module/{type}', function(\App\Core\Request $req, array $p)
     exit;
 });
 
-// ── Serve uploaded files (Docker volume access) ──────────────
+// ── Serve uploaded files ─────────────────────────────────────
 $router->get('/uploads/{path}', function(\App\Core\Request $req, array $p) {
     $path = '/uploads/' . ($p['path'] ?? '');
     $file = PUBLIC_PATH . $path;
@@ -287,6 +287,9 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     $r->get('/iptv/menus',          [\App\Controllers\Web\IptvMenuWebController::class, 'index']);
     // ── IPTV Rooms ─────────────────────────────────────────────
     $r->get('/iptv/rooms',          [\App\Controllers\Web\IptvRoomWebController::class, 'index']);
+    // ── Guest Services — خدمات مهمان ───────────────────────────
+    $r->get('/guest-services',      [\App\Controllers\Web\GuestServiceWebController::class, 'index']);
+    $r->get('/guest-services/feed', [\App\Controllers\Web\GuestServiceWebController::class, 'feed']);
     // ── TVHeadend Live TV ──────────────────────────────────────
     $r->get('/iptv/tvheadend',                    [\App\Controllers\Web\TvheadendController::class, 'index']);
     $r->post('/iptv/tvheadend',                   [\App\Controllers\Web\TvheadendController::class, 'store']);

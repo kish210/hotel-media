@@ -261,6 +261,9 @@ body { font-family: var(--ui-font) !important; }
   <a href="/admin/iptv/rooms" class="sidebar-link <?= isActive('/admin/iptv/rooms') ?>">
     <span class="icon"><i class="fas fa-door-open" style="color:#f87171;"></i></span> اتاق‌های IPTV
   </a>
+  <a href="/admin/guest-services" class="sidebar-link <?= isActive('/admin/guest-services') ?>">
+    <span class="icon"><i class="fas fa-concierge-bell" style="color:#f59e0b;"></i></span> خدمات مهمان
+  </a>
   <?php endif; ?>
 
   <!-- Inflight -->
