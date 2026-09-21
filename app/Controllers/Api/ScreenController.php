@@ -142,7 +142,10 @@ class ScreenController extends Controller
             'iptv_menu_id'     => $iptvMenuId,
             'cfg_3d'           => $cfg3d,
             'messages'         => $pendingMessages,
-            'sync_interval'    => 30,
+            // پلیرها این مقدار را می‌خوانند و فاصله‌ی heartbeat خود را با آن
+            // تنظیم می‌کنند. در هتل ۳۰۰ اتاقه، هر ثانیه کم‌کردن این عدد
+            // مستقیم به بار وب‌سرور اضافه می‌شود، پس از .env قابل تنظیم است.
+            'sync_interval'    => max(10, min(300, (int)env('PLAYER_SYNC_INTERVAL', 30))),
         ]);
     }
 

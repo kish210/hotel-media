@@ -947,18 +947,48 @@ function dismissPopup() {
 // ══════════════════════════════════════════════════════════════
 //  Heartbeat
 // ══════════════════════════════════════════════════════════════
+// فاصله‌ی heartbeat را سرور تعیین می‌کند. در هتل بزرگ، ۳۰۰ تلویزیون با
+// فاصله‌ی ثابت ۱۵ ثانیه ۲۰ درخواست در ثانیه می‌سازند؛ با این کار مدیر
+// می‌تواند بار را از .env کم کند بدون اینکه اپ تلویزیون‌ها عوض شود.
+let hbTimer = null;
+
+function scheduleHeartbeat(seconds) {
+  const ms = Math.max(10, Math.min(300, Number(seconds) || 30)) * 1000;
+  clearTimeout(hbTimer);
+  hbTimer = setTimeout(heartbeat, ms);
+}
+
 async function heartbeat() {
+  let next = 30;
   try {
     const r = await fetch(`${SERVER_URL}/api/v1/screens/${SCREEN_CODE}/heartbeat`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ version:'2.0', screen_type:'iptv' }),
+      body:JSON.stringify({ version:'2.0', screen_type:'iptv', platform:PLATFORM }),
     });
     const d = await r.json();
+    if (d.data?.sync_interval) next = d.data.sync_interval;
+
     (d.data?.commands || []).forEach(cmd => {
-      if (cmd.command==='reload'||cmd.command==='refresh') { clearTimeout(autoTimer); loadMenu(); }
-      if (cmd.command==='reboot') window.location.reload();
+      // صف جدید کلید cmd دارد، پرچم‌های قدیمی کلید command
+      const name = cmd.cmd || cmd.command;
+      if (name==='reload'||name==='refresh') { clearTimeout(autoTimer); loadMenu(); }
+      if (name==='reboot') window.location.reload();
+      if (name==='open_url' && cmd.payload?.url) window.location.href = cmd.payload.url;
+
+      // گزارش اجرا، تا در پنل معلوم شود فرمان واقعا رسید
+      if (cmd.id) {
+        fetch(`${SERVER_URL}/api/v1/device/${SCREEN_CODE}/ack`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ id: cmd.id, ok: true }),
+        }).catch(()=>{});
+      }
     });
-  } catch(_) {}
+  } catch(_) {
+    // سرور در دسترس نیست — کندتر تلاش کن تا وقتی برگشت، ۳۰۰ تلویزیون
+    // همزمان به آن هجوم نیاورند
+    next = 60;
+  }
+  scheduleHeartbeat(next);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1019,13 +1049,26 @@ function esc(s) {
 //  Init
 // ══════════════════════════════════════════════════════════════
 <?php if (($screen['status'] ?? '') === 'active'): ?>
+// پلتفرم را برای پنل مدیریت گزارش می‌کنیم تا قابلیت‌های درست نشان داده شود
+const PLATFORM = (() => {
+  const ua = (navigator.userAgent || '').toLowerCase();
+  if (ua.includes('webos') || ua.includes('web0s')) return 'webos';
+  if (ua.includes('tizen') || ua.includes('smart-tv')) return 'tizen';
+  if (ua.includes('android')) return 'android';
+  if (ua.includes('electron')) return 'windows';
+  return 'browser';
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
   loadMenu();
   loadRoomInfo();
   connectWS();
-  setInterval(heartbeat,     15000);
-  setInterval(loadRoomInfo,  30000);  // بررسی پیام‌های جدید هر ۳۰ ثانیه
-  heartbeat();
+
+  // پخش تصادفی اولین درخواست‌ها: بدون این، بعد از قطعی برق کل هتل
+  // همزمان بوت می‌شود و ۳۰۰ تلویزیون در یک لحظه به سرور می‌زنند.
+  const jitter = Math.floor(Math.random() * 10000);
+  setTimeout(heartbeat, jitter);
+  setInterval(loadRoomInfo, 30000 + jitter);  // بررسی پیام‌های جدید
 });
 <?php endif; ?>
 </script>
