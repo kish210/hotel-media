@@ -24,6 +24,57 @@ if (file_exists($envFile)) {
 function env(string $k, mixed $d=null): mixed { $v=$_ENV[$k]??getenv($k)?:$d; if($v==='true')return true; if($v==='false')return false; return $v; }
 function request(): object { return new class { public function ip():string{return '127.0.0.1';} public function userAgent():string{return 'CLI';} public function isJson():bool{return false;} public function isAjax():bool{return false;} }; }
 
+/**
+ * تقسیم فایل SQL به دستورهای مجزا — نقطه‌ویرگول داخل رشته و کامنت نادیده گرفته می‌شود
+ * @return string[]
+ */
+function splitSqlStatements(string $sql): array
+{
+    $statements = [];
+    $current    = '';
+    $len        = strlen($sql);
+    $quote      = null;   // ' یا " یا ` وقتی داخل رشته هستیم
+    $comment    = null;   // 'line' یا 'block'
+
+    for ($i = 0; $i < $len; $i++) {
+        $ch   = $sql[$i];
+        $next = $sql[$i + 1] ?? '';
+
+        if ($comment === 'line') {
+            if ($ch === "\n") { $comment = null; $current .= $ch; }
+            continue;
+        }
+        if ($comment === 'block') {
+            if ($ch === '*' && $next === '/') { $comment = null; $i++; }
+            continue;
+        }
+
+        if ($quote === null) {
+            if (($ch === '-' && $next === '-') || $ch === '#') { $comment = 'line';  continue; }
+            if ($ch === '/' && $next === '*')                  { $comment = 'block'; $i++; continue; }
+
+            if ($ch === "'" || $ch === '"' || $ch === '`') { $quote = $ch; }
+            elseif ($ch === ';') {
+                $stmt = trim($current);
+                if ($stmt !== '') $statements[] = $stmt;
+                $current = '';
+                continue;
+            }
+        } else {
+            // فرار با بک‌اسلش فقط داخل رشته‌های ' و " معنا دارد
+            if ($ch === '\\' && $quote !== '`') { $current .= $ch . $next; $i++; continue; }
+            if ($ch === $quote) { $quote = null; }
+        }
+
+        $current .= $ch;
+    }
+
+    $last = trim($current);
+    if ($last !== '') $statements[] = $last;
+
+    return $statements;
+}
+
 $command = $argv[1] ?? 'help';
 
 match ($command) {
@@ -34,14 +85,70 @@ match ($command) {
 
     'db:migrate' => (function() {
         $db = \App\Core\Database::getInstance();
-        $sql = file_get_contents(ROOT_PATH . '/database/migrations/001_complete_schema.sql');
-        foreach (array_filter(array_map('trim', explode(';', $sql))) as $stmt) {
-            if ($stmt) {
-                try { $db->query($stmt); echo "  ✓\n"; }
-                catch (\Throwable $e) { echo "  ✗ " . $e->getMessage() . "\n"; }
+
+        // جدول ردیابی — هر فایل فقط یک‌بار اجرا می‌شود
+        $db->query("CREATE TABLE IF NOT EXISTS schema_migrations (
+            filename   VARCHAR(190) NOT NULL,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (filename)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $applied = array_column(
+            $db->rows('SELECT filename FROM schema_migrations') ?: [],
+            'filename'
+        );
+
+        $files = glob(ROOT_PATH . '/database/migrations/*.sql') ?: [];
+        sort($files, SORT_NATURAL);
+
+        $ran = 0;
+        foreach ($files as $file) {
+            $name = basename($file);
+
+            // 001_initial_schema نسخه قدیمی 001_complete_schema است — رد می‌شود
+            if ($name === '001_initial_schema.sql') continue;
+            if (in_array($name, $applied, true)) continue;
+
+            echo "\033[36m→ $name\033[0m\n";
+            $sql    = (string)file_get_contents($file);
+            $failed = false;
+
+            foreach (splitSqlStatements($sql) as $stmt) {
+                try {
+                    $db->query($stmt);
+                } catch (\Throwable $e) {
+                    $msg = $e->getMessage();
+
+                    // فقط خطاهای «از قبل ساخته شده» روی نصب‌های قدیمی بی‌ضررند.
+                    // با کد SQLSTATE تشخیص داده می‌شوند، نه با متن پیام — وگرنه
+                    // خطاهای واقعی (مثل «Duplicate column name» در یک SELECT معیوب)
+                    // هم به‌اشتباه نادیده گرفته می‌شوند.
+                    $benign = [
+                        '42S01',  // Base table or view already exists
+                        '42000',  // ... CREATE INDEX روی ایندکس موجود
+                    ];
+                    $isDuplicateColumn = str_contains($msg, '1060 Duplicate column name')
+                        && preg_match('/^\s*ALTER\s+TABLE/i', $stmt);
+
+                    if (in_array($e->getCode(), $benign, true) || $isDuplicateColumn) {
+                        continue;
+                    }
+
+                    $failed = true;
+                    echo "  \033[31m✗ " . $msg . "\033[0m\n";
+                }
+            }
+
+            if (!$failed) {
+                $db->query('INSERT IGNORE INTO schema_migrations (filename) VALUES (?)', [$name]);
+                echo "  \033[32m✓ اعمال شد\033[0m\n";
+                $ran++;
+            } else {
+                echo "  \033[33m! ناقص — دوباره تلاش خواهد شد\033[0m\n";
             }
         }
-        echo "Migration done.\n";
+
+        echo $ran ? "\nMigration done — $ran فایل اعمال شد.\n" : "\nهمه migration ها از قبل اعمال شده‌اند.\n";
     })(),
 
     'db:seed' => (function() {
@@ -90,6 +197,35 @@ match ($command) {
         echo "Cleaned $n files.\n";
     })(),
 
+    'test' => (function() {
+        // تست‌های Feature اسکریپت‌های مستقل PHP هستند و به دیتابیس زنده وصل می‌شوند.
+        // قبل از اجرا مطمئن شوید .env به یک دیتابیس تست اشاره می‌کند، نه production.
+        $files = glob(ROOT_PATH . '/tests/Feature/*Test.php') ?: [];
+        sort($files, SORT_NATURAL);
+
+        if (!$files) { echo "هیچ تستی پیدا نشد.\n"; return; }
+
+        $php    = PHP_BINARY;
+        $failed = [];
+
+        foreach ($files as $file) {
+            $name = basename($file);
+            echo "\n\033[36m══ $name ══\033[0m\n";
+
+            $cmd = escapeshellarg($php) . ' ' . escapeshellarg($file);
+            passthru($cmd, $code);
+
+            if ($code !== 0) $failed[] = $name;
+        }
+
+        echo "\n" . str_repeat('═', 50) . "\n";
+        if ($failed) {
+            echo "\033[31m✗ " . count($failed) . " تست شکست خورد: " . implode(', ', $failed) . "\033[0m\n";
+            exit(1);
+        }
+        echo "\033[32m✓ همه " . count($files) . " فایل تست پاس شدند\033[0m\n";
+    })(),
+
     'cache:clear' => (function() {
         array_map('unlink', glob(STORAGE_PATH.'/cache/*'));
         echo "Cache cleared.\n";
@@ -108,6 +244,7 @@ match ($command) {
             'ws:start'        => 'Start WebSocket server',
             'storage:clean'   => 'Remove soft-deleted media files',
             'cache:clear'     => 'Clear application cache',
+            'test'            => 'Run feature tests (needs a TEST database in .env)',
         ];
         foreach ($cmds as $cmd => $desc) {
             printf("  \033[32m%-20s\033[0m %s\n", $cmd, $desc);

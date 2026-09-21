@@ -58,7 +58,9 @@ CREATE TABLE IF NOT EXISTS pms_integrations (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ستون iptv_room_id به جدول screens
+-- بدون AFTER نوشته شده: روی دیتابیس تازه، ستون iptv_menu_id هنوز وجود ندارد
+-- (نصب‌کننده آن را بعداً اضافه می‌کند) و AFTER باعث شکست migration می‌شد.
 SET @q = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='screens' AND COLUMN_NAME='iptv_room_id')=0,
-  'ALTER TABLE screens ADD COLUMN iptv_room_id INT UNSIGNED DEFAULT NULL AFTER iptv_menu_id',
+  'ALTER TABLE screens ADD COLUMN iptv_room_id INT UNSIGNED DEFAULT NULL',
   'SELECT 1');
 PREPARE s FROM @q; EXECUTE s; DEALLOCATE PREPARE s;

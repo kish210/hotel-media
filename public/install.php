@@ -11,7 +11,7 @@ declare(strict_types=1);
  * CLI:        php public/install.php
  *
  * بعد از نصب حذف کنید:
- *   docker exec signage_php rm /var/www/html/public/install.php
+ *   این فایل را بعد از نصب حذف کنید: public/install.php
  */
 
 define('INSTALLER_VER', '5.0');
@@ -106,25 +106,23 @@ function doInstall(PDO $pdo, array $cfg): array
     $pdo->exec("SET FOREIGN_KEY_CHECKS=0; SET sql_mode='';");
 
     // ── 2. اجرای فایل‌های migration ──────────────────────────────────────
-    $migrations = [
-        '001_complete_schema.sql',
-        '003_module_tables_only.sql',
-        '004_iptv_channels.sql',
-        '005_apk_versions.sql',
-        '006_screen_groups.sql',
-        '007_vod_tables.sql',
-        '008_iptv_menus.sql',
-        '009_iptv_menu_appearance.sql',
-        '010_iptv_rooms.sql',
-        '011_inflight.sql',
-        '012_inflight_rpi.sql',
-        '013_screen_type_inflight.sql',
-    ];
+    // به‌جای فهرست دستی، همه فایل‌های پوشه به ترتیب شماره اجرا می‌شوند تا
+    // migration های جدید بدون ویرایش این فایل هم در نصب اعمال شوند.
+    $files = glob(ROOT . '/database/migrations/*.sql') ?: [];
+    sort($files, SORT_NATURAL);
 
-    foreach ($migrations as $mf) {
-        $path = ROOT . '/database/migrations/' . $mf;
-        if (!file_exists($path)) {
-            addLog($log, 'skip', "فایل migration نیست: {$mf}");
+    // نسخه قدیمی 001 که با 001_complete_schema جایگزین شده
+    $skip = ['001_initial_schema.sql'];
+
+    if (!$files) {
+        addLog($log, 'err', 'هیچ فایل migration پیدا نشد');
+        return $log;
+    }
+
+    foreach ($files as $path) {
+        $mf = basename($path);
+        if (in_array($mf, $skip, true)) {
+            addLog($log, 'skip', "نسخه قدیمی — رد شد: {$mf}");
             continue;
         }
         runSqlFile($pdo, $path, $mf, $log);
@@ -490,7 +488,7 @@ code{background:#111;padding:2px 6px;border-radius:4px;font-family:monospace;col
 
   <div class="del">
     ⚠ بعد از ورود موفق این فایل را حذف کنید:<br>
-    <code>docker exec signage_php rm /var/www/html/public/install.php</code>
+    <code>public/install.php</code> را حذف کنید
   </div>
 </div>
 </div>

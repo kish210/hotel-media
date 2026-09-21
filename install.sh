@@ -54,6 +54,8 @@ sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASS|" .env
 
 mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" -e "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>/dev/null
 mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < database/migrations/001_complete_schema.sql
+# باقی migration ها (002 به بعد) — ردیابی‌شده در جدول schema_migrations
+php artisan db:migrate
 mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < database/seeds/seed.sql
 echo "  ✅ Database migrated and seeded"
 
