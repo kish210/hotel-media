@@ -14,7 +14,7 @@
  *
  * Windows Task Scheduler (هر دقیقه):
  *   Program: php
- *   Arguments: D:\duc\signage-cms\scripts\fids_sync.php 2 102 1
+ *   Arguments: D:\duc\hotel-media\scripts\fids_sync.php 2 102 1
  *
  * Output cache: storage/cache/fids/airport_{id}.json
  */

@@ -1,6 +1,6 @@
 <?php
 /**
- * SignageCMS WebSocket Server
+ * Hotel Media WebSocket Server
  * Pure PHP streams — no extensions needed (socket, ratchet, etc.)
  */
 declare(strict_types=1);

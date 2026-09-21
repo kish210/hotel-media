@@ -1,5 +1,5 @@
 /**
- * SignageCMS - Admin Panel JavaScript
+ * Hotel Media - Admin Panel JavaScript
  * Handles: Auth token, API helpers, real-time WS, toasts
  */
 

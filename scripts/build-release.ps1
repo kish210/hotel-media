@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    SignageCMS — ساخت بسته release (ZIP)
+    Hotel Media — ساخت بسته release (ZIP)
 .DESCRIPTION
     فایل‌های پروژه را بدون .git و فایل‌های بزرگ فشرده می‌کند.
 .EXAMPLE
@@ -17,14 +17,14 @@ $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ProjectDir = Split-Path $PSScriptRoot -Parent
-$ZipName    = "SignageCMS-v${Version}.zip"
+$ZipName    = "HotelMedia-v${Version}.zip"
 $OutDir     = if ($Output) { $Output } else { Split-Path $ProjectDir -Parent }
 $ZipPath    = Join-Path $OutDir $ZipName
 $TempDir    = Join-Path $env:TEMP "signage_release_$(Get-Random)"
 
 Write-Host ""
 Write-Host "╔══════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║   SignageCMS Release Builder v1.0       ║" -ForegroundColor Cyan
+Write-Host "║   Hotel Media Release Builder v1.0       ║" -ForegroundColor Cyan
 Write-Host "╚══════════════════════════════════════════╝" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  پروژه:  $ProjectDir"  -ForegroundColor Gray

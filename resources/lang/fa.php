@@ -1,5 +1,5 @@
 <?php
-/** زبان فارسی — SignageCMS */
+/** زبان فارسی — Hotel Media */
 return [
     // ── ناوبری / Sidebar ──────────────────────────────────
     'nav.dashboard'        => 'داشبورد',

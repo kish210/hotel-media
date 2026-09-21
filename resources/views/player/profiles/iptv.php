@@ -1,6 +1,6 @@
 <?php
 /**
- * SignageCMS — IPTV Player Profile  (v2 — Professional UI)
+ * Hotel Media — IPTV Player Profile  (v2 — Professional UI)
  * جدا از signage player — تغییرات اینجا به modern.php کاری ندارن
  * Appearance از API منو خوانده می‌شه (نه از screen settings)
  */
@@ -407,7 +407,7 @@ html,body {
 <div id="activation-screen">
   <div class="act-card">
     <div class="act-icon">📡</div>
-    <h2 style="font-size:22px;font-weight:900;margin-bottom:8px;">SignageCMS IPTV</h2>
+    <h2 style="font-size:22px;font-weight:900;margin-bottom:8px;">Hotel Media IPTV</h2>
     <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">کد فعال‌سازی را وارد کنید</p>
     <p style="color:var(--text-dim);font-size:12px;margin-bottom:10px;">
       کد صفحه: <strong style="color:var(--accent);font-family:monospace;"><?= e($screenCode) ?></strong>

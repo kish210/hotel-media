@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SignageCMS — راهنمای کامل</title>
+<title>Hotel Media — راهنمای کامل</title>
 <style>
 :root {
   --orange:#f97316; --bg:#09090f; --surface:#16161f; --border:rgba(255,255,255,.08);
@@ -121,7 +121,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 <!-- ─── Sidebar ─── -->
 <aside id="sidebar">
   <div class="sidebar-logo">
-    <h1>📺 SignageCMS</h1>
+    <h1>📺 Hotel Media</h1>
     <p>راهنمای کامل · Full Documentation</p>
   </div>
 
@@ -169,7 +169,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 <h1 class="page-title">نصب و راه‌اندازی
   <span class="en">Installation & Setup</span>
 </h1>
-<p class="page-desc">SignageCMS یک سیستم مدیریت نمایش دیجیتال (Digital Signage) مبتنی بر PHP 8.2 و Docker است. در عرض ۵ دقیقه راه‌اندازی کنید.</p>
+<p class="page-desc">Hotel Media یک سیستم مدیریت نمایش دیجیتال (Digital Signage) مبتنی بر PHP 8.2 و Docker است. در عرض ۵ دقیقه راه‌اندازی کنید.</p>
 
 <h2>پیش‌نیازها <span class="en-small">Prerequisites</span></h2>
 <table>
@@ -185,12 +185,12 @@ tr:hover td{background:rgba(255,255,255,.02);}
   <div class="step"><div class="step-num">1</div>
     <div class="step-content"><h4>دانلود و extract پروژه</h4>
       <pre>cd C:\duc
-Expand-Archive signage-cms-final.zip -DestinationPath . -Force</pre>
+Expand-Archive hotel-media-final.zip -DestinationPath . -Force</pre>
     </div>
   </div>
   <div class="step"><div class="step-num">2</div>
     <div class="step-content"><h4>اجرای Docker</h4>
-      <pre>cd signage-cms
+      <pre>cd hotel-media
 docker compose up -d --build</pre>
       <p>اولین بار ۳-۵ دقیقه طول می‌کشد.</p>
     </div>
@@ -207,7 +207,7 @@ Get-Content "database\migrations\003_module_tables_only.sql" -Raw -Encoding UTF8
   <div class="step"><div class="step-num">4</div>
     <div class="step-content"><h4>باز کردن پنل</h4>
       <p>مرورگر: <code>http://localhost</code></p>
-      <p>ایمیل: <code>admin@signagecms.com</code> · رمز: <code>Admin@123456</code></p>
+      <p>ایمیل: <code>admin@hotelmedia.com</code> · رمز: <code>Admin@123456</code></p>
     </div>
   </div>
 </div>
@@ -239,10 +239,10 @@ Get-Content "database\migrations\003_module_tables_only.sql" -Raw -Encoding UTF8
   </div>
   <div class="mockup-body" style="text-align:center;padding:40px;">
     <div style="font-size:36px;margin-bottom:12px;">📺</div>
-    <h2 style="font-size:20px;color:#fff;margin-bottom:4px;">SignageCMS</h2>
+    <h2 style="font-size:20px;color:#fff;margin-bottom:4px;">Hotel Media</h2>
     <p style="color:#475569;font-size:13px;margin-bottom:24px;">سیستم مدیریت نمایش دیجیتال</p>
     <div style="max-width:320px;margin:0 auto;">
-      <div style="background:#111;border:1px solid #334155;border-radius:10px;padding:12px 14px;margin-bottom:10px;text-align:right;color:#475569;font-size:13px;">admin@signagecms.com</div>
+      <div style="background:#111;border:1px solid #334155;border-radius:10px;padding:12px 14px;margin-bottom:10px;text-align:right;color:#475569;font-size:13px;">admin@hotelmedia.com</div>
       <div style="background:#111;border:1px solid #334155;border-radius:10px;padding:12px 14px;margin-bottom:16px;text-align:right;color:#475569;font-size:13px;">••••••••••</div>
       <div style="background:linear-gradient(135deg,#f97316,#c2570b);border-radius:10px;padding:12px;color:#fff;font-weight:700;font-size:14px;">ورود به حساب</div>
     </div>
@@ -252,7 +252,7 @@ Get-Content "database\migrations\003_module_tables_only.sql" -Raw -Encoding UTF8
 <h2>اطلاعات پیش‌فرض</h2>
 <table>
   <tr><th>فیلد</th><th>مقدار</th></tr>
-  <tr><td>ایمیل</td><td><code>admin@signagecms.com</code></td></tr>
+  <tr><td>ایمیل</td><td><code>admin@hotelmedia.com</code></td></tr>
   <tr><td>رمزعبور</td><td><code>Admin@123456</code></td></tr>
   <tr><td>آدرس</td><td><code>http://localhost</code></td></tr>
 </table>
@@ -684,13 +684,13 @@ FIDS_HTTP_PROXY=         # اگه سرور خارج ایران است: http://pr
 # 3. Release
 
 # با command line:
-cd signage-cms/android
+cd hotel-media/android
 ./gradlew assembleRelease</pre>
 
 <h2>نصب روی TV Box</h2>
 <pre># با ADB:
 adb connect 192.168.1.X
-adb install -r SignageCMS.apk
+adb install -r Hotel Media.apk
 
 # یا از طریق USB:
 # Settings → Security → Unknown Sources: ON</pre>
@@ -785,7 +785,7 @@ docker logs signage_php  # بررسی خطا</pre>
       <li>Firewall ویندوز پورت 80 را باز کنید</li>
     </ol>
     <pre># باز کردن پورت 80 در PowerShell (Admin)
-netsh advfirewall firewall add rule name="SignageCMS" dir=in action=allow protocol=TCP localport=80</pre>
+netsh advfirewall firewall add rule name="Hotel Media" dir=in action=allow protocol=TCP localport=80</pre>
   </div>
 </div>
 
@@ -866,7 +866,7 @@ netsh advfirewall firewall add rule name="SignageCMS" dir=in action=allow protoc
 
 <h2>ریست کامل</h2>
 <div class="alert alert-error"><i>⚠</i> این دستور همه داده‌ها را پاک می‌کند!</div>
-<pre>cd D:\duc\signage-cms
+<pre>cd D:\duc\hotel-media
 docker compose down -v    # حذف containers و volumes
 docker compose up -d --build   # شروع دوباره</pre>
 </div>
@@ -887,7 +887,7 @@ docker compose up -d --build   # شروع دوباره</pre>
     <div style="font-size:20px;color:#475569;">→</div>
     <div style="text-align:center;padding:14px 18px;background:#0d0d14;border:1px solid rgba(249,115,22,.3);border-radius:12px;">
       <div style="font-size:22px;margin-bottom:4px;">⚙️</div>
-      <div style="font-size:11px;color:#f97316;font-weight:700;">SignageCMS API</div>
+      <div style="font-size:11px;color:#f97316;font-weight:700;">Hotel Media API</div>
       <div style="font-size:10px;color:#475569;margin-top:2px;">/api/v1/pms/*</div>
     </div>
     <div style="font-size:20px;color:#475569;">→</div>
@@ -1105,7 +1105,7 @@ POST /api/v1/pms/message
 
 <h2>نصب خودکار</h2>
 <div class="alert alert-warn"><i>⚠</i> فایل‌های RPi در پوشه <code>rpi/</code> پروژه قرار دارند.</div>
-<pre>git clone https://github.com/your-repo/signage-cms.git /tmp/cms
+<pre>git clone https://github.com/your-repo/hotel-media.git /tmp/cms
 cd /tmp/cms/rpi
 sudo bash setup.sh</pre>
 
@@ -1125,7 +1125,7 @@ sudo bash setup.sh</pre>
   <tr><td><code>GET :5055/api/gps</code></td><td>فقط داده GPS (lat, lng, alt, speed, heading)</td></tr>
   <tr><td><code>GET :5055/api/adsb</code></td><td>هواپیماهای دریافتی از ADS-B</td></tr>
   <tr><td><code>GET :5055/api/health</code></td><td>health check سریع</td></tr>
-  <tr><td><code>POST :5055/api/config</code></td><td>ذخیره تنظیمات (push, SignageCMS URL)</td></tr>
+  <tr><td><code>POST :5055/api/config</code></td><td>ذخیره تنظیمات (push, Hotel Media URL)</td></tr>
 </table>
 
 <pre>curl http://192.168.1.100:5055/api/gps
@@ -1167,7 +1167,7 @@ sudo bash setup.sh</pre>
   <div class="step"><div class="step-num">5</div>
     <div class="step-content"><h4>Push خودکار از RPi (اختیاری)</h4>
       <p>دکمه «تنظیم Push» → URL سرور، API token، و بازه زمانی را وارد کنید.</p>
-      <p>RPi مستقیماً داده را به SignageCMS می‌فرستد — بدون نیاز به باز بودن مرورگر.</p>
+      <p>RPi مستقیماً داده را به Hotel Media می‌فرستد — بدون نیاز به باز بودن مرورگر.</p>
     </div>
   </div>
 </div>
@@ -1194,7 +1194,7 @@ curl http://localhost:8080/data/aircraft.json | python3 -m json.tool | head -30<
 <h2>Authentication</h2>
 <pre>POST /api/v1/auth/login
 Content-Type: application/json
-{"email":"admin@signagecms.com","password":"Admin@123456"}
+{"email":"admin@hotelmedia.com","password":"Admin@123456"}
 
 Response: {"token": "JWT_TOKEN"}</pre>
 

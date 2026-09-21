@@ -1,20 +1,20 @@
 #!/bin/bash
 # ════════════════════════════════════════════════
-# SignageCMS Installation Script
+# Hotel Media Installation Script
 # ════════════════════════════════════════════════
 set -e
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; BLUE='\033[0;34m'; NC='\033[0m'
 
 echo -e "${BLUE}"
-echo "  ███████╗██╗ ██████╗ ███╗   ██╗ █████╗  ██████╗ ███████╗"
-echo "  ██╔════╝██║██╔════╝ ████╗  ██║██╔══██╗██╔════╝ ██╔════╝"
-echo "  ███████╗██║██║  ███╗██╔██╗ ██║███████║██║  ███╗█████╗  "
-echo "  ╚════██║██║██║   ██║██║╚██╗██║██╔══██║██║   ██║██╔══╝  "
-echo "  ███████║██║╚██████╔╝██║ ╚████║██║  ██║╚██████╔╝███████╗"
-echo "  ╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝"
+echo "  ██╗  ██╗ ██████╗ ████████╗███████╗██╗         ███╗   ███╗███████╗██████╗ ██╗ █████╗ "
+echo "  ██║  ██║██╔═══██╗╚══██╔══╝██╔════╝██║         ████╗ ████║██╔════╝██╔══██╗██║██╔══██╗"
+echo "  ███████║██║   ██║   ██║   █████╗  ██║         ██╔████╔██║█████╗  ██║  ██║██║███████║"
+echo "  ██╔══██║██║   ██║   ██║   ██╔══╝  ██║         ██║╚██╔╝██║██╔══╝  ██║  ██║██║██╔══██║"
+echo "  ██║  ██║╚██████╔╝   ██║   ███████╗███████╗    ██║ ╚═╝ ██║███████╗██████╔╝██║██║  ██║"
+echo "  ╚═╝  ╚═╝ ╚═════╝    ╚═╝   ╚══════╝╚══════╝    ╚═╝     ╚═╝╚══════╝╚═════╝ ╚═╝╚═╝  ╚═╝"
 echo -e "${NC}"
-echo -e "${YELLOW}Digital Signage Management System — v1.0.0${NC}"
+echo -e "${YELLOW}Hotel IPTV & Digital Signage — hotel-media${NC}"
 echo ""
 
 # ─── Check requirements ───
@@ -43,7 +43,7 @@ fi
 # ─── Database setup ───
 echo -e "${GREEN}[3/7] Database setup...${NC}"
 read -p "  DB Host [localhost]: " DB_HOST; DB_HOST=${DB_HOST:-localhost}
-read -p "  DB Name [signage_cms]: " DB_NAME; DB_NAME=${DB_NAME:-signage_cms}
+read -p "  DB Name [hotel_media]: " DB_NAME; DB_NAME=${DB_NAME:-hotel_media}
 read -p "  DB User [root]: " DB_USER; DB_USER=${DB_USER:-root}
 read -sp "  DB Password: " DB_PASS; echo ""
 
@@ -81,10 +81,10 @@ sed -i "s|APP_DEBUG=.*|APP_DEBUG=false|" .env
 echo -e "${GREEN}[7/7] Installation complete! 🎉${NC}"
 echo ""
 echo -e "${BLUE}╔══════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║         SignageCMS Ready to Launch!          ║${NC}"
+echo -e "${BLUE}║         Hotel Media Ready to Launch!          ║${NC}"
 echo -e "${BLUE}╠══════════════════════════════════════════════╣${NC}"
 echo -e "${BLUE}║${NC} 🌐 Admin Panel: ${YELLOW}$APP_URL/admin/dashboard${NC}"
-echo -e "${BLUE}║${NC} 📧 Email:       ${YELLOW}admin@signagecms.com${NC}"
+echo -e "${BLUE}║${NC} 📧 Email:       ${YELLOW}admin@hotelmedia.com${NC}"
 echo -e "${BLUE}║${NC} 🔑 Password:    ${YELLOW}Admin@123456${NC}"
 echo -e "${BLUE}║${NC}                                              ${BLUE}║${NC}"
 echo -e "${BLUE}║${NC} 📺 Player URL:  ${YELLOW}$APP_URL/player/{SCREEN_CODE}${NC}"

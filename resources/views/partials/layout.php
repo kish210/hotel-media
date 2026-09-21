@@ -43,7 +43,7 @@ if (!function_exists('modOn')) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="<?= csrf_token() ?>">
-<title><?= e($title ?? 'SignageCMS') ?> — SignageCMS</title>
+<title><?= e($title ?? 'Hotel Media') ?> — Hotel Media</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -144,7 +144,7 @@ body { font-family: var(--ui-font) !important; }
         <i class="fas fa-tv" style="color:#fff;font-size:15px;"></i>
       </div>
       <div>
-        <div style="font-size:14px;font-weight:800;color:#fff;line-height:1.2;">SignageCMS</div>
+        <div style="font-size:14px;font-weight:800;color:#fff;line-height:1.2;">Hotel Media</div>
         <div style="font-size:10px;color:#475569;">v1.6.0</div>
       </div>
     </div>

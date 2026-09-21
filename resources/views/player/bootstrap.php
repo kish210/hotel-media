@@ -69,7 +69,7 @@ p  { font-size:19px; color:#94a3b8; line-height:1.9; max-width:760px; }
   'use strict';
 
   var TOKEN      = '<?= $enrollToken ?>';
-  var STORE_KEY  = 'signagecms_screen_code';
+  var STORE_KEY  = 'hotelmedia_screen_code';
   var RETRY_MS   = 15000;
   var POLL_MS    = 10000;
 
@@ -230,7 +230,7 @@ p  { font-size:19px; color:#94a3b8; line-height:1.9; max-width:760px; }
 
   /* شناسه‌ی جایگزین وقتی هیچ MAC واقعی در دسترس نیست */
   function fallbackId() {
-    var key = 'signagecms_device_uid';
+    var key = 'hotelmedia_device_uid';
     var v = null;
     try { v = window.localStorage.getItem(key); } catch (e) {}
     if (v) { return v; }

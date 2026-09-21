@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace App\Core;
 
 /**
- * SignageCMS — Multilingual Helper
+ * Hotel Media — Multilingual Helper
  * Supports: fa (فارسی), en (English), ar (عربي)
  */
 class Lang

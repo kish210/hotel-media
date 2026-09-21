@@ -1,5 +1,5 @@
 <?php
-/** العربية — SignageCMS */
+/** العربية — Hotel Media */
 return [
     // ── التنقل / Sidebar ──────────────────────────────────
     'nav.dashboard'        => 'لوحة التحكم',

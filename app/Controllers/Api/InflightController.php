@@ -246,7 +246,7 @@ class InflightController extends Controller
         ]), 'تله‌متری از GPS به‌روز شد');
     }
 
-    // ── RPi: push SignageCMS config → RPi ─────────────────────────────────────
+    // ── RPi: push Hotel Media config → RPi ─────────────────────────────────────
     public function rpiPushConfig(Request $req, array $params): void
     {
         $tid  = Auth::tenantId();
@@ -263,7 +263,7 @@ class InflightController extends Controller
         }
 
         $cfg = [
-            'signagecms_url'  => rtrim($body['cms_url']       ?? '', '/'),
+            'hotelmedia_url'  => rtrim($body['cms_url']       ?? '', '/'),
             'flight_id'       => $id,
             'api_token'       => $body['api_token']        ?? '',
             'push_enabled'    => !empty($body['push_enabled']),

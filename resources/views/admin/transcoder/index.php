@@ -148,7 +148,7 @@
     <div style="background:#0d0d14;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;">
       <h3 style="font-size:12px;font-weight:700;color:#f97316;margin-bottom:10px;">روش ۱: ویندوز (پیشنهادی)</h3>
       <pre style="font-size:11px;color:#e2e8f0;direction:ltr;text-align:left;margin:0;background:transparent;">winget install Gyan.FFmpeg</pre>
-      <p style="font-size:11px;color:#64748b;margin-top:8px;">بعد از نصب، سرویس SignageCMS را restart کنید ✅</p>
+      <p style="font-size:11px;color:#64748b;margin-top:8px;">بعد از نصب، سرویس Hotel Media را restart کنید ✅</p>
     </div>
     <div style="background:#0d0d14;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;">
       <h3 style="font-size:12px;font-weight:700;color:#60a5fa;margin-bottom:10px;">روش ۲: لینوکس</h3>

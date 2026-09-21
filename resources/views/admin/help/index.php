@@ -7,7 +7,7 @@
     <i class="fas fa-book-open" style="color:#818cf8;font-size:20px;"></i>
   </div>
   <div>
-    <h1 style="font-size:20px;font-weight:800;color:#fff;margin:0;">راهنمای SignageCMS</h1>
+    <h1 style="font-size:20px;font-weight:800;color:#fff;margin:0;">راهنمای Hotel Media</h1>
     <div style="font-size:12px;color:#64748b;margin-top:2px;">مستندات کامل سیستم</div>
   </div>
 </div>
@@ -158,11 +158,11 @@ sudo dnf install tvheadend</code></pre>
   <!-- تنظیم TVHeadend -->
   <div class="card" style="padding:20px;margin-bottom:14px;">
     <h3 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:12px;">
-      <i class="fas fa-cog" style="color:#f59e0b;margin-left:6px;"></i>تنظیمات TVHeadend برای SignageCMS
+      <i class="fas fa-cog" style="color:#f59e0b;margin-left:6px;"></i>تنظیمات TVHeadend برای Hotel Media
     </h3>
     <ol style="padding-right:20px;color:#94a3b8;font-size:13px;line-height:2.3;">
       <li>وارد Web UI شوید: <code style="background:#0f0f17;padding:2px 6px;border-radius:4px;color:#f87171;">http://tvh-server:9981</code></li>
-      <li>از منوی <strong style="color:#fff;">Configuration → Users → Access Entries</strong> یک کاربر برای SignageCMS بسازید</li>
+      <li>از منوی <strong style="color:#fff;">Configuration → Users → Access Entries</strong> یک کاربر برای Hotel Media بسازید</li>
       <li>دسترسی <strong style="color:#fff;">Web Interface</strong> و <strong style="color:#fff;">Stream</strong> را فعال کنید</li>
       <li>
         پروفایل استریم را تنظیم کنید:<br>
@@ -174,10 +174,10 @@ sudo dnf install tvheadend</code></pre>
     </ol>
   </div>
 
-  <!-- اتصال به SignageCMS -->
+  <!-- اتصال به Hotel Media -->
   <div class="card" style="padding:20px;margin-bottom:14px;">
     <h3 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:12px;">
-      <i class="fas fa-link" style="color:#22c55e;margin-left:6px;"></i>اتصال به SignageCMS
+      <i class="fas fa-link" style="color:#22c55e;margin-left:6px;"></i>اتصال به Hotel Media
     </h3>
     <ol style="padding-right:20px;color:#94a3b8;font-size:13px;line-height:2.3;">
       <li>به <a href="/admin/iptv/tvheadend" style="color:#f87171;">Admin → IPTV → TVHeadend</a> بروید</li>

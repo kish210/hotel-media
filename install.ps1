@@ -1,7 +1,7 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    SignageCMS — نصب‌کننده ویندوز
+    Hotel Media — نصب‌کننده ویندوز
     سماع رایانه کیش | kishwifi.com
 .DESCRIPTION
     نصب کامل روی همین سیستم، بدون هیچ پیش‌نیاز بیرونی:
@@ -29,7 +29,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding  = [System.Text.Encoding]::UTF8
-$Host.UI.RawUI.WindowTitle = 'SignageCMS Installer — سماع رایانه کیش'
+$Host.UI.RawUI.WindowTitle = 'Hotel Media Installer — سماع رایانه کیش'
 
 function Write-Color {
     param([string]$Text, [string]$Color = 'White', [switch]$NoNewline)
@@ -44,7 +44,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 
 Write-Color ""
 Write-Color "  ============================================================" 'Cyan'
-Write-Color "    SignageCMS — نصب‌کننده ویندوز" 'Cyan'
+Write-Color "    Hotel Media — نصب‌کننده ویندوز" 'Cyan'
 Write-Color "    kishwifi.com" 'DarkCyan'
 Write-Color "  ============================================================" 'Cyan'
 Write-Color ""

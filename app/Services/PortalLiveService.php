@@ -208,7 +208,7 @@ class PortalLiveService
 
         $ctx = stream_context_create(['http' => [
             'timeout'       => self::HTTP_TIMEOUT,
-            'header'        => "User-Agent: SignageCMS-Portal\r\n",
+            'header'        => "User-Agent: Hotel Media-Portal\r\n",
             'ignore_errors' => true,
         ]]);
 

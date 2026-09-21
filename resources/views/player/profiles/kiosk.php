@@ -1,6 +1,6 @@
 <?php
 /**
- * SignageCMS Player — Kiosk Profile
+ * Hotel Media Player — Kiosk Profile
  * Touch screen optimized with idle/active states
  */
 ?>

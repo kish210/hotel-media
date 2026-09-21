@@ -589,7 +589,7 @@ function renderDetail(f) {
           • گیرنده RTL-SDR برای ADS-B (اختیاری)<br><br>
           <b style="color:#00b4d8;display:block;margin-bottom:6px;">نصب سریع:</b>
           <code style="display:block;background:rgba(0,0,0,0.4);padding:10px;border-radius:8px;
-                       font-size:10px;color:#4ade80;white-space:pre-wrap;">git clone https://github.com/your-repo/signage-cms.git /tmp/signage
+                       font-size:10px;color:#4ade80;white-space:pre-wrap;">git clone https://github.com/your-repo/hotel-media.git /tmp/signage
 cd /tmp/signage/rpi
 sudo bash setup.sh</code>
           <br>
@@ -818,7 +818,7 @@ if (flightsData.length > 0) selectFlight(flightsData[0].id);
 let autoSyncTimer  = null;
 let autoSyncActive = false;
 
-// Save RPi IP/port to SignageCMS server
+// Save RPi IP/port to Hotel Media server
 async function saveRpiIp(flightId) {
   const ip   = document.getElementById('rpi-ip-field')?.value?.trim() || '';
   const port = parseInt(document.getElementById('rpi-port-field')?.value || 5055);
@@ -833,7 +833,7 @@ async function saveRpiIp(flightId) {
   }
 }
 
-// Check RPi status (proxied via SignageCMS backend)
+// Check RPi status (proxied via Hotel Media backend)
 async function checkRpiStatus(flightId) {
   const btn = document.getElementById('rpi-check-btn');
   const box = document.getElementById('rpi-status-box');
@@ -1023,12 +1023,12 @@ async function savePushConfig(e) {
     </div>
     <p style="font-size:12px;color:#64748b;margin-bottom:16px;line-height:1.7;">
       با این تنظیم، Raspberry Pi هر چند ثانیه یکبار داده GPS را مستقیماً
-      به SignageCMS ارسال می‌کند — حتی بدون نیاز به باز بودن این پنل.
+      به Hotel Media ارسال می‌کند — حتی بدون نیاز به باز بودن این پنل.
     </p>
     <form onsubmit="savePushConfig(event)">
       <input type="hidden" id="push-flight-id">
       <div style="margin-bottom:14px;">
-        <label class="form-label">آدرس SignageCMS (URL کامل)</label>
+        <label class="form-label">آدرس Hotel Media (URL کامل)</label>
         <input type="url" id="push-cms-url" class="form-input"
                placeholder="https://your-signage-server.com" required>
       </div>

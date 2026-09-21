@@ -1,5 +1,5 @@
-; ============================================================================
-;  SignageCMS — Native Windows Installer  (NO Docker)
+﻿; ============================================================================
+;  Hotel Media — Native Windows Installer  (NO Docker)
 ;  سماع رایانه کیش | kishwifi.com
 ;
 ;  Produces a single .exe that a non-technical user just double-clicks.
@@ -14,7 +14,7 @@
 ;  Nothing here needs Docker, WSL2 or any prior setup on the target machine.
 ;
 ;  Build (done for you by scripts/build-native-installer.ps1):
-;     ISCC /DMyAppVersion=1.6.2 /DPayloadDir="..\..\dist\native-payload" SignageCMS-Native.iss
+;     ISCC /DMyAppVersion=1.6.2 /DPayloadDir="..\..\dist\native-payload" HotelMedia-Native.iss
 ; ============================================================================
 
 #ifndef MyAppVersion
@@ -26,7 +26,7 @@
   #define PayloadDir "..\..\dist\native-payload"
 #endif
 
-#define MyAppName      "SignageCMS"
+#define MyAppName      "Hotel Media"
 #define MyAppPublisher "Sama Rayaneh Kish - سماع رایانه کیش"
 #define MyAppURL       "https://kishwifi.com"
 #define WebPort        "80"
@@ -39,15 +39,15 @@ AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
-DefaultDirName=C:\SignageCMS
-DefaultGroupName=SignageCMS
+DefaultDirName=C:\HotelMedia
+DefaultGroupName=Hotel Media
 DisableProgramGroupPage=yes
 DisableDirPage=no
 PrivilegesRequired=admin
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 OutputDir=.\Output
-OutputBaseFilename=SignageCMS-v{#MyAppVersion}-setup
+OutputBaseFilename=HotelMedia-v{#MyAppVersion}-setup
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
@@ -74,13 +74,13 @@ Name: "{app}\storage\temp";      Permissions: users-modify
 Name: "{app}\public\uploads";    Permissions: users-modify
 
 [Icons]
-Name: "{group}\SignageCMS Dashboard"; Filename: "http://localhost/admin"
-Name: "{group}\Start SignageCMS";   Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\runtime\scripts\Manage-SignageCMS.ps1"" start";   WorkingDir: "{app}"
-Name: "{group}\Stop SignageCMS";    Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\runtime\scripts\Manage-SignageCMS.ps1"" stop";    WorkingDir: "{app}"
-Name: "{group}\Service status";     Filename: "powershell.exe"; Parameters: "-NoProfile -NoExit -ExecutionPolicy Bypass -File ""{app}\runtime\scripts\Manage-SignageCMS.ps1"" status"; WorkingDir: "{app}"
+Name: "{group}\Hotel Media Dashboard"; Filename: "http://localhost/admin"
+Name: "{group}\Start Hotel Media";   Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\runtime\scripts\Manage-HotelMedia.ps1"" start";   WorkingDir: "{app}"
+Name: "{group}\Stop Hotel Media";    Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\runtime\scripts\Manage-HotelMedia.ps1"" stop";    WorkingDir: "{app}"
+Name: "{group}\Service status";     Filename: "powershell.exe"; Parameters: "-NoProfile -NoExit -ExecutionPolicy Bypass -File ""{app}\runtime\scripts\Manage-HotelMedia.ps1"" status"; WorkingDir: "{app}"
 Name: "{group}\Open install folder"; Filename: "{app}"
-Name: "{group}\Uninstall SignageCMS"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\SignageCMS Dashboard"; Filename: "http://localhost/admin"; Tasks: desktopicon
+Name: "{group}\Uninstall Hotel Media"; Filename: "{uninstallexe}"
+Name: "{autodesktop}\Hotel Media Dashboard"; Filename: "http://localhost/admin"; Tasks: desktopicon
 
 [Run]
 ; Set everything up. waituntilterminated so the wizard shows the progress window.
@@ -88,7 +88,7 @@ Filename: "powershell.exe"; \
   Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\runtime\scripts\provision.ps1"" -InstallDir ""{app}"" -Port {#WebPort} -WsPort {#WsPort}"; \
   WorkingDir: "{app}"; \
   Flags: waituntilterminated; \
-  StatusMsg: "Setting up SignageCMS (database + services). This can take a few minutes..."
+  StatusMsg: "Setting up Hotel Media (database + services). This can take a few minutes..."
 
 [UninstallRun]
 ; Tear down services + firewall before the files are deleted.
@@ -99,7 +99,7 @@ Filename: "powershell.exe"; \
   RunOnceId: "SignageNativeDown"
 
 [Messages]
-WelcomeLabel2=This will install [name/ver] on your computer.%n%nSignageCMS is a digital signage management server. This installer bundles everything it needs (web server, database and realtime server) — you do NOT need Docker, a database, or any technical setup.%n%nJust click Next, and when it finishes your dashboard opens automatically.%n%nسماع رایانه کیش | kishwifi.com
+WelcomeLabel2=This will install [name/ver] on your computer.%n%nHotel Media is a digital signage management server. This installer bundles everything it needs (web server, database and realtime server) — you do NOT need Docker, a database, or any technical setup.%n%nJust click Next, and when it finishes your dashboard opens automatically.%n%nسماع رایانه کیش | kishwifi.com
 
 [Code]
 { Friendly heads-up if something else is already using the web port. }

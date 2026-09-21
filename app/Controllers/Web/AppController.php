@@ -26,7 +26,7 @@ class AppController extends Controller
         $vName   = trim($req->post('version_name', '1.0.0'));
         $changelog = trim($req->post('changelog', ''));
         $force   = $req->post('force_update') ? 1 : 0;
-        $filename = 'signagecms-v' . $vName . '-' . $vCode . '.apk';
+        $filename = 'hotelmedia-v' . $vName . '-' . $vCode . '.apk';
         $dest     = PUBLIC_PATH . '/apk/' . $filename;
 
         if (!is_dir(PUBLIC_PATH . '/apk')) mkdir(PUBLIC_PATH . '/apk', 0755, true);

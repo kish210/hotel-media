@@ -8,9 +8,9 @@
 
 ---
 
-# 🖥️ SignageCMS — Digital Signage Management System
+# 🖥️ Hotel Media — Digital Signage Management System
 
-> سیستم مدیریت تابلوی دیجیتال حرفه‌ای برای فرودگاه‌ها، هتل‌ها، رستوران‌ها، فروشگاه‌ها و محیط‌های شرکتی
+> سیستم مدیریت تلویزیون و تابلوی دیجیتال هتل حرفه‌ای برای فرودگاه‌ها، هتل‌ها، رستوران‌ها، فروشگاه‌ها و محیط‌های شرکتی
 >
 > Developed by **[سماع رایانه کیش — Sama Rayaneh Kish](https://kishwifi.com)** | 🌐 [kishwifi.com](https://kishwifi.com)
 
@@ -43,9 +43,9 @@
 | پلتفرم | فایل | توضیح |
 |--------|------|-------|
 | 🏨 **Server — هتل مدیا (فارسی)** | [⬇️ Setup-HotelMedia.exe](https://github.com/kish210/hotel-media/releases/latest/download/Setup-HotelMedia.exe) | ⭐ Windows — تک‌فایل، UI فارسی، کاملاً خودکار |
-| 🟢 **Server — All-in-One** | [⬇️ SignageCMS-setup.exe](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-setup.exe) | Windows 10/11 / Server — دابل‌کلیک، انگلیسی |
-| 🤖 **Android / Android TV** | [⬇️ APK](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-android.apk) | Android 5.0+ — نصب مستقیم |
-| 🖥️ **Windows Player** | [⬇️ EXE](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-windows-player-setup.exe) | Windows 10/11 — پلیر |
+| 🟢 **Server — All-in-One** | [⬇️ HotelMedia-setup.exe](https://github.com/kish210/hotel-media/releases/latest/download/HotelMedia-setup.exe) | Windows 10/11 / Server — دابل‌کلیک، انگلیسی |
+| 🤖 **Android / Android TV** | [⬇️ APK](https://github.com/kish210/hotel-media/releases/latest/download/HotelMedia-android.apk) | Android 5.0+ — نصب مستقیم |
+| 🖥️ **Windows Player** | [⬇️ EXE](https://github.com/kish210/hotel-media/releases/latest/download/HotelMedia-windows-player-setup.exe) | Windows 10/11 — پلیر |
 
 > 📦 **همه نسخه‌ها و تاریخچه:** [github.com/kish210/hotel-media/releases](https://github.com/kish210/hotel-media/releases)
 >
@@ -82,7 +82,7 @@
 | روش | چه‌کاری بکنید | مناسب چه‌کسی |
 |-----|--------------|--------------|
 | 🏨 **نصب‌کننده هتل مدیا (فارسی)** | [`Setup-HotelMedia.exe`](https://github.com/kish210/hotel-media/releases/latest/download/Setup-HotelMedia.exe) را دابل‌کلیک کنید | کاربر کاملاً غیرفنی — UI فارسی، نام هتل، آیکون دسکتاپ، Tray فارسی |
-| 🟢 **نصب‌کننده All-in-One (انگلیسی)** | [`SignageCMS-setup.exe`](https://github.com/kish210/hotel-media/releases/latest/download/SignageCMS-setup.exe) را دابل‌کلیک کنید | همان تجربه، بدون برند هتل |
+| 🟢 **نصب‌کننده All-in-One (انگلیسی)** | [`HotelMedia-setup.exe`](https://github.com/kish210/hotel-media/releases/latest/download/HotelMedia-setup.exe) را دابل‌کلیک کنید | همان تجربه، بدون برند هتل |
 | 🟢 **اجرا روی همین پوشه** | فایل سرور را extract کنید و روی **`SETUP-NO-DOCKER.bat`** دابل‌کلیک کنید | وقتی فایل‌های سرور را دارید و می‌خواهید همین‌جا نصب شود |
 
 **نصب‌کننده‌ها چه می‌کنند؟** یک PHP + MariaDB قابل‌حمل را بسته‌بندی/دانلود می‌کنند، پورت آزاد را
@@ -146,7 +146,7 @@ php websocket/server.php                        # سرور real-time (ترمین
 | 🔌 WebSocket | ws://localhost:8080 |
 
 **ورود پیش‌فرض:**
-- Email: `admin@signagecms.com`
+- Email: `admin@hotelmedia.com`
 - Password: `Admin@123456`
 
 ---
@@ -205,7 +205,7 @@ FIDS_HTTP_PROXY=        # proxy ایران (اگه سرور خارج باشه)
 ## 📁 ساختار پروژه
 
 ```
-signage-cms/
+hotel-media/
 ├── app/
 │   ├── Controllers/
 │   │   ├── Api/              # REST API endpoints
@@ -313,7 +313,7 @@ GET  /api/v1/fids/live?airport_id=2    # خواندن از cache
 ## ⚙️ متغیرهای محیطی
 
 ```env
-APP_NAME=SignageCMS
+APP_NAME=Hotel Media
 APP_URL=http://localhost
 APP_DEBUG=false
 APP_TIMEZONE=Asia/Tehran
@@ -370,7 +370,7 @@ FIDS_HTTP_PROXY=          # http://proxy-ip:port (برای سرور خارج ا�
 
 ### v1.8.0 — نسخه‌ی کامل (Complete Package)
 - 🏨 **نصب‌کننده‌ی فارسی هتل مدیا** — `Setup-HotelMedia.exe`: تک‌فایل، UI فارسی RTL، صفحه‌ی نام هتل، بدون هیچ پیش‌نیاز، سرویس‌های خودکار، Tray فارسی، صفحه‌ی welcome، rollback و uninstaller با سوال «حذف داده‌ها؟»
-- 🟢 **نصب‌کننده‌ی All-in-One** — `SignageCMS-setup.exe`: PHP + MariaDB بسته‌بندی‌شده
+- 🟢 **نصب‌کننده‌ی All-in-One** — `HotelMedia-setup.exe`: PHP + MariaDB بسته‌بندی‌شده
 - 🖥️ **نصب درجا** — `SETUP-NO-DOCKER.bat` / `setup-native.ps1`
 - 🔧 پایداری نصب: رفع باگ بحرانی `$Args` (سرویس‌ها حالا واقعاً روی پورت listen می‌کنند)، سازگاری کامل PowerShell 5.1 / Windows Server (UTF-8 BOM)، مدیریت خطای native commands، ریدایرکت `/admin`
 - 🌐 یافتن خودکار پورت آزاد + Windows Firewall خودکار

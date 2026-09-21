@@ -1,6 +1,6 @@
 <?php
 /**
- * SignageCMS Player — Samsung Tizen Profile
+ * Hotel Media Player — Samsung Tizen Profile
  * Optimized for Samsung Smart TV (Tizen 3.x, 4.x, 5.x, 6.x+)
  * Uses Samsung AVPlay API where available + HTML5 fallback
  */
@@ -16,7 +16,7 @@ $posMap  = ['bottom-right'=>'bottom:14px;right:14px','bottom-left'=>'bottom:14px
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1920">
-<title>SignageCMS — Samsung</title>
+<title>Hotel Media — Samsung</title>
 <!-- Samsung Tizen APIs -->
 <script type="text/javascript" src="$WEBAPIS/webapis/webapis.js" onerror=""></script>
 <style>
@@ -46,7 +46,7 @@ body,html{width:1920px;height:1080px;overflow:hidden;background:#000;}
   <div id="act">
     <div id="act-box">
       <div style="font-size:40px;margin-bottom:12px;">📺</div>
-      <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:6px;">SignageCMS</div>
+      <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:6px;">Hotel Media</div>
       <div style="font-size:12px;color:#64748b;margin-bottom:20px;">کد فعال‌سازی را وارد کنید</div>
       <div style="font-size:13px;color:#94a3b8;margin-bottom:14px;font-family:monospace;"><?= e($screen['code']??'') ?></div>
       <input id="act-inp" type="text" maxlength="6" placeholder="______">

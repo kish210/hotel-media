@@ -1,6 +1,6 @@
 <?php
 /**
- * SignageCMS Player — Enhanced
+ * Hotel Media Player — Enhanced
  * Features: HLS/RTSP streams, Logo overlay, Subtitles/Ticker, Instant broadcast
  */
 
@@ -34,7 +34,7 @@ $logoStyle = $logoPositions[$logoPos] ?? $logoPositions['bottom-right'];
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SignageCMS Player — <?= e($screen['name'] ?? 'Signage') ?></title>
+<title>Hotel Media Player — <?= e($screen['name'] ?? 'Signage') ?></title>
 <script src="/assets/vendor/hls/hls.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -156,7 +156,7 @@ body { background:#000; color:#fff; font-family:sans-serif; overflow:hidden; wid
       <div style="width:60px;height:60px;background:linear-gradient(135deg,#f97316,#c2570b);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
         <span style="font-size:28px">📺</span>
       </div>
-      <h2 style="font-size:20px;font-weight:800;margin-bottom:8px;">SignageCMS</h2>
+      <h2 style="font-size:20px;font-weight:800;margin-bottom:8px;">Hotel Media</h2>
       <p style="color:#64748b;font-size:13px;margin-bottom:24px;">کد فعال‌سازی را وارد کنید</p>
       <p style="color:#94a3b8;font-size:12px;margin-bottom:8px;">کد صفحه: <strong style="color:#f97316;font-family:monospace;"><?= e($screen['code'] ?? '—') ?></strong></p>
       <input type="text" id="actCode" class="code-input" maxlength="6" placeholder="______"

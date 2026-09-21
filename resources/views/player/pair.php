@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SignageCMS — راه‌اندازی</title>
+<title>Hotel Media — راه‌اندازی</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body {
@@ -271,7 +271,7 @@ html, body {
   </script>
 <?php endif; ?>
 
-  <div class="brand">SignageCMS Player</div>
+  <div class="brand">Hotel Media Player</div>
 </div>
 
 <!-- Font Awesome CDN (lightweight) -->

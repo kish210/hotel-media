@@ -1,5 +1,5 @@
 <?php
-/** English — SignageCMS */
+/** English — Hotel Media */
 return [
     // ── Navigation / Sidebar ──────────────────────────────
     'nav.dashboard'        => 'Dashboard',

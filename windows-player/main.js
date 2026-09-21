@@ -90,7 +90,7 @@ function createSetupWindow() {
     alwaysOnTop:     false,
     autoHideMenuBar: true,
     backgroundColor: '#0a0a14',
-    title:           'SignageCMS Player — راه‌اندازی',
+    title:           'Hotel Media Player — راه‌اندازی',
     webPreferences: {
       preload:          path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -108,14 +108,14 @@ function createTray() {
   if (!fs.existsSync(iconPath)) return;
 
   tray = new Tray(iconPath);
-  tray.setToolTip('SignageCMS Player');
+  tray.setToolTip('Hotel Media Player');
   updateTrayMenu();
 }
 
 function updateTrayMenu() {
   if (!tray) return;
   const menu = Menu.buildFromTemplate([
-    { label: 'SignageCMS Player', enabled: false },
+    { label: 'Hotel Media Player', enabled: false },
     { type: 'separator' },
     { label: 'تنظیمات / Setup',  click: () => createSetupWindow() },
     { label: 'بارگذاری مجدد',    click: () => mainWindow?.reload() },

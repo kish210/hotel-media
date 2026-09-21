@@ -1,4 +1,4 @@
-/* SignageCMS - Additional styles (beyond Tailwind inline) */
+/* Hotel Media - Additional styles (beyond Tailwind inline) */
 
 /* ── RTL Utilities ── */
 [dir="rtl"] .flip-rtl { transform: scaleX(-1); }

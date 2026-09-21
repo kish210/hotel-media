@@ -68,15 +68,15 @@ jobs:
           mkdir -p dist
           # APK — versioned + stable name (for /releases/latest/download/)
           if ls android/app/build/outputs/apk/release/*.apk 2>/dev/null; then
-            cp android/app/build/outputs/apk/release/*.apk dist/SignageCMS-${TAG}-android.apk
+            cp android/app/build/outputs/apk/release/*.apk dist/Hotel Media-${TAG}-android.apk
           else
-            cp android/app/build/outputs/apk/debug/*.apk   dist/SignageCMS-${TAG}-android.apk
+            cp android/app/build/outputs/apk/debug/*.apk   dist/Hotel Media-${TAG}-android.apk
           fi
-          cp dist/SignageCMS-${TAG}-android.apk dist/SignageCMS-android.apk
+          cp dist/Hotel Media-${TAG}-android.apk dist/HotelMedia-android.apk
           # AAB (Google Play Store)
           if ls android/app/build/outputs/bundle/release/*.aab 2>/dev/null; then
             cp android/app/build/outputs/bundle/release/*.aab \
-               dist/SignageCMS-${TAG}-android-playstore.aab
+               dist/Hotel Media-${TAG}-android-playstore.aab
           fi
           ls -lh dist/
 
@@ -84,13 +84,13 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: android-apk
-          path: dist/SignageCMS-*.apk
+          path: dist/Hotel Media-*.apk
 
       - name: Upload AAB artifact (Play Store)
         uses: actions/upload-artifact@v7
         with:
           name: android-aab
-          path: dist/SignageCMS-*-playstore.aab
+          path: dist/Hotel Media-*-playstore.aab
           if-no-files-found: ignore
 
   # ── ساخت Windows Player (Electron) ───────────────────────────
@@ -147,8 +147,8 @@ jobs:
           $distDir = Join-Path $env:GITHUB_WORKSPACE "windows-player\dist"
           $exe = Get-ChildItem $distDir -Filter "*.exe" -Recurse | Select-Object -First 1
           if ($exe) {
-            $versioned = Join-Path $distDir "SignageCMS-$tag-windows-player-setup.exe"
-            $stable    = Join-Path $distDir "SignageCMS-windows-player-setup.exe"
+            $versioned = Join-Path $distDir "Hotel Media-$tag-windows-player-setup.exe"
+            $stable    = Join-Path $distDir "HotelMedia-windows-player-setup.exe"
             Rename-Item $exe.FullName $versioned
             Copy-Item $versioned $stable
             Write-Host "Versioned: $versioned"
@@ -162,7 +162,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: windows-player-exe
-          path: windows-player/dist/SignageCMS-*.exe
+          path: windows-player/dist/Hotel Media-*.exe
 
   # ── ساخت نصب‌کننده All-in-One ویندوز ─────────────────────────
   windows-native-installer:
@@ -206,8 +206,8 @@ jobs:
           if (-not $exe) { Write-Error "No all-in-one installer produced"; Get-ChildItem $outDir; exit 1 }
           $dist = Join-Path $env:GITHUB_WORKSPACE "dist"
           New-Item -ItemType Directory -Force -Path $dist | Out-Null
-          $versioned = Join-Path $dist "SignageCMS-$tag-setup.exe"
-          $stable    = Join-Path $dist "SignageCMS-setup.exe"
+          $versioned = Join-Path $dist "Hotel Media-$tag-setup.exe"
+          $stable    = Join-Path $dist "HotelMedia-setup.exe"
           Copy-Item $exe.FullName $versioned -Force
           Copy-Item $exe.FullName $stable -Force
           Write-Host "Versioned: $versioned"
@@ -219,8 +219,8 @@ jobs:
           name: windows-native-installer
           # match BOTH versioned (…-v1.7.0-setup.exe) and stable (…-setup.exe)
           path: |
-            dist/SignageCMS-*-setup.exe
-            dist/SignageCMS-setup.exe
+            dist/Hotel Media-*-setup.exe
+            dist/HotelMedia-setup.exe
 
   # ── ساخت نصب‌کننده فارسی هتل مدیا (تک‌فایل) ──────────────────
   hotelmedia-installer:
@@ -299,19 +299,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: "SignageCMS ${{ github.ref_name }}"
+          name: "Hotel Media ${{ github.ref_name }}"
           body: |
-            ## SignageCMS ${{ github.ref_name }}
+            ## Hotel Media ${{ github.ref_name }}
 
             ### ⭐ جدید: نصب‌کننده All-in-One ویندوز
 
-            دیگه نیازی به دانش فنی نیست. فایل **`SignageCMS-setup.exe`**
+            دیگه نیازی به دانش فنی نیست. فایل **`HotelMedia-setup.exe`**
             را دانلود کنید، دابل‌کلیک کنید و چند بار Next بزنید — همه‌چیز (وب‌سرور، دیتابیس
             MariaDB و سرور realtime) داخل نصب‌کننده هست و خودکار به‌صورت سرویس ویندوز نصب
             و راه‌اندازی می‌شود. بعد از نصب، داشبورد خودکار روی `http://localhost/admin` باز می‌شود.
 
             > 💡 **لینک ثابت آخرین نسخه:**
-            > `https://github.com/${{ github.repository }}/releases/latest/download/SignageCMS-setup.exe`
+            > `https://github.com/${{ github.repository }}/releases/latest/download/HotelMedia-setup.exe`
 
             ---
 
@@ -347,7 +347,7 @@ jobs:
             | فایل | توضیح | سیستم‌عامل |
             |------|-------|------------|
             | **`Setup-HotelMedia.exe`** | 🏨 **نصب‌کننده فارسی هتل مدیا — تک‌فایل، بدون Docker، کاملاً خودکار** | Windows 10/11 / Server |
-            | **`SignageCMS-setup.exe`** | ⭐ **سرور All-in-One — بدون Docker، فقط دابل‌کلیک** | Windows 10/11 / Server |
+            | **`HotelMedia-setup.exe`** | ⭐ **سرور All-in-One — بدون Docker، فقط دابل‌کلیک** | Windows 10/11 / Server |
             | `*-android.apk` | اپلیکیشن Android / Android TV — نصب مستقیم | Android 5.0+ |
             | `*-android-playstore.aab` | Android App Bundle — آپلود در Google Play Store | Google Play |
             | `*-windows-player-setup.exe` | پلیر Windows (نصب‌کننده) | Windows 10/11 |
@@ -359,13 +359,13 @@ jobs:
             3. آدرس سرور را وارد کنید و متصل شوید
 
             ### 🖥️ نصب سرور (ساده‌ترین راه — بدون Docker)
-            فایل **`SignageCMS-setup.exe`** را دانلود و اجرا کنید. نصب‌کننده All-in-One همه‌چیز
+            فایل **`HotelMedia-setup.exe`** را دانلود و اجرا کنید. نصب‌کننده All-in-One همه‌چیز
             (PHP، MariaDB، سرور realtime) را به‌صورت سرویس ویندوز نصب می‌کند و داشبورد را باز می‌کند.
             هیچ پیش‌نیازی لازم نیست.
 
             ### 🔑 ورود پیش‌فرض
             - URL: `http://your-server/admin`
-            - Email: `admin@signagecms.com`
+            - Email: `admin@hotelmedia.com`
             - Password: `Admin@123456`
           files: release-files/*
           fail_on_unmatched_files: false

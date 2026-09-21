@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ورود به SignageCMS</title>
+<title>ورود به Hotel Media</title>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
@@ -31,7 +31,7 @@
 <div class="bg-glow"></div>
 <div class="card">
   <div class="logo"><i class="fas fa-tv" style="font-size:24px;color:#fff;"></i></div>
-  <h1>SignageCMS</h1>
+  <h1>Hotel Media</h1>
   <p class="sub">سیستم مدیریت تابلو دیجیتال</p>
 
   <?php if (!empty($error)): ?>
@@ -43,7 +43,7 @@
     <div class="field">
       <label>ایمیل</label>
       <input type="email" name="email" value="<?= e($old['email'] ?? '') ?>"
-        placeholder="admin@signagecms.com" required autofocus>
+        placeholder="admin@hotelmedia.com" required autofocus>
     </div>
     <div class="field">
       <label>رمز عبور</label>
@@ -54,7 +54,7 @@
 
   <div class="hint">
     <strong>اطلاعات پیش‌فرض:</strong><br>
-    admin@signagecms.com | Admin@123456
+    admin@hotelmedia.com | Admin@123456
   </div>
 </div>
 </body>

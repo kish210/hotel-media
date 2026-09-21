@@ -1,6 +1,6 @@
 <?php
 /**
- * SignageCMS Player — Minimal Profile
+ * Hotel Media Player — Minimal Profile
  * Ultra-lightweight: no animations, no JS framework
  * For: Raspberry Pi, weak CPUs, very old browsers
  */

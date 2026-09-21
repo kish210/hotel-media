@@ -317,7 +317,7 @@ class EpgSyncService
 
         $ctx = stream_context_create(['http' => [
             'timeout'       => 30,
-            'header'        => $extraHeader . "User-Agent: SignageCMS-EPG\r\n",
+            'header'        => $extraHeader . "User-Agent: Hotel Media-EPG\r\n",
             'ignore_errors' => true,
         ]]);
 

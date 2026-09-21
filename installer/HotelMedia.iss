@@ -1,14 +1,14 @@
-; ============================================================================
-;  SignageCMS — Windows Server Installer (Inno Setup / ISCC)
+﻿; ============================================================================
+;  Hotel Media — Windows Server Installer (Inno Setup / ISCC)
 ;  سماع رایانه کیش | kishwifi.com
 ;
 ;  This produces a native Windows installer (.exe) that:
-;    1. Copies the full SignageCMS server into the install folder.
+;    1. Copies the full Hotel Media server into the install folder.
 ;    2. Optionally runs the universal installer (install.ps1) right after,
 ;       which auto-detects the Windows edition and sets up Docker/WSL2.
 ;
 ;  Build:
-;    ISCC.exe /DMyAppVersion=1.6.2 /DSourceDir="..\dist\server-files" SignageCMS.iss
+;    ISCC.exe /DMyAppVersion=1.6.2 /DSourceDir="..\dist\server-files" HotelMedia.iss
 ; ============================================================================
 
 #ifndef MyAppVersion
@@ -21,7 +21,7 @@
   #define SourceDir "..\dist\server-files"
 #endif
 
-#define MyAppName     "SignageCMS Server"
+#define MyAppName     "Hotel Media Server"
 #define MyAppPublisher "Sama Rayaneh Kish — سماع رایانه کیش"
 #define MyAppURL      "https://kishwifi.com"
 
@@ -33,8 +33,8 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName=C:\SignageCMS
-DefaultGroupName=SignageCMS
+DefaultDirName=C:\HotelMedia
+DefaultGroupName=Hotel Media
 DisableProgramGroupPage=yes
 DisableDirPage=no
 ; Server install needs admin (WSL2, Firewall, Scheduled Task, Docker).
@@ -42,7 +42,7 @@ PrivilegesRequired=admin
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 OutputDir=.\Output
-OutputBaseFilename=SignageCMS-v{#MyAppVersion}-server-setup
+OutputBaseFilename=HotelMedia-v{#MyAppVersion}-server-setup
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
@@ -53,7 +53,7 @@ UninstallDisplayName={#MyAppName}
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "runsetup"; Description: "Run the SignageCMS installer now (installs Docker / WSL2 and starts the stack)"; GroupDescription: "Post-install:"
+Name: "runsetup"; Description: "Run the Hotel Media installer now (installs Docker / WSL2 and starts the stack)"; GroupDescription: "Post-install:"
 Name: "desktopicon"; Description: "Create a desktop shortcut to the dashboard"; GroupDescription: "Shortcuts:"
 
 [Files]
@@ -61,11 +61,11 @@ Name: "desktopicon"; Description: "Create a desktop shortcut to the dashboard"; 
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Icons]
-Name: "{group}\SignageCMS Dashboard"; Filename: "http://localhost/admin"
+Name: "{group}\Hotel Media Dashboard"; Filename: "http://localhost/admin"
 Name: "{group}\Open install folder"; Filename: "{app}"
 Name: "{group}\Re-run installer"; Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\install.ps1"""; WorkingDir: "{app}"
-Name: "{group}\Uninstall SignageCMS"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\SignageCMS Dashboard"; Filename: "http://localhost/admin"; Tasks: desktopicon
+Name: "{group}\Uninstall Hotel Media"; Filename: "{uninstallexe}"
+Name: "{autodesktop}\Hotel Media Dashboard"; Filename: "http://localhost/admin"; Tasks: desktopicon
 
 [Run]
 ; Kick off the universal installer after files are copied (only if the user opted in).
@@ -73,8 +73,8 @@ Filename: "powershell.exe"; \
   Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\install.ps1"""; \
   WorkingDir: "{app}"; \
   Flags: shellexec waituntilterminated; \
-  Description: "Set up SignageCMS (Docker / WSL2)"; \
-  StatusMsg: "Running SignageCMS installer…"; \
+  Description: "Set up Hotel Media (Docker / WSL2)"; \
+  StatusMsg: "Running Hotel Media installer…"; \
   Tasks: runsetup
 
 [UninstallRun]
@@ -86,4 +86,4 @@ Filename: "powershell.exe"; \
   RunOnceId: "SignageStackDown"
 
 [Messages]
-WelcomeLabel2=This will install [name/ver] on your computer.%n%nSignageCMS is a digital signage management server (PHP + MySQL + Redis + WebSocket) that runs in Docker. The installer can set up Docker / WSL2 for you automatically.%n%nسماع رایانه کیش | kishwifi.com
+WelcomeLabel2=This will install [name/ver] on your computer.%n%nHotel Media is a digital signage management server (PHP + MySQL + Redis + WebSocket) that runs in Docker. The installer can set up Docker / WSL2 for you automatically.%n%nسماع رایانه کیش | kishwifi.com

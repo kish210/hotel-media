@@ -1,4 +1,4 @@
-# SignageCMS REST API Documentation
+# Hotel Media REST API Documentation
 **Base URL:** `https://your-domain.com/api/v1`  
 **Auth:** Bearer token (JWT) in `Authorization` header  
 **Content-Type:** `application/json`
@@ -512,7 +512,7 @@ Returns all flights for the tenant.
 
 ## Raspberry Pi Bridge API
 
-> Runs on Raspberry Pi at port 5055 — called by SignageCMS backend (server-side proxy)
+> Runs on Raspberry Pi at port 5055 — called by Hotel Media backend (server-side proxy)
 
 ### GET :5055/api/status — Full status
 ```json
@@ -538,7 +538,7 @@ Returns all flights for the tenant.
 ### POST :5055/api/config — Update config
 ```json
 {
-  "signagecms_url":  "https://your-server.com",
+  "hotelmedia_url":  "https://your-server.com",
   "flight_id":       1,
   "api_token":       "JWT_TOKEN",
   "push_enabled":    true,
@@ -548,9 +548,9 @@ Returns all flights for the tenant.
 
 ---
 
-## SignageCMS → RPi Proxy Endpoints
+## Hotel Media → RPi Proxy Endpoints
 
-> Auth: JWT — SignageCMS fetches from RPi on behalf of admin
+> Auth: JWT — Hotel Media fetches from RPi on behalf of admin
 
 ### GET /inflight/{id}/rpi-status
 Proxies `GET :5055/api/status` from the flight's saved RPi IP.
@@ -565,7 +565,7 @@ Also auto-calculates `progress_pct` from GPS position on great-circle route.
 ```
 
 ### POST /inflight/{id}/rpi-push-config
-Sends SignageCMS connection config to RPi.
+Sends Hotel Media connection config to RPi.
 ```json
 {
   "cms_url":       "https://your-server.com",
