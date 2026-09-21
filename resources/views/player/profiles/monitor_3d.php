@@ -31,7 +31,7 @@ $floatDuration = $depthLevels[$depthLevel] ?? '2.5s';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>3D Monitor — <?= e($screen['name'] ?? 'SignageCMS') ?></title>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+<script src="/assets/vendor/hls/hls.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 

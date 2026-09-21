@@ -14,10 +14,10 @@ $screenName = htmlspecialchars($screen['name'] ?? 'IPTV', ENT_QUOTES);
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>IPTV — <?= e($screen['name'] ?? 'IPTV') ?></title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;800;900&display=swap">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+
+<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
+<link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
+<script src="/assets/vendor/hls/hls.min.js"></script>
 <style>
 :root {
   --accent:     #ef4444;

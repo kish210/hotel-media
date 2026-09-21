@@ -215,6 +215,12 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
 // ── Screen Player (public, screen-facing)
 // /player          → cookie-based: اگر cookie داره پلیر لود می‌کنه، وگرنه pair page
 // /player/{code}   → bind device به این screen از طریق cookie + لود پلیر
+// ── TV Bootstrap — یک آدرس ثابت برای همه تلویزیون‌های هتل ─────
+// در منوی مخفی LG (MENU نگه‌داشته → 1105) و منوی هتلی سامسونگ
+// (MUTE → 1 → 1 → 9 → ENTER) همین آدرس در همه‌ی دستگاه‌ها وارد می‌شود.
+// مسیرها کوتاه‌اند چون بعضی منوها فقط IP و پورت می‌پذیرند.
+$router->get('/tv',              [\App\Controllers\Web\TvBootstrapController::class, 'index']);
+
 $router->get('/player',          [\App\Controllers\Web\PlayerController::class, 'index']);
 $router->get('/player/{code}',   [\App\Controllers\Web\PlayerController::class, 'show']);
 $router->post('/player/activate',[\App\Controllers\Web\PlayerController::class, 'activate']);
@@ -290,6 +296,9 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     // ── Guest Services — خدمات مهمان ───────────────────────────
     $r->get('/guest-services',      [\App\Controllers\Web\GuestServiceWebController::class, 'index']);
     $r->get('/guest-services/feed', [\App\Controllers\Web\GuestServiceWebController::class, 'feed']);
+    // ── Devices — مدیریت تلویزیون‌ها ───────────────────────────
+    $r->get('/devices',       [\App\Controllers\Web\DeviceWebController::class, 'index']);
+    $r->get('/devices/feed',  [\App\Controllers\Web\DeviceWebController::class, 'feed']);
     // ── EPG — راهنمای برنامه‌ها ────────────────────────────────
     $r->get('/epg',                 [\App\Controllers\Web\EpgWebController::class, 'index']);
     $r->post('/epg/map',            [\App\Controllers\Web\EpgWebController::class, 'mapChannel'], [CsrfMiddleware::class]);

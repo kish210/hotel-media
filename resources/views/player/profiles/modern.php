@@ -35,7 +35,7 @@ $logoStyle = $logoPositions[$logoPos] ?? $logoPositions['bottom-right'];
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SignageCMS Player — <?= e($screen['name'] ?? 'Signage') ?></title>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+<script src="/assets/vendor/hls/hls.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { background:#000; color:#fff; font-family:sans-serif; overflow:hidden; width:100vw; height:100vh; }

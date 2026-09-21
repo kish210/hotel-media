@@ -291,3 +291,22 @@ $router->get('/api/v1/player/epg/{code}',   [\App\Controllers\Api\EpgController:
 // ── Portal — صفحه اصلی تلویزیون اتاق (بدون JWT، هویت با کد صفحه‌نمایش)
 $router->get('/api/v1/portal/{code}',      [\App\Controllers\Api\PortalController::class, 'home']);
 $router->get('/api/v1/portal/{code}/live', [\App\Controllers\Api\PortalController::class, 'live']);
+
+// ── Device — سمت تلویزیون (بدون JWT) ─────────────────────────────
+$router->post('/api/v1/device/enroll',            [\App\Controllers\Api\DeviceController::class, 'enroll']);
+$router->get('/api/v1/device/{code}/commands',    [\App\Controllers\Api\DeviceController::class, 'commands']);
+$router->post('/api/v1/device/{code}/ack',        [\App\Controllers\Api\DeviceController::class, 'ack']);
+
+// ── Device — پنل مدیریت (protected) ──────────────────────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    $r->get('/devices/stats',                 [\App\Controllers\Api\DeviceController::class, 'stats']);
+    $r->get('/devices/tokens',                [\App\Controllers\Api\DeviceController::class, 'tokens']);
+    $r->post('/devices/tokens',               [\App\Controllers\Api\DeviceController::class, 'storeToken']);
+    $r->delete('/devices/tokens/{id}',        [\App\Controllers\Api\DeviceController::class, 'destroyToken']);
+    $r->post('/devices/bulk-command',         [\App\Controllers\Api\DeviceController::class, 'bulkCommand']);
+    $r->get('/devices',                       [\App\Controllers\Api\DeviceController::class, 'index']);
+    $r->get('/devices/{id}/history',          [\App\Controllers\Api\DeviceController::class, 'history']);
+    $r->post('/devices/{id}/approve',         [\App\Controllers\Api\DeviceController::class, 'approve']);
+    $r->post('/devices/{id}/assign-room',     [\App\Controllers\Api\DeviceController::class, 'assignRoom']);
+    $r->post('/devices/{id}/command',         [\App\Controllers\Api\DeviceController::class, 'command']);
+});

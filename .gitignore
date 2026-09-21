@@ -4,6 +4,9 @@ node_modules/
 storage/logs/*.log
 storage/cache/*
 storage/temp/*
+# نشست‌های ورود کاربران — هرگز نباید در مخزن برود
+storage/sessions/*
+!storage/sessions/.gitkeep
 public/uploads/media/*
 public/uploads/thumbnails/*
 !public/uploads/media/.gitkeep
