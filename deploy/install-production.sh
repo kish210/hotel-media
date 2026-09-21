@@ -22,6 +22,13 @@ DB_USER="${DB_USER:-hotel_media}"
 PHP_VER="${PHP_VER:-8.3}"
 WS_PORT="${WS_PORT:-8080}"
 
+# TVHeadend — سر دریافت سیگنال (DVB-S/S2/T/T2/C).
+# با INSTALL_TVHEADEND=0 می‌توان از نصبش صرف‌نظر کرد، مثلا وقتی
+# TVHeadend روی سرور دیگری است.
+INSTALL_TVHEADEND="${INSTALL_TVHEADEND:-1}"
+TVH_USER="${TVH_USER:-hotelmedia}"
+TVH_PORT="${TVH_PORT:-9981}"
+
 G='\033[0;32m'; Y='\033[1;33m'; R='\033[0;31m'; B='\033[0;34m'; N='\033[0m'
 ok()   { echo -e "  ${G}✔${N} $1"; }
 info() { echo -e "  ${B}→${N} $1"; }
@@ -88,6 +95,42 @@ command -v composer >/dev/null 2>&1 || {
 }
 
 ok "nginx · PHP ${PHP_VER} · MariaDB · ffmpeg · Composer"
+
+# ── TVHeadend ────────────────────────────────────────────────────────
+# نقش «سهند» در استک ما: سیگنال ماهواره و زمینی را می‌گیرد و روی IP می‌دهد.
+if [[ "$INSTALL_TVHEADEND" == "1" ]]; then
+    if systemctl list-unit-files 2>/dev/null | grep -q '^tvheadend'; then
+        ok "TVHeadend از قبل نصب است"
+        # رمز نصب قبلی را نمی‌دانیم؛ اگر فایل ما هست از آن بخوان
+        [[ -f /etc/hotel-media/tvheadend.cred ]] && . /etc/hotel-media/tvheadend.cred
+    else
+        info "نصب TVHeadend"
+        TVH_PASS="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20)"
+
+        # نصب tvheadend وگرنه سؤال تعاملی برای کاربر ادمین می‌پرسد و
+        # اسکریپت وسط نصب معلق می‌ماند. با debconf از قبل پاسخ می‌دهیم.
+        debconf-set-selections <<DEBCONF
+tvheadend tvheadend/admin_username string ${TVH_USER}
+tvheadend tvheadend/admin_password password ${TVH_PASS}
+tvheadend tvheadend/admin_password_again password ${TVH_PASS}
+DEBCONF
+
+        if apt-get install -y -qq tvheadend >/dev/null 2>&1; then
+            # رمز فقط برای root خواندنی — اسکریپت‌های بعدی از اینجا می‌خوانند
+            mkdir -p /etc/hotel-media
+            printf 'TVH_USER=%s\nTVH_PASS=%s\n' "$TVH_USER" "$TVH_PASS" \
+                > /etc/hotel-media/tvheadend.cred
+            chmod 600 /etc/hotel-media/tvheadend.cred
+
+            systemctl enable --now tvheadend >/dev/null 2>&1 || true
+            ok "TVHeadend نصب شد (کاربر: ${TVH_USER})"
+        else
+            warn "نصب TVHeadend ناموفق بود — بدون آن ادامه می‌دهیم"
+            warn "می‌توانید بعدا نصب و با 'php artisan tvheadend:setup' وصلش کنید"
+            INSTALL_TVHEADEND=0
+        fi
+    fi
+fi
 
 # ── ۲) فایل‌های برنامه ───────────────────────────────────────────────
 echo -e "\n${G}[3/9] استقرار فایل‌ها${N}"
@@ -271,6 +314,27 @@ systemctl is-active --quiet hotel-media-ws \
     && ok "سرویس WebSocket اجرا شد" \
     || warn "سرویس WebSocket بالا نیامد — journalctl -u hotel-media-ws"
 
+# ── اتصال خودکار TVHeadend ───────────────────────────────────────────
+# بدون این، اپراتور کانال‌ها را دستی وارد می‌کند و EPG خالی می‌ماند.
+if [[ "$INSTALL_TVHEADEND" == "1" ]]; then
+    info "اتصال TVHeadend به سیستم"
+
+    # سرویس چند ثانیه طول می‌کشد تا پورت را بگیرد
+    for _ in $(seq 1 20); do
+        curl -fsS -o /dev/null --max-time 2 "http://127.0.0.1:${TVH_PORT}/" 2>/dev/null && break
+        sleep 1
+    done
+
+    if sudo -u www-data php "$APP_DIR/artisan" tvheadend:setup \
+            "http://127.0.0.1:${TVH_PORT}" "${TVH_USER}" "${TVH_PASS:-}" 1; then
+        ok "TVHeadend به سیستم وصل شد"
+    else
+        # نصب تازه هنوز تیونر و شبکه تنظیم‌نشده دارد؛ این شکست طبیعی است
+        warn "TVHeadend وصل نشد — بعد از تنظیم تیونر این را اجرا کنید:"
+        warn "  sudo -u www-data php $APP_DIR/artisan tvheadend:setup"
+    fi
+fi
+
 # کارهای زمان‌بندی‌شده
 cat > /etc/cron.d/hotel-media <<CRON
 # Hotel Media — کارهای زمان‌بندی‌شده
@@ -312,6 +376,13 @@ echo -e "    همین آدرس را در منوی مخفی همه‌ی تلوی�
 echo -e "      LG      نگه‌داشتن MENU ← 1105 ← Manual Pro:Centric ← HTML/IP"
 echo -e "      Samsung MUTE ← 1 ← 1 ← 9 ← ENTER ← URL Launcher"
 echo ""
+if [[ "$INSTALL_TVHEADEND" == "1" ]]; then
+echo -e "  ${B}TVHeadend${N}        http://${SERVER_IP}:${TVH_PORT}"
+echo -e "    کاربر: ${TVH_USER}   رمز: ${Y}/etc/hotel-media/tvheadend.cred${N}"
+echo -e "    ${Y}گام بعدی:${N} تیونر و شبکه را در Configuration → DVB Inputs تنظیم و اسکن کنید،"
+echo -e "    سپس:  sudo -u www-data php ${APP_DIR}/artisan tvheadend:setup"
+echo ""
+fi
 echo -e "  ${B}ظرفیت این سرور${N}  ${FPM_MAX} worker موازی — مناسب تا ۳۰۰ اتاق"
 echo ""
 echo -e "  ${B}وضعیت سرویس‌ها${N}"

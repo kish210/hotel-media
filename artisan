@@ -227,6 +227,59 @@ match ($command) {
         if ($failed) exit(1);
     })(),
 
+    'tvheadend:setup' => (function() use ($argv) {
+        // ثبت خودکار TVHeadend و همگام‌سازی کانال‌ها.
+        // نصب‌کننده‌ی production بعد از نصب TVHeadend این را صدا می‌زند تا
+        // اپراتور هیچ کار دستی برای وصل کردنش نداشته باشد.
+        //   php artisan tvheadend:setup [url] [user] [pass] [tenantId]
+        $url  = $argv[2] ?? 'http://127.0.0.1:9981';
+        $user = $argv[3] ?? '';
+        $pass = $argv[4] ?? '';
+        $tid  = isset($argv[5]) ? (int)$argv[5] : 1;
+
+        $svc = new \App\Services\TvheadendService();
+
+        echo "  بررسی $url …\n";
+        $probe = $svc->probe($url, $user, $pass);
+        if (!$probe['ok']) {
+            echo "  \033[31m✗ {$probe['message']}\033[0m\n";
+            echo "    بررسی کنید سرویس بالا باشد:  systemctl status tvheadend\n";
+            exit(1);
+        }
+        echo "  \033[32m✓ {$probe['message']}\033[0m\n";
+
+        $res = $svc->autoRegister($tid, $url, $user, $pass);
+        if (!$res['ok']) {
+            echo "  \033[31m✗ {$res['message']}\033[0m\n";
+            exit(1);
+        }
+
+        echo "  \033[32m✓ {$res['message']}\033[0m\n";
+
+        if ($res['channels'] === 0) {
+            echo "\n  \033[33m! هنوز کانالی در TVHeadend تعریف نشده.\033[0m\n";
+            echo "    وارد http://<server>:9981 شوید، در Configuration → DVB Inputs\n";
+            echo "    شبکه و تیونر را تنظیم و اسکن کنید، سپس دوباره اجرا کنید.\n";
+        }
+    })(),
+
+    'tvheadend:health' => (function() {
+        $rows = (new \App\Services\TvheadendService())->health();
+        if (!$rows) { echo "هیچ منبع TVHeadend فعالی تعریف نشده.\n"; return; }
+
+        $down = 0;
+        foreach ($rows as $r) {
+            printf(
+                "  %s %-34s %s  (%d کانال)\n",
+                $r['online'] ? "\033[32m✓\033[0m" : "\033[31m✗\033[0m",
+                $r['name'], $r['url'], $r['channels']
+            );
+            if (!$r['online']) { $down++; echo "      {$r['message']}\n"; }
+        }
+
+        if ($down) exit(1);
+    })(),
+
     'pms:push' => (function() use ($argv) {
         // اقلام صورتحساب را به سیستم هتلداری می‌فرستد.
         // برای cron: هر ۵ دقیقه — قلم‌هایی که PMS در دسترس نبوده در صف
@@ -311,7 +364,8 @@ match ($command) {
             'cache:clear'     => 'Clear application cache',
             'epg:sync'        => 'Sync EPG from TVHeadend / XMLTV sources [tenantId]',
             'pms:push'        => 'Push room charges to the hotel PMS [tenantId]',
-            'pms:push'        => 'Push room charges to the hotel PMS [tenantId]',
+            'tvheadend:setup' => 'Register TVHeadend and import its channels [url user pass]',
+            'tvheadend:health'=> 'Check every configured TVHeadend source',
             'test'            => 'Run feature tests (needs a TEST database in .env)',
         ];
         foreach ($cmds as $cmd => $desc) {
