@@ -287,3 +287,7 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
 
 // ── EPG عمومی — تلویزیون اتاق (بدون JWT، هویت با کد صفحه‌نمایش)
 $router->get('/api/v1/player/epg/{code}',   [\App\Controllers\Api\EpgController::class, 'playerNow']);
+
+// ── Portal — صفحه اصلی تلویزیون اتاق (بدون JWT، هویت با کد صفحه‌نمایش)
+$router->get('/api/v1/portal/{code}',      [\App\Controllers\Api\PortalController::class, 'home']);
+$router->get('/api/v1/portal/{code}/live', [\App\Controllers\Api\PortalController::class, 'live']);

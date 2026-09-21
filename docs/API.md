@@ -738,3 +738,62 @@ php artisan epg:sync 3      # فقط tenant شماره ۳
 
 روی ویندوز با Task Scheduler و روی لینوکس با cron، روزی یک‌بار اجرا کنید.
 رویدادهای گذشته‌ی بیش از ۲ روز خودکار پاک می‌شوند تا جدول رشد بی‌پایان نکند.
+
+---
+
+## Portal API — صفحه اصلی تلویزیون اتاق
+
+همه‌چیزِ لازم برای رندر صفحه‌ی اصلی در **یک درخواست**. بدون JWT؛ هویت با
+کد صفحه‌نمایش، چون ست‌تاپ‌باکس چیزی جز کد خودش نمی‌داند.
+(migration `019_portal_experience.sql` — فاز ۳ نقشه‌راه)
+
+### GET /portal/{screen_code}
+
+پارامتر اختیاری `lang` زبان اتاق را override می‌کند.
+
+```json
+{ "success": true, "data": {
+  "screen":   { "code": "TV101", "name": "TV اتاق ۱۰۱" },
+  "room":     { "room_number": "101", "occupied": true, "guest_name": "آقای احمدی" },
+  "branding": { "logo_url": "...", "accent_color": "#0ea5e9",
+                "backgrounds": ["/uploads/s1.jpg", "/uploads/s2.jpg"],
+                "bg_dim": 0.4, "bg_blur": 4,
+                "welcome_title": "...", "welcome_sub": "...",
+                "ticker": { "text": "...", "color": "#fff", "bg": "#111", "speed": 30 } },
+  "menu":     [ { "id": 3, "type": "live", "label": "Live TV",
+                  "icon": "fas fa-tv", "color": "#ef4444", "shortcut_key": 1 } ],
+  "header":   { "widgets": ["clock","weather","prayer"],
+                "data": { "server_time": "...", "weather": {...}, "prayer": {...} } },
+  "lang":     "en",
+  "strings":  { "welcome": "Welcome", "live_tv": "Live TV" } } }
+```
+
+**انتخاب منو** به ترتیب: منوی مستقیم صفحه (`screens.iptv_menu_id`) ←
+منوی گروه صفحه ← اولین منوی فعال tenant. صفحه‌ای که به هیچ منویی وصل نیست
+هم با برندینگ پیش‌فرض رندر می‌شود، نه خطا.
+
+**زبان**: `lang` در query ← `iptv_rooms.guest_lang` ← فارسی.
+کلیدهایی که در زبان مهمان ترجمه ندارند از فارسی پر می‌شوند تا رابط
+نیمه‌خالی نماند. زبان‌های پایه: `fa`, `en`, `ar` (جدول `portal_translations`).
+
+**میانبر عددی** (`shortcut_key`): عدد ۰ تا ۹ روی ریموت. عدد تکراری یا
+خارج از بازه `null` برمی‌گردد — اولین آیتم مالک آن عدد است.
+
+### GET /portal/{screen_code}/live
+
+فقط داده‌های زنده‌ی نوار بالا. پلیر این را هر چند دقیقه صدا می‌زند بدون
+اینکه کل صفحه را دوباره بگیرد.
+
+**کش:** آب‌وهوا ۱۵ دقیقه، نرخ ارز ۱۰ دقیقه، اوقات شرعی ۱۲ ساعت
+(جدول `portal_live_cache`). بدون کش، یک هتل ۲۰۰ اتاقه صدها درخواست بیرونی
+در دقیقه می‌سازد. اگر واکشی تازه شکست بخورد، مقدار کش منقضی برگردانده
+می‌شود — نوار کمی کهنه بهتر از نوار خالی است.
+
+**تنظیمات `.env`:**
+
+| متغیر | کاربرد |
+|-------|--------|
+| `WEATHER_API_KEY` | OpenWeather — بدون آن ویجت آب‌وهوا نمایش داده نمی‌شود |
+| `WEATHER_DEFAULT_CITY` | شهر پیش‌فرض وقتی روی منو تعیین نشده |
+| `CURRENCY_API_URL` | آدرس JSON نرخ ارز به شکل `{"usd":000,"eur":000}` |
+| `PRAYER_COUNTRY` | کشور برای اوقات شرعی (پیش‌فرض `Iran`، منبع Aladhan با روش ۷ — ژئوفیزیک تهران) |

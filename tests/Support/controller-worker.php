@@ -35,6 +35,10 @@ $method     = $argv[2];
 // base64 چون escapeshellarg روی ویندوز کوتیشن‌های JSON را خراب می‌کند
 $params     = json_decode(base64_decode($argv[3] ?? ''), true) ?: [];
 $body       = json_decode(base64_decode($argv[4] ?? ''), true) ?: [];
+$query      = json_decode(base64_decode($argv[5] ?? ''), true) ?: [];
+
+// پارامترهای GET را در همان جایی می‌گذاریم که Request::get از آن می‌خواند
+$_GET = $query;
 
 // هرچه کنترلر چاپ کند را جمع می‌کنیم و در shutdown گزارش می‌دهیم
 ob_start();

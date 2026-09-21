@@ -64,6 +64,9 @@ $cases = [
     ['GET',    '/api/v1/epg/grid',                        'EpgController::grid',                  true,  []],
     ['GET',    '/api/v1/epg/channel/9',                   'EpgController::channel',               true,  ['id' => '9']],
     ['GET',    '/api/v1/player/epg/TSCR01',               'EpgController::playerNow',             false, ['code' => 'TSCR01']],
+    // پورتال — فاز ۳
+    ['GET',    '/api/v1/portal/PTEST01',                  'PortalController::home',               false, ['code' => 'PTEST01']],
+    ['GET',    '/api/v1/portal/PTEST01/live',             'PortalController::live',               false, ['code' => 'PTEST01']],
     // رگرسیون: مسیرهای موجود نباید خراب شده باشند
     ['GET',    '/api/v1/iptv/rooms',                      'IptvRoomController::index',            true,  []],
     ['POST',   '/api/v1/pms/checkin',                     'IptvRoomController::pmsCheckin',       false, []],
