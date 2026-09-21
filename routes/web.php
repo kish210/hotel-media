@@ -290,6 +290,9 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     // ── Guest Services — خدمات مهمان ───────────────────────────
     $r->get('/guest-services',      [\App\Controllers\Web\GuestServiceWebController::class, 'index']);
     $r->get('/guest-services/feed', [\App\Controllers\Web\GuestServiceWebController::class, 'feed']);
+    // ── EPG — راهنمای برنامه‌ها ────────────────────────────────
+    $r->get('/epg',                 [\App\Controllers\Web\EpgWebController::class, 'index']);
+    $r->post('/epg/map',            [\App\Controllers\Web\EpgWebController::class, 'mapChannel'], [CsrfMiddleware::class]);
     // ── TVHeadend Live TV ──────────────────────────────────────
     $r->get('/iptv/tvheadend',                    [\App\Controllers\Web\TvheadendController::class, 'index']);
     $r->post('/iptv/tvheadend',                   [\App\Controllers\Web\TvheadendController::class, 'store']);

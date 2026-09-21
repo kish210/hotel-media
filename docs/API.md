@@ -665,3 +665,76 @@ done / cancelled → (نهایی)
 
 ### POST /guest/{screen_code}/requests/{id}/cancel
 فقط وقتی هنوز `pending` است؛ بعد از پذیرش → `409`.
+
+---
+
+## EPG API — راهنمای الکترونیکی برنامه‌ها
+
+جدول‌ها: `epg_programs`, `epg_sources`, `epg_channel_map` (migration `018_epg.sql`).
+کلید تطبیق روی کانال، ستون موجود `iptv_channels.epg_id` است.
+
+**منابع پشتیبانی‌شده:** `tvheadend` (از `/api/epg/events/grid`) ·
+`xmltv_url` (آدرس اینترنتی) · `xmltv_file` (فایل داخل `storage/`)
+
+**ترتیب تطبیق کانال:** نگاشت دستی (`epg_channel_map`) ← `iptv_channels.epg_id`
+← `iptv_channels.tvh_uuid` ← نام یکسان کانال.
+
+### مدیریت منابع (JWT یا session)
+
+### GET /epg/sources
+هر منبع به‌همراه `last_sync_at`، `last_sync_msg` و تعداد برنامه‌های پیش‌رو.
+
+### POST /epg/sources
+```json
+{ "name": "تی‌وی‌هدند اصلی", "source_type": "tvheadend",
+  "tvh_source_id": 1, "days_ahead": 7 }
+```
+```json
+{ "name": "XMLTV ملی", "source_type": "xmltv_url",
+  "url": "https://example.com/epg.xml", "days_ahead": 3 }
+```
+
+### POST /epg/sources/{id}/sync
+همگام‌سازی دستی. منبع ناموفق → `502` با پیام خطا.
+
+### DELETE /epg/sources/{id}
+منبع و همه‌ی برنامه‌های آن را حذف می‌کند.
+
+### جدول پخش (JWT یا session)
+
+### GET /epg/grid
+پارامترها: `from` (پیش‌فرض الان)، `hours` (۱ تا ۴۸، پیش‌فرض ۶)،
+`channel_id` (اختیاری، چند شناسه با کاما).
+خروجی بر اساس کانال گروه‌بندی شده — همان شکلی که رابط جدول EPG می‌خواهد.
+
+### GET /epg/channel/{id}
+برنامه‌های یک کانال تا `days` روز جلوتر (۱ تا ۱۴، پیش‌فرض ۲).
+
+### GET /epg/now
+برای هر کانال: برنامه‌ی در حال پخش، برنامه‌ی بعدی و `progress` (درصد پیشرفت).
+
+---
+
+## EPG (Public) — تلویزیون اتاق
+
+### GET /player/epg/{screen_code}
+بدون JWT. `tenant` از روی خود صفحه‌نمایش گرفته می‌شود.
+با `?current_only=1` فقط کانالی که همین صفحه روی آن است برمی‌گردد.
+
+```json
+{ "success": true, "data": [
+  { "channel_id": 4, "channel_name": "شبکه یک", "logo_url": "...",
+    "now":  { "title": "اخبار ساعت ۲۰", "starts_at": "...", "ends_at": "...", "minutes": 60 },
+    "next": { "title": "فیلم سینمایی", "starts_at": "..." },
+    "progress": 42 } ] }
+```
+
+### همگام‌سازی خودکار
+
+```bash
+php artisan epg:sync        # همه منابع فعال همه tenant ها
+php artisan epg:sync 3      # فقط tenant شماره ۳
+```
+
+روی ویندوز با Task Scheduler و روی لینوکس با cron، روزی یک‌بار اجرا کنید.
+رویدادهای گذشته‌ی بیش از ۲ روز خودکار پاک می‌شوند تا جدول رشد بی‌پایان نکند.

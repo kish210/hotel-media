@@ -271,3 +271,19 @@ $router->get('/api/v1/guest/{code}/services',                 [\App\Controllers\
 $router->get('/api/v1/guest/{code}/requests',                 [\App\Controllers\Api\GuestPortalController::class, 'myRequests']);
 $router->post('/api/v1/guest/{code}/requests',                [\App\Controllers\Api\GuestPortalController::class, 'store']);
 $router->post('/api/v1/guest/{code}/requests/{id}/cancel',    [\App\Controllers\Api\GuestPortalController::class, 'cancel']);
+
+// ── EPG — راهنمای الکترونیکی برنامه‌ها (پنل، protected) ──────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    // منابع
+    $r->get('/epg/sources',                 [\App\Controllers\Api\EpgController::class, 'sources']);
+    $r->post('/epg/sources',                [\App\Controllers\Api\EpgController::class, 'storeSource']);
+    $r->delete('/epg/sources/{id}',         [\App\Controllers\Api\EpgController::class, 'destroySource']);
+    $r->post('/epg/sources/{id}/sync',      [\App\Controllers\Api\EpgController::class, 'syncSource']);
+    // جدول پخش
+    $r->get('/epg/now',                     [\App\Controllers\Api\EpgController::class, 'now']);
+    $r->get('/epg/grid',                    [\App\Controllers\Api\EpgController::class, 'grid']);
+    $r->get('/epg/channel/{id}',            [\App\Controllers\Api\EpgController::class, 'channel']);
+});
+
+// ── EPG عمومی — تلویزیون اتاق (بدون JWT، هویت با کد صفحه‌نمایش)
+$router->get('/api/v1/player/epg/{code}',   [\App\Controllers\Api\EpgController::class, 'playerNow']);

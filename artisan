@@ -22,6 +22,9 @@ if (file_exists($envFile)) {
     }
 }
 function env(string $k, mixed $d=null): mixed { $v=$_ENV[$k]??getenv($k)?:$d; if($v==='true')return true; if($v==='false')return false; return $v; }
+
+// همان منطقه زمانی که public/index.php اعمال می‌کند — تا date() در CLI و وب یکی باشد
+date_default_timezone_set((string)env('APP_TIMEZONE', 'Asia/Tehran'));
 function request(): object { return new class { public function ip():string{return '127.0.0.1';} public function userAgent():string{return 'CLI';} public function isJson():bool{return false;} public function isAjax():bool{return false;} }; }
 
 /**
@@ -197,6 +200,33 @@ match ($command) {
         echo "Cleaned $n files.\n";
     })(),
 
+    'epg:sync' => (function() use ($argv) {
+        // برای اجرای زمان‌بندی‌شده: روزی یک‌بار در Task Scheduler / cron
+        //   php artisan epg:sync          همه منابع فعال همه tenant ها
+        //   php artisan epg:sync 3        فقط tenant شماره ۳
+        $tenantId = isset($argv[2]) ? (int)$argv[2] : null;
+
+        $svc     = new \App\Services\EpgSyncService();
+        $results = $svc->syncAll($tenantId);
+
+        if (!$results) { echo "هیچ منبع EPG فعالی تعریف نشده است.\n"; return; }
+
+        $failed = 0;
+        foreach ($results as $r) {
+            if ($r['ok']) {
+                printf("  \033[32m✓\033[0m %-28s %s\n", $r['source'], $r['message']);
+            } else {
+                $failed++;
+                printf("  \033[31m✗\033[0m %-28s %s\n", $r['source'], $r['message']);
+            }
+        }
+
+        echo "\n" . count($results) . " منبع پردازش شد"
+           . ($failed ? "، \033[31m$failed ناموفق\033[0m" : '') . ".\n";
+
+        if ($failed) exit(1);
+    })(),
+
     'test' => (function() {
         // تست‌های Feature اسکریپت‌های مستقل PHP هستند و به دیتابیس زنده وصل می‌شوند.
         // قبل از اجرا مطمئن شوید .env به یک دیتابیس تست اشاره می‌کند، نه production.
@@ -244,6 +274,7 @@ match ($command) {
             'ws:start'        => 'Start WebSocket server',
             'storage:clean'   => 'Remove soft-deleted media files',
             'cache:clear'     => 'Clear application cache',
+            'epg:sync'        => 'Sync EPG from TVHeadend / XMLTV sources [tenantId]',
             'test'            => 'Run feature tests (needs a TEST database in .env)',
         ];
         foreach ($cmds as $cmd => $desc) {

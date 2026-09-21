@@ -55,6 +55,15 @@ $cases = [
     ['GET',    '/api/v1/guest/SCR001/requests',           'GuestPortalController::myRequests',    false, ['code' => 'SCR001']],
     ['POST',   '/api/v1/guest/SCR001/requests',           'GuestPortalController::store',         false, ['code' => 'SCR001']],
     ['POST',   '/api/v1/guest/SCR001/requests/7/cancel',  'GuestPortalController::cancel',        false, ['code' => 'SCR001', 'id' => '7']],
+    // EPG — فاز ۲
+    ['GET',    '/api/v1/epg/sources',                     'EpgController::sources',               true,  []],
+    ['POST',   '/api/v1/epg/sources',                     'EpgController::storeSource',           true,  []],
+    ['DELETE', '/api/v1/epg/sources/3',                   'EpgController::destroySource',         true,  ['id' => '3']],
+    ['POST',   '/api/v1/epg/sources/3/sync',              'EpgController::syncSource',            true,  ['id' => '3']],
+    ['GET',    '/api/v1/epg/now',                         'EpgController::now',                   true,  []],
+    ['GET',    '/api/v1/epg/grid',                        'EpgController::grid',                  true,  []],
+    ['GET',    '/api/v1/epg/channel/9',                   'EpgController::channel',               true,  ['id' => '9']],
+    ['GET',    '/api/v1/player/epg/TSCR01',               'EpgController::playerNow',             false, ['code' => 'TSCR01']],
     // رگرسیون: مسیرهای موجود نباید خراب شده باشند
     ['GET',    '/api/v1/iptv/rooms',                      'IptvRoomController::index',            true,  []],
     ['POST',   '/api/v1/pms/checkin',                     'IptvRoomController::pmsCheckin',       false, []],
