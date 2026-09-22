@@ -423,7 +423,53 @@ html, body { background: #000; }
     if (c.kind === 'venue_info')  return evVenue(c);
     if (c.kind === 'info_bar')    return evInfoBar(c);
     if (c.kind === 'live_tv')     return evLive(c);
+    if (c.kind === 'flight_board') return evFlights(c);
     return '';
+  }
+
+  /* ── تابلوی پرواز ───────────────────────────────────────────────
+     برای هتل نزدیک فرودگاه. تاخیر را سرور حساب کرده و فرستاده —
+     مرورگر تلویزیون برای تفریق تاریخ قابل اعتماد نیست. */
+  function evFlights(c) {
+    var list = c.flights || [], rows = '', i, f, cls, late;
+
+    for (i = 0; i < list.length; i++) {
+      f    = list[i];
+      late = f.delay_minutes > 0;
+
+      if (f.status === 'cancelled')     cls = 'is-cancelled';
+      else if (f.status === 'boarding') cls = 'is-boarding';
+      else if (f.status === 'delayed' || late) cls = 'is-late';
+      else if (f.status === 'departed' || f.status === 'arrived') cls = 'is-done';
+      else cls = 'is-ontime';
+
+      rows +=
+        '<div class="sg-row' + (f.status === 'cancelled' ? ' is-cancelled is-off' : '') + '">' +
+          '<div class="sg-fl-time' + (late ? ' is-late' : '') + '">' + hm(f.scheduled_at) + '</div>' +
+          (late ? '<div class="sg-fl-new">' + hm(f.estimated_at) + '</div>' : '') +
+          '<div class="sg-fl-no">' + esc(f.flight_number) + '</div>' +
+          (f.airline_logo
+            ? '<img class="sg-fl-logo" src="' + esc(f.airline_logo) + '" alt="">' : '') +
+          '<div class="sg-grow">' +
+            '<div class="sg-fl-city sg-clip">' + esc(f.city) + '</div>' +
+            '<div class="sg-fl-line sg-clip">' + esc(f.airline) +
+              (f.terminal ? ' · ترمینال ' + esc(f.terminal) : '') + '</div>' +
+          '</div>' +
+          '<div class="sg-fl-state ' + cls + '">' + esc(f.status_label) +
+            (late && f.status !== 'cancelled' ? ' ' + f.delay_minutes + '′' : '') +
+          '</div>' +
+        '</div>';
+    }
+
+    if (!rows) rows = '<div class="sg-empty-text">پروازی برای نمایش نیست</div>';
+
+    return '<div class="sg">' +
+             '<div class="sg-head">' +
+               '<div class="sg-title">' + esc(c.title) + '</div>' +
+               '<div class="sg-rule"></div>' +
+             '</div>' +
+             '<div class="sg-body">' + rows + '</div>' +
+           '</div>';
   }
 
   function evEventBoard(c) {

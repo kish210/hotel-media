@@ -24,6 +24,7 @@ class SignageContentService
     public const DYNAMIC_TYPES = [
         'event_board', 'menu_board', 'news', 'directory',
         'info_bar', 'venue_info', 'live_tv', 'weather',
+        'flight_board',
     ];
 
     private Database $db;
@@ -52,10 +53,101 @@ class SignageContentService
             'directory'   => $this->directory($tid),
             'venue_info'  => $this->venueInfo($tid, $venueId),
             'live_tv'     => $this->liveTv($tid, (int)($item['ref_id'] ?? 0)),
+            'flight_board' => $this->flightBoard($tid, $item, $screen),
             'info_bar',
             'weather'     => $this->infoBar($tid, $item),
             default       => null,
         };
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  تابلوی پرواز — برای هتل نزدیک فرودگاه
+    // ══════════════════════════════════════════════════════════════
+
+    /**
+     * فهرست پروازهای ورودی یا خروجی.
+     *
+     * عمدا ساده است: هتل به دروازه و تسمه و نوع هواپیما کاری ندارد —
+     * مهمان فقط می‌خواهد بداند پروازش سر ساعت است یا نه.
+     *
+     * پروازهای گذشته حذف می‌شوند ولی یک پنجره‌ی کوتاه عقب‌تر نگه
+     * داشته می‌شود: مهمانی که تازه رسیده هنوز دنبال پرواز خودش در
+     * تابلو می‌گردد و اگر بلافاصله ناپدید شود فکر می‌کند اشتباه آمده.
+     *
+     * @return array<string,mixed>|null
+     */
+    private function flightBoard(int $tenantId, array $item, array $screen): ?array
+    {
+        $settings  = $this->settings($item);
+        $direction = ($settings['direction'] ?? 'departure') === 'arrival' ? 'arrival' : 'departure';
+        $limit     = max(1, min(20, (int)($settings['limit'] ?? 8)));
+
+        /* پنجره: از ۳۰ دقیقه پیش تا ۱۲ ساعت بعد */
+        $from = date('Y-m-d H:i:s', time() - 1800);
+        $to   = date('Y-m-d H:i:s', time() + 43200);
+
+        $sql = "SELECT flight_number, airline, airline_logo, city, city_en,
+                       scheduled_at, estimated_at, status, terminal
+                  FROM flights
+                 WHERE tenant_id = ? AND is_active = 1
+                   AND direction = ?
+                   AND scheduled_at BETWEEN ? AND ?";
+        $par = [$tenantId, $direction, $from, $to];
+
+        /* در هتل زنجیره‌ای، هر شعبه تابلوی فرودگاه خودش را می‌خواهد */
+        $locationId = (int)($screen['location_id'] ?? 0);
+        if ($locationId > 0) {
+            $sql .= ' AND (location_id = ? OR location_id IS NULL)';
+            $par[] = $locationId;
+        }
+
+        $sql .= " ORDER BY scheduled_at LIMIT $limit";
+
+        $rows = $this->db->rows($sql, $par);
+        if (!$rows) return null;
+
+        $out = [];
+        foreach ($rows as $r) {
+            $sched = (string)$r['scheduled_at'];
+            $est   = $r['estimated_at'] !== null ? (string)$r['estimated_at'] : null;
+
+            $out[] = [
+                'flight_number' => $r['flight_number'],
+                'airline'       => $r['airline'],
+                'airline_logo'  => $r['airline_logo'],
+                'city'          => $r['city'],
+                'city_en'       => $r['city_en'],
+                'scheduled_at'  => $sched,
+                'estimated_at'  => $est,
+                /* تاخیر را سرور حساب می‌کند نه تلویزیون: مرورگر
+                   تلویزیون برای تفریق تاریخ قابل اعتماد نیست. */
+                'delay_minutes' => ($est !== null && strtotime($est) > strtotime($sched))
+                    ? (int)round((strtotime($est) - strtotime($sched)) / 60)
+                    : 0,
+                'status'        => $r['status'],
+                'status_label'  => $this->flightStatusLabel((string)$r['status']),
+                'terminal'      => $r['terminal'],
+            ];
+        }
+
+        return [
+            'kind'      => 'flight_board',
+            'direction' => $direction,
+            'title'     => $direction === 'arrival' ? 'پروازهای ورودی' : 'پروازهای خروجی',
+            'flights'   => $out,
+        ];
+    }
+
+    private function flightStatusLabel(string $status): string
+    {
+        return [
+            'scheduled' => 'طبق برنامه',
+            'boarding'  => 'سوار شوید',
+            'departed'  => 'پرواز کرد',
+            'arrived'   => 'نشست',
+            'delayed'   => 'تاخیر',
+            'cancelled' => 'لغو شد',
+        ][$status] ?? $status;
     }
 
     // ══════════════════════════════════════════════════════════════

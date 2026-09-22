@@ -323,3 +323,45 @@
 @keyframes msgIn  { from { opacity: 0; -webkit-transform: translateY(1.6rem); transform: translateY(1.6rem); } to { opacity: 1; -webkit-transform: translateY(0); transform: translateY(0); } }
 @-webkit-keyframes msgOut { from { opacity: 1; } to { opacity: 0; -webkit-transform: translateY(1.2rem); } }
 @keyframes msgOut { from { opacity: 1; } to { opacity: 0; -webkit-transform: translateY(1.2rem); transform: translateY(1.2rem); } }
+
+/* ── تابلوی پرواز ───────────────────────────────────────────────────
+   هتل نزدیک فرودگاه. عمدا ساده‌تر از تابلوی خود فرودگاه است: مهمان
+   فقط می‌خواهد بداند پروازش سر ساعت است یا نه — دروازه و تسمه به کارش
+   نمی‌آید و فقط جا می‌گیرد. */
+.sg-fl-time {
+  font-size: 2rem;
+  font-weight: 800;
+  font-family: monospace;
+  letter-spacing: -.02em;
+  min-width: 6.5rem;
+  margin-left: 1.3rem;
+}
+/* ساعت اصلی وقتی تاخیر دارد خط می‌خورد و ساعت تازه کنارش می‌آید */
+.sg-fl-time.is-late { text-decoration: line-through; color: #79849a; font-size: 1.5rem; }
+.sg-fl-new {
+  font-size: 2rem; font-weight: 800; font-family: monospace;
+  color: #f5b13d; margin-left: 1.3rem;
+}
+.sg-fl-no {
+  font-size: 1.5rem; font-weight: 700;
+  font-family: monospace; letter-spacing: .04em;
+  min-width: 6rem; color: #7bb8e8;
+}
+.sg-fl-logo {
+  width: 2.6rem; height: 1.7rem;
+  margin-left: .8rem;
+  -o-object-fit: contain; object-fit: contain;
+  -webkit-flex: 0 0 auto; -ms-flex: 0 0 auto; flex: 0 0 auto;
+}
+.sg-fl-city  { font-size: 1.75rem; font-weight: 700; }
+.sg-fl-line  { font-size: 1.05rem; font-weight: 400; color: #8c99ad; margin-top: .2rem; }
+.sg-fl-state {
+  font-size: 1.2rem; font-weight: 600;
+  min-width: 8.5rem; text-align: left;
+}
+.sg-fl-state.is-ontime    { color: #8c99ad; }
+.sg-fl-state.is-boarding  { color: #32d17a; }
+.sg-fl-state.is-late      { color: #f5b13d; }
+.sg-fl-state.is-cancelled { color: #ff5f57; }
+.sg-fl-state.is-done      { color: #4a5567; }
+.sg-row.is-cancelled .sg-fl-city { text-decoration: line-through; }

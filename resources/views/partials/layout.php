@@ -98,97 +98,114 @@ if (!function_exists('modOn')) {
     <span class="icon"><i class="fas fa-gauge"></i></span> <?= __('nav.dashboard') ?>
   </a>
 
-  <!-- ── محتوا ── -->
-  <div class="sidebar-section"><?= __('nav.section.content') ?></div>
-  <a href="/admin/screens"   class="sidebar-link <?= isActive('/admin/screens') && !isActive('/admin/screens/monitor') ? 'active' : '' ?>">
-    <span class="icon"><i class="fas fa-tv"></i></span> <?= __('nav.screens') ?>
+  <?php
+  /* ══ دو دنیای جدا ═══════════════════════════════════════════════
+     تابلوی دیجیتال و IPTV اتاق دو کار کاملا متفاوت‌اند و اپراتورشان
+     هم معمولا یک نفر نیست:
+
+       تابلو  → لابی، رستوران، آسانسور. محتوا پلی‌لیست است و اپراتور
+                مارکتینگ یا روابط‌عمومی به آن دست می‌زند.
+       IPTV   → تلویزیون داخل اتاق. محتوا کانال و منوی مهمان است و
+                IT هتل به آن دست می‌زند.
+
+     پیش از این هر دو زیر یک عنوان «محتوا» و «ماژول‌ها» قاطی بودند و
+     اپراتور نمی‌دانست «پلی‌لیست» به کدام‌یک مربوط است. حالا هر کدام
+     عنوان خودش را دارد و چیزی بینشان مشترک نیست. */
+  ?>
+
+  <!-- ══ تابلوی دیجیتال ══ -->
+  <div class="sidebar-section">
+    <i class="fas fa-display" style="margin-left:5px;opacity:.6"></i> تابلوی دیجیتال
+  </div>
+  <a href="/admin/screens" class="sidebar-link <?= isActive('/admin/screens') && !isActive('/admin/screens/monitor') ? 'active' : '' ?>">
+    <span class="icon"><i class="fas fa-tv"></i></span> صفحه‌نمایش‌ها
   </a>
   <a href="/admin/playlists" class="sidebar-link <?= isActive('/admin/playlists') ?>">
-    <span class="icon"><i class="fas fa-list"></i></span> <?= __('nav.playlists') ?>
+    <span class="icon"><i class="fas fa-list"></i></span> پلی‌لیست‌ها
   </a>
-  <a href="/admin/media"     class="sidebar-link <?= isActive('/admin/media') ?>">
-    <span class="icon"><i class="fas fa-photo-film"></i></span> <?= __('nav.media') ?>
+  <a href="/admin/media" class="sidebar-link <?= isActive('/admin/media') ?>">
+    <span class="icon"><i class="fas fa-photo-film"></i></span> رسانه‌ها
   </a>
-  <a href="/admin/layouts"   class="sidebar-link <?= isActive('/admin/layouts') ?>">
-    <span class="icon"><i class="fas fa-table-cells-large"></i></span> <?= __('nav.layouts') ?>
+  <a href="/admin/layouts" class="sidebar-link <?= isActive('/admin/layouts') ?>">
+    <span class="icon"><i class="fas fa-table-cells-large"></i></span> طراح چیدمان
   </a>
   <a href="/admin/schedules" class="sidebar-link <?= isActive('/admin/schedules') ?>">
-    <span class="icon"><i class="fas fa-calendar"></i></span> <?= __('nav.schedules') ?>
+    <span class="icon"><i class="fas fa-calendar"></i></span> زمان‌بندی
   </a>
-  <a href="/admin/messages" class="sidebar-link <?= isActive('/admin/messages') ?>">
-    <span class="icon"><i class="fas fa-message" style="color:#a78bfa;"></i></span>
-    <?= __('nav.messages') ?>
+  <?php /* همان صفحه‌ای که «کمپین‌ها و اعلان اضطراری» نام داشت. اسمش
+           عوض شد چون اپراتور هتل «کمپین» را نمی‌شناسد — کاری که
+           می‌کند پخش فوری یک پیام روی تابلوهاست. */ ?>
+  <a href="/admin/campaigns" class="sidebar-link <?= isActive('/admin/campaigns') ?>">
+    <span class="icon"><i class="fas fa-bullhorn"></i></span> پخش فوری و اعلان
   </a>
-
-  <!-- ── ماژول‌ها ── -->
-  <div class="sidebar-section"><?= __('nav.modules') ?></div>
-
-  <!-- مدیریت ماژول‌ها — همیشه نمایش داده می‌شود -->
-  <a href="/admin/modules" class="sidebar-link <?= isActive('/admin/modules') ?>">
-    <span class="icon"><i class="fas fa-puzzle-piece"></i></span>
-    مدیریت ماژول‌ها
-    <?php if (count($GLOBALS['_activeModules'] ?? []) > 0): ?>
-      <span class="mod-badge"><?= count($GLOBALS['_activeModules']) ?></span>
-    <?php endif; ?>
+  <a href="/admin/monitor3d" class="sidebar-link <?= isActive('/admin/monitor3d') ?>">
+    <span class="icon"><i class="fas fa-cube"></i></span> مانیتور سه‌بعدی
   </a>
 
-  <!-- Hotel -->
-  <?php if (modOn('hotel')): ?>
-  <a href="/admin/modules/hotel" class="sidebar-link <?= isActive('/admin/modules/hotel') ?>">
-    <span class="icon"><i class="fas fa-hotel" style="color:#fbbf24;"></i></span> هتل
-  </a>
-  <?php endif; ?>
-
-  <!-- Menu / Restaurant -->
-  <?php if (modOn('menu')): ?>
-  <a href="/admin/modules/menu" class="sidebar-link <?= isActive('/admin/modules/menu') ?>">
-    <span class="icon"><i class="fas fa-utensils" style="color:#1a7ac4;"></i></span> منوی رستوران
-  </a>
-  <?php endif; ?>
-
-  <!-- IPTV -->
+  <!-- ══ تلویزیون اتاق (IPTV) ══ -->
   <?php if (modOn('iptv')): ?>
-  <a href="/admin/iptv" class="sidebar-link <?= isActive('/admin/iptv') && !isActive('/admin/iptv/menus') && !isActive('/admin/iptv/rooms') && !isActive('/admin/iptv/tvheadend') ? 'active' : '' ?>">
-    <span class="icon"><i class="fas fa-satellite-dish" style="color:#f87171;"></i></span> کانال‌های IPTV
-  </a>
-  <a href="/admin/iptv/tvheadend" class="sidebar-link <?= isActive('/admin/iptv/tvheadend') ?>">
-    <span class="icon"><i class="fas fa-broadcast-tower" style="color:#f87171;"></i></span> TVHeadend
-  </a>
-  <a href="/admin/iptv/menus" class="sidebar-link <?= isActive('/admin/iptv/menus') ?>">
-    <span class="icon"><i class="fas fa-bars" style="color:#f87171;"></i></span> منوهای IPTV
-  </a>
+  <div class="sidebar-section">
+    <i class="fas fa-satellite-dish" style="margin-left:5px;opacity:.6"></i> تلویزیون اتاق
+  </div>
   <a href="/admin/iptv/rooms" class="sidebar-link <?= isActive('/admin/iptv/rooms') ?>">
-    <span class="icon"><i class="fas fa-door-open" style="color:#f87171;"></i></span> اتاق‌های IPTV
+    <span class="icon"><i class="fas fa-door-open"></i></span> اتاق‌ها
   </a>
   <a href="/admin/devices" class="sidebar-link <?= isActive('/admin/devices') ?>">
-    <span class="icon"><i class="fas fa-tv" style="color:#4098db;"></i></span> مدیریت تلویزیون‌ها
+    <span class="icon"><i class="fas fa-tv"></i></span> تلویزیون‌ها
+  </a>
+  <a href="/admin/iptv" class="sidebar-link <?= isActive('/admin/iptv') && !isActive('/admin/iptv/menus') && !isActive('/admin/iptv/rooms') && !isActive('/admin/iptv/tvheadend') ? 'active' : '' ?>">
+    <span class="icon"><i class="fas fa-list-ol"></i></span> کانال‌ها
+  </a>
+  <a href="/admin/iptv/menus" class="sidebar-link <?= isActive('/admin/iptv/menus') ?>">
+    <span class="icon"><i class="fas fa-bars"></i></span> منوی مهمان
   </a>
   <a href="/admin/epg" class="sidebar-link <?= isActive('/admin/epg') ?>">
-    <span class="icon"><i class="fas fa-calendar-days" style="color:#60a5fa;"></i></span> راهنمای برنامه‌ها
+    <span class="icon"><i class="fas fa-calendar-days"></i></span> راهنمای برنامه‌ها
   </a>
   <a href="/admin/guest-services" class="sidebar-link <?= isActive('/admin/guest-services') ?>">
-    <span class="icon"><i class="fas fa-concierge-bell" style="color:#f59e0b;"></i></span> خدمات مهمان
+    <span class="icon"><i class="fas fa-concierge-bell"></i></span> خدمات مهمان
+  </a>
+  <a href="/admin/messages" class="sidebar-link <?= isActive('/admin/messages') ?>">
+    <span class="icon"><i class="fas fa-message"></i></span> پیام به اتاق
   </a>
   <?php endif; ?>
 
-  <!-- Monitor 3D -->
-  <a href="/admin/monitor3d" class="sidebar-link <?= isActive('/admin/monitor3d') ?>">
-    <span class="icon" style="font-size:14px;color:#00e5ff;">⬡</span> مانیتورهای ۳D
+  <!-- ══ محتوای هتل — بین هر دو مشترک است ══ -->
+  <?php if (modOn('hotel') || modOn('menu') || modOn('vod')): ?>
+  <div class="sidebar-section">
+    <i class="fas fa-hotel" style="margin-left:5px;opacity:.6"></i> محتوای هتل
+  </div>
+  <?php if (modOn('hotel')): ?>
+  <a href="/admin/modules/hotel" class="sidebar-link <?= isActive('/admin/modules/hotel') ?>">
+    <span class="icon"><i class="fas fa-circle-info"></i></span> اطلاعات و رویدادها
   </a>
-
-  <!-- VOD -->
+  <?php endif; ?>
+  <?php if (modOn('menu')): ?>
+  <a href="/admin/modules/menu" class="sidebar-link <?= isActive('/admin/modules/menu') ?>">
+    <span class="icon"><i class="fas fa-utensils"></i></span> منوی رستوران
+  </a>
+  <?php endif; ?>
   <?php if (modOn('vod')): ?>
   <a href="/admin/vod" class="sidebar-link <?= isActive('/admin/vod') ?>">
-    <span class="icon"><i class="fas fa-film" style="color:#ec4899;"></i></span> VOD / فیلم
-  </a>
-  <?php if (modOn('iptv')): // Transcoder نیاز به هر دو دارد ?>
-  <a href="/admin/transcoder" class="sidebar-link <?= isActive('/admin/transcoder') ?>">
-    <span class="icon"><i class="fas fa-microchip" style="color:#a855f7;"></i></span> Transcoder
+    <span class="icon"><i class="fas fa-film"></i></span> فیلم و سریال
   </a>
   <?php endif; ?>
   <?php endif; ?>
 
-  <!-- ── ابزارها ── -->
+  <!-- ══ زیرساخت پخش ══ -->
+  <?php if (modOn('iptv')): ?>
+  <div class="sidebar-section">
+    <i class="fas fa-server" style="margin-left:5px;opacity:.6"></i> زیرساخت پخش
+  </div>
+  <a href="/admin/iptv/tvheadend" class="sidebar-link <?= isActive('/admin/iptv/tvheadend') ?>">
+    <span class="icon"><i class="fas fa-tower-broadcast"></i></span> هدِند (TVHeadend)
+  </a>
+  <?php if (modOn('vod')): ?>
+  <a href="/admin/transcoder" class="sidebar-link <?= isActive('/admin/transcoder') ?>">
+    <span class="icon"><i class="fas fa-wand-magic-sparkles"></i></span> ترنسکد
+  </a>
+  <?php endif; ?>
+  <?php endif; ?>
   <div class="sidebar-section"><?= __('nav.section.tools') ?></div>
   <a href="/admin/screens/monitor" class="sidebar-link <?= isActive('/admin/screens/monitor') ?>">
     <span class="icon"><i class="fas fa-display" style="color:#4ade80;"></i></span> مانیتورینگ
@@ -202,14 +219,20 @@ if (!function_exists('modOn')) {
 
   <!-- ── مدیریت ── -->
   <div class="sidebar-section"><?= __('nav.section.admin') ?></div>
-  <a href="/admin/campaigns" class="sidebar-link <?= isActive('/admin/campaigns') ?>">
-    <span class="icon"><i class="fas fa-bullhorn"></i></span> کمپین‌ها
-  </a>
   <a href="/admin/users"     class="sidebar-link <?= isActive('/admin/users') ?>">
     <span class="icon"><i class="fas fa-users"></i></span> کاربران
   </a>
   <a href="/admin/reports"   class="sidebar-link <?= isActive('/admin/reports') ?>">
     <span class="icon"><i class="fas fa-chart-bar"></i></span> گزارش‌ها
+  </a>
+  <?php /* مدیریت ماژول‌ها جای واقعی‌اش اینجاست نه بالای فهرست: کاری
+           است که یک‌بار موقع راه‌اندازی انجام می‌شود، نه هر روز. */ ?>
+  <a href="/admin/modules" class="sidebar-link <?= isActive('/admin/modules') ?>">
+    <span class="icon"><i class="fas fa-puzzle-piece"></i></span>
+    ماژول‌ها
+    <?php if (count($GLOBALS['_activeModules'] ?? []) > 0): ?>
+      <span class="mod-badge"><?= count($GLOBALS['_activeModules']) ?></span>
+    <?php endif; ?>
   </a>
   <a href="/admin/settings"  class="sidebar-link <?= isActive('/admin/settings') ?>">
     <span class="icon"><i class="fas fa-gear"></i></span> تنظیمات
