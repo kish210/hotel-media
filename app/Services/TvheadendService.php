@@ -292,31 +292,25 @@ class TvheadendService
             return ['ok' => false, 'body' => '', 'error' => 'آدرس باید با http شروع شود'];
         }
 
-        $header = "Accept: application/json\r\nUser-Agent: HotelMedia\r\n";
-        if ($user !== '') {
-            $header .= 'Authorization: Basic ' . base64_encode("$user:$pass") . "\r\n";
+        /* احراز هویت به HttpDigestClient سپرده می‌شود.
+           تا پیش از این فقط Basic فرستاده می‌شد، ولی TVHeadend جدید با
+           «digest: 1» نصب می‌شود و Basic را اصلا نمی‌پذیرد. نتیجه‌اش
+           این بود که روی هر نصب تازه، اتصال برقرار نمی‌شد و پیام «نام
+           کاربری یا رمز اشتباه است» می‌داد — در حالی که رمز درست بود.
+           روی Ubuntu 24.04 تایید شد: basic ۴۰۱، digest ۲۰۰. */
+        $res = (new HttpDigestClient(self::TIMEOUT))->get($url, $user, $pass);
+
+        if ($res['ok']) {
+            return ['ok' => true, 'body' => $res['body'], 'error' => ''];
         }
-
-        $ctx = stream_context_create(['http' => [
-            'timeout'       => self::TIMEOUT,
-            'header'        => $header,
-            'ignore_errors' => true,
-        ]]);
-
-        $body = @file_get_contents($url, false, $ctx);
-        if ($body === false) {
-            return ['ok' => false, 'body' => '', 'error' => 'اتصال به TVHeadend برقرار نشد'];
+        if ($res['status'] === 401 || $res['status'] === 403) {
+            return ['ok' => false, 'body' => $res['body'],
+                    'error' => 'نام کاربری یا رمز TVHeadend پذیرفته نشد'];
         }
-
-        $code = 0;
-        if (isset($http_response_header)) {
-            preg_match('#HTTP/\S+ (\d+)#', $http_response_header[0] ?? '', $m);
-            $code = (int)($m[1] ?? 0);
+        if ($res['status'] === 0) {
+            return ['ok' => false, 'body' => '',
+                    'error' => 'اتصال به TVHeadend برقرار نشد — ' . $res['error']];
         }
-
-        if ($code === 401) return ['ok' => false, 'body' => $body, 'error' => 'نام کاربری یا رمز TVHeadend اشتباه است'];
-        if ($code >= 400)  return ['ok' => false, 'body' => $body, 'error' => "TVHeadend خطای HTTP $code داد"];
-
-        return ['ok' => true, 'body' => $body, 'error' => ''];
+        return ['ok' => false, 'body' => $res['body'], 'error' => $res['error']];
     }
 }

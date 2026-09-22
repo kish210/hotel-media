@@ -407,48 +407,33 @@ final class TvheadendApiService
     {
         $url = rtrim($src['url'], '/') . $path;
 
-        if (!preg_match('#^https?://#i', $url)) {
-            return ['ok' => false, 'body' => '', 'error' => 'آدرس تی‌وی‌هدند باید با http شروع شود'];
+        /* احراز هویت را HttpDigestClient مدیریت می‌کند.
+           تی‌وی‌هدند جدید با «digest: 1» نصب می‌شود و Basic را اصلا
+           نمی‌پذیرد — روی نصب واقعی Ubuntu 24.04 تایید شد که Basic
+           همیشه ۴۰۱ می‌دهد و digest ۲۰۰. */
+        $res = (new HttpDigestClient(self::TIMEOUT))
+            ->get($url, (string)($src['username'] ?? ''), (string)($src['password'] ?? ''));
+
+        if ($res['ok']) {
+            return ['ok' => true, 'body' => $res['body'], 'error' => ''];
         }
 
-        $header = "Accept: application/json\r\nUser-Agent: HotelMedia\r\n";
-        if (($src['username'] ?? '') !== '') {
-            $header .= 'Authorization: Basic '
-                     . base64_encode($src['username'] . ':' . ($src['password'] ?? '')) . "\r\n";
-        }
-
-        $ctx = stream_context_create(['http' => [
-            'timeout'       => self::TIMEOUT,
-            'header'        => $header,
-            'ignore_errors' => true,
-        ]]);
-
-        $body = @file_get_contents($url, false, $ctx);
-        if ($body === false) {
-            return ['ok' => false, 'body' => '', 'error' => 'اتصال به تی‌وی‌هدند برقرار نشد'];
-        }
-
-        $code = 0;
-        if (isset($http_response_header)) {
-            preg_match('#HTTP/\S+ (\d+)#', $http_response_header[0] ?? '', $m);
-            $code = (int)($m[1] ?? 0);
-        }
-
-        if ($code === 401) {
-            return ['ok' => false, 'body' => $body,
-                    'error' => 'نام کاربری یا رمز تی‌وی‌هدند اشتباه است'];
-        }
-        if ($code === 404) {
+        if ($res['status'] === 404) {
             /* ‏udpstream از نسخه‌ی اکتبر ۲۰۲۲ اضافه شده؛ روی نسخه‌ی
                قدیمی‌تر این مسیر اصلا وجود ندارد و پیام باید همین را
                بگوید نه «یافت نشد». */
-            return ['ok' => false, 'body' => $body,
+            return ['ok' => false, 'body' => $res['body'],
                     'error' => 'این قابلیت در نسخه‌ی تی‌وی‌هدند شما نیست — به‌روزرسانی کنید'];
         }
-        if ($code >= 400) {
-            return ['ok' => false, 'body' => $body, 'error' => "تی‌وی‌هدند خطای HTTP $code داد"];
+        if ($res['status'] === 401 || $res['status'] === 403) {
+            return ['ok' => false, 'body' => $res['body'],
+                    'error' => 'نام کاربری یا رمز تی‌وی‌هدند پذیرفته نشد'];
+        }
+        if ($res['status'] === 0) {
+            return ['ok' => false, 'body' => '',
+                    'error' => 'اتصال به تی‌وی‌هدند برقرار نشد — ' . $res['error']];
         }
 
-        return ['ok' => true, 'body' => (string)$body, 'error' => ''];
+        return ['ok' => false, 'body' => $res['body'], 'error' => $res['error']];
     }
 }

@@ -106,7 +106,7 @@ class EpgSyncService
         // ‏TVHeadend صفحه‌بندی می‌کند؛ تا رسیدن به افق زمانی جلو می‌رویم
         while (count($events) < self::MAX_EVENTS) {
             $url  = "$base/api/epg/events/grid?start=$offset&limit=$limit";
-            $body = $this->httpGet($url, $this->authHeader($tvh));
+            $body = $this->httpGet($url, (string)($tvh['username'] ?? ''), (string)($tvh['password'] ?? ''));
             $json = json_decode($body, true);
 
             $entries = $json['entries'] ?? [];
@@ -309,29 +309,27 @@ class EpgSyncService
     //  Helpers
     // ══════════════════════════════════════════════════════════════
 
-    private function httpGet(string $url, string $extraHeader = ''): string
+    /**
+     * دریافت از منبع، با احراز هویت خودکار.
+     *
+     * تا پیش از این فقط سرآیند Basic ساخته و فرستاده می‌شد. TVHeadend
+     * جدید با «digest: 1» نصب می‌شود و Basic را اصلا نمی‌پذیرد، پس
+     * همگام‌سازی EPG روی هر نصب تازه با «رمز اشتباه است» شکست می‌خورد
+     * در حالی که رمز درست بود. HttpDigestClient هر دو روش را می‌فهمد.
+     */
+    private function httpGet(string $url, string $user = '', string $pass = ''): string
     {
-        if (!preg_match('#^https?://#i', $url)) {
-            throw new \RuntimeException('آدرس باید با http یا https شروع شود');
+        $res = (new HttpDigestClient(30))->get($url, $user, $pass);
+
+        if ($res['ok']) return $res['body'];
+
+        if ($res['status'] === 401 || $res['status'] === 403) {
+            throw new \RuntimeException('نام کاربری یا رمز منبع پذیرفته نشد');
         }
-
-        $ctx = stream_context_create(['http' => [
-            'timeout'       => 30,
-            'header'        => $extraHeader . "User-Agent: Hotel Media-EPG\r\n",
-            'ignore_errors' => true,
-        ]]);
-
-        $body = @file_get_contents($url, false, $ctx);
-        if ($body === false) throw new \RuntimeException("اتصال به منبع برقرار نشد: $url");
-
-        if (isset($http_response_header)) {
-            preg_match('#HTTP/\S+ (\d+)#', $http_response_header[0] ?? '', $m);
-            $code = (int)($m[1] ?? 0);
-            if ($code === 401) throw new \RuntimeException('نام کاربری یا رمز منبع اشتباه است (401)');
-            if ($code >= 400)  throw new \RuntimeException("منبع خطای HTTP $code برگرداند");
+        if ($res['status'] === 0) {
+            throw new \RuntimeException('اتصال به منبع برقرار نشد: ' . $res['error']);
         }
-
-        return $body;
+        throw new \RuntimeException($res['error']);
     }
 
     private function readLocal(string $path): string
@@ -346,13 +344,6 @@ class EpgSyncService
         if (!is_file($real)) throw new \RuntimeException('فایل XMLTV یافت نشد');
 
         return (string)file_get_contents($real);
-    }
-
-    private function authHeader(array $tvh): string
-    {
-        if (empty($tvh['username'])) return '';
-        $cred = base64_encode($tvh['username'] . ':' . ($tvh['password'] ?? ''));
-        return "Authorization: Basic $cred\r\n";
     }
 
     /** XMLTV: «20260921183000 +0330» */
