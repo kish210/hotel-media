@@ -1,61 +1,109 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl" class="dark">
+<html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ورود به Hotel Media</title>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<?php // همه محلی — سرور هتل روی VLAN بدون اینترنت است. ?>
+<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
+<link rel="stylesheet" href="/assets/vendor/inter/inter.css">
+<link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
+<link rel="stylesheet" href="/assets/css/design-system.css">
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Vazirmatn',sans-serif;background:#09090f;color:#e2e8f0;direction:rtl;min-height:100vh;display:flex;align-items:center;justify-content:center;}
-  .bg-glow{position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 30% 40%,rgba(249,115,22,0.08),transparent 60%),radial-gradient(ellipse at 70% 70%,rgba(59,130,246,0.04),transparent 60%);pointer-events:none;}
-  .card{position:relative;background:#111118;border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:40px;width:100%;max-width:420px;}
-  .logo{width:56px;height:56px;background:linear-gradient(135deg,#f97316,#c2570b);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;}
-  h1{text-align:center;font-size:22px;font-weight:800;color:#fff;margin-bottom:4px;}
-  .sub{text-align:center;font-size:13px;color:#64748b;margin-bottom:32px;}
-  label{display:block;font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:6px;}
-  input{width:100%;background:#0d0d14;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:11px 14px;font-size:14px;color:#fff;outline:none;transition:border-color .2s;font-family:'Vazirmatn',sans-serif;}
-  input:focus{border-color:#f97316;}
-  input::placeholder{color:#475569;}
-  .field{margin-bottom:18px;}
-  .btn{width:100%;background:linear-gradient(135deg,#f97316,#c2570b);color:#fff;padding:13px;border-radius:12px;font-size:15px;font-weight:700;border:none;cursor:pointer;transition:opacity .2s;margin-top:8px;font-family:'Vazirmatn',sans-serif;}
-  .btn:hover{opacity:.9;}
-  .btn:active{transform:scale(.99);}
-  .error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:11px 14px;font-size:13px;color:#f87171;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
-  .hint{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:11px 14px;font-size:12px;color:#94a3b8;margin-top:20px;text-align:center;line-height:1.6;}
-  .hint strong{color:#60a5fa;}
+  body {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: var(--s5);
+  }
+  /* درخشش پس‌زمینه با رنگ برند، نه نارنجی قبلی */
+  .bg-glow {
+    position: fixed; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse at 28% 38%, color-mix(in srgb, var(--brand-500) 12%, transparent), transparent 58%),
+      radial-gradient(ellipse at 72% 72%, color-mix(in srgb, var(--brand-700) 10%, transparent), transparent 58%);
+  }
+  .login-card {
+    position: relative;
+    background: var(--surface-2);
+    border: 1px solid var(--line-1);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-4);
+    padding: 40px 36px 32px;
+    width: 100%; max-width: 420px;
+    animation: sheet var(--t-slow) var(--ease-out) both;
+  }
+  .login-mark {
+    height: 56px; width: auto; display: block; margin: 0 auto 18px;
+    border-radius: var(--r-sm);
+  }
+  /* در تم روشن نشان روی کاشی تیره می‌نشیند تا بخش‌های سفیدش گم نشود */
+  :root[data-theme="light"] .login-mark {
+    background: var(--brand-900); padding: 6px 9px; box-sizing: content-box;
+  }
+  .login-card h1 {
+    text-align: center; font-size: 21px; font-weight: 700;
+    color: var(--text-1); letter-spacing: -.02em; margin: 0 0 4px;
+  }
+  .login-sub { text-align: center; font-size: 13px; color: var(--text-3); margin: 0 0 28px; }
+  .field { margin-bottom: 16px; }
+  .btn-login {
+    width: 100%; justify-content: center; margin-top: 8px;
+    padding: 12px; font-size: 15px; font-weight: 700;
+  }
+  .login-foot {
+    margin-top: 22px; padding-top: 18px;
+    border-top: 1px solid var(--line-1);
+    text-align: center; font-size: 11.5px; color: var(--text-4);
+  }
+  .login-foot a { color: var(--text-3); }
+  .login-foot a:hover { color: var(--brand-400); }
+  @media (max-width: 480px) { .login-card { padding: 32px 22px 26px; } }
 </style>
 </head>
 <body>
 <div class="bg-glow"></div>
-<div class="card">
-  <div class="logo"><i class="fas fa-tv" style="font-size:24px;color:#fff;"></i></div>
+
+<main class="login-card">
+  <img class="login-mark" src="/assets/img/sama-logo.svg" alt="سماع رایانه کیش">
   <h1>Hotel Media</h1>
-  <p class="sub">سیستم مدیریت تابلو دیجیتال</p>
+  <p class="login-sub">سامانه تلویزیون و تابلو دیجیتال هتل</p>
 
   <?php if (!empty($error)): ?>
-  <div class="error"><i class="fas fa-circle-xmark"></i><?= e($error) ?></div>
+  <div class="alert alert-error"><i class="fas fa-circle-xmark"></i><span><?= e($error) ?></span></div>
   <?php endif; ?>
 
   <form method="POST" action="/login">
     <?= csrf_field() ?>
     <div class="field">
-      <label>ایمیل</label>
-      <input type="email" name="email" value="<?= e($old['email'] ?? '') ?>"
-        placeholder="admin@hotelmedia.com" required autofocus>
+      <label class="form-label" for="email">ایمیل</label>
+      <input class="form-input" id="email" type="email" name="email"
+        value="<?= e($old['email'] ?? '') ?>" placeholder="admin@hotelmedia.com"
+        autocomplete="username" required autofocus>
     </div>
     <div class="field">
-      <label>رمز عبور</label>
-      <input type="password" name="password" placeholder="••••••••" required>
+      <label class="form-label" for="password">رمز عبور</label>
+      <input class="form-input" id="password" type="password" name="password"
+        placeholder="••••••••" autocomplete="current-password" required>
     </div>
-    <button type="submit" class="btn"><i class="fas fa-right-to-bracket" style="margin-left:8px;"></i>ورود به سیستم</button>
+    <button type="submit" class="btn btn-primary btn-login">
+      <i class="fas fa-right-to-bracket"></i> ورود به سیستم
+    </button>
   </form>
 
-  <div class="hint">
-    <strong>اطلاعات پیش‌فرض:</strong><br>
-    admin@hotelmedia.com | Admin@123456
+  <?php
+  // اطلاعات ورود پیش‌فرض قبلا همیشه روی صفحه ورود چاپ می‌شد — روی سرور
+  // هتل یعنی هر کسی که صفحه را باز کند رمز مدیر را می‌بیند. حالا فقط در
+  // حالت اشکال‌زدایی نشان داده می‌شود.
+  if (defined('APP_DEBUG') && APP_DEBUG):
+  ?>
+  <div class="alert alert-info" style="margin-top:20px;font-size:12px;">
+    <i class="fas fa-circle-info"></i>
+    <span><strong>ورود پیش‌فرض:</strong> admin@hotelmedia.com / Admin@123456</span>
   </div>
-</div>
+  <?php endif; ?>
+
+  <div class="login-foot">
+    <a href="https://kishwifi.com" target="_blank" rel="noopener">سماع رایانه کیش</a>
+  </div>
+</main>
 </body>
 </html>

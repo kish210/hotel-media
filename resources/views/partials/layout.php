@@ -44,92 +44,36 @@ if (!function_exists('modOn')) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="<?= csrf_token() ?>">
 <title><?= e($title ?? 'Hotel Media') ?> — Hotel Media</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-:root { --ui-font: '<?= $_uiFont ?>', sans-serif; }
-body { font-family: var(--ui-font) !important; }
-.sidebar-nav, .card, .btn-primary, .btn-ghost, .form-input, .form-label, button, select, input, textarea { font-family: var(--ui-font) !important; }
-</style>
-<script src="https://cdn.tailwindcss.com"></script>
+<?php
+// همه‌ی دارایی‌ها محلی‌اند. سرور هتل معمولا روی شبکه‌ی بسته است و با
+// CDN، پنل مدیریت بدون هیچ استایلی بالا می‌آمد.
+?>
+<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
+<link rel="stylesheet" href="/assets/vendor/inter/inter.css">
+<link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
+<link rel="stylesheet" href="/assets/css/design-system.css">
+<script src="/assets/vendor/tailwind/tailwind.min.js"></script>
 <script>
+  // ‏Tailwind برای کلاس‌های کمکی در نماهای موجود می‌ماند؛ رنگ‌ها و
+  // کنترل‌ها از design-system.css می‌آیند تا یک منبع حقیقت باشد.
   tailwind.config = {
-    darkMode: 'class',
+    darkMode: ['class', '[data-theme="dark"]'],
     theme: {
       extend: {
-        fontFamily: { sans: ['Vazirmatn', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+        fontFamily: { sans: ['Vazirmatn', 'Inter', 'sans-serif'], mono: ['Inter', 'monospace'] },
         colors: {
-          brand:   { 500:'#f97316', 600:'#ea6f10', 700:'#c2570b' },
-          surface: { 900:'#0a0a0f', 800:'#111118', 750:'#16161f', 700:'#1c1c28' },
-        }
-      }
-    }
-  }
+          brand: {
+            50:'#eef6fd', 100:'#d6e9f9', 200:'#b0d4f2', 300:'#7bb8e8', 400:'#4098db',
+            500:'#1a7ac4', 600:'#1668b3', 700:'#12558f', 800:'#104670', 900:'#0d3a5c',
+          },
+        },
+      },
+    },
+  };
 </script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-  * { box-sizing: border-box; }
-  body { font-family: 'Vazirmatn', sans-serif; background: #0a0a0f; color: #e2e8f0; direction: <?= $_uiDir ?>; }
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #111118; }
-  ::-webkit-scrollbar-thumb { background: #2d2d40; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #f97316; }
-
-  /* LTR/RTL layout switch */
-  <?php if ($_uiDir === 'ltr'): ?>
-  .sidebar { width:240px; background:#111118; border-right:1px solid rgba(255,255,255,0.06); height:100vh; position:fixed; left:0; top:0; overflow-y:auto; z-index:40; }
-  .main { margin-left:240px; min-height:100vh; display:flex; flex-direction:column; }
-  <?php else: ?>
-  .sidebar { width:240px; background:#111118; border-left:1px solid rgba(255,255,255,0.06); height:100vh; position:fixed; right:0; top:0; overflow-y:auto; z-index:40; }
-  .main { margin-right:240px; min-height:100vh; display:flex; flex-direction:column; }
-  <?php endif; ?>
-  .topbar { background:#111118; border-bottom:1px solid rgba(255,255,255,0.06); padding:12px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:30; }
-
-  .sidebar-link { display:flex; align-items:center; gap:10px; padding:9px 16px; color:#94a3b8; font-size:13.5px; font-weight:500; border-radius:10px; margin:2px 8px; text-decoration:none; transition:all 0.2s; }
-  .sidebar-link:hover, .sidebar-link.active { background:rgba(249,115,22,0.12); color:#f97316; }
-  .sidebar-link .icon { width:20px; text-align:center; font-size:14px; }
-  .sidebar-section { font-size:10px; font-weight:700; color:#475569; letter-spacing:0.8px; text-transform:uppercase; padding:12px 24px 4px; }
-
-  /* badge تعداد ماژول فعال */
-  .mod-badge { margin-right:auto; background:rgba(249,115,22,0.15); color:#f97316; font-size:10px; font-weight:700; padding:1px 7px; border-radius:20px; border:1px solid rgba(249,115,22,0.25); }
-
-  .card { background:#16161f; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:20px; }
-  .stat-card { background:#16161f; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px; }
-  .btn-primary { background:linear-gradient(135deg,#f97316,#c2570b); color:#fff; padding:8px 18px; border-radius:10px; font-size:13.5px; font-weight:600; border:none; cursor:pointer; transition:opacity 0.2s; text-decoration:none; display:inline-flex; align-items:center; }
-  .btn-primary:hover { opacity:0.9; }
-  .btn-ghost { background:rgba(255,255,255,0.05); color:#94a3b8; padding:7px 14px; border-radius:10px; font-size:13px; border:1px solid rgba(255,255,255,0.08); cursor:pointer; transition:all 0.2s; text-decoration:none; display:inline-flex; align-items:center; }
-  .btn-ghost:hover { background:rgba(255,255,255,0.1); color:#fff; }
-  .btn-danger { background:rgba(239,68,68,0.1); color:#f87171; padding:7px 14px; border-radius:10px; font-size:13px; border:1px solid rgba(239,68,68,0.3); cursor:pointer; transition:all 0.2s; }
-  .btn-danger:hover { background:rgba(239,68,68,0.2); }
-
-  .form-label { display:block; font-size:12px; font-weight:600; color:#94a3b8; margin-bottom:6px; }
-  .form-input { width:100%; background:#0d0d14; border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:9px 14px; font-size:14px; color:#fff; outline:none; transition:border-color 0.2s; font-family:'Vazirmatn',sans-serif; }
-  .form-input:focus { border-color:#f97316; }
-  .form-input::placeholder { color:#475569; }
-  select.form-input option { background:#16161f; }
-
-  .badge-online  { background:rgba(34,197,94,0.12);  color:#4ade80; border:1px solid rgba(34,197,94,0.3);  padding:2px 8px; border-radius:20px; font-size:11px; }
-  .badge-offline { background:rgba(239,68,68,0.12);  color:#f87171; border:1px solid rgba(239,68,68,0.3);  padding:2px 8px; border-radius:20px; font-size:11px; }
-  .badge-pending { background:rgba(245,158,11,0.12); color:#fbbf24; border:1px solid rgba(245,158,11,0.3); padding:2px 8px; border-radius:20px; font-size:11px; }
-
-  .online-dot { width:8px; height:8px; border-radius:50%; background:#4ade80; display:inline-block; animation:pulse 2s infinite; }
-
-  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; display:flex; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(4px); }
-  .modal-overlay.hidden { display:none !important; }
-  .hidden { display:none !important; }
-  .modal { background:#16161f; border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:28px; width:100%; max-width:560px; max-height:90vh; overflow-y:auto; }
-
-  .toast { position:fixed; bottom:24px; right:24px; background:#16161f; border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px 18px; z-index:9999; display:flex; align-items:center; gap:10px; font-size:13px; animation:slideUp 0.3s ease; max-width:360px; }
-  .toast-success { border-color:rgba(34,197,94,0.5);  color:#4ade80; }
-  .toast-error   { border-color:rgba(239,68,68,0.5);  color:#f87171; }
-
-  .table-row:hover td { background:rgba(255,255,255,0.02); }
-
-  @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
-  @keyframes spin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-  @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
-  .fa-spin { animation:spin 1s linear infinite; }
+  /* زبان فعال فونت خودش را دارد — عربی و انگلیسی با وزیرمتن خوب نیستند */
+  :root { --font-ui: '<?= $_uiFont ?>', 'Vazirmatn', 'Inter', sans-serif; }
 </style>
 </head>
 <body class="dark">
@@ -137,32 +81,15 @@ body { font-family: var(--ui-font) !important; }
 <!-- ═══ Sidebar ════════════════════════════════════════════════════════════ -->
 <nav class="sidebar">
 
-  <!-- Logo + Brand -->
-  <div style="padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:8px;">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div style="width:36px;height:36px;background:linear-gradient(135deg,#f97316,#c2570b);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <i class="fas fa-tv" style="color:#fff;font-size:15px;"></i>
-      </div>
-      <div>
-        <div style="font-size:14px;font-weight:800;color:#fff;line-height:1.2;">Hotel Media</div>
-        <div style="font-size:10px;color:#475569;">v1.6.0</div>
-      </div>
+  <!-- نشان: یک بلوک واحد. قبلا دو نشان رقیب اینجا بود (کاشی نارنجی + کارت
+       سما با رنگ‌های نامربوط)؛ حالا لوگوی واقعی سما نشانِ اصلی است. -->
+  <div class="brand">
+    <img class="brand-mark" src="/assets/img/sama-logo.svg" alt="سماع رایانه کیش">
+    <div class="brand-text">
+      <div class="brand-name">Hotel Media</div>
+      <a class="brand-sub" href="https://kishwifi.com" target="_blank" rel="noopener">سماع رایانه کیش</a>
     </div>
-    <!-- Sama Rayaneh Kish branding -->
-    <a href="https://kishwifi.com" target="_blank" rel="noopener"
-       style="display:flex;align-items:center;gap:7px;margin-top:10px;padding:7px 10px;
-              background:rgba(44,74,140,0.12);border:1px solid rgba(44,74,140,0.25);
-              border-radius:8px;text-decoration:none;transition:background .2s;"
-       onmouseover="this.style.background='rgba(44,74,140,0.22)'"
-       onmouseout="this.style.background='rgba(44,74,140,0.12)'">
-      <img src="/assets/img/sama-logo.svg" alt="سماع رایانه کیش"
-           style="height:26px;width:auto;object-fit:contain;"
-           onerror="this.style.display='none'">
-      <div style="line-height:1.3;">
-        <div style="font-size:10px;font-weight:700;color:#7ba4e0;">سماع رایانه کیش</div>
-        <div style="font-size:9px;color:#c8943a;letter-spacing:0.3px;">kishwifi.com</div>
-      </div>
-    </a>
+    <span class="brand-ver">v1.6.0</span>
   </div>
 
   <!-- ── اصلی ── -->

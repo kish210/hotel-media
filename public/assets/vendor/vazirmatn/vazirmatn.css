@@ -1,0 +1,51 @@
+/*
+ * Vazirmatn — میزبانی محلی
+ * تلویزیون هتل معمولا روی VLAN بدون اینترنت است و fonts.googleapis.com
+ * در دسترس نیست؛ بدون این فایل متن فارسی با فونت پیش‌فرض و بد رندر می‌شود.
+ * وزن‌ها: ۴۰۰ معمولی، ۶۰۰ نیمه‌ضخیم، ۷۰۰ ضخیم، ۸۰۰ خیلی‌ضخیم
+ */
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('vazirmatn-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('vazirmatn-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('vazirmatn-700.woff2') format('woff2');
+}
+/* ۸۰۰ و ۹۰۰ هر دو به فایل ۸۰۰ نگاشت می‌شوند — تفاوتشان روی تلویزیون
+   از فاصله‌ی نشستن دیده نمی‌شود و یک فایل کمتر یعنی بوت سریع‌تر */
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('vazirmatn-800.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('vazirmatn-800.woff2') format('woff2');
+}
+/* ۳۰۰ هم به ۴۰۰ — فایل سبک جدا ارزش یک درخواست اضافه را ندارد */
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('vazirmatn-400.woff2') format('woff2');
+}

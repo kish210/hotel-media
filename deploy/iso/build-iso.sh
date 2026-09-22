@@ -51,20 +51,32 @@ echo ""
 echo -e "${G}[1/6] ابزارهای ساخت${N}"
 
 MISSING=()
-for t in xorriso rsync curl 7z; do
+for t in xorriso rsync curl; do
     command -v "$t" >/dev/null 2>&1 || MISSING+=("$t")
 done
 
 if ((${#MISSING[@]})); then
     info "نصب: ${MISSING[*]}"
     export DEBIAN_FRONTEND=noninteractive
-    apt-get update -qq
-    # ‏p7zip-full برای استخراج ISO بدون mount — در WSL و کانتینر
-    # ‏loop mount در دسترس نیست
-    apt-get install -y -qq xorriso rsync curl p7zip-full isolinux >/dev/null 2>&1 || \
-        apt-get install -y -qq xorriso rsync curl p7zip-full >/dev/null
+    if apt-get update -qq 2>/dev/null; then
+        # ‏p7zip اختیاری است — xorriso خودش هم می‌تواند استخراج کند
+        apt-get install -y -qq xorriso rsync curl p7zip-full isolinux >/dev/null 2>&1 || \
+            apt-get install -y -qq xorriso rsync curl >/dev/null 2>&1 || true
+    fi
 fi
-ok "xorriso · rsync · curl · 7z"
+
+for t in xorriso rsync curl; do
+    command -v "$t" >/dev/null 2>&1 || die "ابزار لازم نصب نیست: $t"
+done
+
+# ‏7z اگر باشد سریع‌تر است، ولی xorriso هم استخراج می‌کند و هیچ‌کدام به
+# ‏loop mount نیاز ندارند — پس داخل WSL و کانتینر هم کار می‌کند.
+if command -v 7z >/dev/null 2>&1; then
+    EXTRACTOR=7z
+else
+    EXTRACTOR=xorriso
+fi
+ok "xorriso · rsync · curl  (استخراج با ${EXTRACTOR})"
 
 # ── ۲) ISO پایه ──────────────────────────────────────────────────────
 echo -e "\n${G}[2/6] ISO پایه‌ی Ubuntu${N}"
@@ -85,12 +97,19 @@ echo -e "\n${G}[3/6] استخراج ISO${N}"
 rm -rf "$WORK"
 mkdir -p "$WORK"
 
-# ‏7z به loop device نیاز ندارد، پس داخل WSL هم کار می‌کند
-7z x -o"$WORK" "$BASE_ISO" -bso0 -bsp0 >/dev/null || die "استخراج ناموفق"
+if [[ "$EXTRACTOR" == "7z" ]]; then
+    7z x -o"$WORK" "$BASE_ISO" -bso0 -bsp0 >/dev/null || die "استخراج ناموفق"
+    # ‏7z پوشه‌ی مجازی [BOOT] می‌سازد که جزو محتوای ISO نیست
+    rm -rf "$WORK/[BOOT]"
+else
+    # ‏xorriso فایل‌های بوت را هم مثل فایل معمولی بیرون می‌کشد
+    xorriso -osirrox on -indev "$BASE_ISO" -extract / "$WORK" >/dev/null 2>&1 \
+        || die "استخراج با xorriso ناموفق"
+fi
 
-# ‏7z پوشه‌ی [BOOT] می‌سازد که جزو محتوای ISO نیست
-rm -rf "$WORK/[BOOT]"
 chmod -R u+w "$WORK"
+
+[[ -d "$WORK/casper" ]] || die "ساختار ISO شناخته نشد — آیا ISO سرور اوبونتو است؟"
 ok "استخراج شد ($(du -sh "$WORK" | cut -f1))"
 
 # ── ۴) تزریق برنامه و autoinstall ────────────────────────────────────
@@ -98,12 +117,26 @@ echo -e "\n${G}[4/6] افزودن Hotel Media${N}"
 
 # برنامه
 mkdir -p "$WORK/hotel-media"
+# ‏.env حتما باید بیرون بماند: ISO دست هتل‌های مختلف می‌گردد و .env توسعه
+# رمز دیتابیس و APP_KEY و JWT_SECRET دارد. firstboot.sh از .env.example
+# یک .env تازه با رازهای تصادفیِ همان سرور می‌سازد.
 rsync -a \
-    --exclude='.git' --exclude='node_modules' --exclude='vendor' \
+    --exclude='.env' --exclude='.env.*' \
+    --exclude='.git' --exclude='.github' --exclude='.claude' \
+    --exclude='node_modules' --exclude='vendor' \
     --exclude='storage/logs/*' --exclude='storage/sessions/*' \
     --exclude='storage/cache/*' --exclude='public/uploads/media/*' \
     --exclude='*.iso' --exclude='dist' \
+    --exclude='*.bat' --exclude='*.ps1' --exclude='android' \
+    --exclude='tests' --exclude='public/__*.html' \
     "$REPO_ROOT/" "$WORK/hotel-media/"
+
+# اگر .env با وجود استثنا جایی جا مانده بود، ساخت را متوقف کن — این
+# نوع نشتی را نباید با هشدار رد کرد.
+if [[ -e "$WORK/hotel-media/.env" ]]; then
+    die ".env داخل محتوای ISO است — ساخت متوقف شد"
+fi
+cp -f "$REPO_ROOT/.env.example" "$WORK/hotel-media/.env.example"
 ok "فایل‌های برنامه ($(du -sh "$WORK/hotel-media" | cut -f1))"
 
 # وابستگی‌های composer از قبل — سرور هتل ممکن است به packagist نرسد
@@ -197,36 +230,35 @@ rm -f "$WORK/md5sum.txt"
 
 cd "$WORK"
 
-# ‏EFI را از خود ISO پایه برمی‌داریم تا بوت UEFI حفظ شود
-EFI_IMG="$(find . -name 'efi.img' -o -path './EFI/boot/*.efi' 2>/dev/null | head -1)"
+rm -f "$OUT_ISO"
 
-XORRISO_ARGS=(
-    -as mkisofs
-    -r -V "HOTEL_MEDIA"
-    -J -joliet-long
-    -o "$OUT_ISO"
-)
+# روش مطمئن: ساختار بوت را از خود ISO پایه کپی می‌کنیم.
+# ‏-boot_image any replay یعنی «هرچه ISO اصلی برای بوت داشت، همان را
+# بساز» — بدون اینکه لازم باشد نام و مسیر تصاویر BIOS و UEFI را حدس
+# بزنیم، که بین نسخه‌های اوبونتو عوض می‌شود و بوت را خاموش خراب می‌کند.
+if xorriso -indev "$BASE_ISO" \
+           -outdev "$OUT_ISO" \
+           -map "$WORK" / \
+           -boot_image any replay \
+           -volid "HOTEL_MEDIA" \
+           -padding 0 >/dev/null 2>&1; then
+    ok "ساختار بوت از ISO پایه حفظ شد"
+else
+    warn "replay ناموفق — تلاش با پارامترهای صریح"
 
-if [[ -f "boot/grub/i386-pc/eltorito.img" ]]; then
-    XORRISO_ARGS+=(
-        -b boot/grub/i386-pc/eltorito.img
-        -c boot.catalog
+    XORRISO_ARGS=(-as mkisofs -r -V "HOTEL_MEDIA" -J -joliet-long -o "$OUT_ISO")
+
+    [[ -f "boot/grub/i386-pc/eltorito.img" ]] && XORRISO_ARGS+=(
+        -b boot/grub/i386-pc/eltorito.img -c boot.catalog
         -no-emul-boot -boot-load-size 4 -boot-info-table
     )
-fi
 
-if [[ -f "EFI/boot/bootx64.efi" ]] || [[ -n "$EFI_IMG" ]]; then
-    XORRISO_ARGS+=(
-        -eltorito-alt-boot
-        -e "$(cd "$WORK" && find . -name 'efi.img' | head -1 | sed 's|^\./||')"
-        -no-emul-boot
-    )
-fi
+    EFI_IMG="$(find . -name 'efi.img' 2>/dev/null | head -1 | sed 's|^\./||')"
+    [[ -n "$EFI_IMG" ]] && XORRISO_ARGS+=(-eltorito-alt-boot -e "$EFI_IMG" -no-emul-boot)
 
-XORRISO_ARGS+=(-isohybrid-gpt-basdat .)
+    XORRISO_ARGS+=(-isohybrid-gpt-basdat .)
 
-if ! xorriso "${XORRISO_ARGS[@]}" 2>&1 | tail -5; then
-    die "ساخت ISO ناموفق بود"
+    xorriso "${XORRISO_ARGS[@]}" 2>&1 | tail -5 || die "ساخت ISO ناموفق بود"
 fi
 
 [[ -f "$OUT_ISO" ]] || die "فایل خروجی ساخته نشد"

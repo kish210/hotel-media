@@ -186,7 +186,7 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+<script src="/assets/vendor/hls/hls.min.js"></script>
 <script>
 // فیلتر و جستجو
 function searchChannels(q) {

@@ -243,7 +243,7 @@
 @keyframes livePulse { 0%,100%{opacity:1}50%{opacity:.3} }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+<script src="/assets/vendor/hls/hls.min.js"></script>
 <script>
 var _hlsInstance = null;
 var _currentLogName = null;

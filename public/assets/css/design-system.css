@@ -1,0 +1,654 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Hotel Media — سیستم طراحی
+   سماع رایانه کیش | kishwifi.com
+
+   اصولی که این فایل دنبال می‌کند (الهام از راهنمای رابط اپل):
+     • وضوح  — متن خوانا، سلسله‌مراتب روشن، فضای تنفس
+     • عمق   — لایه‌بندی با شفافیت و سایه‌ی نرم، نه خطوط پررنگ
+     • ثبات  — یک مقیاس فاصله، یک مقیاس گردی، یک مجموعه رنگ
+     • احترام به محتوا — رابط عقب می‌نشیند تا محتوا دیده شود
+
+   همه چیز توکن است. برای تغییر ظاهر کل برنامه، فقط :root را عوض کنید.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── فونت‌ها (محلی — سرور هتل ممکن است اینترنت نداشته باشد) ───────── */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url('/assets/vendor/inter/inter-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal; font-weight: 500; font-display: swap;
+  src: url('/assets/vendor/inter/inter-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal; font-weight: 600; font-display: swap;
+  src: url('/assets/vendor/inter/inter-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url('/assets/vendor/inter/inter-700.woff2') format('woff2');
+}
+
+:root {
+  /* ── رنگ برند ─────────────────────────────────────────────────────
+     از آبی لوگوی سماع رایانه کیش گرفته شده. نارنجی قبلی با نشان برند
+     نمی‌خواند و رابط را غیرحرفه‌ای نشان می‌داد. */
+  --brand-50:  #eef6fd;
+  --brand-100: #d6e9f9;
+  --brand-200: #b0d4f2;
+  --brand-300: #7bb8e8;
+  --brand-400: #4098db;
+  --brand-500: #1a7ac4;   /* رنگ اصلی */
+  --brand-600: #1668b3;   /* آبی خط خوشنویسی لوگو */
+  --brand-700: #12558f;
+  --brand-800: #104670;
+  --brand-900: #0d3a5c;
+
+  /* ── سطح‌ها ───────────────────────────────────────────────────────
+     تم تیره پیش‌فرض است: اپراتور هتل اغلب شب کار می‌کند و صفحه‌های
+     کنار مانیتورهای پخش نباید چشم را بزنند. */
+  --bg:          #0b0d12;   /* پس‌زمینه‌ی پنجره */
+  --surface-1:   #121620;   /* نوار کناری و بالا */
+  --surface-2:   #171c28;   /* کارت */
+  --surface-3:   #1e2433;   /* کارتِ روی کارت، ورودی */
+  --surface-4:   #262e40;   /* حالت hover */
+
+  /* ── متن ──────────────────────────────────────────────────────── */
+  --text-1: #f2f5f9;   /* عنوان */
+  --text-2: #aeb9c9;   /* متن معمولی */
+  --text-3: #6d7a8d;   /* توضیح کم‌اهمیت */
+  --text-4: #48536380; /* غیرفعال */
+
+  /* ── خطوط ─────────────────────────────────────────────────────── */
+  --line-1: rgba(255,255,255,.07);   /* جداکننده‌ی معمولی */
+  --line-2: rgba(255,255,255,.12);   /* لبه‌ی کنترل */
+  --line-3: rgba(255,255,255,.18);   /* لبه‌ی برجسته */
+
+  /* ── رنگ‌های معنایی ───────────────────────────────────────────── */
+  --ok:    #32d17a;
+  --warn:  #f5b13d;
+  --error: #ff5f57;
+  --info:  #4098db;
+
+  --ok-bg:    rgba(50,209,122,.12);
+  --warn-bg:  rgba(245,177,61,.12);
+  --error-bg: rgba(255,95,87,.12);
+  --info-bg:  rgba(64,152,219,.12);
+
+  /* ── فاصله — مقیاس ۴ پیکسلی ───────────────────────────────────── */
+  --s1: 4px;   --s2: 8px;   --s3: 12px;  --s4: 16px;
+  --s5: 20px;  --s6: 24px;  --s8: 32px;  --s10: 40px;
+  --s12: 48px; --s16: 64px;
+
+  /* ── گردی — اپل گردی بزرگ‌تر و پیوسته می‌پسندد ────────────────── */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-full: 999px;
+
+  /* ── عمق — سایه‌ی نرم و لایه‌ای، نه یک سایه‌ی تیز ───────────────── */
+  --shadow-1: 0 1px 2px rgba(0,0,0,.24);
+  --shadow-2: 0 2px 8px rgba(0,0,0,.28), 0 1px 2px rgba(0,0,0,.2);
+  --shadow-3: 0 8px 28px rgba(0,0,0,.36), 0 2px 6px rgba(0,0,0,.24);
+  --shadow-4: 0 20px 60px rgba(0,0,0,.5), 0 4px 12px rgba(0,0,0,.3);
+  --glow:     0 0 0 4px rgba(26,122,196,.18);
+
+  /* ── حرکت ─────────────────────────────────────────────────────────
+     منحنی‌های اپل: ورود سریع، خروج نرم. بیش از ۳۰۰ms کند به‌نظر می‌رسد. */
+  --ease:      cubic-bezier(.32,.72,0,1);
+  --ease-out:  cubic-bezier(.16,1,.3,1);
+  --t-fast:    .14s var(--ease);
+  --t-base:    .22s var(--ease);
+  --t-slow:    .34s var(--ease-out);
+
+  /* ── چیدمان ───────────────────────────────────────────────────── */
+  --sidebar-w: 248px;
+  --topbar-h:  56px;
+
+  --font-ui:   'Vazirmatn', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-num:  'Inter', 'SF Mono', ui-monospace, monospace;
+}
+
+/* ── تم روشن ────────────────────────────────────────────────────────
+   بعضی اپراتورها در لابیِ پرنور کار می‌کنند و تم تیره آنجا خوانا نیست. */
+:root[data-theme="light"] {
+  --bg:        #f5f6f8;
+  --surface-1: #ffffff;
+  --surface-2: #ffffff;
+  --surface-3: #f1f3f6;
+  --surface-4: #e7eaef;
+
+  --text-1: #14181f;
+  --text-2: #4a5567;
+  --text-3: #79849a;
+  --text-4: #a9b2c0;
+
+  --line-1: rgba(0,0,0,.07);
+  --line-2: rgba(0,0,0,.11);
+  --line-3: rgba(0,0,0,.16);
+
+  --shadow-1: 0 1px 2px rgba(16,24,40,.06);
+  --shadow-2: 0 2px 8px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
+  --shadow-3: 0 8px 24px rgba(16,24,40,.1),  0 2px 6px rgba(16,24,40,.05);
+  --shadow-4: 0 20px 48px rgba(16,24,40,.14);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   پایه
+   ═══════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-2);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.6;
+  /* رندر نرم‌تر متن، همان چیزی که رابط اپل را تمیز نشان می‌دهد */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 {
+  color: var(--text-1);
+  font-weight: 700;
+  /* عنوان‌های بزرگ در فارسی با tracking منفی جمع‌تر و تمیزتر می‌شوند */
+  letter-spacing: -.01em;
+  line-height: 1.3;
+  margin: 0;
+}
+h1 { font-size: 22px; }
+h2 { font-size: 17px; }
+h3 { font-size: 15px; }
+
+a { color: var(--brand-400); text-decoration: none; transition: color var(--t-fast); }
+a:hover { color: var(--brand-300); }
+
+/* اعداد همیشه لاتین و هم‌عرض — جدول‌ها و ساعت‌ها نباید بلرزند */
+.num, .tabular {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* ── اسکرول‌بار ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: var(--r-full);
+  /* حاشیه‌ی شفاف، نوار را باریک‌تر نشان می‌دهد — ترفند اسکرول‌بار مک */
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--line-3); background-clip: content-box; }
+
+/* ── تمرکز صفحه‌کلید ──────────────────────────────────────────────
+   حلقه فقط برای پیمایش با کیبورد؛ کلیک ماوس نباید حلقه بسازد. */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--brand-400);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   چیدمان
+   ═══════════════════════════════════════════════════════════════════ */
+.sidebar {
+  position: fixed; top: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--surface-1);
+  overflow-y: auto; overflow-x: hidden;
+  z-index: 40;
+  padding-bottom: var(--s6);
+  /* شفافیت پشت‌زمینه — عمق بدون خط اضافه */
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+[dir="rtl"] .sidebar { right: 0; border-left:  1px solid var(--line-1); }
+[dir="ltr"] .sidebar { left: 0;  border-right: 1px solid var(--line-1); }
+
+.main { min-height: 100vh; display: flex; flex-direction: column; }
+[dir="rtl"] .main { margin-right: var(--sidebar-w); }
+[dir="ltr"] .main { margin-left:  var(--sidebar-w); }
+
+.topbar {
+  position: sticky; top: 0; z-index: 30;
+  height: var(--topbar-h);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s4);
+  padding: 0 var(--s6);
+  background: color-mix(in srgb, var(--surface-1) 78%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--line-1);
+}
+
+.content { flex: 1; padding: var(--s6); max-width: 1600px; width: 100%; }
+
+/* ── نشان برند ──────────────────────────────────────────────────── */
+.brand {
+  display: flex; align-items: center; gap: var(--s3);
+  padding: var(--s5) var(--s5) var(--s4);
+  margin-bottom: var(--s2);
+}
+/* نشان سماع بخش‌های سفید و آبی‌روشن دارد و فقط روی زمینه تیره خوانا است.
+   در تم تیره مستقیم می‌نشیند؛ در تم روشن یک کاشی تیره پشتش می‌گذاریم تا
+   بدون دست‌زدن به خود فایل لوگو، کنتراست حفظ شود. */
+.brand-mark {
+  height: 32px; width: auto; display: block; flex: none;
+  border-radius: var(--r-sm); transition: background var(--t-fast);
+}
+:root[data-theme="light"] .brand-mark {
+  background: var(--brand-900);
+  padding: 3px 5px;
+  box-sizing: content-box;
+}
+.brand-text { display: flex; flex-direction: column; min-width: 0; }
+.brand-name {
+  font-size: 14px; font-weight: 700; color: var(--text-1);
+  letter-spacing: -.01em; white-space: nowrap;
+}
+.brand-sub { font-size: 10.5px; color: var(--text-3); white-space: nowrap; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   پیمایش
+   ═══════════════════════════════════════════════════════════════════ */
+.sidebar-section {
+  font-size: 10.5px; font-weight: 700;
+  color: var(--text-3);
+  letter-spacing: .06em; text-transform: uppercase;
+  padding: var(--s5) var(--s5) var(--s2);
+}
+
+.sidebar-link {
+  position: relative;
+  display: flex; align-items: center; gap: var(--s3);
+  margin: 1px var(--s3);
+  padding: 9px var(--s3);
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+  font-size: 13.5px; font-weight: 500;
+  text-decoration: none;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.sidebar-link:hover { background: var(--surface-3); color: var(--text-1); }
+
+.sidebar-link.active {
+  background: color-mix(in srgb, var(--brand-500) 16%, transparent);
+  color: var(--brand-300);
+  font-weight: 600;
+}
+/* نشانگر باریک کنار آیتم فعال — به‌جای پررنگ کردن کل ردیف */
+.sidebar-link.active::before {
+  content: '';
+  position: absolute; top: 20%; bottom: 20%;
+  width: 3px; border-radius: var(--r-full);
+  background: var(--brand-500);
+}
+[dir="rtl"] .sidebar-link.active::before { right: -6px; }
+[dir="ltr"] .sidebar-link.active::before { left:  -6px; }
+
+.sidebar-link .icon {
+  width: 20px; flex-shrink: 0;
+  text-align: center; font-size: 14px;
+  opacity: .85;
+}
+.sidebar-link.active .icon { opacity: 1; }
+
+.mod-badge {
+  margin-inline-start: auto;
+  background: color-mix(in srgb, var(--brand-500) 20%, transparent);
+  color: var(--brand-300);
+  font-family: var(--font-num);
+  font-size: 10.5px; font-weight: 600;
+  padding: 1px 7px; border-radius: var(--r-full);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   کارت
+   ═══════════════════════════════════════════════════════════════════ */
+.card {
+  background: var(--surface-2);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-lg);
+  padding: var(--s5);
+  box-shadow: var(--shadow-1);
+}
+
+.card-hover { transition: transform var(--t-base), box-shadow var(--t-base), border-color var(--t-base); }
+.card-hover:hover {
+  /* بلند شدن خیلی کم — بیشتر از این، سبُک و اسباب‌بازی‌وار می‌شود */
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-3);
+  border-color: var(--line-2);
+}
+
+.stat-card {
+  background: var(--surface-2);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-lg);
+  padding: var(--s4) var(--s5);
+  box-shadow: var(--shadow-1);
+}
+.stat-label { font-size: 12px; color: var(--text-3); display: flex; align-items: center; gap: var(--s2); }
+.stat-value {
+  font-family: var(--font-num);
+  font-size: 26px; font-weight: 700; color: var(--text-1);
+  letter-spacing: -.02em; line-height: 1.2; margin-top: var(--s1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   دکمه‌ها
+   ═══════════════════════════════════════════════════════════════════ */
+.btn-primary, .btn-ghost, .btn-danger {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+  padding: 8px 16px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-ui);
+  font-size: 13.5px; font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: background var(--t-fast), border-color var(--t-fast),
+              transform var(--t-fast), box-shadow var(--t-fast), opacity var(--t-fast);
+}
+/* فشار محسوس هنگام کلیک — بازخورد لمسی که رابط را زنده نشان می‌دهد */
+.btn-primary:active, .btn-ghost:active, .btn-danger:active { transform: scale(.975); }
+
+.btn-primary { background: var(--brand-600); color: #fff; box-shadow: var(--shadow-1); }
+.btn-primary:hover { background: var(--brand-500); box-shadow: var(--shadow-2); }
+
+.btn-ghost {
+  background: var(--surface-3);
+  border-color: var(--line-2);
+  color: var(--text-2);
+}
+.btn-ghost:hover { background: var(--surface-4); color: var(--text-1); border-color: var(--line-3); }
+
+.btn-danger { background: var(--error-bg); border-color: rgba(255,95,87,.3); color: var(--error); }
+.btn-danger:hover { background: rgba(255,95,87,.2); }
+
+.btn-primary:disabled, .btn-ghost:disabled, .btn-danger:disabled {
+  opacity: .45; cursor: not-allowed; transform: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   فرم
+   ═══════════════════════════════════════════════════════════════════ */
+.form-label {
+  display: block;
+  font-size: 12.5px; font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: var(--s2);
+}
+
+.form-input, input[type="text"], input[type="email"], input[type="password"],
+input[type="number"], input[type="search"], input[type="url"], input[type="time"],
+input[type="date"], input[type="datetime-local"], select, textarea {
+  width: 100%;
+  background: var(--surface-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  padding: 9px 13px;
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+}
+.form-input:hover, select:hover, textarea:hover { border-color: var(--line-3); }
+
+.form-input:focus, input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--brand-500);
+  /* حلقه‌ی نرم به‌جای outline تیز */
+  box-shadow: var(--glow);
+}
+::placeholder { color: var(--text-4); }
+
+select { appearance: none; padding-inline-end: 34px; cursor: pointer; }
+select option { background: var(--surface-2); color: var(--text-1); }
+
+/* سوییچ — کنترلی که در پنل هتل زیاد استفاده می‌شود */
+.switch { position: relative; display: inline-block; width: 42px; height: 25px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .track {
+  position: absolute; inset: 0;
+  background: var(--surface-4);
+  border-radius: var(--r-full);
+  cursor: pointer;
+  transition: background var(--t-base);
+}
+.switch .track::before {
+  content: ''; position: absolute;
+  width: 19px; height: 19px; left: 3px; top: 3px;
+  background: #fff; border-radius: 50%;
+  box-shadow: var(--shadow-1);
+  transition: transform var(--t-base);
+}
+.switch input:checked + .track { background: var(--ok); }
+.switch input:checked + .track::before { transform: translateX(17px); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   نشان وضعیت
+   ═══════════════════════════════════════════════════════════════════ */
+.badge-online, .badge-offline, .badge-pending, .badge-info {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 9px;
+  border-radius: var(--r-full);
+  font-size: 11.5px; font-weight: 600;
+  border: 1px solid transparent;
+}
+.badge-online  { background: var(--ok-bg);    color: var(--ok);    border-color: rgba(50,209,122,.25); }
+.badge-offline { background: var(--error-bg); color: var(--error); border-color: rgba(255,95,87,.25); }
+.badge-pending { background: var(--warn-bg);  color: var(--warn);  border-color: rgba(245,177,61,.25); }
+.badge-info    { background: var(--info-bg);  color: var(--info);  border-color: rgba(64,152,219,.25); }
+
+.online-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--ok); display: inline-block;
+  box-shadow: 0 0 0 0 rgba(50,209,122,.5);
+  animation: pulse-dot 2.4s infinite;
+}
+@keyframes pulse-dot {
+  0%   { box-shadow: 0 0 0 0 rgba(50,209,122,.45); }
+  70%  { box-shadow: 0 0 0 6px rgba(50,209,122,0); }
+  100% { box-shadow: 0 0 0 0 rgba(50,209,122,0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   جدول
+   ═══════════════════════════════════════════════════════════════════ */
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  font-size: 11.5px; font-weight: 600;
+  color: var(--text-3);
+  text-align: start;
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--line-1);
+  white-space: nowrap;
+}
+tbody td {
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--line-1);
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+tbody tr { transition: background var(--t-fast); }
+tbody tr:hover td { background: color-mix(in srgb, var(--surface-3) 60%, transparent); }
+tbody tr:last-child td { border-bottom: none; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   مودال
+   ═══════════════════════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--s4);
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fade-in var(--t-base);
+}
+.modal-overlay.hidden { display: none !important; }
+
+.modal {
+  width: 100%; max-width: 560px; max-height: 88vh;
+  overflow-y: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-xl);
+  padding: var(--s6);
+  box-shadow: var(--shadow-4);
+  /* ورود از پایین با کمی مقیاس — الگوی sheet در iOS */
+  animation: sheet-in var(--t-slow);
+}
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(12px) scale(.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   اعلان
+   ═══════════════════════════════════════════════════════════════════ */
+.toast {
+  position: fixed; bottom: var(--s6); z-index: 9999;
+  display: flex; align-items: center; gap: var(--s3);
+  max-width: 400px;
+  padding: var(--s3) var(--s5);
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-4);
+  font-size: 13.5px;
+  animation: toast-in var(--t-slow);
+}
+[dir="rtl"] .toast { left: var(--s6); }
+[dir="ltr"] .toast { right: var(--s6); }
+
+.toast-success { border-color: rgba(50,209,122,.4);  color: var(--ok); }
+.toast-error   { border-color: rgba(255,95,87,.4);   color: var(--error); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(14px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   کمکی
+   ═══════════════════════════════════════════════════════════════════ */
+.hidden { display: none !important; }
+.divider { height: 1px; background: var(--line-1); margin: var(--s5) 0; }
+
+/* حالت خالی — به‌جای صفحه‌ی سفید، راهنمای کار بعدی */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  gap: var(--s3); padding: var(--s16) var(--s6);
+  text-align: center; color: var(--text-3);
+}
+.empty-state .icon { font-size: 30px; color: var(--text-4); }
+.empty-state .title { font-size: 15px; font-weight: 600; color: var(--text-2); }
+
+/* اسکلت بارگذاری — بهتر از اسپینر، چون جای محتوا را نشان می‌دهد */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-3) 25%, var(--surface-4) 50%, var(--surface-3) 75%);
+  background-size: 200% 100%;
+  border-radius: var(--r-sm);
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* ── موبایل و تبلت ─────────────────────────────────────────────────
+   اپراتور هتل گاهی از تبلت در لابی کار می‌کند. */
+@media (max-width: 960px) {
+  .sidebar { transform: translateX(100%); transition: transform var(--t-slow); }
+  [dir="ltr"] .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: none; box-shadow: var(--shadow-4); }
+  .main { margin: 0 !important; }
+  .content { padding: var(--s4); }
+  .topbar { padding: 0 var(--s4); }
+}
+
+/* ── احترام به تنظیم کاهش حرکت سیستم ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ── چاپ ────────────────────────────────────────────────────────── */
+@media print {
+  .sidebar, .topbar, .toast { display: none !important; }
+  .main { margin: 0 !important; }
+  .card { box-shadow: none; border-color: #ddd; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   باقی‌مانده‌های استایل درون‌خطی قدیمیِ layout که هنوز در نماها به کار
+   می‌روند. اینجا جمع شده‌اند تا یک منبع حقیقت بماند.
+   ═══════════════════════════════════════════════════════════════════ */
+.brand-ver {
+  margin-inline-start: auto;
+  font-size: 10px; font-weight: 600;
+  color: var(--text-3);
+  background: var(--surface-3);
+  padding: 2px 6px; border-radius: 999px;
+  white-space: nowrap;
+}
+.table-row:hover td { background: var(--surface-3); }
+
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.fa-spin { animation: spin 1s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fa-spin { animation-duration: 2.4s; }
+}
+
+/* ── هشدارها ────────────────────────────────────────────────────────
+   نوار پیام درون‌صفحه‌ای (خطای ورود، راهنما). با toast فرق دارد:
+   toast شناور و گذراست، alert در جریان صفحه می‌نشیند و می‌ماند. */
+.alert {
+  display: flex; align-items: flex-start; gap: var(--s3);
+  padding: 11px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  font-size: 13px; line-height: 1.6;
+  margin-bottom: var(--s4);
+}
+.alert i { margin-top: 2px; flex: none; }
+.alert-error   { background: var(--error-bg); border-color: rgba(255,95,87,.28);  color: var(--error); }
+.alert-warn    { background: var(--warn-bg);  border-color: rgba(245,177,61,.28); color: var(--warn); }
+.alert-info    { background: var(--info-bg);  border-color: rgba(64,152,219,.25); color: var(--text-2); }
+.alert-info strong { color: var(--info); }
+.alert-success { background: var(--ok-bg); border-color: rgba(50,209,122,.28); color: var(--ok); }
+
+/* .btn تنهایی پایه‌ی مشترک است؛ در نماها معمولا با .btn-primary و
+   برادرانش جفت می‌شود و آن‌ها ظاهر را می‌دهند. */
+.btn {
+  display: inline-flex; align-items: center; gap: var(--s2);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  padding: 8px 16px;
+  font-family: inherit; font-size: 13.5px; font-weight: 600;
+  cursor: pointer; text-decoration: none;
+  transition: background var(--t-fast), color var(--t-fast),
+              border-color var(--t-fast), box-shadow var(--t-fast),
+              transform var(--t-fast);
+}
+.btn:active { transform: scale(.975); }

@@ -1,5 +1,9 @@
 .env
-vendor/
+# فقط vendor/ ریشه (composer). بدون / ابتدایی، این قانون
+# public/assets/vendor/ را هم می‌گرفت و دارایی‌های میزبانی‌شده محلی
+# (tailwind، فونت‌ها، Font Awesome، hls.js) هیچ‌وقت commit نمی‌شدند —
+# یعنی clone تازه روی سرور هتلِ بدون اینترنت بدون استایل بالا می‌آمد.
+/vendor/
 node_modules/
 storage/logs/*.log
 storage/cache/*
