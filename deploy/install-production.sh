@@ -35,6 +35,20 @@ info() { echo -e "  ${B}→${N} $1"; }
 warn() { echo -e "  ${Y}!${N} $1"; }
 die()  { echo -e "  ${R}✘ $1${N}"; exit 1; }
 
+# رشته‌ی تصادفی امن برای رمز و کلید.
+#
+# الگوی رایج «tr -dc ... < /dev/urandom | head -c N» اینجا کار نمی‌کند:
+# head بعد از N بایت لوله را می‌بندد، tr سیگنال SIGPIPE می‌گیرد و با
+# کد ۱۴۱ می‌میرد. با set -o pipefail همان کد به کل خط سرایت می‌کند و
+# set -e نصب را می‌کشد — دقیقا همین روی سرور واقعی اتفاق افتاد.
+#
+# ‏head اینجا اول می‌آید تا کسی لوله را زیر پای دیگری نبندد.
+randstr() {
+    local n="${1:-24}"
+    LC_ALL=C tr -dc 'A-Za-z0-9' < <(head -c $(( n * 8 )) /dev/urandom) | head -c "$n"
+    echo
+}
+
 # با set -e هر فرمانی که کد غیرصفر بدهد نصب را متوقف می‌کند — ولی
 # بی‌صدا. در نصب واقعی روی اوبونتو ۲۴.۰۴ همین اتفاق افتاد: یک
 # debconf-set-selections کد ۱ برگرداند و کل نصب وسط راه ایستاد بدون
@@ -156,7 +170,7 @@ if [[ "$INSTALL_TVHEADEND" == "1" ]]; then
         INSTALL_TVHEADEND=0
     else
         info "نصب TVHeadend"
-        TVH_PASS="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20)"
+        TVH_PASS="$(randstr 20)"
 
         # پاسخ از پیش به پرسش‌های نصب، وگرنه نصب برای کاربر ادمین سؤال
         # تعاملی می‌پرسد و اسکریپت معلق می‌ماند.
@@ -216,7 +230,7 @@ if [[ -f .env ]] && grep -q '^DB_PASSWORD=' .env; then
     DB_PASS="$(grep '^DB_PASSWORD=' .env | head -1 | cut -d= -f2- | tr -d '"'"'"' ')"
     info "رمز دیتابیس از .env موجود خوانده شد"
 fi
-[[ -n "${DB_PASS:-}" ]] || DB_PASS="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24)"
+[[ -n "${DB_PASS:-}" ]] || DB_PASS="$(randstr 24)"
 
 mysql <<SQL
 CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`
@@ -254,7 +268,7 @@ echo -e "\n${G}[5/9] پیکربندی${N}"
 if [[ ! -f .env ]]; then
     cp .env.example .env
     APP_KEY="base64:$(head -c 32 /dev/urandom | base64)"
-    JWT="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48)"
+    JWT="$(randstr 48)"
     SERVER_IP="$(hostname -I | awk '{print $1}')"
 
     sed -i "s|^APP_ENV=.*|APP_ENV=production|"           .env
