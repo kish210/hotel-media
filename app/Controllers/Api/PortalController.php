@@ -47,7 +47,7 @@ class PortalController extends Controller
             'room'     => $this->roomBlock($ctx, $menu),
             'branding' => $this->brandingBlock($menu),
             'menu'     => $this->menuBlock($menu, $lang),
-            'channels' => $this->channelsBlock($tid, (string)($ctx['platform'] ?? 'unknown')),
+            'channels' => $this->channelsBlock($tid, (string)($ctx['platform'] ?? 'unknown'), $ctx['room_id'] ? $ctx : null),
             'header'   => ['widgets' => $widgets, 'data' => $live],
             'lang'     => $lang,
             'strings'  => $this->translations($tid, $lang),
@@ -205,16 +205,13 @@ class PortalController extends Controller
      *
      * @return list<array<string,mixed>>
      */
-    private function channelsBlock(int $tenantId, string $platform): array
+    private function channelsBlock(int $tenantId, string $platform, ?array $room = null): array
     {
-        $rows = $this->db->rows(
-            'SELECT id, name, name_en, logo_url, category, channel_no, sort_order,
-                    stream_url, multicast_url, delivery, protocol
-               FROM iptv_channels
-              WHERE tenant_id = ? AND is_active = 1
-              ORDER BY channel_no IS NULL, channel_no, sort_order, id',
-            [$tenantId]
-        );
+        // سطح دسترسی اتاق و قفل والدین از یک جا اعمال می‌شوند، وگرنه
+        // کانال VIP از این مسیر لو می‌رفت در حالی که /guest/{code}/channels
+        // آن را پنهان می‌کند.
+        $rows = (new \App\Services\ChannelAccessService($this->db))
+            ->visibleChannels($tenantId, $room);
         if (!$rows) return [];
 
         $udpxy = (string)($this->db->value(
@@ -242,6 +239,12 @@ class PortalController extends Controller
                 $url = $http;  $via = 'unicast';
             }
 
+            // کانال قفل‌شده نباید آدرس داشته باشد، وگرنه قفل ظاهری است و
+            // با خواندن پاسخ API دور زده می‌شود. باز کردنش از مسیر
+            // /guest/{code}/channels با توکن انجام می‌شود.
+            $locked = !empty($r['locked']);
+            if ($locked) { $url = ''; $via = 'locked'; }
+
             $out[] = [
                 'id'         => (int)$r['id'],
                 'name'       => $r['name'],
@@ -249,6 +252,8 @@ class PortalController extends Controller
                 'logo_url'   => $r['logo_url'],
                 'category'   => $r['category'],
                 'channel_no' => $r['channel_no'] !== null ? (int)$r['channel_no'] : null,
+                'is_radio'   => !empty($r['is_radio']),
+                'locked'     => $locked,
                 'url'        => $url,
                 'via'        => $via,
                 'playable'   => $url !== '',
@@ -308,8 +313,9 @@ class PortalController extends Controller
 
         return $this->db->row(
             'SELECT s.id, s.code, s.name, s.tenant_id, s.iptv_menu_id, s.group_id, s.platform,
-                    r.room_number, r.room_name, r.status AS room_status,
-                    r.guest_name, r.guest_lang
+                    r.id AS room_id, r.room_number, r.room_name, r.status AS room_status,
+                    r.guest_name, r.guest_lang,
+                    r.access_level, r.parental_enabled, r.parental_pin
                FROM screens s
                LEFT JOIN iptv_rooms r ON r.id = s.iptv_room_id
               WHERE s.code = ?',

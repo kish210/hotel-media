@@ -357,3 +357,21 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
     $r->post('/multicast/assign',      [\App\Controllers\Api\MulticastController::class, 'assign']);
     $r->get('/multicast/playlist.m3u', [\App\Controllers\Api\MulticastController::class, 'playlist']);
 });
+
+// ── محتوای جانبی و قفل والدین — مهمان (بدون JWT) ────────────────
+$router->get('/api/v1/guest/{code}/channels',              [\App\Controllers\Api\ContentController::class, 'guestChannels']);
+$router->get('/api/v1/guest/{code}/content/{kind}',        [\App\Controllers\Api\ContentController::class, 'guestContent']);
+$router->get('/api/v1/guest/{code}/content/{kind}/{id}',   [\App\Controllers\Api\ContentController::class, 'guestContentItem']);
+$router->post('/api/v1/guest/{code}/parental/unlock',      [\App\Controllers\Api\ContentController::class, 'unlock']);
+$router->post('/api/v1/guest/{code}/parental/pin',         [\App\Controllers\Api\ContentController::class, 'setPin']);
+$router->delete('/api/v1/guest/{code}/parental/pin',       [\App\Controllers\Api\ContentController::class, 'disablePin']);
+$router->get('/api/v1/guest/{code}/wakeups',               [\App\Controllers\Api\ContentController::class, 'dueWakeups']);
+$router->post('/api/v1/guest/{code}/wakeups/{id}/ack',     [\App\Controllers\Api\ContentController::class, 'ackWakeup']);
+
+// ── محتوای جانبی — پنل (protected) ──────────────────────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    $r->get('/content',            [\App\Controllers\Api\ContentController::class, 'index']);
+    $r->post('/content',           [\App\Controllers\Api\ContentController::class, 'store']);
+    $r->put('/content/{id}',       [\App\Controllers\Api\ContentController::class, 'update']);
+    $r->delete('/content/{id}',    [\App\Controllers\Api\ContentController::class, 'destroy']);
+});
