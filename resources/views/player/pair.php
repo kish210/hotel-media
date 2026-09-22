@@ -1,281 +1,294 @@
+<?php
+/**
+ * Hotel Media — راه‌اندازی صفحه‌نمایش
+ *
+ * دو حالت دارد:
+ *   ۱) دستگاه تازه متصل شد — تایید کوتاه و رفتن به پلیر
+ *   ۲) هنوز کوکی ندارد — گرفتن کد فعال‌سازی
+ *
+ * این صفحه هم روی مرورگر تلویزیون باز می‌شود، پس ES5 خالص است.
+ * بازرس: node tests/Support/tv-compat-lint.js
+ */
+$paired = isset($pairingScreen);
+?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hotel Media — راه‌اندازی</title>
+<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
+<!-- در نسخه‌ی قبلی این لینک ته body بود، پس آیکون‌ها دیر می‌آمدند و
+     دکمه یک لحظه بدون آیکون می‌پرید. -->
+<link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
+<link rel="stylesheet" href="/assets/css/tv-base.css">
+<script src="/assets/js/tv-base.js"></script>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-html, body {
-  width:100%; height:100%;
-  background:#0a0a14;
-  font-family:'Segoe UI',Tahoma,sans-serif;
-  color:#e2e8f0;
-  overflow:hidden;
+body {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-orient: vertical; -webkit-box-direction: normal;
+  -webkit-flex-direction: column; -ms-flex-direction: column; flex-direction: column;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+  padding: 1.5rem;
 }
-.bg-grid {
-  position:fixed; inset:0; z-index:0;
+
+/* شبکه‌ی پس‌زمینه با رنگ برند */
+#grid-bg {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 0;
   background-image:
-    linear-gradient(rgba(56,189,248,.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56,189,248,.03) 1px, transparent 1px);
-  background-size:60px 60px;
-  animation:gridMove 25s linear infinite;
+    -webkit-linear-gradient(top, rgba(26,122,196,.045) 1px, transparent 1px),
+    -webkit-linear-gradient(left, rgba(26,122,196,.045) 1px, transparent 1px);
+  background-image:
+    linear-gradient(to bottom, rgba(26,122,196,.045) 1px, transparent 1px),
+    linear-gradient(to right,  rgba(26,122,196,.045) 1px, transparent 1px);
+  background-size: 60px 60px;
+  -webkit-animation: gridMove 26s linear infinite;
+  animation: gridMove 26s linear infinite;
 }
-@keyframes gridMove { to { background-position:60px 60px; } }
+@-webkit-keyframes gridMove { to { background-position: 60px 60px; } }
+@keyframes gridMove { to { background-position: 60px 60px; } }
 
-.wrap {
-  position:relative; z-index:1;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  min-height:100vh; padding:24px;
+.card {
+  position: relative;
+  z-index: 1;
+  width: 27rem;
+  max-width: 100%;
+  padding: 2.8rem 2.5rem;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid rgba(255, 255, 255, .1);
+  box-shadow: 0 1.6rem 4rem rgba(0, 0, 0, .55);
+  text-align: center;
 }
 
-/* ── Binding confirmation card ── */
-.bind-card {
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:24px;
-  padding:48px 44px;
-  max-width:420px; width:100%;
-  text-align:center;
-  backdrop-filter:blur(14px);
-  box-shadow:0 28px 90px rgba(0,0,0,.55);
-}
+.logo { height: 3.2rem; width: auto; margin: 0 auto 1.4rem; display: block; }
 
-/* ── Pairing confirmed (ring animation) ── */
-.ring-wrap {
-  position:relative;
-  width:90px; height:90px;
-  margin:0 auto 22px;
-}
-.ring-wrap svg { width:90px; height:90px; transform:rotate(-90deg); }
-.ring-wrap circle { fill:none; stroke-width:4; }
-.bg-circle  { stroke:rgba(56,189,248,.12); }
-.prog-circle {
-  stroke:#38bdf8; stroke-linecap:round;
-  stroke-dasharray:245; stroke-dashoffset:245;
-  animation:ringFill 2.4s ease-out forwards;
-}
-@keyframes ringFill { to { stroke-dashoffset:0; } }
-.check-icon {
-  position:absolute; inset:0;
-  display:flex; align-items:center; justify-content:center;
-  font-size:30px;
-}
-.bind-name { font-size:22px; font-weight:800; color:#fff; margin-bottom:6px; }
-.bind-code { font-size:12px; color:#38bdf8; font-family:monospace; letter-spacing:3px; margin-bottom:18px; }
-.bind-msg  { font-size:13px; color:#64748b; }
+.title { font-size: 1.4rem; font-weight: 800; margin-bottom: .4rem; }
+.sub   { font-size: .92rem; font-weight: 400; color: #a8b4c6; line-height: 1.75; margin-bottom: 1.6rem; }
 
-/* ── Enter code card ── */
-.enter-card {
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:24px;
-  padding:44px 40px;
-  max-width:440px; width:100%;
-  text-align:center;
-  backdrop-filter:blur(14px);
-  box-shadow:0 28px 90px rgba(0,0,0,.55);
+/* ── تایید اتصال ── */
+.ring { position: relative; width: 5.6rem; height: 5.6rem; margin: 0 auto 1.3rem; }
+.ring svg {
+  width: 5.6rem; height: 5.6rem;
+  -webkit-transform: rotate(-90deg); -ms-transform: rotate(-90deg); transform: rotate(-90deg);
 }
-.icon-ring {
-  width:76px; height:76px;
-  border-radius:50%;
-  background:rgba(56,189,248,.08);
-  border:1.5px solid rgba(56,189,248,.2);
-  display:flex; align-items:center; justify-content:center;
-  margin:0 auto 22px;
-  font-size:30px;
+.ring circle { fill: none; stroke-width: 4; }
+.ring .bg   { stroke: rgba(26, 122, 196, .14); }
+.ring .prog {
+  stroke: #4098db;
+  stroke-linecap: round;
+  stroke-dasharray: 245;
+  stroke-dashoffset: 245;
+  -webkit-animation: ringFill 2.3s ease-out forwards;
+  animation: ringFill 2.3s ease-out forwards;
 }
-.ec-title { font-size:20px; font-weight:800; color:#fff; margin-bottom:6px; }
-.ec-sub   { font-size:13px; color:#64748b; line-height:1.7; margin-bottom:28px; }
+@-webkit-keyframes ringFill { to { stroke-dashoffset: 0; } }
+@keyframes ringFill { to { stroke-dashoffset: 0; } }
+.ring .tick {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+  font-size: 1.9rem;
+  color: #32d17a;
+}
+.paired-name { font-size: 1.4rem; font-weight: 800; margin-bottom: .3rem; }
+.paired-code { font-size: .82rem; color: #7bb8e8; font-family: monospace; letter-spacing: .2em; margin-bottom: 1rem; }
 
-/* ── Code input ── */
-.code-input {
-  background:rgba(255,255,255,.05);
-  border:1.5px solid rgba(255,255,255,.1);
-  border-radius:14px;
-  padding:16px 20px;
-  font-size:26px; letter-spacing:6px;
-  color:#fff; width:100%;
-  text-align:center;
-  font-family:'Courier New',monospace;
-  text-transform:uppercase;
-  outline:none;
-  transition:border-color .2s, background .2s;
-  caret-color:#38bdf8;
+/* ── ورود کد ── */
+.badge {
+  width: 4.6rem; height: 4.6rem;
+  border-radius: 50%;
+  background: rgba(26, 122, 196, .1);
+  border: 2px solid rgba(26, 122, 196, .24);
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+  margin: 0 auto 1.3rem;
+  font-size: 1.8rem;
 }
-.code-input:focus {
-  border-color:rgba(56,189,248,.5);
-  background:rgba(56,189,248,.04);
+#code-input {
+  width: 100%;
+  padding: 1rem 1.2rem;
+  border-radius: .85rem;
+  background: rgba(255, 255, 255, .05);
+  border: 2px solid rgba(255, 255, 255, .11);
+  color: #fff;
+  font-family: monospace;
+  font-size: 1.6rem;
+  letter-spacing: .35rem;
+  text-align: center;
+  text-transform: uppercase;
+  outline: 0;
+  -webkit-transition: border-color .2s ease, background .2s ease;
+  transition: border-color .2s ease, background .2s ease;
 }
-.code-input::placeholder { color:#334155; letter-spacing:3px; font-size:16px; }
+#code-input:focus { border-color: #4098db; background: rgba(26, 122, 196, .06); }
+#code-input::-webkit-input-placeholder { color: #4a5567; letter-spacing: .15rem; font-size: 1rem; }
+#code-input::placeholder { color: #4a5567; letter-spacing: .15rem; font-size: 1rem; }
 
-/* ── Go button ── */
-.btn-go {
-  width:100%; margin-top:14px;
-  padding:15px;
-  background:linear-gradient(135deg,#38bdf8,#0ea5e9);
-  border:none; border-radius:14px;
-  color:#fff; font-size:15px; font-weight:700;
-  cursor:pointer; font-family:inherit;
-  transition:opacity .2s, transform .1s;
-  display:flex; align-items:center; justify-content:center; gap:8px;
+#go-btn {
+  width: 100%;
+  margin-top: .9rem;
+  padding: .95rem;
+  font-size: 1rem;
+  background: #1668b3;
+  border-color: #1a7ac4;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
 }
-.btn-go:hover  { opacity:.88; }
-.btn-go:active { transform:scale(.98); }
-.btn-go:disabled { opacity:.4; cursor:not-allowed; }
+#go-btn:disabled { opacity: .45; cursor: default; }
 
-/* ── Error / status ── */
-.err {
-  font-size:12px; color:#f87171;
-  margin-top:12px; min-height:18px;
-  display:flex; align-items:center; justify-content:center; gap:6px;
-}
-.loading { color:#38bdf8 !important; }
+#err { font-size: .88rem; color: #ff5f57; margin-top: .8rem; min-height: 1.3rem; }
+#err.is-busy { color: #7bb8e8; }
 
-/* ── Help hint ── */
 .help {
-  margin-top:20px;
-  font-size:11px; color:#334155;
-  line-height:1.8;
-  border-top:1px solid rgba(255,255,255,.05);
-  padding-top:16px;
+  margin-top: 1.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, .07);
+  /* رنگ قبلی #334155 روی زمینه‌ی تیره تقریبا خوانده نمی‌شد */
+  font-size: .8rem;
+  font-weight: 400;
+  color: #8c99ad;
+  line-height: 1.9;
 }
 .help code {
-  color:#38bdf8;
-  background:rgba(56,189,248,.08);
-  padding:1px 6px; border-radius:4px;
+  color: #7bb8e8;
+  background: rgba(26, 122, 196, .1);
+  padding: .05rem .35rem;
+  border-radius: .25rem;
+  font-family: monospace;
 }
+.help b { color: #c2cbd8; }
 
-.brand { margin-top:28px; font-size:11px; color:#1e293b; letter-spacing:1px; }
+.foot {
+  position: relative; z-index: 1;
+  margin-top: 1.6rem;
+  font-size: .78rem;
+  color: #79849a;
+  letter-spacing: .06em;
+}
 </style>
 </head>
 <body>
-<div class="bg-grid"></div>
-<div class="wrap">
+<div id="grid-bg"></div>
 
-<?php if (isset($pairingScreen)): ?>
-  <!-- ══ حالت: دستگاه تازه bind شد ══ -->
-  <div class="bind-card">
-    <div class="ring-wrap">
+<?php if ($paired): ?>
+  <div class="card">
+    <div class="ring">
       <svg viewBox="0 0 90 90">
-        <circle class="bg-circle"   cx="45" cy="45" r="39"/>
-        <circle class="prog-circle" cx="45" cy="45" r="39"/>
+        <circle class="bg"   cx="45" cy="45" r="39"/>
+        <circle class="prog" cx="45" cy="45" r="39"/>
       </svg>
-      <div class="check-icon">✓</div>
+      <div class="tick">✓</div>
     </div>
-    <div class="bind-name"><?= htmlspecialchars($pairingScreen['name'] ?? 'صفحه‌نمایش') ?></div>
-    <div class="bind-code"><?= htmlspecialchars($pairingScreen['code'] ?? '') ?></div>
-    <div class="bind-msg">این دستگاه متصل شد — در حال بارگذاری پلیر...</div>
+    <div class="paired-name"><?= e($pairingScreen['name'] ?? 'صفحه‌نمایش') ?></div>
+    <div class="paired-code"><?= e($pairingScreen['code'] ?? '') ?></div>
+    <div class="sub" style="margin-bottom:0">این دستگاه متصل شد — در حال بارگذاری پخش‌کننده…</div>
   </div>
-  <script>
-  (function(){
-    const code = <?= json_encode($pairingScreen['code'] ?? '') ?>;
-    const name = <?= json_encode($pairingScreen['name'] ?? '') ?>;
-    if (code) {
-      try { localStorage.setItem('signage_scr',  code); } catch(e){}
-      try { localStorage.setItem('signage_name', name); } catch(e){}
-    }
-    setTimeout(function(){ window.location.href = <?= json_encode($pairingRedirect ?? '/player/') ?>; }, 2400);
-  })();
-  </script>
 
 <?php else: ?>
-  <!-- ══ حالت: بدون cookie — ورود کد ══ -->
-  <div class="enter-card">
-    <div class="icon-ring">📺</div>
-    <div class="ec-title">راه‌اندازی صفحه‌نمایش</div>
-    <div class="ec-sub">کد فعال‌سازی را از پنل مدیریت دریافت و وارد کنید</div>
+  <div class="card">
+    <img class="logo" src="/assets/img/sama-logo.svg" alt="">
+    <div class="title">راه‌اندازی صفحه‌نمایش</div>
+    <div class="sub">کد فعال‌سازی را از پنل مدیریت دریافت و وارد کنید</div>
 
-    <input id="codeInput" class="code-input"
-           type="text" autocomplete="off" autocorrect="off"
-           spellcheck="false" maxlength="20"
-           placeholder="کد فعال‌سازی">
+    <input id="code-input" type="text" maxlength="20" placeholder="کد فعال‌سازی"
+           autocomplete="off" autocorrect="off" spellcheck="false">
 
-    <button class="btn-go" id="goBtn" onclick="goPair()">
-      <i class="fas fa-link"></i> اتصال به صفحه‌نمایش
+    <button type="button" class="tv-btn" id="go-btn">
+      <i class="fas fa-link" style="margin-left:.5rem"></i><span id="go-label">اتصال</span>
     </button>
-    <div class="err" id="errMsg"></div>
+    <div id="err"></div>
 
     <div class="help">
-      <strong style="color:#475569;">کد فعال‌سازی</strong> از بخش
-      <code>مدیریت ← صفحات ← فعال‌سازی</code>
-      دریافت کنید.<br>
-      آدرس این صفحه برای <strong>همه</strong> صفحات‌نمایش یکسان است:<br>
-      <code id="thisUrl"></code>
+      کد را از <code>مدیریت ← صفحات ← فعال‌سازی</code> بگیرید.<br>
+      آدرس این صفحه برای <b>همه‌ی</b> صفحه‌نمایش‌ها یکسان است:<br>
+      <code id="this-url"></code>
     </div>
   </div>
-  <script>
-  // نشون دادن URL جاری
-  (function(){
-    const u = window.location.origin + '/player/';
-    const el = document.getElementById('thisUrl');
-    if (el) el.textContent = u;
-  })();
+<?php endif; ?>
 
-  const inp = document.getElementById('codeInput');
-  const btn = document.getElementById('goBtn');
-  const err = document.getElementById('errMsg');
+<div class="foot">Hotel Media Player</div>
 
-  inp.focus();
-  inp.addEventListener('keydown', function(e){ if(e.key==='Enter') goPair(); });
+<script>
+(function () {
+  'use strict';
+  TV.boot();
 
-  async function goPair() {
-    const raw = inp.value.trim().toUpperCase().replace(/\s+/g,'');
-    err.textContent = '';
-    if (!raw) { showErr('کد نمی‌تواند خالی باشد'); return; }
-    if (!/^[A-Z0-9]{4,20}$/.test(raw)) { showErr('فرمت کد نامعتبر است'); return; }
+<?php if ($paired): ?>
+  var code = <?= json_encode((string)($pairingScreen['code'] ?? ''), JSON_UNESCAPED_UNICODE) ?>;
+  var name = <?= json_encode((string)($pairingScreen['name'] ?? ''), JSON_UNESCAPED_UNICODE) ?>;
+  var goTo = <?= json_encode((string)($pairingRedirect ?? '/player/'), JSON_UNESCAPED_UNICODE) ?>;
 
-    // اگه SCR... بود → مستقیم برو به /player/{code}
+  /* localStorage روی بعضی تلویزیون‌ها با حالت خصوصی یا سهمیه‌ی پر
+     پرتاب می‌کند؛ کوکی سمت سرور مرجع اصلی است و این فقط کمکی است. */
+  try { localStorage.setItem('signage_scr',  code); } catch (e) {}
+  try { localStorage.setItem('signage_name', name); } catch (e2) {}
+
+  setTimeout(function () { location.href = goTo; }, 2400);
+
+<?php else: ?>
+  var inp  = TV.id('code-input');
+  var btn  = TV.id('go-btn');
+  var lbl  = TV.id('go-label');
+  var err  = TV.id('err');
+  var busy = false;
+
+  TV.text(TV.id('this-url'), window.location.protocol + '//' + window.location.host + '/player/');
+
+  function fail(msg) {
+    err.className = '';
+    TV.text(err, msg);
+  }
+
+  function setBusy(on) {
+    busy = on;
+    btn.disabled = on;
+    TV.text(lbl, on ? 'در حال اتصال…' : 'اتصال');
+    if (on) { err.className = 'is-busy'; TV.text(err, ''); }
+  }
+
+  function go() {
+    if (busy) return;
+    var raw = (inp.value || '').replace(/\s+/g, '').toUpperCase();
+
+    if (!raw)                          { fail('کد نمی‌تواند خالی باشد'); return; }
+    if (!/^[A-Z0-9]{4,20}$/.test(raw)) { fail('قالب کد نامعتبر است'); return; }
+
+    /* کد صفحه (SCR…) مستقیم است؛ کد فعال‌سازی باید از سرور تبدیل شود */
     if (/^SCR[A-Z0-9]+$/.test(raw)) {
-      window.location.href = '/player/' + encodeURIComponent(raw);
+      location.href = '/player/' + encodeURIComponent(raw);
       return;
     }
 
-    // وگرنه: کد فعال‌سازی (activation code) است → از API بگیر
-    setLoading(true);
-    try {
-      const res = await fetch('/player/activate', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ activation_code: raw })
-      });
-      const d = await res.json();
-      if (d.success && d.data && d.data.screen_code) {
-        // داریم screen code رو → برو به /player/{code} تا cookie ست بشه
-        window.location.href = '/player/' + encodeURIComponent(d.data.screen_code);
-      } else {
-        showErr(d.message || 'کد نامعتبر است یا منقضی شده');
-        setLoading(false);
+    setBusy(true);
+    TV.post('/player/activate', { activation_code: raw }, function (e, d) {
+      if (!e && d && d.success && d.data && d.data.screen_code) {
+        location.href = '/player/' + encodeURIComponent(d.data.screen_code);
+        return;
       }
-    } catch(e) {
-      showErr('خطا در اتصال به سرور');
-      setLoading(false);
-    }
+      setBusy(false);
+      fail((d && d.message) ? d.message : 'کد نامعتبر است یا منقضی شده');
+    });
   }
 
-  function showErr(msg) {
-    err.className = 'err';
-    err.innerHTML = '<i class="fas fa-circle-exclamation"></i> ' + msg;
-  }
-  function setLoading(on) {
-    btn.disabled = on;
-    if (on) {
-      btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> در حال اتصال...';
-      err.className = 'err loading';
-      err.textContent = '';
-    } else {
-      btn.innerHTML = '<i class="fas fa-link"></i> اتصال به صفحه‌نمایش';
-    }
-  }
-  </script>
+  TV.on(btn, 'click', go);
+  TV.on(inp, 'input', function () { inp.value = inp.value.toUpperCase(); });
+  TV.on(document, 'keydown', function (ev) { if (TV.keyName(ev) === 'OK') go(); });
+  if (inp.focus) inp.focus();
 <?php endif; ?>
-
-  <div class="brand">Hotel Media Player</div>
-</div>
-
-<!-- Font Awesome CDN (lightweight) -->
-<link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css"
-      crossorigin="anonymous" referrerpolicy="no-referrer">
+})();
+</script>
 </body>
 </html>

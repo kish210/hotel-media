@@ -67,7 +67,7 @@
 <!-- Departments Tab -->
 <div id="cpanel-dept" class="hidden">
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-    <?php $colors=['#6366f1','#0ea5e9','#22c55e','#f59e0b','#ec4899','#f97316'];
+    <?php $colors=['#6366f1','#0ea5e9','#22c55e','#f59e0b','#ec4899','#1a7ac4'];
     foreach ($depts as $i=>$d): ?>
     <div class="card p-4 flex items-center gap-3 border-r-2" style="border-right-color:<?=$colors[$i%count($colors)]?>">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:<?=$colors[$i%count($colors)]?>18;">

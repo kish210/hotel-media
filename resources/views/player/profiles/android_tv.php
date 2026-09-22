@@ -63,13 +63,14 @@ html, body { width:100%; height:100%; background:#000; overflow:hidden; }
 
 /* Loading */
 #loading {
-  position:absolute; inset:0; background:#000;
+  position:absolute; top:0;right:0;bottom:0;left:0; background:#000;
   display:-webkit-flex; display:flex;
   -webkit-align-items:center; align-items:center;
   -webkit-justify-content:center; justify-content:center;
-  flex-direction:column; gap:16px; z-index:20;
+  flex-direction:column; z-index:20;
 }
-#loading .dot { width:8px; height:8px; border-radius:50%; background:#f97316;
+#loading > * { margin: 8px 0; }
+#loading .dot { width:8px; height:8px; border-radius:50%; background:#1a7ac4;
                 display:inline-block; margin:0 4px; animation:bounce 1.2s infinite; }
 #loading .dot:nth-child(2) { animation-delay:.2s; }
 #loading .dot:nth-child(3) { animation-delay:.4s; }
@@ -77,7 +78,7 @@ html, body { width:100%; height:100%; background:#000; overflow:hidden; }
 
 /* Activation */
 #act {
-  position:absolute; inset:0; background:#09090f;
+  position:absolute; top:0;right:0;bottom:0;left:0; background:#09090f;
   display:-webkit-flex; display:flex;
   -webkit-flex-direction:column; flex-direction:column;
   -webkit-align-items:center; align-items:center;
@@ -86,11 +87,11 @@ html, body { width:100%; height:100%; background:#000; overflow:hidden; }
 }
 #act-box { background:#111; border-radius:16px; padding:32px; width:320px; text-align:center; }
 #act-code { font-size:26px; letter-spacing:8px; padding:12px; width:100%;
-            background:#0d0d14; border:2px solid rgba(249,115,22,0.4);
+            background:#0d0d14; border:2px solid rgba(26,122,196,0.4);
             border-radius:10px; color:#fff; font-family:monospace;
             text-align:center; text-transform:uppercase; }
 #act-btn { width:100%; margin-top:12px; padding:13px; font-size:15px;
-           background:linear-gradient(135deg,#f97316,#c2570b);
+           background:linear-gradient(135deg,#1a7ac4,#12558f);
            color:#fff; border:0; border-radius:10px; cursor:pointer; }
 #act-err { color:#ef4444; font-size:13px; margin-top:10px; min-height:20px; }
 #act-url { font-size:11px; color:#64748b; margin-top:14px; word-break:break-all; }
@@ -146,6 +147,16 @@ html, body { width:100%; height:100%; background:#000; overflow:hidden; }
 </div>
 
 <script>
+/* play() تا Chromium 50 چیزی برنمی‌گرداند، پس .catch روی آن TypeError
+   می‌دهد و کل تابع پخش نیمه‌کاره رها می‌شود — دقیقا روی همان
+   تلویزیون‌های قدیمی که این پروفایل برایشان نوشته شده. */
+function tvPlay(el) {
+  if (!el || !el.play) return;
+  var pr;
+  try { pr = el.play(); } catch (e) { return; }
+  if (pr && pr.catch) pr.catch(function () {});
+}
+
 var SCREEN_CODE  = '<?= e($screen['code'] ?? '') ?>';
 var SCREEN_TYPE  = '<?= e($screen['screen_type'] ?? 'signage') ?>';
 var IPTV_MENU_ID = <?= (int)($screen['iptv_menu_id'] ?? 0) ?>;
@@ -350,7 +361,7 @@ function showInstant(data) {
   clearInstant();
   var overlay = document.createElement('div');
   overlay.id = 'instant';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;';
+  overlay.style.cssText = 'position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;';
 
   if (data.type === 'image') {
     overlay.innerHTML = '<img src="'+data.content+'" style="max-width:100%;max-height:100%;object-fit:contain;">';
@@ -359,7 +370,7 @@ function showInstant(data) {
   } else if (data.type === 'text') {
     var t = {}; try { t = JSON.parse(data.content); } catch(e) { t = {text:data.content,color:'#fff',bg:'#000'}; }
     overlay.style.background = t.bg || '#000';
-    overlay.innerHTML = '<div style="font-size:clamp(28px,6vw,80px);font-weight:900;color:'+(t.color||'#fff')+';text-align:center;padding:40px;">'+t.text+'</div>';
+    overlay.innerHTML = '<div style="font-size:64px;font-weight:900;color:'+(t.color||'#fff')+';text-align:center;padding:40px;">'+t.text+'</div>';
   }
 
   document.body.appendChild(overlay);
@@ -423,7 +434,7 @@ function unlockAutoplay() {
   var slide = document.getElementById('slide-current');
   if (slide) {
     var v = slide.querySelector('video');
-    if (v) v.play().catch(function(){});
+    if (v) tvPlay(v);
   }
 }
 document.addEventListener('click', unlockAutoplay);

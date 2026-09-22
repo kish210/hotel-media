@@ -165,30 +165,54 @@ if ($first) {
     check('کانال برای اندروید قابل پخش است', $first['playable'] === true);
 }
 
+/* تلویزیون هتلی LG (webOS) در تست میدانی udp:// را با پخش‌کننده‌ی
+   بومی خودش باز کرد، پس پیش‌فرض باید آدرس مستقیم باشد نه رله.
+   اگر اینجا به udpxy برگردد یعنی سرور در هتل ۳۰۰ اتاقی ۳۰۰ جریان
+   unicast می‌سازد — همان باری که multicast برای حذفش هست. */
 $lg = portal('home', ['code' => 'MCLG01']);
 $chL = $lg['body']['data']['channels'] ?? [];
 $firstL = null;
 foreach ($chL as $c) { if (str_starts_with((string)$c['name'], 'MCTEST')) { $firstL = $c; break; } }
 check('پاسخ پورتال ال‌جی گرفته شد', $firstL !== null);
 if ($firstL) {
-    // ‏HTML5 نمی‌تواند UDP بخواند — باید udpxy بگیرد
-    check('LG (HTML5) به‌جای multicast آدرس udpxy گرفت',
-        $firstL['via'] === 'udpxy' && str_starts_with((string)$firstL['url'], 'http://'),
+    check('webOS آدرس multicast مستقیم گرفت (بار صفر روی سرور)',
+        $firstL['via'] === 'multicast' && str_starts_with((string)$firstL['url'], 'udp://@'),
         json_encode($firstL, JSON_UNESCAPED_UNICODE));
+    check('کانال روی webOS قابل پخش است', $firstL['playable'] === true);
 }
 
-// بدون udpxy، کانال multicast روی HTML5 باید صریحا غیرقابل‌پخش باشد
-$db->update('multicast_config', ['udpxy_url' => null], ['tenant_id' => 1]);
+/* هتلی که تلویزیون قدیمی‌تر دارد webos را از فهرست برمی‌دارد؛ آن
+   دستگاه‌ها باید به udpxy برگردند. */
+$db->update('multicast_config', ['native_platforms' => 'android,windows'], ['tenant_id' => 1]);
 $lg2 = portal('home', ['code' => 'MCLG01']);
 $firstL2 = null;
 foreach (($lg2['body']['data']['channels'] ?? []) as $c) {
     if (str_starts_with((string)$c['name'], 'MCTEST')) { $firstL2 = $c; break; }
 }
 if ($firstL2) {
-    check('بدون udpxy، کانال صریحا غیرقابل‌پخش علامت خورد',
-        $firstL2['playable'] === false && $firstL2['via'] === 'tv_tuner',
+    check('با برداشتن webos از فهرست، به udpxy برگشت',
+        $firstL2['via'] === 'udpxy' && str_starts_with((string)$firstL2['url'], 'http://'),
         json_encode($firstL2, JSON_UNESCAPED_UNICODE));
 }
+
+/* نه بومی، نه udpxy — باید صریحا غیرقابل‌پخش علامت بخورد، نه اینکه
+   پورتال یک آدرس مرده به تلویزیون بدهد. */
+$db->update('multicast_config', ['udpxy_url' => null], ['tenant_id' => 1]);
+$lg3 = portal('home', ['code' => 'MCLG01']);
+$firstL3 = null;
+foreach (($lg3['body']['data']['channels'] ?? []) as $c) {
+    if (str_starts_with((string)$c['name'], 'MCTEST')) { $firstL3 = $c; break; }
+}
+if ($firstL3) {
+    check('بدون بومی و بدون udpxy، صریحا غیرقابل‌پخش علامت خورد',
+        $firstL3['playable'] === false && $firstL3['via'] === 'tv_tuner',
+        json_encode($firstL3, JSON_UNESCAPED_UNICODE));
+}
+
+// فهرست را برای تست‌های بعدی به پیش‌فرض برگردان
+$db->update('multicast_config',
+    ['native_platforms' => 'android,windows,webos,tizen', 'udpxy_url' => 'http://10.0.0.5:4022'],
+    ['tenant_id' => 1]);
 
 echo "\n" . str_repeat('─', 58) . "\n";
 echo $fail === 0 ? "✅ هر $pass تست پاس شد\n" : "❌ $fail شکست از " . ($pass + $fail) . " تست\n";

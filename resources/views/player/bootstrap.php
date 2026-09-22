@@ -36,7 +36,7 @@ html, body {
 .spinner {
   width:64px; height:64px; margin-bottom:28px;
   border:5px solid rgba(255,255,255,.12);
-  border-top-color:#38bdf8; border-radius:50%;
+  border-top-color:#4098db; border-radius:50%;
   -webkit-animation:spin 1s linear infinite; animation:spin 1s linear infinite;
 }
 @-webkit-keyframes spin { to { -webkit-transform:rotate(360deg); } }
@@ -45,9 +45,9 @@ h1 { font-size:30px; font-weight:bold; margin-bottom:14px; }
 p  { font-size:19px; color:#94a3b8; line-height:1.9; max-width:760px; }
 .code {
   margin-top:26px; padding:16px 36px;
-  background:rgba(56,189,248,.10); border:2px solid rgba(56,189,248,.35);
+  background:rgba(64,152,219,.10); border:2px solid rgba(64,152,219,.35);
   border-radius:14px; font-size:40px; letter-spacing:5px;
-  font-family:'Courier New', monospace; color:#38bdf8;
+  font-family:'Courier New', monospace; color:#4098db;
 }
 .err   { color:#f87171; }
 .hint  { margin-top:22px; font-size:15px; color:#475569; }

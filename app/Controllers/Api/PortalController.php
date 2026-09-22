@@ -197,11 +197,17 @@ class PortalController extends Controller
     /**
      * کانال‌های زنده با آدرسی که **این پلتفرم واقعا می‌تواند پخش کند**.
      *
-     * ‏HTML5 و تگ <video> نمی‌توانند UDP multicast بخوانند. پس:
-     *  • اپ بومی Android TV و ویندوز → آدرس multicast مستقیم (بار صفر روی سرور)
-     *  • پورتال HTML5 روی webOS و Tizen → udpxy اگر تنظیم شده، وگرنه HTTP
-     * ‏playable=false یعنی کانال روی این دستگاه فقط از تیونر خود تلویزیون
-     * قابل دیدن است، نه از داخل پورتال.
+     *  • پلتفرم‌هایی که خودشان udp:// می‌خوانند → آدرس multicast مستقیم
+     *    (بار صفر روی سرور — کل نکته‌ی multicast همین است)
+     *  • بقیه → udpxy اگر تنظیم شده، وگرنه آدرس HTTP کانال
+     *
+     * اینکه کدام پلتفرم بومی می‌خواند از تنظیمات می‌آید نه از ثابتِ کد:
+     * تلویزیون‌های هتلی LG (webOS) و Samsung (Tizen) در تست میدانی udp
+     * را مستقیم پخش کردند، ولی این به مدل و فرم‌ور بستگی دارد و در هر
+     * هتل یکسان نیست. مهاجرت ۰۲۷ ستون native_platforms را اضافه کرد.
+     *
+     * ‏playable=false یعنی کانال روی این دستگاه از داخل پورتال باز
+     * نمی‌شود و باید از تیونر خود تلویزیون دیده شود.
      *
      * @return list<array<string,mixed>>
      */
@@ -214,13 +220,26 @@ class PortalController extends Controller
             ->visibleChannels($tenantId, $room);
         if (!$rows) return [];
 
-        $udpxy = (string)($this->db->value(
-            'SELECT udpxy_url FROM multicast_config WHERE tenant_id = ? AND is_active = 1',
+        $cfg = $this->db->row(
+            'SELECT udpxy_url, native_platforms
+               FROM multicast_config
+              WHERE tenant_id = ? AND is_active = 1',
             [$tenantId]
-        ) ?? '');
+        ) ?: [];
 
-        // فقط اپ بومی می‌تواند سوکت UDP باز کند
-        $nativeMulticast = in_array($platform, ['android', 'windows'], true);
+        $udpxy = (string)($cfg['udpxy_url'] ?? '');
+
+        // اگر مهاجرت ۰۲۷ هنوز اجرا نشده باشد ستون نیست؛ همان پیش‌فرض
+        // تاییدشده را می‌گیریم تا پخش نخوابد.
+        $nativeList = trim((string)($cfg['native_platforms'] ?? ''));
+        if ($nativeList === '') $nativeList = 'android,windows,webos,tizen';
+
+        $native = array_filter(array_map(
+            static fn (string $p): string => strtolower(trim($p)),
+            explode(',', $nativeList)
+        ));
+
+        $nativeMulticast = in_array($platform, $native, true);
 
         $out = [];
         foreach ($rows as $r) {

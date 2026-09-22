@@ -15,7 +15,7 @@ $typeColors = [
     'video'   => ['#a855f7','#7e22ce'],   // بنفش
     'url'     => ['#22c55e','#15803d'],   // سبز
     'hls'     => ['#ef4444','#b91c1c'],   // قرمز — زنده
-    'rtsp'    => ['#f97316','#c2570b'],   // نارنجی — زنده
+    'rtsp'    => ['#1a7ac4','#12558f'],   // نارنجی — زنده
     'xml'     => ['#f59e0b','#b45309'],   // زرد — XML
     'default' => ['#64748b','#475569'],
 ];
@@ -26,13 +26,13 @@ $typeColors = [
     <i class="fas fa-arrow-right text-xs"></i>
   </a>
   <h1 style="font-size:20px;font-weight:700;color:#fff;">
-    <i class="fas fa-film" style="color:#f97316;margin-left:8px;"></i><?= e($playlist['name']) ?>
+    <i class="fas fa-film" style="color:#1a7ac4;margin-left:8px;"></i><?= e($playlist['name']) ?>
   </h1>
   <span class="<?= ($playlist['is_active']??1) ? 'badge-online' : 'badge-offline' ?>" style="margin-right:auto;">
     <?= ($playlist['is_active']??1) ? 'فعال' : 'غیرفعال' ?>
   </span>
   <span style="font-size:12px;color:#64748b;">
-    مدت کل: <strong style="color:#f97316;"><?= $totalMin ?>:<?= str_pad($totalSec2,2,'0',STR_PAD_LEFT) ?></strong>
+    مدت کل: <strong style="color:#1a7ac4;"><?= $totalMin ?>:<?= str_pad($totalSec2,2,'0',STR_PAD_LEFT) ?></strong>
   </span>
   <a href="/admin/playlists/<?=$playlist['id']?>/edit" class="btn-ghost text-sm flex items-center gap-1.5">
     <i class="fas fa-gear text-xs text-slate-400"></i> تنظیمات
@@ -43,7 +43,7 @@ $typeColors = [
 <div class="card mb-5" style="padding:0;overflow:hidden;">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.06);">
     <span style="font-size:13px;font-weight:700;color:#fff;">
-      <i class="fas fa-sliders" style="color:#f97316;margin-left:8px;"></i>خط زمانی پخش
+      <i class="fas fa-sliders" style="color:#1a7ac4;margin-left:8px;"></i>خط زمانی پخش
     </span>
     <button onclick="document.getElementById('addItemModal').classList.remove('hidden')"
       class="btn-primary text-xs flex items-center gap-1.5" style="padding:6px 12px;">
@@ -213,7 +213,7 @@ $typeColors = [
 
       <!-- مدت -->
       <div style="text-align:center;padding:0 12px;">
-        <div style="font-size:22px;font-weight:900;color:#f97316;font-family:monospace;line-height:1;">
+        <div style="font-size:22px;font-weight:900;color:#1a7ac4;font-family:monospace;line-height:1;">
           <?= $isLive ? '∞' : ($m>0 ? "{$m}:{$s}" : "{$dur}s") ?>
         </div>
         <div style="font-size:10px;color:#475569;"><?= $isLive ? 'زنده' : 'ثانیه' ?></div>
@@ -252,22 +252,22 @@ $typeColors = [
   <?php if (!empty($screens)): ?>
   <div class="card">
     <h3 style="font-size:13px;font-weight:700;color:#fff;margin-bottom:12px;">
-      <i class="fas fa-tv" style="color:#f97316;margin-left:8px;"></i>صفحاتی که این پلی‌لیست را دارند
+      <i class="fas fa-tv" style="color:#1a7ac4;margin-left:8px;"></i>صفحاتی که این پلی‌لیست را دارند
     </h3>
     <?php foreach ($screens as $s): ?>
     <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
       <span style="width:8px;height:8px;border-radius:50%;background:<?= $s['is_online'] ? '#4ade80' : '#64748b' ?>; flex-shrink:0;"></span>
       <span style="font-size:13px;color:#e2e8f0;"><?= e($s['name']) ?></span>
-      <a href="/admin/schedules" style="margin-right:auto;font-size:11px;color:#f97316;text-decoration:none;">زمان‌بندی →</a>
+      <a href="/admin/schedules" style="margin-right:auto;font-size:11px;color:#1a7ac4;text-decoration:none;">زمان‌بندی →</a>
     </div>
     <?php endforeach; ?>
   </div>
   <?php else: ?>
-  <div class="card" style="background:rgba(249,115,22,0.04);border-color:rgba(249,115,22,0.15);">
+  <div class="card" style="background:rgba(26,122,196,0.04);border-color:rgba(26,122,196,0.15);">
     <p style="font-size:12px;color:#64748b;text-align:center;padding:8px 0;">
-      <i class="fas fa-info-circle" style="color:#f97316;margin-left:6px;"></i>
+      <i class="fas fa-info-circle" style="color:#1a7ac4;margin-left:6px;"></i>
       این پلی‌لیست به هیچ صفحه‌ای وصل نشده.<br>
-      <a href="/admin/schedules" style="color:#f97316;text-decoration:none;">از زمان‌بندی وصل کنید ←</a>
+      <a href="/admin/schedules" style="color:#1a7ac4;text-decoration:none;">از زمان‌بندی وصل کنید ←</a>
     </p>
   </div>
   <?php endif; ?>
@@ -290,7 +290,7 @@ $typeColors = [
     ?>
     <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;">
       <span style="color:#64748b;"><i class="<?=$ic?> text-xs ml-1"></i><?=$l?></span>
-      <strong style="color:#f97316;"><?=$v?></strong>
+      <strong style="color:#1a7ac4;"><?=$v?></strong>
     </div>
     <?php endforeach; ?>
     <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:12px;">
@@ -325,8 +325,8 @@ $typeColors = [
       <button onclick="aiSetTab('<?=$t?>')" id="ai-tab-<?=$t?>"
         style="flex:1;padding:9px 6px;border-radius:7px;border:none;cursor:pointer;
                font-size:11px;font-weight:600;font-family:'Vazirmatn',sans-serif;transition:all 0.2s;
-               background:<?=$t==='media'?'rgba(249,115,22,0.2)':'transparent'?>;
-               color:<?=$t==='media'?'#f97316':'#64748b'?>;">
+               background:<?=$t==='media'?'rgba(26,122,196,0.2)':'transparent'?>;
+               color:<?=$t==='media'?'#1a7ac4':'#64748b'?>;">
         <?=$l?><br><span style="font-weight:400;font-size:9px;opacity:0.7;"><?=$sub?></span>
       </button>
       <?php endforeach; ?>
@@ -376,7 +376,7 @@ $typeColors = [
           <?php if (empty($media)): ?>
           <div style="grid-column:1/-1;text-align:center;padding:32px;color:#475569;">
             <p>رسانه‌ای آپلود نشده</p>
-            <a href="/admin/media" style="color:#f97316;font-size:12px;">آپلود رسانه ←</a>
+            <a href="/admin/media" style="color:#1a7ac4;font-size:12px;">آپلود رسانه ←</a>
           </div>
           <?php endif; ?>
         </div>
@@ -563,8 +563,8 @@ function aiSetTab(t) {
     const btn = document.getElementById('ai-tab-' + tab);
     if (sec) sec.style.display = tab === t ? '' : 'none';
     if (btn) {
-      btn.style.background = tab === t ? 'rgba(249,115,22,0.2)' : '';
-      btn.style.color = tab === t ? '#f97316' : '#64748b';
+      btn.style.background = tab === t ? 'rgba(26,122,196,0.2)' : '';
+      btn.style.color = tab === t ? '#1a7ac4' : '#64748b';
     }
   });
   document.getElementById('ai-content-type').value = t;
@@ -584,8 +584,8 @@ function aiSelectMedia(id, name, el) {
     e.style.borderColor = 'rgba(255,255,255,0.08)';
     e.style.boxShadow = 'none';
   });
-  el.style.borderColor = '#f97316';
-  el.style.boxShadow = '0 0 0 2px rgba(249,115,22,0.3)';
+  el.style.borderColor = '#1a7ac4';
+  el.style.boxShadow = '0 0 0 2px rgba(26,122,196,0.3)';
 }
 
 function aiFilter(q) {

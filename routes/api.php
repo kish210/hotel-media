@@ -11,6 +11,21 @@ $router->group(['prefix' => '/api/v1'], function($r) {
     $r->post('/screens/{code}/heartbeat', [ScreenController::class, 'heartbeat']);
     $r->get('/screens/{code}/playlist',   [ScreenController::class, 'getPlaylist']);
 
+    /* زمان سرور. تابلوها قبلا این را صدا می‌زدند ولی مسیرش وجود نداشت،
+       پس همگام‌سازی همیشه بی‌صدا شکست می‌خورد و ساعتِ لابی همان ساعتِ
+       خود تلویزیون بود — که بعد از قطعی برق معمولا عقب است.
+       تاریخ شمسی هم اینجا ساخته می‌شود چون مرورگر تلویزیون داده‌ی Intl
+       برای fa-IR ندارد. */
+    $r->get('/time', function () {
+        \App\Core\Response::json([
+            'success'   => true,
+            'timestamp' => time(),
+            'iso'       => date('c'),
+            'jalali'    => function_exists('jalaliDate') ? jalaliDate() : '',
+            'timezone'  => date_default_timezone_get(),
+        ]);
+    });
+
     // ── Protected (JWT)
     $r->group(['middleware' => [ApiAuthMiddleware::class]], function($r) {
         $r->get('/auth/me',      [AuthController::class, 'me']);

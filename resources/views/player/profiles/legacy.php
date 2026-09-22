@@ -24,7 +24,7 @@ body,html { margin:0; padding:0; background:#000; overflow:hidden; width:100%; h
 #ticker-inner { position:absolute; white-space:nowrap; font-size:16px; color:#fff; line-height:36px; padding:0 16px; }
 #act { position:absolute; top:0; left:0; right:0; bottom:0; background:#111; text-align:center; padding-top:20%; }
 #act input { font-size:24px; letter-spacing:8px; padding:12px; width:200px; text-align:center; }
-#act button { display:block; margin:16px auto; padding:12px 40px; font-size:16px; background:#f97316; color:#fff; border:0; cursor:pointer; }
+#act button { display:block; margin:16px auto; padding:12px 40px; font-size:16px; background:#1a7ac4; color:#fff; border:0; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -46,7 +46,11 @@ body,html { margin:0; padding:0; background:#000; overflow:hidden; width:100%; h
 <script>
 var playlist = [], idx = 0, timer = null;
 var SCREEN  = '<?= e($screen['code'] ?? '') ?>';
-var SERVER = window.location.originAPP_URL',''), '/') ?>';
+/* این خط در یک پاکسازیِ قبلیِ APP_URL نصفه‌کاره جایگزین شده بود و
+   نتیجه‌اش SyntaxError بود — یعنی کل اسکریپت رد می‌شد و پروفایل
+   legacy اصلا پخش نمی‌کرد. مبدا را از خود آدرس صفحه می‌گیریم تا
+   دیگر به APP_URL وابسته نباشد. */
+var SERVER = window.location.protocol + '//' + window.location.host;
 
 function load() {
   var xhr = new XMLHttpRequest();

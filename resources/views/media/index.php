@@ -27,7 +27,7 @@
       <span id="uploadStatus" style="font-size:13px;color:#94a3b8;">در حال آپلود...</span>
     </div>
     <div style="background:rgba(255,255,255,0.06);border-radius:4px;height:6px;overflow:hidden;">
-      <div id="uploadBar" style="height:100%;background:linear-gradient(90deg,#f97316,#c2570b);width:0%;transition:width 0.3s;border-radius:4px;"></div>
+      <div id="uploadBar" style="height:100%;background:linear-gradient(90deg,#1a7ac4,#12558f);width:0%;transition:width 0.3s;border-radius:4px;"></div>
     </div>
   </div>
 </div>
@@ -56,7 +56,7 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;" id="mediaGrid">
   <?php foreach ($media as $m): ?>
   <div class="media-card" style="background:#16161f;border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;transition:all 0.2s;"
-    onmouseenter="this.style.borderColor='rgba(249,115,22,0.4)'"
+    onmouseenter="this.style.borderColor='rgba(26,122,196,0.4)'"
     onmouseleave="this.style.borderColor='rgba(255,255,255,0.07)'">
 
     <!-- تامبنیل -->

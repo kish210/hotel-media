@@ -16,7 +16,7 @@
 <!-- راهنمای نصب -->
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
   <?php foreach([
-    ['1','دانلود APK','دانلود اپ از این صفحه','fa-download','#f97316'],
+    ['1','دانلود APK','دانلود اپ از این صفحه','fa-download','#1a7ac4'],
     ['2','نصب روی TV','نصب APK روی Android TV/Box','fa-android','#3ddc84'],
     ['3','تنظیم سرور','وارد کردن IP سرور و کد صفحه','fa-wifi','#60a5fa'],
   ] as [$n,$t,$d,$ic,$c]): ?>

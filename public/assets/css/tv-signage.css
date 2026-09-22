@@ -1,0 +1,325 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Hotel Media — تابلوهای محیط عمومی هتل
+   ═══════════════════════════════════════════════════════════════════
+
+   مکمل tv-base.css برای صفحه‌نمایش‌های لابی، رستوران، سالن همایش و
+   راهروها. همان محدودیت‌های مرورگر تلویزیون اینجا هم برقرار است:
+   بدون var() ، clamp() ، gap ، inset ، color-mix ، backdrop-filter.
+
+   این تابلوها از فاصله‌ی بیشتری خوانده می‌شوند تا پورتال اتاق — مهمان
+   وسط لابی رد می‌شود، نه اینکه روبه‌روی تلویزیون بنشیند. پس اندازه‌ها
+   نسبت به tv-base بزرگ‌ترند و تعداد سطرها کمتر.
+
+   بازرس: node tests/Support/tv-compat-lint.js
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── قاب مشترک تابلو ────────────────────────────────────────────── */
+.sg {
+  width: 100%; height: 100%;
+  padding: 2.8rem 3rem;
+  background-image: -webkit-linear-gradient(top, #0a0f18 0%, #111a2b 100%);
+  background-image: linear-gradient(to bottom, #0a0f18 0%, #111a2b 100%);
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-orient: vertical; -webkit-box-direction: normal;
+  -webkit-flex-direction: column; -ms-flex-direction: column; flex-direction: column;
+  overflow: hidden;
+}
+.sg-title {
+  font-size: 3.1rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -.01em;
+}
+.sg-sub {
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: #8c99ad;
+  margin-top: .35rem;
+}
+.sg-head { margin-bottom: 1.6rem; }
+.sg-body { -webkit-box-flex: 1; -webkit-flex: 1; -ms-flex: 1; flex: 1; overflow: hidden; }
+
+/* خط باریک برند زیر عنوان — تابلو را به بقیه‌ی هویت وصل می‌کند */
+.sg-rule {
+  height: 3px;
+  width: 7rem;
+  margin-top: .9rem;
+  background: #1a7ac4;
+  border-radius: 2px;
+}
+
+/* ── سطر مشترک ──────────────────────────────────────────────────── */
+.sg-row {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  padding: 1.05rem .4rem;
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+.sg-row:last-child { border-bottom: 0; }
+.sg-row.is-off { opacity: .45; }
+.sg-grow { -webkit-box-flex: 1; -webkit-flex: 1; -ms-flex: 1; flex: 1; min-width: 0; }
+
+/* متن بلند نباید تابلو را بشکند */
+.sg-clip {
+  overflow: hidden;
+  white-space: nowrap;
+  -o-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+}
+
+/* ── تابلوی رویداد ──────────────────────────────────────────────── */
+.sg-ev-time {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: #c9a227;
+  min-width: 9.5rem;
+  margin-left: 1.5rem;
+  font-family: monospace;
+  letter-spacing: -.02em;
+}
+.sg-ev-title { font-size: 1.85rem; font-weight: 700; }
+.sg-ev-title.is-cancelled { text-decoration: line-through; }
+.sg-ev-org { font-size: 1.15rem; font-weight: 400; color: #8c99ad; margin-top: .25rem; }
+.sg-ev-venue {
+  font-size: 1.3rem;
+  color: #c2cbd8;
+  text-align: left;
+  min-width: 11rem;
+  margin-right: 1rem;
+}
+.sg-ev-floor { display: block; font-size: 1rem; color: #79849a; }
+.sg-ev-state {
+  font-size: 1.15rem;
+  min-width: 9.5rem;
+  text-align: left;
+}
+.sg-ev-state.is-now       { color: #32d17a; }
+.sg-ev-state.is-cancelled { color: #ff5f57; }
+.sg-ev-state.is-soon      { color: #f5b13d; }
+
+/* ── تابلوی منو (تصویری) ────────────────────────────────────────── */
+/* عکس منو را آشپزخانه می‌سازد؛ نباید بریده شود، پس contain نه cover */
+.sg-menu {
+  position: relative;
+  width: 100%; height: 100%;
+  background: #0a0f18;
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+}
+.sg-menu img {
+  max-width: 100%; max-height: 100%;
+  -o-object-fit: contain;
+  object-fit: contain;
+}
+.sg-menu-page {
+  position: absolute;
+  bottom: 1.4rem;
+  left: 50%;
+  margin-left: -3rem;         /* transform: translateX ارزان‌تر نیست و اینجا لازم نیست */
+  width: 6rem;
+  text-align: center;
+  padding: .35rem 0;
+  border-radius: 1.2rem;
+  background: rgba(0, 0, 0, .6);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+/* ── اخبار ──────────────────────────────────────────────────────── */
+.sg-news-img {
+  width: 10rem; height: 6.5rem;
+  margin-left: 1.3rem;
+  border-radius: .65rem;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -webkit-flex: 0 0 auto; -ms-flex: 0 0 auto; flex: 0 0 auto;
+}
+.sg-news-title { font-size: 1.68rem; font-weight: 700; line-height: 1.35; }
+.sg-news-meta  { font-size: 1.05rem; font-weight: 400; color: #79849a; margin-top: .4rem; }
+
+/* ── شماره‌های داخلی ────────────────────────────────────────────── */
+.sg-dir-name { font-size: 1.75rem; }
+.sg-dir-ext  {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: #4098db;
+  font-family: monospace;
+  letter-spacing: .04em;
+}
+
+/* ── معرفی سالن ─────────────────────────────────────────────────── */
+.sg-venue {
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+  padding: 4rem;
+}
+.sg-venue-name { font-size: 4rem; font-weight: 800; line-height: 1.1; }
+.sg-venue-floor { font-size: 1.6rem; color: #8c99ad; margin-top: .6rem; }
+.sg-venue-desc {
+  font-size: 1.45rem; font-weight: 400;
+  color: #c2cbd8; line-height: 1.9;
+  margin-top: 1.4rem; max-width: 70%;
+}
+.sg-venue-hours { margin-top: 2rem; }
+.sg-venue-time  { font-size: 1.85rem; margin-left: 1.1rem; }
+.sg-badge {
+  display: inline-block;
+  font-size: 1.25rem;
+  padding: .25rem 1.1rem;
+  border-radius: 1.2rem;
+  border: 2px solid currentColor;
+}
+.sg-badge.is-open   { color: #32d17a; }
+.sg-badge.is-closed { color: #ff5f57; }
+.sg-now {
+  margin-top: 2rem;
+  padding: 1.2rem 1.6rem;
+  border-radius: .65rem;
+  background: rgba(50, 209, 122, .12);
+  border-right: 5px solid #32d17a;
+}
+.sg-now-label { font-size: 1.1rem; color: #32d17a; }
+.sg-now-title { font-size: 1.85rem; font-weight: 700; margin-top: .3rem; }
+
+/* ── نوار اطلاعات (ساعت، هوا، اذان، ارز) ───────────────────────── */
+.sg-info {
+  -webkit-box-orient: horizontal; -webkit-box-direction: normal;
+  -webkit-flex-direction: row; -ms-flex-direction: row; flex-direction: row;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: justify; -webkit-justify-content: space-around;
+  -ms-flex-pack: distribute; justify-content: space-around;
+}
+.sg-info-cell { text-align: center; padding: 0 1.5rem; }
+.sg-info-clock { font-size: 5rem; font-weight: 800; letter-spacing: -.02em; line-height: 1; }
+.sg-info-temp  { font-size: 3.4rem; font-weight: 700; color: #4098db; line-height: 1.1; }
+.sg-info-label { font-size: 1.3rem; font-weight: 400; color: #8c99ad; margin-top: .3rem; }
+.sg-info-line  { font-size: 1.3rem; font-weight: 400; color: #c2cbd8; line-height: 2; }
+
+/* ── کارت پخش زنده ──────────────────────────────────────────────── */
+.sg-live {
+  background: #000;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+}
+.sg-live img { max-height: 8rem; width: auto; margin-bottom: 1.4rem; }
+.sg-live-name { font-size: 2.9rem; font-weight: 800; }
+.sg-live-now  { font-size: 1.6rem; font-weight: 400; color: #8c99ad; margin-top: .6rem; }
+
+/* ── حالت خالی ──────────────────────────────────────────────────── */
+/* رنگ قبلی #1e293b روی زمینه‌ی تیره عملا نامرئی بود — کسی نمی‌فهمید
+   تابلو پیام دارد و فکر می‌کرد تلویزیون خراب است. */
+.sg-empty {
+  width: 100%; height: 100%;
+  background: #0a0f18;
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-orient: vertical; -webkit-box-direction: normal;
+  -webkit-flex-direction: column; -ms-flex-direction: column; flex-direction: column;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+  text-align: center;
+}
+.sg-empty-title { font-size: 1.9rem; font-weight: 700; color: #c2cbd8; }
+.sg-empty-text  { font-size: 1.2rem; font-weight: 400; color: #8c99ad; margin-top: .7rem; line-height: 1.8; }
+.sg-empty-code  { font-size: 1rem; font-family: monospace; color: #79849a; margin-top: 1.6rem; letter-spacing: .1em; }
+
+/* ── پیام‌های زمان‌بندی‌شده ─────────────────────────────────────────
+   خوش‌آمدگویی، تبریک، اطلاعیه، هشدار. سرور آن‌ها را در پاسخ ضربان
+   می‌فرستد و تابلو به‌ترتیب نشان می‌دهد.
+
+   رنگ‌ها از خود پیام می‌آیند (مدیر در پنل انتخاب می‌کند)، پس با
+   style درون‌خطی روی المان ست می‌شوند نه با متغیر CSS — متغیر CSS
+   از Chromium 49 است و روی webOS 3 کار نمی‌کند. */
+#msg-ov {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 8888;
+  pointer-events: none;
+  display: none;
+}
+#msg-ov.is-on {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: end; -webkit-align-items: flex-end;
+  -ms-flex-align: end; align-items: flex-end;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+  padding: 2.4rem;
+}
+
+.msg-card {
+  pointer-events: auto;
+  width: 38rem;
+  max-width: 92%;
+  padding: 1.7rem 2.2rem;
+  border-radius: 1.25rem;
+  border: 2px solid #4098db;
+  background: #131a2b;
+  text-align: center;
+  box-shadow: 0 1.2rem 3.5rem rgba(0, 0, 0, .8);
+  -webkit-animation: msgIn .45s ease both;
+  animation: msgIn .45s ease both;
+}
+.msg-card.is-out {
+  -webkit-animation: msgOut .35s ease forwards;
+  animation: msgOut .35s ease forwards;
+}
+
+/* تمام‌صفحه — برای اطلاعیه‌ی مهم که نباید رد شود */
+.msg-card.as-fullscreen {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  width: auto; max-width: none;
+  border: 0;
+  border-top: 4px solid #4098db;
+  border-radius: 0;
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-orient: vertical; -webkit-box-direction: normal;
+  -webkit-flex-direction: column; -ms-flex-direction: column; flex-direction: column;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+}
+
+/* نوار پایین — کم‌مزاحمت، محتوا پشتش دیده می‌شود */
+.msg-card.as-banner {
+  position: fixed;
+  right: 0; bottom: 0; left: 0;
+  width: auto; max-width: none;
+  border: 0;
+  border-top: 3px solid #4098db;
+  border-radius: 0;
+  padding: 1rem 2rem;
+}
+
+.msg-card.as-popup { width: 26rem; padding: 1.25rem 1.5rem; }
+
+.msg-icon  { font-size: 3.4rem; margin-bottom: .9rem; display: block; }
+.msg-title { font-size: 1.75rem; font-weight: 800; line-height: 1.3; margin-bottom: .6rem; }
+.msg-rule  { height: 3px; width: 3.6rem; margin: .9rem auto; border-radius: 2px; background: #4098db; }
+.msg-body  { font-size: 1.15rem; font-weight: 400; line-height: 1.7; opacity: .88; }
+.msg-close {
+  margin-top: 1.2rem;
+  padding: .45rem 1.3rem;
+  border: 0;
+  border-radius: 1.6rem;
+  background: #4098db;
+  color: #06121e;
+  font-family: inherit;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@-webkit-keyframes msgIn  { from { opacity: 0; -webkit-transform: translateY(1.6rem); } to { opacity: 1; -webkit-transform: translateY(0); } }
+@keyframes msgIn  { from { opacity: 0; -webkit-transform: translateY(1.6rem); transform: translateY(1.6rem); } to { opacity: 1; -webkit-transform: translateY(0); transform: translateY(0); } }
+@-webkit-keyframes msgOut { from { opacity: 1; } to { opacity: 0; -webkit-transform: translateY(1.2rem); } }
+@keyframes msgOut { from { opacity: 1; } to { opacity: 0; -webkit-transform: translateY(1.2rem); transform: translateY(1.2rem); } }

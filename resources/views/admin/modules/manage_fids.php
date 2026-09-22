@@ -93,7 +93,7 @@ include VIEWS_PATH . '/partials/layout.php';
     ['ورود',          $stats['arr']        ?? 0, 'fas fa-plane-arrival',  '#a78bfa'],
     ['تأخیر',         $stats['delayed_c']  ?? 0, 'fas fa-clock',          '#fbbf24'],
     ['لغو',           $stats['cancelled_c']?? 0, 'fas fa-ban',            '#f87171'],
-    ['دریافت خودکار', $stats['auto_c']     ?? 0, 'fas fa-robot',          '#f97316'],
+    ['دریافت خودکار', $stats['auto_c']     ?? 0, 'fas fa-robot',          '#1a7ac4'],
   ];
   foreach ($cards as [$label, $val, $icon, $color]):
   ?>
@@ -159,7 +159,7 @@ include VIEWS_PATH . '/partials/layout.php';
           </div>
           <div style="display:flex;flex-direction:column;justify-content:flex-end;">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;">
-              <input type="checkbox" name="clear_old" id="sClearOld" <?= $clearOld ? 'checked' : '' ?> style="accent-color:#f97316;width:15px;height:15px;">
+              <input type="checkbox" name="clear_old" id="sClearOld" <?= $clearOld ? 'checked' : '' ?> style="accent-color:#1a7ac4;width:15px;height:15px;">
               <span style="font-size:12px;color:#94a3b8;">حذف پروازهای قبلی</span>
             </label>
           </div>
@@ -237,8 +237,8 @@ include VIEWS_PATH . '/partials/layout.php';
     <!-- Cron Token -->
     <div class="card">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-        <div style="width:38px;height:38px;background:rgba(249,115,22,.1);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-          <i class="fas fa-key" style="color:#f97316;font-size:16px;"></i>
+        <div style="width:38px;height:38px;background:rgba(26,122,196,.1);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <i class="fas fa-key" style="color:#1a7ac4;font-size:16px;"></i>
         </div>
         <div>
           <h2 style="font-size:14px;font-weight:700;color:#fff;">توکن Cron</h2>
@@ -259,7 +259,7 @@ include VIEWS_PATH . '/partials/layout.php';
       </div>
 
       <button onclick="generateToken()" id="tokenBtn"
-        style="width:100%;padding:9px;background:rgba(249,115,22,.08);border:1px dashed rgba(249,115,22,.3);border-radius:10px;color:#f97316;font-size:12px;font-weight:600;cursor:pointer;font-family:Vazirmatn,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;">
+        style="width:100%;padding:9px;background:rgba(26,122,196,.08);border:1px dashed rgba(26,122,196,.3);border-radius:10px;color:#1a7ac4;font-size:12px;font-weight:600;cursor:pointer;font-family:Vazirmatn,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;">
         <i class="fas fa-rotate-right text-xs"></i>
         <?= $cronToken ? 'تولید توکن جدید' : 'تولید توکن' ?>
       </button>
@@ -507,7 +507,7 @@ async function loadPreview(airportId, direction, route, limit) {
     };
     const statusColor = {
       scheduled:'#94a3b8', boarding:'#4ade80', departed:'#60a5fa',
-      arrived:'#4ade80', delayed:'#fbbf24', cancelled:'#f87171', diverted:'#f97316'
+      arrived:'#4ade80', delayed:'#fbbf24', cancelled:'#f87171', diverted:'#1a7ac4'
     };
 
     tbody.innerHTML = d.data.map(f => \`
@@ -520,7 +520,7 @@ async function loadPreview(airportId, direction, route, limit) {
             : '<span style="color:#a78bfa;font-size:10px;">🛬 ورود</span>'}
         </td>
         <td style="padding:7px 12px;color:#94a3b8;font-size:11px;">\${f.destination||f.origin||'—'}</td>
-        <td style="padding:7px 12px;font-family:monospace;color:#f97316;font-size:12px;">\${(f.scheduled_time||'').substring(11,16)}</td>
+        <td style="padding:7px 12px;font-family:monospace;color:#1a7ac4;font-size:12px;">\${(f.scheduled_time||'').substring(11,16)}</td>
         <td style="padding:7px 12px;font-size:11px;font-weight:600;color:\${statusColor[f.status]||'#94a3b8'};">\${statusMap[f.status]||f.status}</td>
       </tr>\`).join('');
 

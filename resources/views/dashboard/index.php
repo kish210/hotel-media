@@ -10,8 +10,8 @@ $cards = [
   ['label'=>'رسانه‌ها',     'val'=>$stats['media']??0,   'icon'=>'photo-film',   'color'=>'blue'],
 ];
 foreach ($cards as $c):
-$colorMap = ['orange'=>'#f97316','green'=>'#22c55e','red'=>'#ef4444','blue'=>'#3b82f6'];
-$clr = $colorMap[$c['color']] ?? '#f97316';
+$colorMap = ['orange'=>'#1a7ac4','green'=>'#22c55e','red'=>'#ef4444','blue'=>'#3b82f6'];
+$clr = $colorMap[$c['color']] ?? '#1a7ac4';
 ?>
 <div class="stat-card" style="border-top:3px solid <?=$clr?>;">
   <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -47,7 +47,7 @@ $storageColor = $usedPct > 90 ? '#ef4444' : ($usedPct > 70 ? '#f59e0b' : '#22c55
 <div class="card">
   <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap-8px;">
     <i class="fas fa-satellite-dish text-green-400 ml-2"></i> صفحات آنلاین
-    <a href="/admin/screens" style="margin-right:auto;font-size:11px;color:#f97316;text-decoration:none;">همه صفحات →</a>
+    <a href="/admin/screens" style="margin-right:auto;font-size:11px;color:#1a7ac4;text-decoration:none;">همه صفحات →</a>
   </div>
   <?php if (empty($online_screens)): ?>
   <p style="color:#475569;font-size:13px;text-align:center;padding:20px 0;">
@@ -81,8 +81,8 @@ $storageColor = $usedPct > 90 ? '#ef4444' : ($usedPct > 70 ? '#f59e0b' : '#22c55
   <?php else: ?>
   <?php foreach ($recent_logs as $log): ?>
   <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-    <div style="width:28px;height:28px;background:rgba(249,115,22,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-      <i class="fas fa-bolt" style="color:#f97316;font-size:11px;"></i>
+    <div style="width:28px;height:28px;background:rgba(26,122,196,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <i class="fas fa-bolt" style="color:#1a7ac4;font-size:11px;"></i>
     </div>
     <div style="flex:1;min-width:0;">
       <div style="font-size:12px;color:#e2e8f0;"><?=e($log['action'])?></div>

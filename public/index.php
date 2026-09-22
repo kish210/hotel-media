@@ -70,6 +70,14 @@ function timeAgo(string $datetime): string {
     };
 }
 
+/* app/Helpers/helpers.php هیچ‌جا require نمی‌شد — نه اینجا، نه با
+   autoloader (که فقط کلاس‌های PSR-4 را می‌گیرد، نه فایل تابع). پس
+   persianNumber و formatPrice و slugify و truncate و generateQrUrl
+   و jalaliDate هیچ‌وقت وجود نداشتند و هر صدازدنشان خطای کشنده می‌داد.
+   دو تابع تکراری (formatBytes و timeAgo) آنجا با function_exists
+   محافظت شده‌اند، پس این require بعد از تعریف‌های بالا امن است. */
+require ROOT_PATH . '/app/Helpers/helpers.php';
+
 // ─── Load .env ──────────────────────────────────────────
 $envFile = ROOT_PATH . '/.env';
 if (file_exists($envFile)) {

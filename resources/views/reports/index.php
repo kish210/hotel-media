@@ -3,7 +3,7 @@
 
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
   <?php foreach ([
-    ['صفحات',    'screens',   'tv',         '#f97316'],
+    ['صفحات',    'screens',   'tv',         '#1a7ac4'],
     ['پلی‌لیست', 'playlists', 'list',        '#3b82f6'],
     ['رسانه‌ها', 'media',     'photo-film',  '#a855f7'],
     ['کاربران',  'users',     'users',       '#22c55e'],

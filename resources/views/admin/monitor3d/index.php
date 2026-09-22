@@ -200,12 +200,12 @@ $online = count(array_filter($screens ?? [], fn($s) => $s['is_online']));
       <!-- سرعت چرخش -->
       <div>
         <label class="form-label" style="display:flex;justify-content:space-between;">
-          <span><i class="fas fa-sync text-xs ml-1" style="color:#f97316;"></i>سرعت چرخش</span>
-          <span id="rotVal_<?=$s['id']?>" style="color:#f97316;font-weight:700;"><?= $s['rotate_speed'] ?? 5 ?></span>
+          <span><i class="fas fa-sync text-xs ml-1" style="color:#1a7ac4;"></i>سرعت چرخش</span>
+          <span id="rotVal_<?=$s['id']?>" style="color:#1a7ac4;font-weight:700;"><?= $s['rotate_speed'] ?? 5 ?></span>
         </label>
         <input type="range" name="rotate_speed" min="1" max="20"
                value="<?= (int)($s['rotate_speed'] ?? 5) ?>"
-               style="width:100%;accent-color:#f97316;"
+               style="width:100%;accent-color:#1a7ac4;"
                oninput="document.getElementById('rotVal_<?=$s['id']?>').textContent=this.value">
       </div>
     </div>
@@ -214,7 +214,7 @@ $online = count(array_filter($screens ?? [], fn($s) => $s['is_online']));
     <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;">
       <?php foreach ([
         ['is_outdoor',       $s['is_outdoor']??0,       '#22c55e', 'fa-sun',          'نمایشگر فضای باز'],
-        ['auto_rotate',      $s['auto_rotate']??0,      '#f97316', 'fa-sync',          'چرخش خودکار محور Y'],
+        ['auto_rotate',      $s['auto_rotate']??0,      '#1a7ac4', 'fa-sync',          'چرخش خودکار محور Y'],
         ['show_depth_badge', $s['show_depth_badge']??1, '#00e5ff', 'fa-certificate',   'نمایش نشان ۳D'],
       ] as [$name, $val, $col, $ico, $lbl]): ?>
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">

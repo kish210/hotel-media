@@ -13,7 +13,7 @@ $ITEM_TYPES = [
   'corporate' => ['سازمانی',      'fas fa-building-columns','#6366f1'],
   'retail'    => ['فروشگاه',      'fas fa-store',          '#10b981'],
   'url'       => ['لینک سفارشی',  'fas fa-link',           '#64748b'],
-  'custom'    => ['سفارشی',       'fas fa-grip-dots',      '#f97316'],
+  'custom'    => ['سفارشی',       'fas fa-grip-dots',      '#1a7ac4'],
 ];
 
 // گروه‌های IPTV و منوهاشون رو از PHP variable دریافت می‌کنیم
@@ -96,7 +96,7 @@ $allMenus   = $allMenus   ?? [];
         <?php $gMenus = $grouped[$g['id']] ?? []; ?>
         <div style="margin-bottom:12px;">
           <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;">
-            <span style="width:8px;height:8px;border-radius:50%;background:<?= e($g['color'] ?? '#f97316') ?>;flex-shrink:0;"></span>
+            <span style="width:8px;height:8px;border-radius:50%;background:<?= e($g['color'] ?? '#1a7ac4') ?>;flex-shrink:0;"></span>
             <span style="font-size:11px;font-weight:700;color:#cbd5e1;"><?= e($g['name']) ?></span>
             <button onclick="openCreateMenu(<?= $g['id'] ?>, '<?= e(addslashes($g['name'])) ?>')"
               style="margin-right:auto;background:none;border:none;color:#475569;cursor:pointer;font-size:11px;padding:2px 5px;border-radius:6px;font-family:inherit;"
@@ -514,7 +514,7 @@ $allMenus   = $allMenus   ?? [];
 .item-card:hover { background:rgba(255,255,255,.05); }
 .item-card .drag-handle { cursor:grab;color:#334155;font-size:12px; }
 .tp-active { background:rgba(239,68,68,.12) !important;border-color:var(--tpc) !important; }
-.tpl-active { background:rgba(249,115,22,.1) !important;border-color:#f97316 !important;color:#f97316 !important; }
+.tpl-active { background:rgba(26,122,196,.1) !important;border-color:#1a7ac4 !important;color:#1a7ac4 !important; }
 </style>
 
 <script>
@@ -751,7 +751,7 @@ function pickType(type) {
   });
   const btn = document.getElementById('tp-' + type);
   if (btn) {
-    const color = ITEM_TYPES[type]?.color || '#f97316';
+    const color = ITEM_TYPES[type]?.color || '#1a7ac4';
     btn.style.setProperty('--tpc', color);
     btn.classList.add('tp-active');
     btn.style.borderColor = color;
@@ -829,8 +829,8 @@ function getDefaultIcon(type) {
 function getDefaultColor(type) {
   const map = {live:'#ef4444',vod:'#ec4899',news:'#3b82f6',info:'#8b5cf6',
     weather:'#06b6d4',fids:'#0ea5e9',hotel:'#f59e0b',corporate:'#6366f1',
-    retail:'#10b981',url:'#64748b',custom:'#f97316'};
-  return map[type] || '#f97316';
+    retail:'#10b981',url:'#64748b',custom:'#1a7ac4'};
+  return map[type] || '#1a7ac4';
 }
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');

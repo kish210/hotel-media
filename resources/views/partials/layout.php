@@ -135,7 +135,7 @@ if (!function_exists('modOn')) {
   <!-- FIDS -->
   <?php if (modOn('fids')): ?>
   <a href="/admin/modules/fids/flights" class="sidebar-link <?= isActive('/admin/modules/fids') ?>">
-    <span class="icon"><i class="fas fa-plane-departure" style="color:#38bdf8;"></i></span> پروازها (FIDS)
+    <span class="icon"><i class="fas fa-plane-departure" style="color:#4098db;"></i></span> پروازها (FIDS)
   </a>
   <?php endif; ?>
 
@@ -149,7 +149,7 @@ if (!function_exists('modOn')) {
   <!-- Menu / Restaurant -->
   <?php if (modOn('menu')): ?>
   <a href="/admin/modules/menu" class="sidebar-link <?= isActive('/admin/modules/menu') ?>">
-    <span class="icon"><i class="fas fa-utensils" style="color:#f97316;"></i></span> منوی رستوران
+    <span class="icon"><i class="fas fa-utensils" style="color:#1a7ac4;"></i></span> منوی رستوران
   </a>
   <?php endif; ?>
 
@@ -189,7 +189,7 @@ if (!function_exists('modOn')) {
     <span class="icon"><i class="fas fa-door-open" style="color:#f87171;"></i></span> اتاق‌های IPTV
   </a>
   <a href="/admin/devices" class="sidebar-link <?= isActive('/admin/devices') ?>">
-    <span class="icon"><i class="fas fa-tv" style="color:#38bdf8;"></i></span> مدیریت تلویزیون‌ها
+    <span class="icon"><i class="fas fa-tv" style="color:#4098db;"></i></span> مدیریت تلویزیون‌ها
   </a>
   <a href="/admin/epg" class="sidebar-link <?= isActive('/admin/epg') ?>">
     <span class="icon"><i class="fas fa-calendar-days" style="color:#60a5fa;"></i></span> راهنمای برنامه‌ها
@@ -298,10 +298,10 @@ if (!function_exists('modOn')) {
         <a href="/lang/<?= $code ?>"
            style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;
                   text-decoration:none;font-size:13px;
-                  <?= $code === $_uiLang ? 'background:rgba(249,115,22,.12);color:#f97316;font-weight:700;' : 'color:#94a3b8;' ?>
+                  <?= $code === $_uiLang ? 'background:rgba(26,122,196,.12);color:#1a7ac4;font-weight:700;' : 'color:#94a3b8;' ?>
                   ">
           <?= $info['flag'] ?> <?= $info['label'] ?>
-          <?php if ($code === $_uiLang): ?><i class="fas fa-check text-xs" style="margin-<?= $_uiDir==='rtl'?'right':'left'?>:auto;color:#f97316;"></i><?php endif; ?>
+          <?php if ($code === $_uiLang): ?><i class="fas fa-check text-xs" style="margin-<?= $_uiDir==='rtl'?'right':'left'?>:auto;color:#1a7ac4;"></i><?php endif; ?>
         </a>
         <?php endforeach; ?>
       </div>
@@ -309,7 +309,7 @@ if (!function_exists('modOn')) {
 
     <!-- User menu -->
     <div style="display:flex;align-items:center;gap:8px;">
-      <div style="width:32px;height:32px;background:linear-gradient(135deg,#f97316,#c2570b);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,#1a7ac4,#12558f);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">
         <?= mb_substr($authUser['name'] ?? 'A', 0, 1) ?>
       </div>
       <div style="font-size:12px;">

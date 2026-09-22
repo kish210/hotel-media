@@ -3,17 +3,28 @@ package com.signagecms.player;
 import android.content.Context;
 import android.webkit.JavascriptInterface;
 
+import com.signagecms.player.input.ExternalInputManager;
+import com.signagecms.player.kiosk.KioskManager;
+
 /**
  * JavaScript → Android Bridge
  * JS می‌تونه از این interface برای interact با Android استفاده کنه
+ *
+ * هر متد اینجا از نخ WebView صدا می‌شود، نه نخ اصلی. هر چیزی که به
+ * UI دست بزند باید در runOnUiThread بپیچد — وگرنه روی بعضی اندروید
+ * TVها بی‌صدا هیچ کاری نمی‌کند.
  */
 public class SignageBridge {
     private final Context ctx;
     private final MainActivity activity;
+    private final KioskManager kiosk;
+    private final ExternalInputManager inputs;
 
     public SignageBridge(MainActivity act) {
         this.ctx = act;
         this.activity = act;
+        this.kiosk = new KioskManager(act);
+        this.inputs = new ExternalInputManager(act);
     }
 
     @JavascriptInterface
@@ -55,5 +66,54 @@ public class SignageBridge {
                     android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             }
         });
+    }
+
+    // ── حالت قفل‌گاه ───────────────────────────────────────────────
+    // مهمان نباید به منوهای خود تلویزیون برسد.
+
+    /** وضعیت قفل، برای نمایش در پنل مدیریت */
+    @JavascriptInterface
+    public String getKioskState() {
+        return "{\"deviceOwner\":" + kiosk.isDeviceOwner() +
+               ",\"locked\":" + kiosk.isLocked() + "}";
+    }
+
+    @JavascriptInterface
+    public boolean enterKiosk() {
+        /* startLockTask باید روی نخ اصلی صدا شود. چون نتیجه لازم است،
+           منتظر می‌مانیم — با مهلت، تا اگر نخ اصلی گیر کرد صفحه‌ی
+           مهمان قفل نشود. */
+        final boolean[] ok = { false };
+        final java.util.concurrent.CountDownLatch done =
+            new java.util.concurrent.CountDownLatch(1);
+        activity.runOnUiThread(() -> {
+            try { ok[0] = kiosk.enterKiosk(); } finally { done.countDown(); }
+        });
+        try { done.await(3, java.util.concurrent.TimeUnit.SECONDS); }
+        catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        return ok[0];
+    }
+
+    /** خروج از قفل — فقط برای تکنسین؛ پنل باید قبلش احراز هویت کند */
+    @JavascriptInterface
+    public void exitKiosk() {
+        activity.runOnUiThread(kiosk::exitKiosk);
+    }
+
+    // ── ورودی‌های خارجی (موبایل، کنسول بازی) ──────────────────────
+
+    /**
+     * فهرست ورودی‌های سخت‌افزاری به صورت JSON.
+     * آرایه‌ی خالی یعنی این دستگاه پورت HDMI ورودی ندارد — مثل
+     * Mi TV Stick و Mi Box که فقط خروجی دارند.
+     */
+    @JavascriptInterface
+    public String listInputs() {
+        return inputs.listJson();
+    }
+
+    @JavascriptInterface
+    public boolean switchInput(String inputId) {
+        return inputs.switchTo(inputId);
     }
 }

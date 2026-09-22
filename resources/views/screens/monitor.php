@@ -4,7 +4,7 @@
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
   <div>
     <h1 style="font-size:20px;font-weight:800;color:#fff;">
-      <i class="fas fa-display" style="color:#f97316;margin-left:10px;"></i>مانیتورینگ صفحات نمایش
+      <i class="fas fa-display" style="color:#1a7ac4;margin-left:10px;"></i>مانیتورینگ صفحات نمایش
     </h1>
     <p style="font-size:12px;color:#475569;margin-top:4px;">
       آپدیت خودکار هر ۱۵ ثانیه
@@ -15,7 +15,7 @@
     <div style="display:flex;gap:4px;background:rgba(0,0,0,0.3);border-radius:8px;padding:3px;">
       <button onclick="setView('grid')" id="view-grid"
         style="padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;
-               font-family:'Vazirmatn',sans-serif;background:rgba(249,115,22,0.2);color:#f97316;">
+               font-family:'Vazirmatn',sans-serif;background:rgba(26,122,196,0.2);color:#1a7ac4;">
         <i class="fas fa-grip text-xs ml-1"></i>گرید
       </button>
       <button onclick="setView('table')" id="view-table"
@@ -34,7 +34,7 @@
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="stats-bar">
   <?php
   $statCards = [
-    ['کل صفحات',   $stats['total'],   '#f97316','fa-tv'],
+    ['کل صفحات',   $stats['total'],   '#1a7ac4','fa-tv'],
     ['آنلاین',      $stats['online'],  '#22c55e','fa-circle-check'],
     ['آفلاین',      $stats['offline'], '#ef4444','fa-circle-xmark'],
     ['در انتظار',   $stats['pending'], '#f59e0b','fa-hourglass-half'],
@@ -98,7 +98,7 @@
             <!-- در حال پخش -->
             <div style="position:absolute;inset:0;background:linear-gradient(135deg,#0d0d1e,#111827);
                         display:flex;flex-direction:column;align-items:center;justify-content:center;">
-              <i class="fas fa-play-circle" style="font-size:32px;color:#f97316;margin-bottom:8px;"></i>
+              <i class="fas fa-play-circle" style="font-size:32px;color:#1a7ac4;margin-bottom:8px;"></i>
               <div style="font-size:11px;color:#94a3b8;text-align:center;padding:0 12px;max-width:200px;
                            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                 <?= e($s['current_item']) ?>
@@ -298,10 +298,10 @@
 function setView(v) {
   document.getElementById('grid-view').style.display  = v==='grid'  ? '' : 'none';
   document.getElementById('table-view').style.display = v==='table' ? '' : 'none';
-  document.getElementById('view-grid').style.background  = v==='grid'  ? 'rgba(249,115,22,0.2)' : 'transparent';
-  document.getElementById('view-grid').style.color  = v==='grid'  ? '#f97316' : '#64748b';
-  document.getElementById('view-table').style.background = v==='table' ? 'rgba(249,115,22,0.2)' : 'transparent';
-  document.getElementById('view-table').style.color = v==='table' ? '#f97316' : '#64748b';
+  document.getElementById('view-grid').style.background  = v==='grid'  ? 'rgba(26,122,196,0.2)' : 'transparent';
+  document.getElementById('view-grid').style.color  = v==='grid'  ? '#1a7ac4' : '#64748b';
+  document.getElementById('view-table').style.background = v==='table' ? 'rgba(26,122,196,0.2)' : 'transparent';
+  document.getElementById('view-table').style.color = v==='table' ? '#1a7ac4' : '#64748b';
 }
 
 // ─── Auto refresh ─────────────────────────────────────────────

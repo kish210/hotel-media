@@ -42,7 +42,7 @@ include VIEWS_PATH . '/partials/layout.php';
       $zones = json_decode($l['zones'] ?? '[]', true) ?: [];
       $cw = max(1, (int)$l['canvas_width']);
       $ch = max(1, (int)$l['canvas_height']);
-      $colors = ['#f97316','#3b82f6','#22c55e','#a855f7','#ec4899','#f59e0b'];
+      $colors = ['#1a7ac4','#3b82f6','#22c55e','#a855f7','#ec4899','#f59e0b'];
       foreach ($zones as $zi => $z):
         $left   = round((($z['x']  ?? 0) / $cw) * 100, 2);
         $top    = round((($z['y']  ?? 0) / $ch) * 100, 2);
@@ -173,7 +173,7 @@ let selected = null;
 let editId   = <?= $editLayout ? $editLayout['id'] : 'null' ?>;
 let cw = <?= $editLayout['canvas_width']  ?? 1920 ?>;
 let ch = <?= $editLayout['canvas_height'] ?? 1080 ?>;
-const COLORS = ['#f97316','#3b82f6','#22c55e','#a855f7','#ec4899','#f59e0b','#14b8a6','#0ea5e9'];
+const COLORS = ['#1a7ac4','#3b82f6','#22c55e','#a855f7','#ec4899','#f59e0b','#14b8a6','#0ea5e9'];
 const SCALE  = 0.35;
 
 // ─── Init ─────────────────────────────────────────────────────────────

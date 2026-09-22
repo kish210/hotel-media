@@ -18,12 +18,12 @@
 }
 .phase-preflight  { background:rgba(148,163,184,.12); color:#94a3b8; }
 .phase-taxi       { background:rgba(251,191,36,.12);  color:#fbbf24; }
-.phase-takeoff    { background:rgba(249,115,22,.14);  color:#fb923c; }
+.phase-takeoff    { background:rgba(26,122,196,.14);  color:#4098db; }
 .phase-climb      { background:rgba(34,211,238,.12);  color:#22d3ee; }
 .phase-cruise     { background:rgba(0,180,216,.14);   color:#00b4d8; }
 .phase-descent    { background:rgba(168,85,247,.12);  color:#a78bfa; }
 .phase-approach   { background:rgba(244,114,182,.12); color:#f472b6; }
-.phase-landing    { background:rgba(249,115,22,.14);  color:#fb923c; }
+.phase-landing    { background:rgba(26,122,196,.14);  color:#4098db; }
 .phase-landed     { background:rgba(34,197,94,.12);   color:#4ade80; }
 .progress-track {
   height:6px; background:rgba(255,255,255,0.07); border-radius:3px; overflow:hidden;

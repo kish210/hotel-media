@@ -21,7 +21,7 @@ include VIEWS_PATH . '/partials/layout.php';
   <?php foreach(['events'=>'رویدادها','amenities'=>'امکانات','info'=>'اطلاعات هتل'] as $t=>$l): ?>
   <button onclick="showTab('<?=$t?>')" id="tab-<?=$t?>"
     class="tab-btn px-4 py-2 text-sm rounded-8 font-semibold transition-all"
-    style="border-radius:7px;<?=$t==='events'?'background:rgba(249,115,22,0.2);color:#f97316;':'color:#64748b;'?>">
+    style="border-radius:7px;<?=$t==='events'?'background:rgba(26,122,196,0.2);color:#1a7ac4;':'color:#64748b;'?>">
     <?=$l?>
   </button>
   <?php endforeach; ?>
@@ -178,8 +178,8 @@ function showTab(name) {
   ['events','amenities','info'].forEach(t => {
     document.getElementById('section-' + t).style.display = t === name ? '' : 'none';
     const btn = document.getElementById('tab-' + t);
-    btn.style.background = t === name ? 'rgba(249,115,22,0.2)' : '';
-    btn.style.color = t === name ? '#f97316' : '#64748b';
+    btn.style.background = t === name ? 'rgba(26,122,196,0.2)' : '';
+    btn.style.color = t === name ? '#1a7ac4' : '#64748b';
   });
 }
 JS;

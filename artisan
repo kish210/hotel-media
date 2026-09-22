@@ -331,20 +331,33 @@ match ($command) {
             if ($code !== 0) $failed[] = $name;
         }
 
-        // شبیه‌سازی APIهای تلویزیون (Tizen / webOS / Android) با Node
-        $sim = ROOT_PATH . '/tests/Support/tv-platform-sim.js';
-        if (is_file($sim)) {
-            echo "\n\033[36m══ tv-platform-sim.js ══\033[0m\n";
+        // تست‌های Node:
+        //   tv-platform-sim  — شبیه‌سازی APIهای Tizen / webOS / Android
+        //   tv-compat-lint   — ویژگی‌های مرورگری که روی تلویزیون هتل نیست
+        //
+        // دومی مهم‌تر از چیزی است که به نظر می‌رسد: کد ES6 یا CSS مدرن روی
+        // webOS 3 و Tizen 2.3 خطای کنسول نمی‌دهد — صفحه فقط سیاه می‌ماند
+        // و تا وقتی مهمان شکایت نکند کسی نمی‌فهمد.
+        $nodeTests = [
+            'tv-platform-sim.js',
+            'tv-compat-lint.js',
+        ];
 
-            // Node ممکن است روی سرور هتل نصب نباشد — تست رد می‌شود نه شکست
-            exec('node --version 2>&1', $out, $hasNode);
+        // Node ممکن است روی سرور هتل نصب نباشد — تست‌ها رد می‌شوند نه شکست
+        exec('node --version 2>&1', $out, $hasNode);
+
+        foreach ($nodeTests as $name) {
+            $path = ROOT_PATH . '/tests/Support/' . $name;
+            if (!is_file($path)) continue;
+
+            echo "\n\033[36m══ {$name} ══\033[0m\n";
             if ($hasNode !== 0) {
                 echo "  \033[33m⏭ Node نصب نیست — این تست رد شد\033[0m\n";
-            } else {
-                passthru(escapeshellarg('node') . ' ' . escapeshellarg($sim), $code);
-                if ($code !== 0) $failed[] = 'tv-platform-sim.js';
-                $files[] = $sim;
+                continue;
             }
+            passthru(escapeshellarg('node') . ' ' . escapeshellarg($path), $code);
+            if ($code !== 0) $failed[] = $name;
+            $files[] = $path;
         }
 
         echo "\n" . str_repeat('═', 50) . "\n";

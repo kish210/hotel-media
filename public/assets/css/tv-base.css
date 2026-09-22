@@ -1,0 +1,512 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Hotel Media — پایه‌ی مشترک صفحه‌های تلویزیون
+   ═══════════════════════════════════════════════════════════════════
+
+   این فایل برای مرورگرِ خودِ تلویزیون نوشته شده، نه کروم دسکتاپ:
+
+     Samsung Tizen 2.3 → Chromium 34     LG webOS 3 → Chromium 38
+     Samsung Tizen 4   → Chromium 56     LG webOS 4 → Chromium 53
+     Samsung Tizen 5   → Chromium 63     LG webOS 5 → Chromium 68
+     Samsung Tizen 6   → Chromium 76     LG webOS 6 → Chromium 79
+
+   پس هیچ‌کدام از این‌ها اینجا نیست و نباید اضافه شود:
+     var(--x)      Chromium 49      clamp()/min()/max()  79
+     inset:        87               gap: در flexbox      84
+     color-mix()   111              aspect-ratio         88
+     backdrop-filter 76             font-variant-numeric 52
+
+   نکته‌ی مهم درباره‌ی اندازه‌گذاری: تلویزیون رزولوشن ثابت دارد، پس
+   به‌جای clamp() همه‌چیز بر حسب rem است و tv-base.js اندازه‌ی فونت
+   ریشه را از عرض واقعی صفحه حساب می‌کند. rem از Chromium 4 کار می‌کند.
+   مبنا: عرض ۱۹۲۰ ⇒ 16px. تلویزیون ۱۳۶۶ ⇒ ~11.4px، ۴K ⇒ 32px.
+
+   پرهیز از backdrop-filter فقط بحث سازگاری نیست — روی SoC تلویزیون
+   بلورِ زنده باعث افت فریم می‌شود. پس‌زمینه‌ی نیمه‌شفاف ساده بهتر است.
+
+   بازرس: node tests/Support/tv-compat-lint.js
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── پایه ───────────────────────────────────────────────────────── */
+* { margin: 0; padding: 0; }
+*, *:before, *:after { -webkit-box-sizing: border-box; box-sizing: border-box; }
+
+html {
+  /* tv-base.js این را بازنویسی می‌کند. این مقدار فقط پشتیبانِ
+     حالتی است که JS اجرا نشود. */
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;                 /* تلویزیون اسکرول‌بار ندارد */
+  background: #080b11;
+  color: #ffffff;
+  font-family: 'Vazirmatn', 'Inter', sans-serif;
+  /* روی صفحه‌ی بزرگ از فاصله‌ی ۳ متری، وزن نازک خوانده نمی‌شود */
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+}
+
+body { position: relative; }
+
+img { border: 0; }
+
+/* مکان‌نما روی تلویزیون معنا ندارد و اگر ماوس USB وصل باشد مزاحم است */
+body.tv-no-cursor, body.tv-no-cursor * { cursor: none; }
+
+/* انتخاب متن با ریموت اتفاقی رخ می‌دهد و زشت است */
+body {
+  -webkit-user-select: none; -moz-user-select: none;
+  -ms-user-select: none; user-select: none;
+}
+
+/* ── لایه‌های پس‌زمینه ───────────────────────────────────────────── */
+/* inset: نداریم — هر چهار سمت جدا. */
+.tv-layer {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+}
+
+.tv-bg       { z-index: 0; background: #080b11; }
+.tv-bg-image {
+  z-index: 0;
+  background-position: center center;
+  background-repeat: no-repeat;
+  -webkit-background-size: cover;
+  background-size: cover;
+}
+/* تیره‌کردن پشت متن تا کنتراست از ۳ متری حفظ شود */
+.tv-bg-dim   { z-index: 1; background: rgba(4, 7, 12, .58); }
+
+/* درخشش رنگ برند. گرادیان شعاعی از Chromium 26 کار می‌کند. */
+.tv-bg-glow {
+  z-index: 1;
+  background-image:
+    -webkit-radial-gradient(22% 38%, ellipse, rgba(26, 122, 196, .20) 0%, rgba(26,122,196,0) 62%),
+    -webkit-radial-gradient(78% 76%, ellipse, rgba(18, 85, 143, .16) 0%, rgba(18,85,143,0) 56%);
+  background-image:
+    radial-gradient(ellipse at 22% 38%, rgba(26, 122, 196, .20) 0%, rgba(26,122,196,0) 62%),
+    radial-gradient(ellipse at 78% 76%, rgba(18, 85, 143, .16) 0%, rgba(18,85,143,0) 56%);
+}
+
+.tv-stage { position: relative; z-index: 10; width: 100%; height: 100%; }
+
+/* ── چیدمان ستونی ───────────────────────────────────────────────── */
+/* flexbox قدیمی هم اعلام می‌شود چون Tizen 2.3 روی نحو ۲۰۰۹ است */
+.tv-col {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-orient: vertical; -webkit-box-direction: normal;
+  -webkit-flex-direction: column; -ms-flex-direction: column; flex-direction: column;
+  width: 100%; height: 100%;
+}
+.tv-row {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+}
+.tv-row-top {
+  -webkit-box-align: start; -webkit-align-items: flex-start;
+  -ms-flex-align: start; align-items: flex-start;
+}
+.tv-spread {
+  -webkit-box-pack: justify; -webkit-justify-content: space-between;
+  -ms-flex-pack: justify; justify-content: space-between;
+}
+.tv-grow { -webkit-box-flex: 1; -webkit-flex: 1 1 auto; -ms-flex: 1 1 auto; flex: 1 1 auto; min-width: 0; }
+.tv-fixed { -webkit-box-flex: 0; -webkit-flex: 0 0 auto; -ms-flex: 0 0 auto; flex: 0 0 auto; }
+
+/* ── سربرگ ──────────────────────────────────────────────────────── */
+.tv-header { padding: 2.6rem 3.2rem 0; }
+
+.tv-logo { height: 2.8rem; width: auto; display: block; opacity: .95; }
+
+.tv-welcome {
+  font-size: 2.9rem;
+  font-weight: 800;
+  line-height: 1.14;
+  letter-spacing: -.01em;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, .65);
+}
+.tv-welcome-sub {
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: #a8b4c6;
+  margin-top: .45rem;
+}
+
+/* ساعت — بدون backdrop-filter */
+.tv-clock {
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 1.05rem;
+  padding: .85rem 1.6rem;
+  text-align: center;
+  min-width: 9.5rem;
+}
+.tv-clock-time {
+  font-size: 2.85rem;
+  font-weight: 800;
+  letter-spacing: .03em;
+  line-height: 1.05;
+}
+.tv-clock-date {
+  font-size: .82rem;
+  font-weight: 400;
+  color: #8c99ad;
+  margin-top: .3rem;
+}
+
+.tv-divider {
+  height: 1px;
+  margin: 1.7rem 3.2rem;
+  background-image: -webkit-linear-gradient(left,
+    rgba(26,122,196,0) 0%, rgba(26,122,196,.45) 30%,
+    rgba(26,122,196,.15) 72%, rgba(26,122,196,0) 100%);
+  background-image: linear-gradient(to right,
+    rgba(26,122,196,0) 0%, rgba(26,122,196,.45) 30%,
+    rgba(26,122,196,.15) 72%, rgba(26,122,196,0) 100%);
+}
+
+/* ── شبکه‌ی کاشی‌ها ─────────────────────────────────────────────── */
+/* gap: در flexbox از Chromium 84 است، پس فاصله با margin ساخته می‌شود.
+   منفیِ بیرونی روی ظرف تا لبه‌ی چپ و راست هم‌تراز بماند. */
+.tv-grid-wrap {
+  padding: 0 3.2rem 1.2rem;
+  overflow: hidden;
+}
+.tv-grid {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-flex-wrap: wrap; -ms-flex-wrap: wrap; flex-wrap: wrap;
+  -webkit-align-content: flex-start; -ms-flex-line-pack: start; align-content: flex-start;
+  margin: -.62rem;
+  direction: ltr;                    /* ترتیب کاشی‌ها چپ‌به‌راست می‌ماند */
+}
+.tv-grid > * { margin: .62rem; }
+
+/* ── کاشی ───────────────────────────────────────────────────────── */
+.tv-tile {
+  position: relative;
+  overflow: hidden;
+  width: 11.2rem;
+  height: 9.9rem;
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, .07);
+  border: 2px solid rgba(255, 255, 255, .11);
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-orient: vertical; -webkit-box-direction: normal;
+  -webkit-flex-direction: column; -ms-flex-direction: column; flex-direction: column;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+  cursor: pointer;
+  /* فقط transform و opacity متحرک می‌شوند — این دو روی GPU تلویزیون
+     ارزان‌اند؛ متحرک‌کردن box-shadow باعث افت فریم می‌شود. */
+  -webkit-transition: -webkit-transform .18s ease, border-color .18s ease, background .18s ease;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.tv-tile-icon {
+  width: 4.3rem; height: 4.3rem;
+  border-radius: 1.05rem;
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+  margin-bottom: .78rem;
+  font-size: 2.05rem;
+}
+.tv-tile-label {
+  font-size: .95rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0 .5rem;
+  line-height: 1.25;
+}
+
+/* ــ حالت فوکوس ــ
+   مهم‌ترین بخش تجربه‌ی کاربری تلویزیون: مهمان با دکمه‌های جهتِ ریموت
+   حرکت می‌کند و باید از ۳ متری بی‌مکث بفهمد کجاست. پس هم بزرگ‌نمایی،
+   هم حلقه‌ی روشن، هم روشن‌ترشدن پس‌زمینه — نه فقط یکی. */
+.tv-tile.is-focused {
+  background: rgba(26, 122, 196, .22);
+  border-color: #4098db;
+  -webkit-transform: scale(1.075);
+  -ms-transform: scale(1.075);
+  transform: scale(1.075);
+  box-shadow: 0 0 0 3px rgba(64, 152, 219, .55), 0 .6rem 2rem rgba(0, 0, 0, .5);
+  z-index: 5;
+}
+
+/* روی تلویزیون‌هایی که ماوس ندارند :hover هیچ‌وقت فعال نمی‌شود؛
+   برای نمایشگر لمسی لابی مفید است. */
+.tv-tile:hover {
+  border-color: rgba(255, 255, 255, .26);
+  background: rgba(255, 255, 255, .11);
+}
+
+/* کاشی قفل‌شده — کانال بزرگسال یا سطح دسترسی اتاق */
+.tv-tile.is-locked { opacity: .45; }
+.tv-tile-lock {
+  position: absolute;
+  top: .55rem;
+  left: .55rem;
+  font-size: .8rem;
+  color: #f5b13d;
+}
+
+/* ── فهرست کانال ────────────────────────────────────────────────── */
+.tv-list { overflow: hidden; }
+.tv-list-item {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  padding: .72rem 1.1rem;
+  border-radius: .7rem;
+  margin-bottom: .34rem;
+  -webkit-transition: background .15s ease;
+  transition: background .15s ease;
+}
+.tv-list-item.is-focused {
+  background: rgba(26, 122, 196, .28);
+  box-shadow: inset 0 0 0 2px rgba(64, 152, 219, .6);
+}
+.tv-list-no {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #8c99ad;
+  min-width: 3.2rem;
+  text-align: center;
+}
+.tv-list-item.is-focused .tv-list-no { color: #7bb8e8; }
+.tv-list-logo {
+  width: 3.1rem; height: 2rem;
+  margin: 0 .85rem;
+  -o-object-fit: contain;
+  object-fit: contain;
+}
+.tv-list-name { font-size: 1.05rem; font-weight: 600; }
+
+/* ── دکمه ───────────────────────────────────────────────────────── */
+.tv-btn {
+  display: -webkit-inline-box; display: -webkit-inline-flex;
+  display: -ms-inline-flexbox; display: inline-flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  padding: .7rem 1.5rem;
+  border: 2px solid rgba(255, 255, 255, .14);
+  border-radius: .7rem;
+  background: rgba(255, 255, 255, .08);
+  color: #fff;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.tv-btn.is-focused,
+.tv-btn:focus {
+  outline: 0;
+  background: #1668b3;
+  border-color: #4098db;
+  box-shadow: 0 0 0 3px rgba(64, 152, 219, .5);
+}
+
+/* ── پیام و بارگذاری ────────────────────────────────────────────── */
+.tv-center {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 60;
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-orient: vertical; -webkit-box-direction: normal;
+  -webkit-flex-direction: column; -ms-flex-direction: column; flex-direction: column;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+  text-align: center;
+  background: rgba(8, 11, 17, .88);
+}
+.tv-center-title { font-size: 1.7rem; font-weight: 700; margin-bottom: .6rem; }
+.tv-center-text  { font-size: 1.05rem; font-weight: 400; color: #a8b4c6; line-height: 1.7; }
+
+/* چرخنده — بدون تصویر خارجی تا آفلاین هم کار کند */
+.tv-spinner {
+  width: 3rem; height: 3rem;
+  margin-bottom: 1.4rem;
+  border: .28rem solid rgba(255, 255, 255, .14);
+  border-top-color: #4098db;
+  border-radius: 50%;
+  -webkit-animation: tvSpin 1s linear infinite;
+  animation: tvSpin 1s linear infinite;
+}
+@-webkit-keyframes tvSpin { to { -webkit-transform: rotate(360deg); } }
+@keyframes tvSpin { to { -webkit-transform: rotate(360deg); transform: rotate(360deg); } }
+
+/* ── نوار اطلاعات کانال ─────────────────────────────────────────── */
+/* وقتی مهمان کانال عوض می‌کند چند ثانیه پایین صفحه می‌آید */
+.tv-infobar {
+  position: fixed;
+  right: 0; bottom: 0; left: 0;
+  z-index: 50;
+  padding: 1.4rem 3.2rem;
+  background-image: -webkit-linear-gradient(top, rgba(0,0,0,0) 0%, rgba(0,0,0,.85) 100%);
+  background-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,.85) 100%);
+  -webkit-transition: opacity .3s ease;
+  transition: opacity .3s ease;
+}
+.tv-infobar.is-hidden { opacity: 0; }
+.tv-infobar-no   { font-size: 2.3rem; font-weight: 800; color: #7bb8e8; }
+.tv-infobar-name { font-size: 1.5rem; font-weight: 700; margin: 0 1rem; }
+.tv-infobar-prog { font-size: 1rem; font-weight: 400; color: #a8b4c6; }
+
+/* ── راهنمای دکمه‌های ریموت ─────────────────────────────────────── */
+/* مهمان راهنما نمی‌خواند؛ باید روی صفحه ببیند کدام دکمه چه می‌کند. */
+.tv-hints {
+  padding: 0 3.2rem 1.5rem;
+  font-size: .82rem;
+  font-weight: 400;
+  color: #79849a;
+}
+.tv-hint { display: inline-block; margin-left: 1.6rem; }
+.tv-key {
+  display: inline-block;
+  min-width: 1.5rem;
+  padding: .08rem .42rem;
+  margin-left: .3rem;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: .3rem;
+  text-align: center;
+  color: #c2cbd8;
+  font-weight: 700;
+}
+
+/* ── ورود عددی کانال ────────────────────────────────────────────── */
+/* مهمان روی ریموت عدد می‌زند؛ باید ببیند چه زده. */
+.tv-numpad {
+  position: fixed;
+  top: 3.2rem;
+  right: 3.2rem;
+  z-index: 55;
+  padding: .8rem 1.6rem;
+  border-radius: .8rem;
+  background: rgba(0, 0, 0, .78);
+  border: 2px solid rgba(64, 152, 219, .5);
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+/* ── ویدیو ──────────────────────────────────────────────────────── */
+.tv-video {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 20;
+  width: 100%; height: 100%;
+  background: #000;
+  -o-object-fit: contain;
+  object-fit: contain;
+}
+
+/* ── کمکی ───────────────────────────────────────────────────────── */
+.tv-hidden { display: none !important; }
+.tv-fade   { -webkit-transition: opacity .3s ease; transition: opacity .3s ease; }
+.tv-t-dim  { color: #8c99ad; }
+.tv-t-mute { color: #a8b4c6; }
+
+/* ── ورود آرام ──────────────────────────────────────────────────── */
+@-webkit-keyframes tvIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tvIn { from { opacity: 0; } to { opacity: 1; } }
+.tv-in { -webkit-animation: tvIn .45s ease both; animation: tvIn .45s ease both; }
+
+/* ورودی‌ها روی صفحه‌های کوچک‌تر (۱۳۶۶×۷۶۸) خودبه‌خود کوچک می‌شوند
+   چون font-size ریشه را tv-base.js از عرض صفحه حساب می‌کند. */
+
+/* ── پیام کوتاه از پنل ──────────────────────────────────────────── */
+/* فرمان message برای همه‌ی پلتفرم‌ها مجاز است ولی تا امروز هیچ صفحه‌ای
+   نشانش نمی‌داد. صفحه‌هایی که نمایش پیام اختصاصی دارند (تابلو) این را
+   دور می‌زنند؛ این پیش‌فرض همگانی است. */
+.tv-notice {
+  position: fixed;
+  right: 3.2rem;
+  bottom: 3.2rem;
+  left: 3.2rem;
+  z-index: 70;
+  padding: 1.1rem 1.5rem;
+  border-radius: .85rem;
+  background: rgba(10, 15, 24, .94);
+  border: 2px solid #1a7ac4;
+  box-shadow: 0 .8rem 2.4rem rgba(0, 0, 0, .6);
+  -webkit-animation: tvIn .35s ease both;
+  animation: tvIn .35s ease both;
+}
+.tv-notice-title { font-size: 1.2rem; font-weight: 800; margin-bottom: .3rem; }
+.tv-notice-body  { font-size: 1rem; font-weight: 400; color: #c2cbd8; line-height: 1.7; }
+
+/* ── اتصال دستگاه مهمان (موبایل، کنسول بازی) ─────────────────────
+   مهمان می‌خواهد گوشی یا پلی‌استیشنش را وصل کند، ولی منوی خود
+   تلویزیون برایش قفل است. پس این کار باید از داخل پورتال شدنی باشد. */
+.tv-inputs {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 65;
+  background: rgba(8, 11, 17, .96);
+  display: none;
+}
+.tv-inputs.is-on {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-orient: vertical; -webkit-box-direction: normal;
+  -webkit-flex-direction: column; -ms-flex-direction: column; flex-direction: column;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+  text-align: center;
+  padding: 3rem;
+}
+.tv-inputs-title { font-size: 2.2rem; font-weight: 800; }
+.tv-inputs-sub {
+  font-size: 1.05rem; font-weight: 400;
+  color: #a8b4c6; line-height: 1.8;
+  margin-top: .6rem; max-width: 34rem;
+}
+.tv-inputs-grid { margin-top: 2.2rem; }
+
+/* کارت هر ورودی. بزرگ‌تر از کاشی معمولی چون تعدادشان کم است و
+   مهمان باید از ۳ متری بی‌مکث بخواند HDMI چند است. */
+.tv-input {
+  width: 10.5rem;
+  height: 8rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, .07);
+  border: 2px solid rgba(255, 255, 255, .11);
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-orient: vertical; -webkit-box-direction: normal;
+  -webkit-flex-direction: column; -ms-flex-direction: column; flex-direction: column;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+  cursor: pointer;
+  -webkit-transition: -webkit-transform .18s ease, border-color .18s ease, background .18s ease;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+.tv-input.is-focused {
+  background: rgba(26, 122, 196, .22);
+  border-color: #4098db;
+  -webkit-transform: scale(1.07);
+  -ms-transform: scale(1.07);
+  transform: scale(1.07);
+  box-shadow: 0 0 0 3px rgba(64, 152, 219, .55);
+}
+.tv-input-icon  { font-size: 1.9rem; margin-bottom: .55rem; }
+.tv-input-label { font-size: 1.05rem; font-weight: 700; }
+
+/* وضعیت کابل. «نامعلوم» عمدا نشان داده نمی‌شود — روی webOS از مسیر
+   اپ‌ها نمی‌شود فهمید کابل هست یا نه، و ادعای غلط بدتر از سکوت است. */
+.tv-input-state { font-size: .8rem; font-weight: 400; margin-top: .3rem; }
+.tv-input-state.is-on  { color: #32d17a; }
+.tv-input-state.is-off { color: #79849a; }
+
+.tv-inputs-back { margin-top: 2rem; }

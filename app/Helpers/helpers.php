@@ -52,3 +52,61 @@ if (!function_exists('truncate')) {
         return mb_substr($text, 0, $len) . $suffix;
     }
 }
+
+/* ── تاریخ شمسی ──────────────────────────────────────────────────────
+   پورتال تلویزیون قبلا تاریخ را با toLocaleDateString('fa-IR') در خود
+   مرورگر می‌ساخت. روی webOS و Tizen داده‌ی Intl برای fa-IR وجود ندارد،
+   پس یا تاریخ میلادی نشان داده می‌شد یا رشته‌ی خالی — مهمان ایرانی
+   تاریخ اشتباه می‌دید. حالا سرور آن را می‌سازد و تلویزیون فقط چاپ
+   می‌کند. به هیچ افزونه‌ی PHP (intl/calendar) هم نیاز نیست. */
+
+if (!function_exists('gregorianToJalali')) {
+    /** @return array{0:int,1:int,2:int} سال، ماه، روز شمسی */
+    function gregorianToJalali(int $gy, int $gm, int $gd): array {
+        $g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
+        $gy2 = ($gm > 2) ? $gy + 1 : $gy;
+        $days = 355666 + (365 * $gy) + (int)(($gy2 + 3) / 4)
+              - (int)(($gy2 + 99) / 100) + (int)(($gy2 + 399) / 400)
+              + $gd + $g_d_m[$gm - 1];
+
+        $jy    = -1595 + (33 * (int)($days / 12053));
+        $days %= 12053;
+        $jy   += 4 * (int)($days / 1461);
+        $days %= 1461;
+
+        if ($days > 365) {
+            $jy   += (int)(($days - 1) / 365);
+            $days  = ($days - 1) % 365;
+        }
+
+        if ($days < 186) {
+            $jm = 1 + (int)($days / 31);
+            $jd = 1 + ($days % 31);
+        } else {
+            $jm = 7 + (int)(($days - 186) / 30);
+            $jd = 1 + (($days - 186) % 30);
+        }
+        return [$jy, $jm, $jd];
+    }
+}
+
+if (!function_exists('jalaliDate')) {
+    /**
+     * تاریخ شمسی خوانا، مثل: «یکشنبه ۱ مهر ۱۴۰۵»
+     * $ts پیش‌فرض now است و منطقه‌ی زمانی همان چیزی که bootstrap ست کرده.
+     */
+    function jalaliDate(?int $ts = null, bool $withWeekday = true): string {
+        $ts ??= time();
+        [$jy, $jm, $jd] = gregorianToJalali(
+            (int)date('Y', $ts), (int)date('n', $ts), (int)date('j', $ts)
+        );
+
+        $months = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور',
+                   'مهر','آبان','آذر','دی','بهمن','اسفند'];
+        // date('w') یکشنبه را ۰ می‌دهد و هفته‌ی ایرانی از شنبه شروع می‌شود
+        $days   = ['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه'];
+
+        $out = persianNumber($jd) . ' ' . $months[$jm - 1] . ' ' . persianNumber($jy);
+        return $withWeekday ? $days[(int)date('w', $ts)] . ' ' . $out : $out;
+    }
+}

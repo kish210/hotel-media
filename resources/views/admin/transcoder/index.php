@@ -39,7 +39,7 @@
     <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">
       برای فعال کردن Transcoder باید FFmpeg را روی سرور نصب کنید:
     </div>
-    <pre style="background:#0a0a14;border-radius:8px;padding:10px;font-size:12px;color:#f97316;margin:0;direction:ltr;text-align:left;">winget install Gyan.FFmpeg</pre>
+    <pre style="background:#0a0a14;border-radius:8px;padding:10px;font-size:12px;color:#1a7ac4;margin:0;direction:ltr;text-align:left;">winget install Gyan.FFmpeg</pre>
     <?php endif; ?>
   </div>
 </div>
@@ -53,7 +53,7 @@
   $total  = count($channels);
   foreach ([
     ['استریم فعال', $active, 'fa-signal', '#ef4444'],
-    ['کانال RTSP', $total, 'fa-satellite-dish', '#f97316'],
+    ['کانال RTSP', $total, 'fa-satellite-dish', '#1a7ac4'],
     ['HLS segments', count(glob($hlsDir . '/*/*.ts') ?: []), 'fa-film', '#a855f7'],
     ['CPU FFmpeg', function_exists('sys_getloadavg') ? round(sys_getloadavg()[0]*100/4) . '%' : '—', 'fa-microchip', '#22c55e'],
   ] as [$l,$v,$ic,$c]):
@@ -127,7 +127,7 @@
       </div>
       <div style="font-size:11px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:10px;"><?= e($ch['stream_url']) ?></div>
       <button onclick="quickTranscode('<?= e(addslashes($ch['stream_url'])) ?>','<?= e(addslashes($ch['name'])) ?>')"
-        style="width:100%;padding:7px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);border-radius:8px;color:#f97316;cursor:pointer;font-size:12px;font-weight:600;font-family:'Vazirmatn',sans-serif;">
+        style="width:100%;padding:7px;background:rgba(26,122,196,.1);border:1px solid rgba(26,122,196,.3);border-radius:8px;color:#1a7ac4;cursor:pointer;font-size:12px;font-weight:600;font-family:'Vazirmatn',sans-serif;">
         <i class="fas fa-play text-xs ml-1"></i> Transcode این کانال
       </button>
     </div>
@@ -146,7 +146,7 @@
   </h2>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
     <div style="background:#0d0d14;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;">
-      <h3 style="font-size:12px;font-weight:700;color:#f97316;margin-bottom:10px;">روش ۱: ویندوز (پیشنهادی)</h3>
+      <h3 style="font-size:12px;font-weight:700;color:#1a7ac4;margin-bottom:10px;">روش ۱: ویندوز (پیشنهادی)</h3>
       <pre style="font-size:11px;color:#e2e8f0;direction:ltr;text-align:left;margin:0;background:transparent;">winget install Gyan.FFmpeg</pre>
       <p style="font-size:11px;color:#64748b;margin-top:8px;">بعد از نصب، سرویس Hotel Media را restart کنید ✅</p>
     </div>
@@ -314,7 +314,7 @@ function quickTranscode(url, name) {
 // ─── بروزرسانی خودکار ────────────────────────────────────────
 setInterval(function() {
   var badge = document.getElementById('refresh-badge');
-  if (badge) badge.style.color = '#f97316';
+  if (badge) badge.style.color = '#1a7ac4';
   setTimeout(function(){
     location.reload();
   }, 500);

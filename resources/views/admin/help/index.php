@@ -19,7 +19,7 @@
     <?php
     $toc = [
       ['#getting-started', 'fa-rocket',       '#6366f1', 'شروع سریع'],
-      ['#screens',         'fa-tv',           '#f97316', 'مدیریت صفحه‌نمایش'],
+      ['#screens',         'fa-tv',           '#1a7ac4', 'مدیریت صفحه‌نمایش'],
       ['#playlists',       'fa-list',         '#22c55e', 'پلی‌لیست‌ها'],
       ['#media',           'fa-photo-film',   '#a855f7', 'رسانه‌ها'],
       ['#iptv',            'fa-satellite-dish','#ef4444', 'IPTV کانال‌ها'],
@@ -59,7 +59,7 @@
 <!-- ─── صفحه‌نمایش ──────────────────────────────── -->
 <section id="screens" style="margin-bottom:32px;">
   <h2 style="font-size:16px;font-weight:800;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
-    <i class="fas fa-tv" style="color:#f97316;"></i> مدیریت صفحه‌نمایش
+    <i class="fas fa-tv" style="color:#1a7ac4;"></i> مدیریت صفحه‌نمایش
   </h2>
   <div class="card" style="padding:20px;">
     <p style="font-size:13px;color:#94a3b8;line-height:1.9;margin-bottom:12px;">

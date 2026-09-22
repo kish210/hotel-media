@@ -11,7 +11,7 @@ $locations = $locations ?? [];
 $heartbeats= $heartbeats ?? [];
 
 $profiles  = [
-  'modern'     => ['🎬','مدرن','Chrome / کامپیوتر','#f97316'],
+  'modern'     => ['🎬','مدرن','Chrome / کامپیوتر','#1a7ac4'],
   'android_tv' => ['📱','Android TV','TV Box / Android','#22c55e'],
   'lg_tv'      => ['🔵','LG WebOS','تلویزیون LG','#006eb6'],
   'samsung_tv' => ['⚫','Samsung','تلویزیون Samsung','#1428a0'],
@@ -53,7 +53,7 @@ include VIEWS_PATH . '/partials/layout.php';
 
 <!-- ─── Tabs ─── -->
 <div style="display:flex;gap:2px;background:rgba(0,0,0,0.4);border-radius:12px;padding:4px;margin-bottom:20px;width:fit-content;">
-<button type="button" id="stab-info"       onclick="showTab('info')"       style="padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px;background:rgba(249,115,22,.2);color:#f97316;"><i class="fas fa-sliders"></i>اطلاعات</button>
+<button type="button" id="stab-info"       onclick="showTab('info')"       style="padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px;background:rgba(26,122,196,.2);color:#1a7ac4;"><i class="fas fa-sliders"></i>اطلاعات</button>
 <button type="button" id="stab-activation" onclick="showTab('activation')" style="padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px;background:transparent;color:#64748b;"><i class="fas fa-qrcode"></i>فعال‌سازی</button>
 <button type="button" id="stab-player"     onclick="showTab('player')"     style="padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px;background:transparent;color:#64748b;"><i class="fas fa-tv"></i>پلیر</button>
 <button type="button" id="stab-broadcast"  onclick="showTab('broadcast')"  style="padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px;background:transparent;color:#64748b;"><i class="fas fa-bolt"></i>پخش فوری</button>
@@ -372,7 +372,7 @@ include VIEWS_PATH . '/partials/layout.php';
       <div style="flex:1;background:#0a0a14;border:2px solid rgba(245,158,11,<?=$actValid?.5:.2?>);
                   border-radius:12px;padding:18px;text-align:center;
                   font-family:monospace;font-size:36px;font-weight:900;letter-spacing:12px;
-                  color:<?=$actValid?'#f97316':'#475569'?>;">
+                  color:<?=$actValid?'#1a7ac4':'#475569'?>;">
         <?= $actValid ? e($actCode) : '──────' ?>
       </div>
       <form method="POST" action="/admin/screens/<?= $screen['id'] ?>">
@@ -416,7 +416,7 @@ include VIEWS_PATH . '/partials/layout.php';
         </a>
       </div>
       <p style="font-size:11px;color:#475569;line-height:1.7;">
-        <i class="fas fa-circle-info text-xs ml-1" style="color:#38bdf8;"></i>
+        <i class="fas fa-circle-info text-xs ml-1" style="color:#4098db;"></i>
         مرورگر/TV را به این آدرس ببرید، سپس کد فعال‌سازی زیر را وارد کنید تا این صفحه متصل شود.
       </p>
     </div>
@@ -437,7 +437,7 @@ include VIEWS_PATH . '/partials/layout.php';
         <?php foreach ($profiles as $pk=>[$ico,$name,$desc,$clr]): $on=$currentProfile===$pk; ?>
         <button type="button" onclick="setProfile('<?=$pk?>')" id="pp-<?=$pk?>"
           style="padding:14px 8px;border-radius:12px;text-align:center;cursor:pointer;
-                 background:<?=$on?'rgba(249,115,22,.15)':'rgba(255,255,255,.03)'?>;
+                 background:<?=$on?'rgba(26,122,196,.15)':'rgba(255,255,255,.03)'?>;
                  border:1px solid <?=$on?$clr:'rgba(255,255,255,.08)'?>;
                  transition:all 0.2s;font-family:'Vazirmatn',sans-serif;">
           <div style="font-size:24px;margin-bottom:8px;"><?=$ico?></div>
@@ -530,20 +530,20 @@ include VIEWS_PATH . '/partials/layout.php';
 
         <!-- روشنایی/صدا -->
         <div style="background:#0d0d14;border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.06);">
-          <h3 style="font-size:12px;font-weight:700;color:#fb923c;margin-bottom:10px;">
+          <h3 style="font-size:12px;font-weight:700;color:#4098db;margin-bottom:10px;">
             <i class="fas fa-sun ml-1"></i>روشنایی و صدا
           </h3>
           <label class="form-label">روشنایی (%)</label>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
             <input type="range" name="settings[brightness]" style="flex:1;" min="10" max="100" step="5"
               value="<?=$settings['brightness']??100?>" oninput="document.getElementById('br-val').textContent=this.value+'%'">
-            <span id="br-val" style="font-size:11px;color:#f97316;width:36px;"><?=$settings['brightness']??100?>%</span>
+            <span id="br-val" style="font-size:11px;color:#1a7ac4;width:36px;"><?=$settings['brightness']??100?>%</span>
           </div>
           <label class="form-label">صدای پیش‌فرض (%)</label>
           <div style="display:flex;align-items:center;gap:8px;">
             <input type="range" name="settings[volume]" style="flex:1;" min="0" max="100" step="5"
               value="<?=$settings['volume']??100?>" oninput="document.getElementById('vol-val').textContent=this.value+'%'">
-            <span id="vol-val" style="font-size:11px;color:#f97316;width:36px;"><?=$settings['volume']??100?>%</span>
+            <span id="vol-val" style="font-size:11px;color:#1a7ac4;width:36px;"><?=$settings['volume']??100?>%</span>
           </div>
         </div>
 
@@ -688,7 +688,7 @@ include VIEWS_PATH . '/partials/layout.php';
 </div>
 
 <div id="sec-broadcast" style="display:none;">
-  <div class="card" style="border:1px solid rgba(249,115,22,.2);">
+  <div class="card" style="border:1px solid rgba(26,122,196,.2);">
     <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:16px;">
       <i class="fas fa-bolt text-orange-400 ml-2"></i>پخش فوری روی صفحه
     </h2>
@@ -698,8 +698,8 @@ include VIEWS_PATH . '/partials/layout.php';
       <button onclick="bcType('<?=$t?>')" id="bc-<?=$t?>"
         style="flex:1;min-width:70px;padding:8px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600;
                font-family:'Vazirmatn',sans-serif;transition:all .2s;
-               background:<?=$t==='image'?'rgba(249,115,22,.2)':'transparent'?>;
-               color:<?=$t==='image'?'#f97316':'#64748b'?>;"><?=$l?></button>
+               background:<?=$t==='image'?'rgba(26,122,196,.2)':'transparent'?>;
+               color:<?=$t==='image'?'#1a7ac4':'#64748b'?>;"><?=$l?></button>
       <?php endforeach; ?>
     </div>
 
@@ -800,8 +800,8 @@ include VIEWS_PATH . '/partials/layout.php';
         <i class="fas fa-stop text-xs ml-1"></i> توقف
       </button>
     </div>
-    <div id="bc-preview" style="display:none;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid rgba(249,115,22,.2);">
-      <div style="padding:5px 10px;background:rgba(249,115,22,.1);font-size:10px;color:#f97316;">
+    <div id="bc-preview" style="display:none;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid rgba(26,122,196,.2);">
+      <div style="padding:5px 10px;background:rgba(26,122,196,.1);font-size:10px;color:#1a7ac4;">
         <i class="fas fa-eye ml-1 text-xs"></i> در حال پخش
       </div>
       <div id="bc-preview-inner" style="padding:10px;font-size:12px;color:#94a3b8;"></div>
@@ -918,19 +918,19 @@ function showTab(t) {
     var b=document.getElementById('stab-'+id);
     if(s) s.style.display=(id===t)?'block':'none';
     if(b){
-      b.style.background=(id===t)?'rgba(249,115,22,.2)':'transparent';
-      b.style.color=(id===t)?'#f97316':'#64748b';
+      b.style.background=(id===t)?'rgba(26,122,196,.2)':'transparent';
+      b.style.color=(id===t)?'#1a7ac4':'#64748b';
     }
   });
   if(t==='broadcast'){try{bcType('image');loadBcMedia('image');}catch(e){}}
 }
 
-var ppColors={modern:'#f97316',android_tv:'#22c55e',lg_tv:'#006eb6',samsung_tv:'#1428a0',legacy:'#60a5fa',minimal:'#64748b',kiosk:'#a855f7'};
+var ppColors={modern:'#1a7ac4',android_tv:'#22c55e',lg_tv:'#006eb6',samsung_tv:'#1428a0',legacy:'#60a5fa',minimal:'#64748b',kiosk:'#a855f7'};
 function setProfile(p){
   var inp=document.getElementById('pp-input');
   if(inp)inp.value=p;
   document.querySelectorAll('[id^="pp-"]').forEach(function(b){
-    var k=b.id.replace('pp-',''),c=ppColors[k]||'#f97316',on=(k===p);
+    var k=b.id.replace('pp-',''),c=ppColors[k]||'#1a7ac4',on=(k===p);
     b.style.background=on?'rgba('+hx(c)+',0.15)':'rgba(255,255,255,0.03)';
     b.style.borderColor=on?c:'rgba(255,255,255,0.08)';
     var lbl=b.querySelectorAll('div')[1];
@@ -950,8 +950,8 @@ function bcType(t) {
   ['image','video','url','text','fids_live'].forEach(x=>{
     const b=document.getElementById('bc-'+x);
     if(!b)return;
-    b.style.background=x===t?'rgba(249,115,22,.2)':'transparent';
-    b.style.color=x===t?'#f97316':'#64748b';
+    b.style.background=x===t?'rgba(26,122,196,.2)':'transparent';
+    b.style.color=x===t?'#1a7ac4':'#64748b';
   });
   document.getElementById('bc-media-wrap').style.display=['image','video'].includes(t)?'':'none';
   document.getElementById('bc-url-wrap').style.display=t==='url'?'':'none';
@@ -982,7 +982,7 @@ async function loadBcMedia(type) {
 function bcSelect(id, url, el) {
   _bcMediaId=id;
   document.querySelectorAll('#bc-grid > div').forEach(e=>{e.style.borderColor='rgba(255,255,255,.08)';e.style.boxShadow='';});
-  el.style.borderColor='#f97316'; el.style.boxShadow='0 0 0 2px rgba(249,115,22,.25)';
+  el.style.borderColor='#1a7ac4'; el.style.boxShadow='0 0 0 2px rgba(26,122,196,.25)';
 }
 
 async function bcSend(sid) {

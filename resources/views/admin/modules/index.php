@@ -129,8 +129,8 @@ $categories = [
             style="opacity:0;width:0;height:0;position:absolute;">
           <span style="
             position:absolute;inset:0;border-radius:24px;transition:background .3s;
-            background:<?= $installed ? '#f97316' : '#1e293b' ?>;
-            border:1px solid <?= $installed ? 'rgba(249,115,22,.5)' : 'rgba(255,255,255,.1)' ?>;
+            background:<?= $installed ? '#1a7ac4' : '#1e293b' ?>;
+            border:1px solid <?= $installed ? 'rgba(26,122,196,.5)' : 'rgba(255,255,255,.1)' ?>;
           "></span>
           <span style="
             position:absolute;top:3px;<?= $installed ? 'right:3px' : 'left:3px' ?>;
@@ -143,7 +143,7 @@ $categories = [
       <!-- Manage + Preview buttons (only if installed) -->
       <?php if ($installed): ?>
       <div style="display:flex;gap:8px;">
-        <a href="<?= $manageUrl ?>" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;background:linear-gradient(135deg,#f97316,#c2570b);color:#fff;border-radius:10px;font-size:12px;font-weight:600;text-decoration:none;border:none;cursor:pointer;">
+        <a href="<?= $manageUrl ?>" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;background:linear-gradient(135deg,#1a7ac4,#12558f);color:#fff;border-radius:10px;font-size:12px;font-weight:600;text-decoration:none;border:none;cursor:pointer;">
           <i class="<?= $manageIcon ?> text-xs"></i> <?= $manageLabel ?>
         </a>
         <button onclick="openZoneDemo('<?= $mod->id() ?>')"
@@ -155,7 +155,7 @@ $categories = [
       <?php else: ?>
       <button onclick="installModule('<?= $mod->id() ?>')"
         id="install-<?= $mod->id() ?>"
-        style="width:100%;padding:9px;background:rgba(249,115,22,.08);border:1px dashed rgba(249,115,22,.3);border-radius:10px;color:#f97316;font-size:12px;font-weight:600;cursor:pointer;font-family:Vazirmatn,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;">
+        style="width:100%;padding:9px;background:rgba(26,122,196,.08);border:1px dashed rgba(26,122,196,.3);border-radius:10px;color:#1a7ac4;font-size:12px;font-weight:600;cursor:pointer;font-family:Vazirmatn,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;">
         <i class="fas fa-download text-xs"></i> نصب و فعال‌سازی
       </button>
       <?php endif; ?>

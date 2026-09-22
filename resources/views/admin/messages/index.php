@@ -7,7 +7,7 @@ include VIEWS_PATH . '/partials/layout.php';
 // آیکون‌های نوع پیام
 $typeIcons = [
     'welcome'       => ['🤝', '#22c55e', __('messages.type.welcome')],
-    'congratulation'=> ['🎉', '#f97316', __('messages.type.congrats')],
+    'congratulation'=> ['🎉', '#1a7ac4', __('messages.type.congrats')],
     'announcement'  => ['📢', '#818cf8', __('messages.type.announce')],
     'warning'       => ['⚠️', '#f59e0b', __('messages.type.warning')],
     'info'          => ['ℹ️', '#00e5ff', __('messages.type.info')],
@@ -26,12 +26,12 @@ $stateLabels = [
 
 <style>
 .msg-card{background:#111118;border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden;transition:border-color .2s;}
-.msg-card:hover{border-color:rgba(249,115,22,.3);}
+.msg-card:hover{border-color:rgba(26,122,196,.3);}
 .msg-card.live{border-color:rgba(34,197,94,.25);box-shadow:0 0 20px rgba(34,197,94,.06);}
 .tab-btn{padding:9px 20px;border-radius:9px;font-size:13px;font-weight:700;text-decoration:none;
          display:flex;align-items:center;gap:6px;transition:all .2s;cursor:pointer;
          background:transparent;color:#64748b;border:none;font-family:inherit;}
-.tab-btn.active{background:rgba(249,115,22,.18);color:#f97316;}
+.tab-btn.active{background:rgba(26,122,196,.18);color:#1a7ac4;}
 </style>
 
 <!-- ─── Header ────────────────────────────────────────────────────── -->
@@ -44,7 +44,7 @@ $stateLabels = [
   </div>
   <button onclick="openModal()"
           style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
-                 background:linear-gradient(135deg,#f97316,#c2570b);color:#fff;
+                 background:linear-gradient(135deg,#1a7ac4,#12558f);color:#fff;
                  border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
     <i class="fas fa-plus text-xs"></i> <?= __('messages.new') ?>
   </button>
@@ -80,7 +80,7 @@ $ended     = count(array_filter($messages ?? [], fn($m) => $m['state'] === 'ende
   <div style="font-size:18px;color:#475569;margin-bottom:8px;"><?= __('messages.no_messages') ?></div>
   <button onclick="openModal()"
           style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;
-                 background:linear-gradient(135deg,#f97316,#c2570b);color:#fff;
+                 background:linear-gradient(135deg,#1a7ac4,#12558f);color:#fff;
                  border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px;">
     <i class="fas fa-plus"></i> <?= __('messages.new') ?>
   </button>
@@ -133,7 +133,7 @@ $ended     = count(array_filter($messages ?? [], fn($m) => $m['state'] === 'ende
           <span style="font-size:11px;color:#475569;"><?= __('messages.active') ?></span>
           <input type="checkbox" <?= $msg['is_active'] ? 'checked' : '' ?>
                  onchange="toggleMsg(<?=$msg['id']?>)"
-                 style="accent-color:#f97316;width:16px;height:16px;cursor:pointer;">
+                 style="accent-color:#1a7ac4;width:16px;height:16px;cursor:pointer;">
         </label>
       </div>
 
@@ -153,7 +153,7 @@ $ended     = count(array_filter($messages ?? [], fn($m) => $m['state'] === 'ende
           <?= $msg['target'] === 'all' ? __('messages.target.all') : ucfirst($msg['target']) ?>
         </span>
         <?php if ($msg['show_count'] > 0): ?>
-        <span><i class="fas fa-eye text-xs ml-1" style="color:#f97316;"></i><?=$msg['show_count']?> بار نمایش</span>
+        <span><i class="fas fa-eye text-xs ml-1" style="color:#1a7ac4;"></i><?=$msg['show_count']?> بار نمایش</span>
         <?php endif; ?>
       </div>
     </div>
@@ -204,9 +204,9 @@ $ended     = count(array_filter($messages ?? [], fn($m) => $m['state'] === 'ende
       <?= csrf_field() ?>
 
       <!-- ── زبان‌های پیام ── -->
-      <div style="background:rgba(249,115,22,.05);border:1px solid rgba(249,115,22,.2);
+      <div style="background:rgba(26,122,196,.05);border:1px solid rgba(26,122,196,.2);
                   border-radius:12px;padding:16px;margin-bottom:20px;">
-        <div style="font-size:11px;font-weight:700;color:#f97316;margin-bottom:14px;
+        <div style="font-size:11px;font-weight:700;color:#1a7ac4;margin-bottom:14px;
                     display:flex;align-items:center;gap:6px;">
           <i class="fas fa-language text-xs"></i> محتوای چندزبانه
         </div>
@@ -301,7 +301,7 @@ $ended     = count(array_filter($messages ?? [], fn($m) => $m['state'] === 'ende
         <?php foreach([
           ['bg_color','#1a1a2e','رنگ پس‌زمینه'],
           ['text_color','#ffffff','رنگ متن'],
-          ['accent_color','#f97316','رنگ تأکید'],
+          ['accent_color','#1a7ac4','رنگ تأکید'],
         ] as [$n,$v,$l]): ?>
         <div>
           <label class="form-label" style="font-size:11px;"><?=$l?></label>
@@ -323,7 +323,7 @@ $ended     = count(array_filter($messages ?? [], fn($m) => $m['state'] === 'ende
             <input type="radio" name="target" value="<?=$tv?>"
                    <?= $tv==='all'?'checked':'' ?>
                    onchange="toggleTargetSelect(this.value)"
-                   style="accent-color:#f97316;">
+                   style="accent-color:#1a7ac4;">
             <span style="font-size:13px;color:#94a3b8;"><?=$tl?></span>
           </label>
           <?php endforeach; ?>
@@ -403,7 +403,7 @@ $ended     = count(array_filter($messages ?? [], fn($m) => $m['state'] === 'ende
           <?= __('btn.cancel') ?>
         </button>
         <button type="submit"
-                style="padding:10px 24px;background:linear-gradient(135deg,#f97316,#c2570b);
+                style="padding:10px 24px;background:linear-gradient(135deg,#1a7ac4,#12558f);
                        color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;
                        cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;">
           <i class="fas fa-paper-plane text-xs"></i> <?= __('btn.save') ?>

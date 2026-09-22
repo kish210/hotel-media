@@ -1,1076 +1,1083 @@
 <?php
 /**
- * Hotel Media — IPTV Player Profile  (v2 — Professional UI)
- * جدا از signage player — تغییرات اینجا به modern.php کاری ندارن
- * Appearance از API منو خوانده می‌شه (نه از screen settings)
+ * Hotel Media — پورتال IPTV مهمان
+ *
+ * این صفحه در مرورگرِ خودِ تلویزیون هتل باز می‌شود، نه کروم دسکتاپ:
+ *   Samsung Tizen 2.3 → Chromium 34     LG webOS 3 → Chromium 38
+ *   Samsung Tizen 5   → Chromium 63     LG webOS 5 → Chromium 68
+ *
+ * پس همه‌ی JS اینجا ES5 است و CSS از tv-base.css می‌آید. اگر کد ES6
+ * بنویسید خطای کنسول به جایی نمی‌رسد — تلویزیون فقط صفحه‌ی سیاه
+ * نشان می‌دهد. بازرس: node tests/Support/tv-compat-lint.js
+ *
+ * ظاهر (رنگ، پس‌زمینه، لوگو، تیکر) از API منو می‌آید، نه از تنظیمات
+ * صفحه — تا مدیر هتل بتواند یک‌بار تنظیم کند و روی همه‌ی اتاق‌ها بیفتد.
  */
-$screenCode = $screen['code']        ?? '';
+$screenCode = (string)($screen['code'] ?? '');
 $iptvMenuId = (int)($screen['iptv_menu_id'] ?? 0);
-$screenName = htmlspecialchars($screen['name'] ?? 'IPTV', ENT_QUOTES);
+$screenName = (string)($screen['name'] ?? 'IPTV');
+$isActive   = ($screen['status'] ?? '') === 'active';
+
+/* تاریخ شمسی را سرور می‌سازد. مرورگر تلویزیون داده‌ی Intl برای fa-IR
+   ندارد و toLocaleDateString('fa-IR') آنجا تاریخ میلادی برمی‌گرداند. */
+$todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>IPTV — <?= e($screen['name'] ?? 'IPTV') ?></title>
+<title>IPTV — <?= e($screenName) ?></title>
 
 <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
 <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
+<link rel="stylesheet" href="/assets/css/tv-base.css">
 <script src="/assets/vendor/hls/hls.min.js"></script>
+<script src="/assets/js/tv-base.js"></script>
 <style>
-:root {
-  --accent:     #ef4444;
-  --accent-rgb: 239,68,68;
-  --glass-bg:   rgba(255,255,255,0.06);
-  --glass-border: rgba(255,255,255,0.10);
-  --text:       #ffffff;
-  --text-muted: #94a3b8;
-  --text-dim:   #475569;
-}
-*,*::before,*::after { margin:0;padding:0;box-sizing:border-box; }
+/* فقط چیزهایی که مخصوص همین صفحه‌اند. بقیه در tv-base.css است.
+   یادآوری: بدون var() ، clamp() ، gap ، inset ، backdrop-filter. */
 
-html,body {
-  width:100vw; height:100vh; overflow:hidden;
-  background:#09090f;
-  font-family:'Vazirmatn',sans-serif;
-  color:var(--text);
+/* ── تیکر خبری ── */
+#ticker {
+  height: 2.6rem;
+  background: #000;
+  border-top: 1px solid rgba(26, 122, 196, .28);
+  overflow: hidden;
+  display: none;
 }
+#ticker.is-on {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+}
+#ticker-dot {
+  width: .5rem; height: .5rem; border-radius: 50%;
+  background: #4098db;
+  margin: 0 1rem;
+  -webkit-flex: 0 0 auto; -ms-flex: 0 0 auto; flex: 0 0 auto;
+}
+#ticker-track { -webkit-flex: 1; -ms-flex: 1; flex: 1; overflow: hidden; }
+#ticker-inner {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  white-space: nowrap;
+  -webkit-animation: tickerMove 90s linear infinite;
+  animation: tickerMove 90s linear infinite;
+}
+.ticker-text { font-size: 1rem; font-weight: 600; padding: 0 5rem; }
+.ticker-sep  { color: rgba(255,255,255,.25); padding: 0 1.2rem; }
+@-webkit-keyframes tickerMove { 0% { -webkit-transform: translateX(-50%); } 100% { -webkit-transform: translateX(0); } }
+@keyframes tickerMove { 0% { -webkit-transform: translateX(-50%); transform: translateX(-50%); } 100% { -webkit-transform: translateX(0); transform: translateX(0); } }
 
-/* ════════════════════════════════════════════════
-   BACKGROUND
-════════════════════════════════════════════════ */
-#bg-layer {
-  position:fixed; inset:0; z-index:0;
-  background:#09090f;
-}
-/* تصویر پس‌زمینه — کنترل شده توسط JS */
-#bg-img {
-  position:absolute; inset:0;
-  background-size:cover; background-position:center;
-  background-image:radial-gradient(ellipse 80% 60% at 20% 40%,
-    rgba(239,68,68,.12) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 80% 80%,
-    rgba(239,68,68,.07) 0%, transparent 50%);
-  transition:opacity .4s ease;
-}
-/* dim overlay */
-#bg-dim { position:fixed;inset:0;z-index:1;background:rgba(0,0,0,0.55); }
-/* grain */
-#bg-grain {
-  position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.035;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  background-repeat:repeat; background-size:128px;
-}
-
-/* ════════════════════════════════════════════════
-   LAYOUT
-════════════════════════════════════════════════ */
-#iptv-wrap { position:relative;z-index:10;width:100%;height:100%;display:flex;flex-direction:column; }
-
-/* ════════════════════════════════════════════════
-   HEADER
-════════════════════════════════════════════════ */
-#iptv-header {
-  display:flex; align-items:flex-start; justify-content:space-between;
-  padding:clamp(20px,3.5vw,52px) clamp(20px,4vw,60px) 0;
-  flex-shrink:0;
-  animation:fadeSlideDown .6s ease both;
-}
-#welcome-block { flex:1; min-width:0; }
-#logo-wrap { display:none; margin-bottom:10px; }
-#iptv-logo {
-  height:clamp(28px,3.5vw,52px);
-  object-fit:contain;
-  opacity:.9;
-  display:block;
-}
-#welcome-title {
-  font-size:clamp(22px,3.5vw,52px);
-  font-weight:900; letter-spacing:-.02em;
-  color:#fff;
-  line-height:1.15;
-  text-shadow:0 2px 24px rgba(0,0,0,.6);
-}
-#welcome-sub {
-  font-size:clamp(11px,1.3vw,18px);
-  color:var(--text-muted);
-  margin-top:clamp(4px,.5vw,8px);
-  font-weight:400;
-  display:none;
-}
-
-/* ── ساعت ── */
-#clock-box {
-  flex-shrink:0;
-  background:var(--glass-bg);
-  border:1px solid var(--glass-border);
-  backdrop-filter:blur(16px) saturate(1.2);
-  border-radius:clamp(12px,1.5vw,20px);
-  padding:clamp(10px,1.2vw,18px) clamp(14px,1.8vw,28px);
-  text-align:center; min-width:clamp(100px,12vw,180px);
-}
-#clock-time {
-  font-size:clamp(26px,3.5vw,52px);
-  font-weight:900; color:#fff;
-  font-variant-numeric:tabular-nums;
-  letter-spacing:.04em;
-}
-#clock-date { font-size:clamp(9px,1vw,13px); color:var(--text-dim); margin-top:4px; }
-
-/* ── divider ── */
-#iptv-divider {
-  margin:clamp(14px,2vw,28px) clamp(20px,4vw,60px);
-  height:1px;
-  background:linear-gradient(90deg,
-    transparent 0%,
-    rgba(var(--accent-rgb),.4) 30%,
-    rgba(var(--accent-rgb),.15) 70%,
-    transparent 100%);
-  flex-shrink:0;
-  animation:fadeIn .8s .3s ease both;
-}
-
-/* ════════════════════════════════════════════════
-   GRID
-════════════════════════════════════════════════ */
-#iptv-grid-wrap {
-  flex:1; overflow:hidden;
-  padding:0 clamp(20px,4vw,60px) clamp(10px,1.5vw,20px);
-  animation:fadeSlideUp .6s .15s ease both;
-}
-#iptv-grid {
-  display:flex; flex-wrap:wrap;
-  gap:clamp(10px,1.3vw,20px);
-  align-content:flex-start;
-  direction:ltr;
-  height:100%;
-}
-
-/* ── تایل ── */
-.iptv-tile {
-  width:clamp(120px,14vw,190px);
-  height:clamp(110px,12vw,168px);
-  border-radius:clamp(12px,1.4vw,20px);
-  background:var(--glass-bg);
-  border:1.5px solid var(--glass-border);
-  backdrop-filter:blur(12px) saturate(1.1);
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  gap:clamp(8px,1vw,14px);
-  cursor:pointer;
-  transition:transform .2s ease, box-shadow .2s ease,
-             background .2s ease, border-color .2s ease;
-  flex-shrink:0;
-  user-select:none;
-  position:relative; overflow:hidden;
-}
-/* shimmer */
-.iptv-tile::after {
-  content:''; position:absolute; inset:0;
-  background:linear-gradient(135deg,rgba(255,255,255,.06) 0%,transparent 60%);
-  pointer-events:none;
-}
-.iptv-tile:hover { transform:scale(1.04); }
-.iptv-tile.focused {
-  border-color:var(--tc,var(--accent));
-  background:rgba(var(--tc-rgb,var(--accent-rgb)),.14);
-  transform:scale(1.07);
-  box-shadow:
-    0 0 0 2px rgba(var(--tc-rgb,var(--accent-rgb)),.5),
-    0 8px 32px rgba(var(--tc-rgb,var(--accent-rgb)),.35),
-    0 0 60px rgba(var(--tc-rgb,var(--accent-rgb)),.15);
-}
-/* pulse on focused */
-@keyframes tilePulse {
-  0%,100%{ box-shadow:0 0 0 2px rgba(var(--tc-rgb,var(--accent-rgb)),.5), 0 8px 32px rgba(var(--tc-rgb,var(--accent-rgb)),.35); }
-  50%    { box-shadow:0 0 0 4px rgba(var(--tc-rgb,var(--accent-rgb)),.3), 0 12px 40px rgba(var(--tc-rgb,var(--accent-rgb)),.45); }
-}
-.iptv-tile.focused { animation:tilePulse 2s ease-in-out infinite; }
-
-.tile-icon-wrap {
-  width:clamp(46px,5vw,72px); height:clamp(46px,5vw,72px);
-  border-radius:clamp(12px,1.3vw,18px);
-  display:flex; align-items:center; justify-content:center;
-  flex-shrink:0;
-}
-.tile-icon { font-size:clamp(20px,2.4vw,34px); }
-.tile-label {
-  font-size:clamp(10px,1.1vw,15px);
-  font-weight:700; color:#fff;
-  text-align:center; padding:0 8px;
-  line-height:1.3; letter-spacing:.01em;
-}
-
-/* ════════════════════════════════════════════════
-   HINTS BAR
-════════════════════════════════════════════════ */
-#iptv-hints {
-  flex-shrink:0;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:0 clamp(20px,4vw,60px) clamp(10px,1.2vw,16px);
-  animation:fadeIn .8s .4s ease both;
-}
-.hint-key {
-  display:inline-flex; align-items:center; justify-content:center;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.1);
-  border-bottom:2px solid rgba(255,255,255,.14);
-  border-radius:6px; padding:3px 9px;
-  font-size:clamp(9px,0.9vw,12px); color:var(--text-dim);
-  font-family:monospace;
-}
-.hint-text { font-size:clamp(9px,0.9vw,11px); color:#1e293b; margin:0 4px; }
-
-/* ════════════════════════════════════════════════
-   TICKER
-════════════════════════════════════════════════ */
-#iptv-ticker {
-  flex-shrink:0;
-  background:#000;
-  border-top:1px solid rgba(var(--accent-rgb),.2);
-  overflow:hidden; height:40px;
-  display:none;
-  align-items:center;
-}
-#iptv-ticker .t-dot {
-  flex-shrink:0; margin:0 16px;
-  width:8px; height:8px; border-radius:50%;
-  background:var(--accent);
-  box-shadow:0 0 8px rgba(var(--accent-rgb),.8);
-  animation:dotPulse 1.2s ease-in-out infinite;
-}
-@keyframes dotPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.7)} }
-.t-track {
-  flex:1; overflow:hidden;
-  mask-image:linear-gradient(90deg,transparent 0%,#000 5%,#000 95%,transparent 100%);
-}
-.t-inner {
-  display:flex; white-space:nowrap; will-change:transform;
-  animation:tickerMove 120s linear infinite;
-}
-.t-text { font-size:clamp(12px,1.3vw,16px); font-weight:600; color:#fff; padding:0 80px; }
-.t-sep  { color:rgba(255,255,255,.2); padding:0 20px; font-size:18px; }
-@keyframes tickerMove { 0%{transform:translateX(-50%)} 100%{transform:translateX(0)} }
-
-/* ════════════════════════════════════════════════
-   ROOM BADGE
-════════════════════════════════════════════════ */
+/* ── نشان اتاق ── */
 #room-badge {
-  position:fixed; bottom:52px; left:clamp(20px,4vw,60px); z-index:20;
-  background:var(--glass-bg); border:1px solid var(--glass-border);
-  backdrop-filter:blur(12px); border-radius:10px;
-  padding:6px 14px; display:none; align-items:center; gap:8px;
+  position: fixed;
+  bottom: 3.4rem;
+  left: 3.2rem;
+  z-index: 25;
+  padding: .45rem 1rem;
+  border-radius: .65rem;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.13);
+  display: none;
 }
-#room-badge .rb-num { font-size:clamp(11px,1.1vw,15px); font-weight:800; color:#fff; }
-#room-badge .rb-lbl { font-size:clamp(9px,.9vw,11px); color:var(--text-dim); }
+#room-badge.is-on {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+}
+#rb-icon { color: #4098db; font-size: .95rem; margin-left: .55rem; }
+#rb-number { font-size: 1rem; font-weight: 800; }
+#rb-guest  { font-size: .78rem; color: #8c99ad; }
 
-/* ════════════════════════════════════════════════
-   MESSAGE OVERLAY
-════════════════════════════════════════════════ */
-/* banner — نوار پایین */
+/* ── پیام نواری ── */
 #msg-banner {
-  position:fixed; bottom:40px; left:0; right:0; z-index:30;
-  transform:translateY(120%); transition:transform .4s cubic-bezier(.2,.8,.2,1);
+  position: fixed;
+  right: 0; bottom: 2.6rem; left: 0;
+  z-index: 30;
+  -webkit-transform: translateY(150%);
+  -ms-transform: translateY(150%);
+  transform: translateY(150%);
+  -webkit-transition: -webkit-transform .35s ease;
+  transition: transform .35s ease;
 }
-#msg-banner.visible { transform:translateY(0); }
-#msg-banner .mb-inner {
-  margin:0 clamp(20px,4vw,60px) 0;
-  padding:14px 20px;
-  border-radius:14px;
-  display:flex; align-items:center; gap:14px;
-  backdrop-filter:blur(20px);
+#msg-banner.is-on {
+  -webkit-transform: translateY(0); -ms-transform: translateY(0); transform: translateY(0);
 }
-/* popup — وسط صفحه */
+#msg-banner-inner {
+  margin: 0 3.2rem;
+  padding: .9rem 1.3rem;
+  border-radius: .9rem;
+  border: 1px solid rgba(255,255,255,.14);
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+}
+#mb-icon  { font-size: 1.4rem; margin-left: .85rem; -webkit-flex: 0 0 auto; -ms-flex: 0 0 auto; flex: 0 0 auto; }
+#mb-title { font-size: 1rem; font-weight: 800; display: none; }
+#mb-body  { font-size: .92rem; font-weight: 400; color: #c2cbd8; }
+
+/* ── پیام وسط صفحه ── */
 #msg-popup {
-  position:fixed; inset:0; z-index:40;
-  display:none; align-items:center; justify-content:center;
-  background:rgba(0,0,0,.65); backdrop-filter:blur(4px);
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 40;
+  background: rgba(0,0,0,.72);
+  display: none;
 }
-#msg-popup.visible { display:flex; }
-#msg-popup .mp-card {
-  background:#111118; border:1px solid rgba(255,255,255,.12);
-  border-radius:20px; padding:clamp(28px,3vw,48px) clamp(24px,3vw,40px);
-  max-width:clamp(300px,50vw,560px); width:90%; text-align:center;
-  animation:fadeSlideUp .4s ease both;
+#msg-popup.is-on {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
 }
-#msg-popup .mp-icon { font-size:clamp(32px,4vw,52px); margin-bottom:16px; display:block; }
-#msg-popup .mp-title { font-size:clamp(16px,2vw,26px); font-weight:900; color:#fff; margin-bottom:10px; }
-#msg-popup .mp-body  { font-size:clamp(13px,1.4vw,18px); color:var(--text-muted); line-height:1.6; }
-#msg-popup .mp-close {
-  margin-top:24px; padding:12px 32px;
-  background:var(--accent); color:#fff; border:none; border-radius:12px;
-  font-size:clamp(12px,1.2vw,15px); font-weight:700; font-family:inherit; cursor:pointer;
-  transition:opacity .15s;
+#mp-card {
+  background: #10151d;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 1.25rem;
+  padding: 2.6rem 2.2rem;
+  width: 34rem;
+  max-width: 88%;
+  text-align: center;
 }
-#msg-popup .mp-close:hover { opacity:.85; }
+#mp-icon  { font-size: 3rem; display: block; margin-bottom: .9rem; }
+#mp-title { font-size: 1.55rem; font-weight: 800; margin-bottom: .6rem; }
+#mp-body  { font-size: 1.1rem; font-weight: 400; color: #c2cbd8; line-height: 1.7; }
+#mp-close { margin-top: 1.6rem; }
 
-/* ════════════════════════════════════════════════
-   PLAYER OVERLAY (هنگام پخش محتوا)
-════════════════════════════════════════════════ */
-#iptv-player {
-  position:fixed; inset:0; z-index:50;
-  background:#000;
-  display:none;
+/* ── پخش محتوا ── */
+#stage-player {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 50;
+  background: #000;
+  display: none;
 }
-#iptv-player video,
-#iptv-player iframe { width:100%; height:100%; object-fit:cover; border:none; }
-#iptv-player.active { display:block; }
+#stage-player.is-on { display: block; }
+#stage-player video,
+#stage-player iframe { width: 100%; height: 100%; border: 0; }
+/* contain نه cover — با cover لبه‌ی تصویر تلویزیون بریده می‌شد */
+#stage-player video { -o-object-fit: contain; object-fit: contain; }
 
-/* ── دکمه بازگشت ── */
 #back-btn {
-  position:fixed; top:20px; left:20px; z-index:60;
-  display:none; align-items:center; gap:10px;
-  background:rgba(0,0,0,0.8); backdrop-filter:blur(16px);
-  border:1px solid rgba(255,255,255,.15);
-  color:#fff; padding:12px 20px; border-radius:14px;
-  cursor:pointer; font-family:inherit;
-  font-size:clamp(12px,1.2vw,15px);
-  transition:background .15s;
-  animation:fadeIn .3s ease;
+  position: fixed;
+  top: 1.6rem; left: 1.6rem;
+  z-index: 60;
+  display: none;
 }
-#back-btn:hover { background:rgba(255,255,255,.1); }
-#back-btn.active { display:flex; }
+#back-btn.is-on {
+  display: -webkit-inline-box; display: -webkit-inline-flex;
+  display: -ms-inline-flexbox; display: inline-flex;
+}
 
-/* ── loading inline ── */
-#iptv-loading {
-  position:fixed; inset:0; z-index:80;
-  background:#09090f;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center; gap:20px;
+/* ── صفحه فعال‌سازی ── */
+#activation {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 200;
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
 }
-#iptv-loading .spinner {
-  width:48px; height:48px;
-  border:3px solid rgba(var(--accent-rgb),.2);
-  border-top-color:var(--accent);
-  border-radius:50%;
-  animation:spin .8s linear infinite;
+#act-card {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 1.5rem;
+  padding: 3rem 2.5rem;
+  width: 24rem;
+  max-width: 90%;
+  text-align: center;
 }
-@keyframes spin { to{transform:rotate(360deg)} }
-
-/* ════════════════════════════════════════════════
-   صفحه فعال‌سازی
-════════════════════════════════════════════════ */
-#activation-screen {
-  position:fixed; inset:0; z-index:200;
-  background:radial-gradient(ellipse at center, #111118 0%, #09090f 100%);
-  display:flex; align-items:center; justify-content:center;
+#act-logo { height: 3.4rem; width: auto; margin: 0 auto 1.4rem; display: block; }
+#act-title { font-size: 1.4rem; font-weight: 800; margin-bottom: .4rem; }
+#act-sub   { font-size: .92rem; font-weight: 400; color: #a8b4c6; margin-bottom: 1.4rem; }
+#act-screen { font-size: .85rem; font-weight: 400; color: #8c99ad; margin-bottom: .8rem; }
+#act-screen b { color: #7bb8e8; font-family: monospace; letter-spacing: .08em; }
+#act-code {
+  width: 100%;
+  padding: 1rem;
+  border-radius: .8rem;
+  background: rgba(0,0,0,.45);
+  border: 2px solid rgba(26,122,196,.35);
+  color: #fff;
+  font-family: monospace;
+  font-size: 1.7rem;
+  letter-spacing: .5rem;
+  text-align: center;
+  text-transform: uppercase;
+  outline: 0;
 }
-.act-card {
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.1);
-  backdrop-filter:blur(20px);
-  border-radius:24px; padding:48px 40px;
-  width:clamp(300px,90vw,360px); text-align:center;
-}
-.act-icon {
-  width:72px; height:72px; border-radius:20px;
-  background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#000));
-  display:flex; align-items:center; justify-content:center;
-  margin:0 auto 24px; font-size:34px;
-  box-shadow:0 8px 32px rgba(var(--accent-rgb),.4);
-}
-.act-code {
-  background:rgba(0,0,0,.4); border:2px solid rgba(var(--accent-rgb),.3);
-  border-radius:14px; padding:16px; color:#fff;
-  font-size:clamp(20px,4vw,28px); text-align:center; width:100%;
-  font-family:monospace; letter-spacing:10px; text-transform:uppercase; outline:none;
-}
-.act-code:focus { border-color:var(--accent); }
-.act-btn {
-  width:100%; margin-top:16px; padding:16px;
-  background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#000));
-  color:#fff; border:none; border-radius:12px;
-  font-size:16px; font-weight:700; font-family:inherit; cursor:pointer;
-  box-shadow:0 4px 20px rgba(var(--accent-rgb),.4);
-  transition:transform .15s, box-shadow .15s;
-}
-.act-btn:hover { transform:translateY(-1px); box-shadow:0 8px 28px rgba(var(--accent-rgb),.5); }
-
-/* ════════════════════════════════════════════════
-   ANIMATIONS
-════════════════════════════════════════════════ */
-@keyframes fadeIn { from{opacity:0} to{opacity:1} }
-@keyframes fadeSlideDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:none} }
-@keyframes fadeSlideUp   { from{opacity:0;transform:translateY(16px)}  to{opacity:1;transform:none} }
+#act-code:focus { border-color: #4098db; }
+#act-btn { width: 100%; margin-top: 1rem; -webkit-box-pack: center; -webkit-justify-content: center; -ms-flex-pack: center; justify-content: center; }
+#act-err { font-size: .9rem; margin-top: .9rem; min-height: 1.4rem; color: #ff5f57; }
 </style>
 </head>
 <body>
 
-<!-- ── لایه‌های پس‌زمینه ── -->
-<div id="bg-layer"><div id="bg-img"></div></div>
-<div id="bg-dim"></div>
-<div id="bg-grain"></div>
+<!-- لایه‌های پس‌زمینه. tv-layer یعنی top/right/bottom/left صفر — inset
+     کوتاه‌نویس Chromium 87 می‌خواهد و هیچ تلویزیون هتلی ندارد. -->
+<div class="tv-layer tv-bg"></div>
+<div class="tv-layer tv-bg-image" id="bg-img"></div>
+<div class="tv-layer tv-bg-glow" id="bg-glow"></div>
+<div class="tv-layer tv-bg-dim" id="bg-dim"></div>
 
-<?php if (($screen['status'] ?? '') !== 'active'): ?>
-<!-- ════════ صفحه فعال‌سازی ════════ -->
-<div id="activation-screen">
-  <div class="act-card">
-    <div class="act-icon">📡</div>
-    <h2 style="font-size:22px;font-weight:900;margin-bottom:8px;">Hotel Media IPTV</h2>
-    <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">کد فعال‌سازی را وارد کنید</p>
-    <p style="color:var(--text-dim);font-size:12px;margin-bottom:10px;">
-      کد صفحه: <strong style="color:var(--accent);font-family:monospace;"><?= e($screenCode) ?></strong>
-    </p>
-    <input type="text" id="actCode" class="act-code" maxlength="6" placeholder="_ _ _ _ _ _"
-      oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doActivate()">
-    <button class="act-btn" onclick="doActivate()">
-      <i class="fas fa-satellite-dish" style="margin-left:8px;"></i>فعال‌سازی
+<?php if (!$isActive): ?>
+<!-- ══ فعال‌سازی ══ -->
+<div id="activation">
+  <div id="act-card">
+    <img id="act-logo" src="/assets/img/sama-logo.svg" alt="">
+    <div id="act-title">Hotel Media</div>
+    <div id="act-sub">این تلویزیون هنوز فعال نشده است</div>
+    <div id="act-screen">کد صفحه: <b><?= e($screenCode) ?></b></div>
+    <input type="text" id="act-code" maxlength="6" placeholder="------"
+           autocomplete="off" autocorrect="off" spellcheck="false">
+    <button type="button" class="tv-btn" id="act-btn">
+      <i class="fas fa-satellite-dish" style="margin-left:.5rem"></i>فعال‌سازی
     </button>
-    <div id="err-msg" style="color:#ef4444;font-size:13px;margin-top:14px;min-height:20px;"></div>
+    <div id="act-err"></div>
   </div>
 </div>
 
 <?php else: ?>
-<!-- ════════ پلیر اصلی ════════ -->
+<!-- ══ پورتال ══ -->
 
-<!-- Loading -->
-<div id="iptv-loading">
-  <div class="spinner"></div>
-  <div style="font-size:15px;color:var(--text-muted);">در حال بارگذاری منوی IPTV...</div>
+<!-- بارگذاری/خطا. tv-base.js با TV.loading و TV.fail اینجا را پر می‌کند. -->
+<div class="tv-center" id="tv-center">
+  <div class="tv-spinner"></div>
+  <div class="tv-center-text">در حال بارگذاری منو…</div>
 </div>
 
-<!-- منوی اصلی -->
-<div id="iptv-wrap" style="display:none;">
+<div class="tv-stage tv-col tv-hidden" id="stage">
 
-  <!-- Header -->
-  <div id="iptv-header">
-    <div id="welcome-block">
-      <div id="logo-wrap"><img id="iptv-logo" src="" alt="logo" onerror="this.style.display='none'"></div>
-      <div id="welcome-title"><?= $screenName ?></div>
-      <div id="welcome-sub"></div>
+  <div class="tv-header tv-row tv-row-top tv-spread tv-fixed tv-in">
+    <div class="tv-grow">
+      <img class="tv-logo tv-hidden" id="hotel-logo" src="" alt="">
+      <div class="tv-welcome" id="welcome-title"><?= e($screenName) ?></div>
+      <div class="tv-welcome-sub tv-hidden" id="welcome-sub"></div>
     </div>
-    <div id="clock-box">
-      <div id="clock-time">--:--</div>
-      <div id="clock-date"></div>
+    <div class="tv-clock tv-fixed">
+      <div class="tv-clock-time" id="clock-time">--:--</div>
+      <div class="tv-clock-date" id="clock-date"><?= e($todayJalali) ?></div>
     </div>
   </div>
 
-  <!-- Divider -->
-  <div id="iptv-divider"></div>
+  <div class="tv-divider tv-fixed"></div>
 
-  <!-- Grid -->
-  <div id="iptv-grid-wrap">
-    <div id="iptv-grid"></div>
+  <div class="tv-grid-wrap tv-grow tv-in">
+    <div class="tv-grid" id="grid"></div>
   </div>
 
-  <!-- Hints -->
-  <div id="iptv-hints">
-    <div style="display:flex;align-items:center;gap:6px;">
-      <span class="hint-key">← → ↑ ↓</span>
-      <span class="hint-text">ناوبری</span>
-      <span class="hint-key" style="margin-right:8px;">OK / Enter</span>
-      <span class="hint-text">انتخاب</span>
+  <!-- راهنمای ریموت. قبلا رنگش #1e293b بود روی زمینه‌ی #09090f —
+       یعنی عملا نامرئی. حالا از کلاس tv-hints می‌آید. -->
+  <div class="tv-hints tv-row tv-spread tv-fixed">
+    <div>
+      <span class="tv-hint"><span class="tv-key">▲▼◀▶</span> جابه‌جایی</span>
+      <span class="tv-hint"><span class="tv-key">OK</span> انتخاب</span>
+      <span class="tv-hint"><span class="tv-key">↩</span> بازگشت</span>
     </div>
-    <span style="font-size:10px;color:#1e293b;font-family:monospace;"><?= e($screenCode) ?></span>
+    <span style="font-family:monospace;letter-spacing:.06em"><?= e($screenCode) ?></span>
   </div>
 
-  <!-- Ticker — محتوا از JS پر می‌شه -->
-  <div id="iptv-ticker">
-    <div class="t-dot"></div>
-    <div class="t-track">
-      <div class="t-inner"></div>
-    </div>
+  <div id="ticker" class="tv-fixed">
+    <div id="ticker-dot"></div>
+    <div id="ticker-track"><div id="ticker-inner"></div></div>
   </div>
 
-</div><!-- /iptv-wrap -->
+</div><!-- /stage -->
 
-<!-- نشان اتاق -->
 <div id="room-badge">
-  <i class="fas fa-door-open" style="color:var(--accent);font-size:14px;"></i>
+  <i class="fas fa-door-open" id="rb-icon"></i>
   <div>
-    <div class="rb-num" id="rb-number"></div>
-    <div class="rb-lbl" id="rb-guest"></div>
+    <div id="rb-number"></div>
+    <div id="rb-guest"></div>
   </div>
 </div>
 
-<!-- banner پیام -->
 <div id="msg-banner">
-  <div class="mb-inner" id="msg-banner-inner">
-    <span id="mb-icon" style="font-size:22px;flex-shrink:0;"></span>
-    <div style="flex:1;min-width:0;">
-      <div id="mb-title" style="font-size:clamp(11px,1.1vw,15px);font-weight:800;color:#fff;display:none;"></div>
-      <div id="mb-body" style="font-size:clamp(11px,1.1vw,14px);color:var(--text-muted);"></div>
+  <div id="msg-banner-inner">
+    <span id="mb-icon"></span>
+    <div class="tv-grow">
+      <div id="mb-title"></div>
+      <div id="mb-body"></div>
     </div>
-    <button onclick="dismissBanner()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--text-dim);padding:4px 10px;border-radius:7px;cursor:pointer;font-size:11px;font-family:inherit;flex-shrink:0;">
+    <button type="button" class="tv-btn" id="mb-close" style="padding:.3rem .7rem;font-size:.85rem">
       <i class="fas fa-times"></i>
     </button>
   </div>
 </div>
 
-<!-- popup پیام -->
 <div id="msg-popup">
-  <div class="mp-card">
-    <span class="mp-icon" id="mp-icon"></span>
-    <div class="mp-title" id="mp-title"></div>
-    <div class="mp-body"  id="mp-body"></div>
-    <button class="mp-close" onclick="dismissPopup()">متوجه شدم</button>
+  <div id="mp-card">
+    <span id="mp-icon"></span>
+    <div id="mp-title"></div>
+    <div id="mp-body"></div>
+    <button type="button" class="tv-btn" id="mp-close">متوجه شدم</button>
   </div>
 </div>
 
-<!-- پلیر محتوا (فول‌اسکرین) -->
-<div id="iptv-player"></div>
+<div id="stage-player"></div>
 
-<!-- دکمه بازگشت -->
-<button id="back-btn" onclick="goBack()">
-  <span id="back-icon"></span>
-  <span id="back-label"></span>
-  <i class="fas fa-chevron-right" style="font-size:11px;color:var(--text-dim);margin-right:6px;"></i>
-  <span style="color:var(--text-dim);font-size:11px;">بازگشت</span>
+<!-- اتصال دستگاه مهمان. منوی خود تلویزیون در اتاق قفل است، پس وصل‌کردن
+     موبایل یا کنسول بازی باید از همین‌جا شدنی باشد. -->
+<div class="tv-inputs" id="inputs-screen">
+  <div class="tv-inputs-title">اتصال دستگاه</div>
+  <div class="tv-inputs-sub" id="inputs-sub">در حال بررسی…</div>
+  <div class="tv-grid tv-inputs-grid" id="inputs-grid"></div>
+  <button type="button" class="tv-btn tv-inputs-back" id="inputs-back">
+    <i class="fas fa-chevron-right" style="margin-left:.5rem"></i>بازگشت
+  </button>
+</div>
+
+<button type="button" class="tv-btn" id="back-btn">
+  <i class="fas fa-chevron-right" style="margin-left:.5rem"></i>
+  <span id="back-label">بازگشت</span>
 </button>
 
 <?php endif; ?>
 
 <script>
-'use strict';
+/* ES5 خالص — بدون const/let، تابع arrow، رشته‌ی template، fetch یا Promise.
+   دلیلش بالای فایل و در tv-base.js توضیح داده شده. */
+(function () {
+  'use strict';
 
-// ─── Constants (PHP → JS) ──────────────────────────────────────
-const SCREEN_CODE  = '<?= e($screenCode) ?>';
-const IPTV_MENU_ID = <?= $iptvMenuId ?>;
-const SCREEN_NAME  = '<?= $screenName ?>';
-const SERVER_URL   = window.location.origin;
-const WS_PORT      = <?= (int)env('WS_PORT', 8080) ?>;
+  var SCREEN_CODE  = '<?= e($screenCode) ?>';
+  var IPTV_MENU_ID = <?= $iptvMenuId ?>;
+  var SCREEN_NAME  = '<?= e($screenName) ?>';
+  var WS_PORT      = <?= (int)env('WS_PORT', 8080) ?>;
+  var ORIGIN       = window.location.protocol + '//' + window.location.host;
 
-// ─── State ────────────────────────────────────────────────────
-let menuData  = null;
-let focusIdx  = 0;
-let autoTimer = null;
-let hlsInst   = null;
+<?php if (!$isActive): ?>
+  /* ── فعال‌سازی ─────────────────────────────────────────────────── */
+  TV.boot();
 
-// ─── hex → rgb helper ──────────────────────────────────────────
-function hexRgb(h) {
-  const r = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h);
-  return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '239,68,68';
-}
+  var codeEl = TV.id('act-code');
+  var errEl  = TV.id('act-err');
+  var busy   = false;
 
-// ══════════════════════════════════════════════════════════════
-//  اعمال تنظیمات ظاهری از منو
-// ══════════════════════════════════════════════════════════════
-function applyAppearance(d) {
-  // ── Accent color ──
-  const accent = /^#[0-9a-f]{6}$/i.test(d.accent_color||'') ? d.accent_color : '#ef4444';
-  const rgb    = hexRgb(accent);
-  document.documentElement.style.setProperty('--accent',     accent);
-  document.documentElement.style.setProperty('--accent-rgb', rgb);
-
-  // ── Background ──
-  const bgImg  = document.getElementById('bg-img');
-  const bgDim  = Math.max(0, Math.min(1, parseFloat(d.bg_dim ?? 0.55)));
-  const bgBlur = Math.max(0, Math.min(20, parseInt(d.bg_blur ?? 0)));
-  document.getElementById('bg-dim').style.background = `rgba(0,0,0,${bgDim})`;
-  if (d.bg_image) {
-    bgImg.style.backgroundImage    = `url('${esc(d.bg_image)}')`;
-    bgImg.style.backgroundSize     = 'cover';
-    bgImg.style.backgroundPosition = 'center';
-    bgImg.style.filter             = bgBlur > 0 ? `blur(${bgBlur}px)` : '';
-    bgImg.style.transform          = bgBlur > 0 ? 'scale(1.08)' : '';
-  } else {
-    bgImg.style.backgroundImage = `radial-gradient(ellipse 80% 60% at 20% 40%,rgba(${rgb},.12) 0%,transparent 60%),radial-gradient(ellipse 60% 80% at 80% 80%,rgba(${rgb},.07) 0%,transparent 50%)`;
-    bgImg.style.filter    = '';
-    bgImg.style.transform = '';
-  }
-
-  // ── Welcome ──
-  document.getElementById('welcome-title').textContent = d.welcome_title || SCREEN_NAME;
-  const subEl = document.getElementById('welcome-sub');
-  subEl.textContent  = d.welcome_sub || '';
-  subEl.style.display = d.welcome_sub ? 'block' : 'none';
-
-  // ── Logo ──
-  const logoWrap = document.getElementById('logo-wrap');
-  const logoImg  = document.getElementById('iptv-logo');
-  if (d.logo_url) {
-    logoImg.src         = d.logo_url;
-    logoWrap.style.display = 'block';
-  } else {
-    logoWrap.style.display = 'none';
-  }
-
-  // ── Ticker ──
-  const ticker = document.getElementById('iptv-ticker');
-  if (d.ticker_text) {
-    const spd   = Math.max(5, parseInt(d.ticker_speed || 40));
-    const secs  = Math.max(10, Math.ceil(d.ticker_text.length * 100 / spd));
-    const color = d.ticker_color || '#ffffff';
-    const bg    = d.ticker_bg    || '#000000';
-    ticker.style.display    = 'flex';
-    ticker.style.background = bg;
-    const dot = ticker.querySelector('.t-dot');
-    if (dot) { dot.style.background = accent; dot.style.boxShadow = `0 0 8px rgba(${rgb},.8)`; }
-    const inner = ticker.querySelector('.t-inner');
-    inner.innerHTML = `<span class="t-text" style="color:${esc(color)}">${esc(d.ticker_text)}</span><span class="t-sep">◆</span><span class="t-text" style="color:${esc(color)}">${esc(d.ticker_text)}</span><span class="t-sep">◆</span>`;
-    inner.style.animationDuration = secs + 's';
-  } else {
-    ticker.style.display = 'none';
-  }
-}
-
-// ══════════════════════════════════════════════════════════════
-//  بارگذاری منو
-// ══════════════════════════════════════════════════════════════
-async function loadMenu() {
-  if (!IPTV_MENU_ID) { showNoMenu(); return; }
-  try {
-    const r = await fetch(`${SERVER_URL}/api/v1/player/iptv-menu/${IPTV_MENU_ID}`);
-    const d = await r.json();
-    if (d.success && d.data?.items?.length) {
-      menuData = d.data;
-      applyAppearance(menuData);   // ← اعمال ظاهر از تنظیمات منو
-      buildGrid();
-      showMenu();
-    } else {
-      showNoMenu();
+  function activate() {
+    if (busy) return;
+    var code = (codeEl.value || '').replace(/^\s+|\s+$/g, '').toUpperCase();
+    if (code.length !== 6) {
+      errEl.style.color = '#ff5f57';
+      TV.text(errEl, 'کد باید ۶ نویسه باشد');
+      return;
     }
-  } catch(e) {
-    console.warn('IPTV menu load failed, retry in 10s');
-    setTimeout(loadMenu, 10000);
-  }
-}
+    busy = true;
+    errEl.style.color = '#a8b4c6';
+    TV.text(errEl, 'در حال فعال‌سازی…');
 
-function buildGrid() {
-  const grid = document.getElementById('iptv-grid');
-  grid.innerHTML = menuData.items.map((item, i) => {
-    const rgb = hexRgb(item.color || '#ef4444');
-    return `
-      <div class="iptv-tile" id="tile-${i}" data-idx="${i}"
-           style="--tc:${esc(item.color)};--tc-rgb:${rgb};"
-           onclick="selectItem(${i})">
-        <div class="tile-icon-wrap"
-             style="background:rgba(${rgb},.18);border:2px solid rgba(${rgb},.35);">
-          <i class="${esc(item.icon)} tile-icon" style="color:${esc(item.color)};"></i>
-        </div>
-        <div class="tile-label">${esc(item.label)}</div>
-      </div>`;
-  }).join('');
-}
-
-function showMenu() {
-  document.getElementById('iptv-loading').style.display = 'none';
-  document.getElementById('iptv-wrap').style.display   = 'flex';
-  document.getElementById('iptv-wrap').style.flexDirection = 'column';
-  document.getElementById('iptv-wrap').style.height    = '100%';
-
-  focusIdx = 0;
-  focusTile(0);
-  tickClock();
-
-  // اجرای خودکار اولین آیتم با URL بعد از ۸ ثانیه
-  const first = menuData.items.findIndex(i => i.target_url);
-  if (first >= 0) autoTimer = setTimeout(() => selectItem(first), 8000);
-}
-
-function showNoMenu() {
-  document.getElementById('iptv-loading').innerHTML = `
-    <div style="font-size:56px;opacity:.2;margin-bottom:8px;">📡</div>
-    <div style="font-size:16px;color:var(--text-muted);text-align:center;">
-      منویی تنظیم نشده<br>
-      <span style="font-size:13px;color:var(--text-dim);margin-top:8px;display:block;">
-        از پنل مدیریت صفحه، منوی IPTV را انتخاب کنید
-      </span>
-    </div>
-    <div style="font-size:11px;color:#1e293b;font-family:monospace;margin-top:16px;">${SCREEN_CODE}</div>`;
-  setTimeout(loadMenu, 30000);
-}
-
-// ══════════════════════════════════════════════════════════════
-//  انتخاب آیتم
-// ══════════════════════════════════════════════════════════════
-function selectItem(idx) {
-  clearTimeout(autoTimer);
-  const item = menuData?.items?.[idx];
-  if (!item) return;
-  playContent(item);
-}
-
-function playContent(item) {
-  // مخفی کردن منو
-  document.getElementById('iptv-wrap').style.display = 'none';
-
-  // دکمه بازگشت
-  document.getElementById('back-icon').innerHTML =
-    `<i class="${esc(item.icon)}" style="color:${esc(item.color)};font-size:16px;"></i>`;
-  document.getElementById('back-label').textContent = item.label;
-  document.getElementById('back-btn').classList.add('active');
-
-  // ساخت پلیر
-  if (hlsInst) { hlsInst.destroy(); hlsInst = null; }
-  const playerEl = document.getElementById('iptv-player');
-  playerEl.innerHTML = '';
-  playerEl.classList.add('active');
-
-  const src = item.target_url || '';
-
-  if (!src) {
-    // ماژول داخلی
-    buildIframe(`${SERVER_URL}/player/module/${encodeURIComponent(item.type)}`, playerEl);
-  } else if (src.match(/\.m3u8(\?|$)/i)) {
-    buildHls(src, playerEl);
-  } else if (src.startsWith('rtsp://')) {
-    playerEl.innerHTML = noSrcMsg('📡', 'RTSP Stream', src);
-  } else if (src.match(/\.(mp4|webm|mov)(\?|$)/i)) {
-    buildVideo(src, playerEl);
-  } else {
-    buildIframe(src, playerEl);
+    TV.post(ORIGIN + '/player/activate',
+      { activation_code: code, screen_code: SCREEN_CODE },
+      function (err, d) {
+        busy = false;
+        if (!err && d && d.success) {
+          errEl.style.color = '#32d17a';
+          TV.text(errEl, 'فعال شد — در حال بازآوری…');
+          setTimeout(function () { location.reload(); }, 1200);
+          return;
+        }
+        errEl.style.color = '#ff5f57';
+        TV.text(errEl, (d && d.message) ? d.message : 'کد نامعتبر است یا سرور در دسترس نیست');
+      });
   }
 
-  // بازگشت خودکار ۵ دقیقه
-  autoTimer = setTimeout(goBack, 300000);
-}
-
-function buildHls(src, el) {
-  const vid = mkVid();
-  el.appendChild(vid);
-  if (Hls.isSupported()) {
-    hlsInst = new Hls({ enableWorker:true, lowLatencyMode:true });
-    hlsInst.loadSource(src);
-    hlsInst.attachMedia(vid);
-    hlsInst.on(Hls.Events.ERROR, (e,d) => { if(d.fatal) goBack(); });
-  } else if (vid.canPlayType('application/vnd.apple.mpegurl')) {
-    vid.src = src;
-  } else {
-    el.innerHTML = noSrcMsg('⚠','HLS پشتیبانی نمی‌شود','');
-  }
-}
-function buildVideo(src, el) {
-  const vid = mkVid(false);
-  vid.src = src;
-  vid.onended = goBack;
-  vid.onerror = goBack;
-  el.appendChild(vid);
-}
-function buildIframe(src, el) {
-  const f = document.createElement('iframe');
-  f.src = src; f.allow = 'autoplay;fullscreen';
-  el.appendChild(f);
-}
-function mkVid(loop=true) {
-  const v = document.createElement('video');
-  v.autoplay = true; v.muted = true; v.loop = loop; v.playsInline = true;
-  return v;
-}
-function noSrcMsg(icon, title, sub) {
-  return `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;
-                       justify-content:center;gap:16px;background:#09090f;">
-    <div style="font-size:52px;">${icon}</div>
-    <div style="font-size:17px;color:var(--text-muted);">${title}</div>
-    ${sub ? `<div style="font-size:12px;color:var(--text-dim);">${esc(sub)}</div>` : ''}
-  </div>`;
-}
-
-function goBack() {
-  clearTimeout(autoTimer);
-  if (hlsInst) { hlsInst.destroy(); hlsInst = null; }
-  const playerEl = document.getElementById('iptv-player');
-  playerEl.classList.remove('active');
-  playerEl.innerHTML = '';
-  document.getElementById('back-btn').classList.remove('active');
-  document.getElementById('iptv-wrap').style.display = 'flex';
-  focusTile(focusIdx);
-
-  // اجرای خودکار مجدد
-  const first = menuData?.items.findIndex(i => i.target_url) ?? -1;
-  if (first >= 0) autoTimer = setTimeout(() => selectItem(first), 8000);
-}
-
-// ══════════════════════════════════════════════════════════════
-//  فوکوس / ناوبری
-// ══════════════════════════════════════════════════════════════
-function focusTile(idx) {
-  if (!menuData?.items) return;
-  document.querySelectorAll('.iptv-tile').forEach((t, i) => {
-    if (i === idx) {
-      t.classList.add('focused');
-    } else {
-      t.classList.remove('focused');
-      t.style.borderColor = '';
-      t.style.background  = '';
-      t.style.transform   = '';
-      t.style.boxShadow   = '';
-    }
+  TV.on(TV.id('act-btn'), 'click', activate);
+  TV.on(codeEl, 'input', function () { codeEl.value = codeEl.value.toUpperCase(); });
+  TV.on(document, 'keydown', function (e) {
+    if (TV.keyName(e) === 'OK') activate();
   });
-  focusIdx = idx;
-}
+  if (codeEl.focus) codeEl.focus();
 
-function getTileCols() {
-  const grid = document.getElementById('iptv-grid');
-  if (!grid) return 5;
-  const tileW = Math.min(190, Math.max(120, window.innerWidth * 0.14)) + 20;
-  return Math.max(1, Math.round(grid.offsetWidth / tileW));
-}
+<?php else: ?>
+  /* ── پورتال ────────────────────────────────────────────────────── */
+  TV.boot();
 
-document.addEventListener('keydown', e => {
-  // در حین پخش محتوا
-  if (document.getElementById('iptv-player').classList.contains('active')) {
-    if (['Backspace','Escape','BrowserBack'].includes(e.key)) {
-      goBack(); e.preventDefault();
+  var items      = [];      /* آیتم‌های منو */
+  var tiles      = [];      /* المان کاشی‌ها، هم‌ترتیب با items */
+  var focusIdx   = 0;
+  var autoTimer  = null;
+  var hlsInst    = null;
+  var playing    = false;
+  var accent     = '#1a7ac4';
+  var accentRgb  = '26,122,196';
+
+  /* Set در Chromium 34 ناقص است، پس نقشه‌ی ساده */
+  var seenBanner = {};
+  var seenPopup  = {};
+
+  /* ── رنگ ────────────────────────────────────────────────────────
+     hex به «r,g,b» تا بتوان rgba() ساخت. */
+  function hexRgb(h, fallback) {
+    var m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h || '');
+    if (!m) return fallback;
+    return parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16);
+  }
+
+  /* ── ظاهر از تنظیمات منو ───────────────────────────────────────── */
+  function applyAppearance(d) {
+    if (/^#[0-9a-f]{6}$/i.test(d.accent_color || '')) {
+      accent    = d.accent_color;
+      accentRgb = hexRgb(accent, accentRgb);
     }
-    return;
-  }
-  if (!menuData?.items) return;
-  const len  = menuData.items.length;
-  const cols = getTileCols();
-  switch(e.key) {
-    case 'ArrowRight': focusTile(Math.min(len-1, focusIdx+1)); e.preventDefault(); break;
-    case 'ArrowLeft':  focusTile(Math.max(0,     focusIdx-1)); e.preventDefault(); break;
-    case 'ArrowDown':  focusTile(Math.min(len-1, focusIdx+cols)); e.preventDefault(); break;
-    case 'ArrowUp':    focusTile(Math.max(0,     focusIdx-cols)); e.preventDefault(); break;
-    case 'Enter': case 'OK': selectItem(focusIdx); break;
-    case 'Backspace': case 'Escape': case 'BrowserBack': goBack(); break;
-  }
-});
 
-// ══════════════════════════════════════════════════════════════
-//  ساعت
-// ══════════════════════════════════════════════════════════════
-function tickClock() {
-  const te = document.getElementById('clock-time');
-  const de = document.getElementById('clock-date');
-  if (!te) return;
-  const now = new Date();
-  te.textContent = [now.getHours(),now.getMinutes(),now.getSeconds()]
-    .map(n => String(n).padStart(2,'0')).join(':');
-  if (de) de.textContent = now.toLocaleDateString('fa-IR',{weekday:'long',month:'long',day:'numeric'});
-  setTimeout(tickClock, 1000);
-}
+    var dim = parseFloat(d.bg_dim);
+    if (isNaN(dim)) dim = 0.58;
+    if (dim < 0) dim = 0; if (dim > 1) dim = 1;
+    TV.id('bg-dim').style.background = 'rgba(4,7,12,' + dim + ')';
 
-// ══════════════════════════════════════════════════════════════
-//  اطلاعات اتاق + پیام‌ها
-// ══════════════════════════════════════════════════════════════
-let roomMsgQueue   = [];
-let bannerTimer    = null;
-let popupDismissed = new Set();
-let bannerDismissed= new Set();
-
-async function loadRoomInfo() {
-  if (!SCREEN_CODE) return;
-  try {
-    const r = await fetch(`${SERVER_URL}/api/v1/player/room-info/${SCREEN_CODE}`);
-    if (!r.ok) return;
-    const d = await r.json();
-    if (!d.success || !d.data) return;
-    const info = d.data;
-
-    // نشان اتاق
-    const badge = document.getElementById('room-badge');
-    if (info.room_number) {
-      document.getElementById('rb-number').textContent = 'اتاق ' + info.room_number;
-      const lbl = document.getElementById('rb-guest');
-      lbl.textContent = info.guest_name || info.room_name || '';
-      badge.style.display = 'flex';
+    var bg = TV.id('bg-img');
+    if (d.bg_image) {
+      bg.style.backgroundImage = "url('" + String(d.bg_image).replace(/'/g, '%27') + "')";
+      /* بلور پس‌زمینه با filter روی SoC تلویزیون هر فریم دوباره حساب
+         می‌شود و پخش ویدیو را می‌لرزاند. تصویر ثابت است، پس یک‌بار
+         تیره‌کردن کافی است و بلور را عمدا اعمال نمی‌کنیم. */
+      TV.hide(TV.id('bg-glow'));
     } else {
-      badge.style.display = 'none';
+      bg.style.backgroundImage = '';
+      TV.show(TV.id('bg-glow'));
     }
 
-    // اگر مهمان خاصی داره، خوش‌آمدگویی رو override کن
-    if (info.guest_name) {
-      const titleEl = document.getElementById('welcome-title');
-      if (titleEl && !titleEl.dataset.menuSet) {
-        titleEl.textContent = 'خوش آمدید، ' + info.guest_name;
+    TV.text(TV.id('welcome-title'), d.welcome_title || SCREEN_NAME);
+
+    var sub = TV.id('welcome-sub');
+    if (d.welcome_sub) { TV.text(sub, d.welcome_sub); TV.show(sub); }
+    else               { TV.hide(sub); }
+
+    var logo = TV.id('hotel-logo');
+    if (d.logo_url) {
+      logo.onerror = function () { TV.hide(logo); };
+      logo.src = d.logo_url;
+      TV.show(logo);
+    } else {
+      TV.hide(logo);
+    }
+
+    if (d.ticker_text) setTicker([d.ticker_text], d.ticker_color, d.ticker_bg);
+  }
+
+  function setTicker(texts, color, bg) {
+    if (!texts || !texts.length) return;
+    var box = TV.id('ticker');
+    var inner = TV.id('ticker-inner');
+    var html = '', i;
+    /* دو بار تکرار می‌شود چون انیمیشن از -۵۰٪ به ۰ می‌رود و باید
+       نیمه‌ی دوم دقیقا نیمه‌ی اول باشد وگرنه در حلقه پرش دارد. */
+    var pass;
+    for (pass = 0; pass < 2; pass++) {
+      for (i = 0; i < texts.length; i++) {
+        html += '<span class="ticker-text"' +
+                (color ? ' style="color:' + TV.esc(color) + '"' : '') + '>' +
+                TV.esc(texts[i]) + '</span><span class="ticker-sep">◆</span>';
       }
     }
-
-    // پیام‌ها
-    if (info.messages?.length) {
-      processMessages(info.messages);
-    }
-  } catch(_) {}
-}
-
-function processMessages(msgs) {
-  const banners = msgs.filter(m => m.display_mode === 'banner' && !bannerDismissed.has(m.id));
-  const popups  = msgs.filter(m => m.display_mode === 'popup'  && !popupDismissed.has(m.id));
-  const tickers = msgs.filter(m => m.display_mode === 'ticker');
-
-  // Ticker پیام‌ها رو به تیکر اضافه کن
-  if (tickers.length) {
-    const ticker = document.getElementById('iptv-ticker');
-    const inner  = ticker.querySelector('.t-inner');
-    if (inner && ticker.style.display === 'none') {
-      ticker.style.display = 'flex';
-      inner.innerHTML = tickers.map(m =>
-        `<span class="t-text">${esc(m.title ? m.title + ': ' + m.body : m.body)}</span><span class="t-sep">◆</span>`
-      ).join('');
-      inner.style.animationDuration = '60s';
-    }
+    inner.innerHTML = html;
+    if (bg) box.style.background = bg;
+    TV.id('ticker-dot').style.background = accent;
+    TV.addClass(box, 'is-on');
   }
 
-  // نمایش اولین popup
-  if (popups.length) {
-    showPopup(popups[0]);
-  } else if (banners.length) {
-    showBanner(banners[0]);
-  }
-}
+  /* ── منو ───────────────────────────────────────────────────────── */
+  function loadMenu() {
+    if (!IPTV_MENU_ID) { noMenu(); return; }
 
-const MSG_ICONS = {welcome:'🌟',info:'💡',urgent:'⚠️',promo:'🎁',custom:'📢'};
-const MSG_COLORS= {welcome:'#22c55e',info:'#3b82f6',urgent:'#ef4444',promo:'#f59e0b',custom:'#8b5cf6'};
-
-function showBanner(msg) {
-  const col = MSG_COLORS[msg.msg_type] || '#3b82f6';
-  const inner = document.getElementById('msg-banner-inner');
-  inner.style.background = col + '22';
-  inner.style.border      = `1px solid ${col}44`;
-  document.getElementById('mb-icon').textContent   = MSG_ICONS[msg.msg_type] || '💡';
-  const titleEl = document.getElementById('mb-title');
-  if (msg.title) { titleEl.textContent = msg.title; titleEl.style.display = 'block'; }
-  else            { titleEl.style.display = 'none'; }
-  document.getElementById('mb-body').textContent = msg.body;
-  document.getElementById('msg-banner').classList.add('visible');
-  bannerTimer = setTimeout(() => dismissBanner(), 12000);
-  bannerDismissed.add(msg.id);
-}
-
-function dismissBanner() {
-  clearTimeout(bannerTimer);
-  document.getElementById('msg-banner').classList.remove('visible');
-}
-
-function showPopup(msg) {
-  document.getElementById('mp-icon').textContent  = MSG_ICONS[msg.msg_type] || '💡';
-  document.getElementById('mp-title').textContent = msg.title || '';
-  document.getElementById('mp-body').textContent  = msg.body;
-  const card = document.querySelector('#msg-popup .mp-card');
-  const col  = MSG_COLORS[msg.msg_type] || 'var(--accent)';
-  card.style.borderColor = col + '44';
-  const icon = document.getElementById('mp-icon');
-  icon.style.textShadow  = `0 0 30px ${col}`;
-  document.getElementById('msg-popup').classList.add('visible');
-  // auto-dismiss بعد از ۳۰ ثانیه
-  setTimeout(dismissPopup, 30000);
-  popupDismissed.add(msg.id);
-}
-
-function dismissPopup() {
-  document.getElementById('msg-popup').classList.remove('visible');
-}
-
-// ══════════════════════════════════════════════════════════════
-//  Heartbeat
-// ══════════════════════════════════════════════════════════════
-// فاصله‌ی heartbeat را سرور تعیین می‌کند. در هتل بزرگ، ۳۰۰ تلویزیون با
-// فاصله‌ی ثابت ۱۵ ثانیه ۲۰ درخواست در ثانیه می‌سازند؛ با این کار مدیر
-// می‌تواند بار را از .env کم کند بدون اینکه اپ تلویزیون‌ها عوض شود.
-let hbTimer = null;
-
-function scheduleHeartbeat(seconds) {
-  const ms = Math.max(10, Math.min(300, Number(seconds) || 30)) * 1000;
-  clearTimeout(hbTimer);
-  hbTimer = setTimeout(heartbeat, ms);
-}
-
-async function heartbeat() {
-  let next = 30;
-  try {
-    const r = await fetch(`${SERVER_URL}/api/v1/screens/${SCREEN_CODE}/heartbeat`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ version:'2.0', screen_type:'iptv', platform:PLATFORM }),
-    });
-    const d = await r.json();
-    if (d.data?.sync_interval) next = d.data.sync_interval;
-
-    (d.data?.commands || []).forEach(cmd => {
-      // صف جدید کلید cmd دارد، پرچم‌های قدیمی کلید command
-      const name = cmd.cmd || cmd.command;
-      if (name==='reload'||name==='refresh') { clearTimeout(autoTimer); loadMenu(); }
-      if (name==='reboot') window.location.reload();
-      if (name==='open_url' && cmd.payload?.url) window.location.href = cmd.payload.url;
-
-      // گزارش اجرا، تا در پنل معلوم شود فرمان واقعا رسید
-      if (cmd.id) {
-        fetch(`${SERVER_URL}/api/v1/device/${SCREEN_CODE}/ack`, {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({ id: cmd.id, ok: true }),
-        }).catch(()=>{});
+    TV.get(ORIGIN + '/api/v1/player/iptv-menu/' + IPTV_MENU_ID, function (err, d) {
+      if (err || !d || !d.success || !d.data || !d.data.items || !d.data.items.length) {
+        if (err) {
+          /* شبکه قطع است — دوباره تلاش کن، ولی صفحه‌ی سیاه نگذار */
+          TV.fail('ارتباط با سرور برقرار نشد', 'تلاش دوباره تا چند لحظه دیگر');
+          setTimeout(loadMenu, 10000);
+        } else {
+          noMenu();
+        }
+        return;
       }
+      items = d.data.items;
+      applyAppearance(d.data);
+      buildGrid();
+      showStage();
     });
-  } catch(_) {
-    // سرور در دسترس نیست — کندتر تلاش کن تا وقتی برگشت، ۳۰۰ تلویزیون
-    // همزمان به آن هجوم نیاورند
-    next = 60;
   }
-  scheduleHeartbeat(next);
-}
 
-// ══════════════════════════════════════════════════════════════
-//  WebSocket
-// ══════════════════════════════════════════════════════════════
-function connectWS() {
-  try {
-    const ws = new WebSocket(`ws://${location.hostname}:${WS_PORT}`);
-    ws.onopen    = ()=> ws.send(JSON.stringify({type:'subscribe',channel:`screen_${SCREEN_CODE}`}));
-    ws.onmessage = e => {
+  function noMenu() {
+    TV.fail('منویی تنظیم نشده',
+            'از پنل مدیریت، برای این صفحه یک منوی IPTV انتخاب کنید' +
+            ' · کد صفحه ' + SCREEN_CODE);
+    setTimeout(loadMenu, 30000);
+  }
+
+  function buildGrid() {
+    var grid = TV.id('grid'), html = '', i, it, rgb;
+    for (i = 0; i < items.length; i++) {
+      it  = items[i];
+      rgb = hexRgb(it.color, accentRgb);
+      html +=
+        '<div class="tv-tile" data-idx="' + i + '">' +
+          '<div class="tv-tile-icon" style="background:rgba(' + rgb + ',.18);' +
+               'border:2px solid rgba(' + rgb + ',.34)">' +
+            '<i class="' + TV.esc(it.icon || 'fas fa-tv') + '"' +
+               ' style="color:' + TV.esc(it.color || accent) + '"></i>' +
+          '</div>' +
+          '<div class="tv-tile-label">' + TV.esc(it.label) + '</div>' +
+        '</div>';
+    }
+    grid.innerHTML = html;
+    tiles = TV.all('.tv-tile', grid);
+
+    /* کلیک برای نمایشگر لمسی لابی. روی تلویزیون معمولی اتفاق نمی‌افتد. */
+    for (i = 0; i < tiles.length; i++) {
+      (function (idx) {
+        TV.on(tiles[idx], 'click', function () { select(idx); });
+      })(i);
+    }
+  }
+
+  function showStage() {
+    TV.ready();
+    TV.show(TV.id('stage'));
+    focus(0);
+    TV.startClock(TV.id('clock-time'), true);
+    scheduleAutoPlay();
+  }
+
+  /* اولین آیتمی که آدرس دارد بعد از ۸ ثانیه خودش پخش می‌شود، تا
+     اگر مهمان ریموت دست نگرفت، تلویزیون روی منوی ساکن نماند. */
+  function scheduleAutoPlay() {
+    clearTimeout(autoTimer);
+    var i;
+    for (i = 0; i < items.length; i++) {
+      if (items[i].target_url) {
+        autoTimer = setTimeout((function (idx) {
+          return function () { select(idx); };
+        })(i), 8000);
+        return;
+      }
+    }
+  }
+
+  /* ── فوکوس ─────────────────────────────────────────────────────── */
+  function focus(idx) {
+    if (!tiles.length) return;
+    if (idx < 0) idx = 0;
+    if (idx >= tiles.length) idx = tiles.length - 1;
+    var i;
+    for (i = 0; i < tiles.length; i++) {
+      TV.toggleClass(tiles[i], 'is-focused', i === idx);
+    }
+    focusIdx = idx;
+  }
+
+  /* ── پخش ───────────────────────────────────────────────────────── */
+  function select(idx) {
+    clearTimeout(autoTimer);
+    var it = items[idx];
+    if (!it) return;
+
+    /* «اتصال دستگاه» محتوا نیست — صفحه‌ی خودش را باز می‌کند.
+       بدون این، کاشی به شاخه‌ی ماژول می‌افتاد و iframe خالی می‌ساخت. */
+    if (it.type === 'input' || it.type === 'hdmi') { openInputs(); return; }
+
+    play(it);
+  }
+
+  function play(it) {
+    playing = true;
+    TV.hide(TV.id('stage'));
+
+    TV.text(TV.id('back-label'), it.label || 'بازگشت');
+    TV.addClass(TV.id('back-btn'), 'is-on');
+
+    destroyHls();
+    var host = TV.id('stage-player');
+    host.innerHTML = '';
+    TV.addClass(host, 'is-on');
+
+    var src = it.target_url || '';
+
+    if (!src) {
+      iframe(ORIGIN + '/player/module/' + encodeURIComponent(it.type || ''), host);
+    } else if (/\.m3u8(\?|$)/i.test(src)) {
+      hls(src, host);
+    } else if (src.indexOf('udp://') === 0 || src.indexOf('rtp://') === 0 ||
+               src.indexOf('rtsp://') === 0) {
+      /* multicast مستقیم.
+         تلویزیون‌های هتلی LG (webOS) و Samsung (Tizen) در تست میدانی
+         udp:// را با پخش‌کننده‌ی بومی خودشان باز کردند، پس آدرس را به
+         تگ video می‌دهیم. روی مرورگر معمولی این کار نمی‌کند و onerror
+         پیام روشن نشان می‌دهد — نه پلیر مرده و نه صفحه‌ی سیاه. */
+      multicast(src, host);
+    } else if (/\.(mp4|webm|m4v|mov)(\?|$)/i.test(src)) {
+      video(src, host);
+    } else {
+      iframe(src, host);
+    }
+
+    /* بازگشت خودکار بعد از ۵ دقیقه تا تلویزیون روی یک صفحه گیر نکند */
+    autoTimer = setTimeout(back, 300000);
+  }
+
+  function mkVideo(loop) {
+    var v = document.createElement('video');
+    v.autoplay = true;
+    v.muted    = true;      /* بدون این، پخش خودکار روی webOS رد می‌شود */
+    v.loop     = !!loop;
+    v.setAttribute('playsinline', 'playsinline');
+    v.setAttribute('webkit-playsinline', 'webkit-playsinline');
+    return v;
+  }
+
+  function hls(src, host) {
+    var v = mkVideo(false);
+    host.appendChild(v);
+
+    /* ترتیب مهم است: تلویزیون‌هایی که HLS بومی دارند باید از آن استفاده
+       کنند، چون hls.js روی SoC ضعیف کند است و MediaSource بعضی
+       نسخه‌های webOS ناقص است. */
+    if (v.canPlayType && v.canPlayType('application/vnd.apple.mpegurl')) {
+      v.src = src;
+      v.onerror = back;
+      return;
+    }
+    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+      hlsInst = new Hls({ enableWorker: false });   /* worker روی تلویزیون ناپایدار است */
+      hlsInst.loadSource(src);
+      hlsInst.attachMedia(v);
+      hlsInst.on(Hls.Events.ERROR, function (evt, data) {
+        if (data && data.fatal) back();
+      });
+      return;
+    }
+    host.innerHTML = centerMsg('این کانال پخش نشد',
+      'مرورگر این تلویزیون از این قالب پشتیبانی نمی‌کند.');
+    setTimeout(back, 8000);
+  }
+
+  /* ── multicast مستقیم (udp / rtp / rtsp) ──────────────────────────
+     تلویزیون خودش سوکت را باز می‌کند و سرور هیچ باری نمی‌گیرد — کل
+     دلیل وجود multicast همین است. اگر رله (udpxy) وسط بود، سرور در
+     هتل ۳۰۰ اتاقی باید ۳۰۰ جریان unicast می‌ساخت.
+
+     شرط شبکه: روی VLAN مربوط به IPTV باید IGMP snooping روشن و دقیقا
+     یک querier فعال باشد. بدون querier، جدول عضویت خالی می‌ماند و
+     سوییچ یا هیچ‌چیز پخش نمی‌کند یا به همه‌ی پورت‌ها flood می‌کند. */
+  function multicast(src, host) {
+    var v = mkVideo(true);
+    var settled = false;
+
+    function giveUp() {
+      if (settled) return;
+      settled = true;
+      host.innerHTML = centerMsg('این کانال از این دستگاه باز نشد',
+        'کانال روی شبکه multicast پخش می‌شود و پخش‌کننده‌ی این دستگاه ' +
+        'آن را نمی‌خواند. از تیونر خود تلویزیون ببینید.');
+      setTimeout(back, 8000);
+    }
+
+    v.onerror = giveUp;
+    /* اگر پخش شروع شد دیگر نگهبان را اجرا نکن */
+    v.onplaying = function () { settled = true; };
+
+    /* بعضی پخش‌کننده‌ها روی آدرس پشتیبانی‌نشده نه خطا می‌دهند نه پخش
+       می‌کنند و صفحه برای همیشه سیاه می‌ماند؛ این نگهبان لازم است. */
+    setTimeout(function () {
+      if (!settled && (!v.readyState || v.readyState < 2)) giveUp();
+    }, 12000);
+
+    v.src = src;
+    host.appendChild(v);
+  }
+
+  function video(src, host) {
+    var v = mkVideo(false);
+    v.src = src;
+    v.onended = back;
+    v.onerror = back;
+    host.appendChild(v);
+  }
+
+  function iframe(src, host) {
+    var f = document.createElement('iframe');
+    f.setAttribute('allow', 'autoplay; fullscreen');
+    f.src = src;
+    host.appendChild(f);
+  }
+
+  function centerMsg(title, text) {
+    return '<div class="tv-center" style="position:absolute">' +
+             '<div class="tv-center-title">' + TV.esc(title) + '</div>' +
+             '<div class="tv-center-text">' + TV.esc(text) + '</div>' +
+           '</div>';
+  }
+
+  function destroyHls() {
+    if (!hlsInst) return;
+    try { hlsInst.destroy(); } catch (e) {}
+    hlsInst = null;
+  }
+
+  function back() {
+    clearTimeout(autoTimer);
+    destroyHls();
+    playing = false;
+    var host = TV.id('stage-player');
+    TV.removeClass(host, 'is-on');
+    host.innerHTML = '';
+    TV.removeClass(TV.id('back-btn'), 'is-on');
+    TV.show(TV.id('stage'));
+    focus(focusIdx);
+    scheduleAutoPlay();
+  }
+
+  TV.on(TV.id('back-btn'), 'click', back);
+
+  /* ── ریموت ─────────────────────────────────────────────────────── */
+  TV.on(document, 'keydown', function (e) {
+    var k = TV.keyName(e);
+    if (!k) return;
+
+    /* صفحه‌ی اتصال دستگاه روی بقیه است، پس اول او. */
+    if (inputsOpen) {
+      if (k === 'BACK' || k === 'EXIT') { closeInputs(); if (e.preventDefault) e.preventDefault(); return; }
+      if (k === 'OK') { pickInput(inputFocus); if (e.preventDefault) e.preventDefault(); return; }
+      if (k === 'LEFT' || k === 'RIGHT' || k === 'UP' || k === 'DOWN') {
+        var ni = TV.findNeighbor(inputTiles, inputFocus, k);
+        if (ni >= 0) focusInput(ni);
+        if (e.preventDefault) e.preventDefault();
+      }
+      return;
+    }
+
+    if (playing) {
+      if (k === 'BACK' || k === 'EXIT') { back(); if (e.preventDefault) e.preventDefault(); }
+      return;
+    }
+    if (!tiles.length) return;
+
+    if (k === 'OK') { select(focusIdx); if (e.preventDefault) e.preventDefault(); return; }
+
+    if (k === 'LEFT' || k === 'RIGHT' || k === 'UP' || k === 'DOWN') {
+      /* همسایه بر اساس مکان واقعی روی صفحه انتخاب می‌شود، نه با
+         حدسِ «تعداد ستون». با wrap شدن کاشی‌ها، حدس ستون غلط است
+         و «پایین» مهمان را به کاشی نامربوط می‌برد. */
+      var n = TV.findNeighbor(tiles, focusIdx, k);
+      if (n >= 0) focus(n);
+      if (e.preventDefault) e.preventDefault();
+      return;
+    }
+
+    if (k === 'BACK') { dismissPopup(); dismissBanner(); }
+  });
+
+  /* ── اتصال دستگاه مهمان ───────────────────────────────────────────
+     مهمان می‌خواهد گوشی یا کنسول بازی‌اش را وصل کند. چون منوی خود
+     تلویزیون در اتاق قفل است، تنها راهش همین صفحه است.
+
+     هر پلتفرم مسیر خودش را دارد و TV.inputs آن را پنهان می‌کند. اگر
+     دستگاه اصلا نتواند (مثل Mi TV Stick که پورت HDMI ورودی ندارد،
+     یا وقتی صفحه‌ی وب مجوز لازم را ندارد) صادقانه گفته می‌شود — نه
+     دکمه‌ی بی‌اثر. */
+  var inputList  = [];
+  var inputTiles = [];
+  var inputFocus = 0;
+  var inputsOpen = false;
+
+  function openInputs() {
+    inputsOpen = true;
+    clearTimeout(autoTimer);
+    TV.addClass(TV.id('inputs-screen'), 'is-on');
+    TV.text(TV.id('inputs-sub'), 'در حال بررسی…');
+    TV.id('inputs-grid').innerHTML = '';
+
+    if (!TV.inputs.supported()) {
+      TV.text(TV.id('inputs-sub'),
+        'این تلویزیون از تعویض ورودی به‌صورت خودکار پشتیبانی نمی‌کند. ' +
+        'برای اتصال دستگاه، از دکمه‌ی ورودی روی ریموت استفاده کنید ' +
+        'یا با پذیرش تماس بگیرید.');
+      return;
+    }
+
+    TV.inputs.list(function (err, list) {
+      if (err || !list || !list.length) {
+        TV.text(TV.id('inputs-sub'),
+          'ورودی قابل استفاده‌ای پیدا نشد. اگر دستگاه را تازه وصل ' +
+          'کرده‌اید چند لحظه صبر کنید و دوباره امتحان کنید.');
+        return;
+      }
+      inputList = list;
+      TV.text(TV.id('inputs-sub'),
+        'دستگاه خود را به یکی از پورت‌های پشت تلویزیون وصل کنید، ' +
+        'سپس همان پورت را از اینجا انتخاب کنید.');
+      buildInputs();
+    });
+  }
+
+  function buildInputs() {
+    var html = '', i, it, state;
+    for (i = 0; i < inputList.length; i++) {
+      it = inputList[i];
+
+      /* connected === null یعنی نمی‌دانیم (روی webOS از مسیر اپ‌ها
+         قابل تشخیص نیست). آنجا هیچ ادعایی نمی‌کنیم. */
+      if (it.connected === true)       state = '<div class="tv-input-state is-on">دستگاه وصل است</div>';
+      else if (it.connected === false) state = '<div class="tv-input-state is-off">چیزی وصل نیست</div>';
+      else                             state = '';
+
+      html +=
+        '<div class="tv-input" data-idx="' + i + '">' +
+          '<div class="tv-input-icon">' +
+            (it.type === 'HDMI' ? '🔌' : '📺') + '</div>' +
+          '<div class="tv-input-label">' + TV.esc(it.label) + '</div>' +
+          state +
+        '</div>';
+    }
+    TV.id('inputs-grid').innerHTML = html;
+    inputTiles = TV.all('.tv-input', TV.id('inputs-grid'));
+
+    for (i = 0; i < inputTiles.length; i++) {
+      (function (idx) {
+        TV.on(inputTiles[idx], 'click', function () { pickInput(idx); });
+      })(i);
+    }
+    focusInput(0);
+  }
+
+  function focusInput(idx) {
+    if (!inputTiles.length) return;
+    if (idx < 0) idx = 0;
+    if (idx >= inputTiles.length) idx = inputTiles.length - 1;
+    var i;
+    for (i = 0; i < inputTiles.length; i++) {
+      TV.toggleClass(inputTiles[i], 'is-focused', i === idx);
+    }
+    inputFocus = idx;
+  }
+
+  function pickInput(idx) {
+    var it = inputList[idx];
+    if (!it) return;
+    TV.text(TV.id('inputs-sub'), 'در حال تغییر به ' + it.label + '…');
+
+    TV.inputs.switchTo(it, function (err) {
+      if (err) {
+        TV.text(TV.id('inputs-sub'),
+          'تغییر به ' + it.label + ' انجام نشد. از دکمه‌ی ورودی روی ' +
+          'ریموت استفاده کنید یا با پذیرش تماس بگیرید.');
+        return;
+      }
+      /* اگر موفق شد، تلویزیون از این صفحه بیرون می‌رود و چیزی برای
+         نشان‌دادن نمی‌ماند؛ ولی اگر برگشت، صفحه نباید روی «در حال
+         تغییر…» گیر کند. */
+      closeInputs();
+    });
+  }
+
+  function closeInputs() {
+    inputsOpen = false;
+    TV.removeClass(TV.id('inputs-screen'), 'is-on');
+    focus(focusIdx);
+    scheduleAutoPlay();
+  }
+
+  TV.on(TV.id('inputs-back'), 'click', closeInputs);
+
+  /* ── اتاق و پیام‌ها ────────────────────────────────────────────── */
+  function loadRoom() {
+    if (!SCREEN_CODE) return;
+    TV.get(ORIGIN + '/api/v1/player/room-info/' + SCREEN_CODE, function (err, d) {
+      if (err || !d || !d.success || !d.data) return;
+      var info = d.data;
+
+      var badge = TV.id('room-badge');
+      if (info.room_number) {
+        TV.text(TV.id('rb-number'), 'اتاق ' + info.room_number);
+        TV.text(TV.id('rb-guest'), info.guest_name || info.room_name || '');
+        TV.addClass(badge, 'is-on');
+      } else {
+        TV.removeClass(badge, 'is-on');
+      }
+
+      if (info.guest_name) {
+        TV.text(TV.id('welcome-title'), 'خوش آمدید، ' + info.guest_name);
+      }
+
+      if (info.messages && info.messages.length) showMessages(info.messages);
+    });
+  }
+
+  var MSG_ICON = { welcome: '🌟', info: '💡', urgent: '⚠️', promo: '🎁', custom: '📢' };
+  var MSG_COLOR = { welcome: '#32d17a', info: '#4098db', urgent: '#ff5f57',
+                    promo: '#f5b13d', custom: '#a78bfa' };
+
+  function showMessages(msgs) {
+    var banners = [], popups = [], tickers = [], i, m;
+    for (i = 0; i < msgs.length; i++) {
+      m = msgs[i];
+      if (m.display_mode === 'ticker') tickers.push(m.title ? m.title + '؛ ' + m.body : m.body);
+      else if (m.display_mode === 'popup' && !seenPopup[m.id])  popups.push(m);
+      else if (m.display_mode === 'banner' && !seenBanner[m.id]) banners.push(m);
+    }
+    if (tickers.length) setTicker(tickers);
+    if (popups.length)       showPopup(popups[0]);
+    else if (banners.length) showBanner(banners[0]);
+  }
+
+  var bannerTimer = null;
+
+  function showBanner(m) {
+    var col = MSG_COLOR[m.msg_type] || '#4098db';
+    var box = TV.id('msg-banner-inner');
+    box.style.background  = col + '22';
+    box.style.borderColor = col + '55';
+    TV.text(TV.id('mb-icon'), MSG_ICON[m.msg_type] || '💡');
+
+    var t = TV.id('mb-title');
+    if (m.title) { TV.text(t, m.title); t.style.display = 'block'; }
+    else         { t.style.display = 'none'; }
+
+    TV.text(TV.id('mb-body'), m.body);
+    TV.addClass(TV.id('msg-banner'), 'is-on');
+    seenBanner[m.id] = 1;
+
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(dismissBanner, 12000);
+  }
+
+  function dismissBanner() {
+    clearTimeout(bannerTimer);
+    TV.removeClass(TV.id('msg-banner'), 'is-on');
+  }
+
+  var popupTimer = null;
+
+  function showPopup(m) {
+    var col = MSG_COLOR[m.msg_type] || '#4098db';
+    TV.text(TV.id('mp-icon'), MSG_ICON[m.msg_type] || '💡');
+    TV.text(TV.id('mp-title'), m.title || '');
+    TV.text(TV.id('mp-body'), m.body);
+    TV.id('mp-card').style.borderColor = col + '55';
+    TV.addClass(TV.id('msg-popup'), 'is-on');
+    seenPopup[m.id] = 1;
+
+    clearTimeout(popupTimer);
+    popupTimer = setTimeout(dismissPopup, 30000);
+  }
+
+  function dismissPopup() {
+    clearTimeout(popupTimer);
+    TV.removeClass(TV.id('msg-popup'), 'is-on');
+  }
+
+  TV.on(TV.id('mb-close'), 'click', dismissBanner);
+  TV.on(TV.id('mp-close'), 'click', dismissPopup);
+
+  /* ── پلتفرم ────────────────────────────────────────────────────── */
+  var PLATFORM = (function () {
+    var ua = (navigator.userAgent || '').toLowerCase();
+    if (ua.indexOf('webos') !== -1 || ua.indexOf('web0s') !== -1) return 'webos';
+    if (ua.indexOf('tizen') !== -1 || ua.indexOf('smart-tv') !== -1) return 'tizen';
+    if (ua.indexOf('android') !== -1) return 'android';
+    if (ua.indexOf('electron') !== -1) return 'windows';
+    return 'browser';
+  })();
+
+  /* ── ضربان ─────────────────────────────────────────────────────
+     فاصله را سرور تعیین می‌کند: ۳۰۰ تلویزیون با فاصله‌ی ثابت ۱۵ ثانیه
+     ۲۰ درخواست در ثانیه می‌سازند و مدیر باید بتواند بدون تغییر اپِ
+     تلویزیون‌ها بار را کم کند. */
+  var hbTimer = null;
+
+  function scheduleHeartbeat(sec) {
+    var s = Number(sec);
+    if (!s || isNaN(s)) s = 30;
+    if (s < 10) s = 10;
+    if (s > 300) s = 300;
+    clearTimeout(hbTimer);
+    hbTimer = setTimeout(heartbeat, s * 1000);
+  }
+
+  function heartbeat() {
+    TV.post(ORIGIN + '/api/v1/screens/' + SCREEN_CODE + '/heartbeat',
+      { version: '2.0', screen_type: 'iptv', platform: PLATFORM },
+      function (err, d) {
+        if (err || !d || !d.data) {
+          /* سرور در دسترس نیست — کندتر تلاش کن تا وقتی برگشت،
+             ۳۰۰ تلویزیون همزمان به آن هجوم نیاورند. */
+          scheduleHeartbeat(60);
+          return;
+        }
+        runCommands(d.data.commands);
+        scheduleHeartbeat(d.data.sync_interval || 30);
+      });
+  }
+
+  /* فرمان‌های مخصوص پورتال. بقیه (open_url، clear_cache، volume،
+     message، reboot) را TV.runCommands می‌گیرد — یک‌جا برای همه‌ی
+     صفحه‌ها، تا دوباره از هم دور نیفتند. ack هم آنجاست. */
+  function portalCommand(name, p) {
+    if (name === 'reload' || name === 'refresh') {
+      clearTimeout(autoTimer);
+      loadMenu();
+      return true;
+    }
+
+    /* تعویض کانال از پنل: اگر آیتمی با همان شماره در منو باشد، بازش
+       کن. DeviceService این فرمان را برای webOS و Tizen مجاز می‌داند
+       ولی تا امروز هیچ‌جا اجرا نمی‌شد. */
+    if (name === 'channel') {
+      var no = Number(p.number || p.channel);
+      if (!no || isNaN(no)) return true;
+      var i;
+      for (i = 0; i < items.length; i++) {
+        if (Number(items[i].channel_no) === no) { select(i); return true; }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function runCommands(list) {
+    TV.runCommands(list, ORIGIN, SCREEN_CODE, portalCommand);
+  }
+
+  /* ── WebSocket ─────────────────────────────────────────────────── */
+  function connectWS() {
+    if (typeof WebSocket === 'undefined') return;   /* Tizen 2.3 گاهی ندارد */
+    var ws;
+    try {
+      ws = new WebSocket('ws://' + location.hostname + ':' + WS_PORT);
+    } catch (e) { return; }
+
+    ws.onopen = function () {
       try {
-        const m = JSON.parse(e.data);
-        if (m.type==='reload') loadMenu();
-        if (m.type==='reboot') location.reload();
-      } catch(_) {}
+        ws.send(JSON.stringify({ type: 'subscribe', channel: 'screen_' + SCREEN_CODE }));
+      } catch (e2) {}
     };
-    ws.onclose = ()=> setTimeout(connectWS, 5000);
-    ws.onerror = ()=> ws.close();
-  } catch(_) {}
-}
-
-// ══════════════════════════════════════════════════════════════
-//  فعال‌سازی
-// ══════════════════════════════════════════════════════════════
-window.doActivate = async function() {
-  const code = document.getElementById('actCode')?.value?.trim()?.toUpperCase() || '';
-  const err  = document.getElementById('err-msg');
-  if (code.length !== 6) { err.textContent = 'کد باید ۶ کاراکتر باشد'; return; }
-  err.textContent = 'در حال فعال‌سازی...'; err.style.color = '#94a3b8';
-  try {
-    const r = await fetch(`${SERVER_URL}/player/activate`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({activation_code:code, screen_code:SCREEN_CODE}),
-    });
-    const d = await r.json();
-    if (d.success) {
-      err.style.color = '#22c55e';
-      err.textContent = '✅ فعال‌سازی موفق';
-      setTimeout(() => location.reload(), 1000);
-    } else {
-      err.style.color = '#ef4444';
-      err.textContent = d.message || 'کد نامعتبر است';
-    }
-  } catch(e) {
-    err.style.color = '#ef4444';
-    err.textContent = 'خطا در اتصال به سرور';
+    ws.onmessage = function (ev) {
+      var m;
+      try { m = JSON.parse(ev.data); } catch (e3) { return; }
+      if (m.type === 'reload') loadMenu();
+      if (m.type === 'reboot') location.reload();
+    };
+    ws.onclose = function () { setTimeout(connectWS, 5000); };
+    ws.onerror = function () { try { ws.close(); } catch (e4) {} };
   }
-};
 
-// ══════════════════════════════════════════════════════════════
-//  Helpers
-// ══════════════════════════════════════════════════════════════
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ══════════════════════════════════════════════════════════════
-//  Init
-// ══════════════════════════════════════════════════════════════
-<?php if (($screen['status'] ?? '') === 'active'): ?>
-// پلتفرم را برای پنل مدیریت گزارش می‌کنیم تا قابلیت‌های درست نشان داده شود
-const PLATFORM = (() => {
-  const ua = (navigator.userAgent || '').toLowerCase();
-  if (ua.includes('webos') || ua.includes('web0s')) return 'webos';
-  if (ua.includes('tizen') || ua.includes('smart-tv')) return 'tizen';
-  if (ua.includes('android')) return 'android';
-  if (ua.includes('electron')) return 'windows';
-  return 'browser';
-})();
-
-document.addEventListener('DOMContentLoaded', () => {
+  /* ── شروع ──────────────────────────────────────────────────────── */
   loadMenu();
-  loadRoomInfo();
+  loadRoom();
   connectWS();
 
-  // پخش تصادفی اولین درخواست‌ها: بدون این، بعد از قطعی برق کل هتل
-  // همزمان بوت می‌شود و ۳۰۰ تلویزیون در یک لحظه به سرور می‌زنند.
-  const jitter = Math.floor(Math.random() * 10000);
+  /* پخش تصادفی اولین درخواست‌ها: بدون این، بعد از قطعی برقِ هتل کل
+     ۳۰۰ تلویزیون همزمان بوت می‌شوند و در یک لحظه به سرور می‌زنند. */
+  var jitter = Math.floor(Math.random() * 10000);
   setTimeout(heartbeat, jitter);
-  setInterval(loadRoomInfo, 30000 + jitter);  // بررسی پیام‌های جدید
-});
+  setInterval(loadRoom, 30000 + jitter);
+
 <?php endif; ?>
+})();
 </script>
 </body>
 </html>

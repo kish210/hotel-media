@@ -38,7 +38,7 @@ $CMD_LABELS = [
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
   <div style="display:flex;align-items:center;gap:12px;">
     <h1 style="font-size:20px;font-weight:800;color:#fff;">
-      <i class="fas fa-tv" style="color:#38bdf8;margin-left:10px;"></i>مدیریت تلویزیون‌ها
+      <i class="fas fa-tv" style="color:#4098db;margin-left:10px;"></i>مدیریت تلویزیون‌ها
     </h1>
     <span id="liveCount" style="font-size:11px;color:#22c55e;background:rgba(34,197,94,.1);padding:3px 11px;border-radius:10px;">
       <?= (int)($stats['online'] ?? 0) ?> از <?= (int)($stats['total'] ?? 0) ?> آنلاین
@@ -58,10 +58,10 @@ $CMD_LABELS = [
 </div>
 
 <!-- آدرس پورتال — مهم‌ترین چیزی که تکنسین لازم دارد -->
-<div style="background:linear-gradient(90deg,rgba(56,189,248,.10),rgba(56,189,248,.02));border:1px solid rgba(56,189,248,.25);border-radius:14px;padding:16px;margin-bottom:20px;">
+<div style="background:linear-gradient(90deg,rgba(64,152,219,.10),rgba(64,152,219,.02));border:1px solid rgba(64,152,219,.25);border-radius:14px;padding:16px;margin-bottom:20px;">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
     <div>
-      <div style="font-size:12px;color:#38bdf8;font-weight:700;margin-bottom:5px;">
+      <div style="font-size:12px;color:#4098db;font-weight:700;margin-bottom:5px;">
         <i class="fas fa-link text-xs ml-1"></i>آدرس پورتال — همین را در منوی مخفی <b>همه‌ی</b> تلویزیون‌ها وارد کنید
       </div>
       <div id="portalUrl" style="font-size:20px;font-family:monospace;color:#fff;direction:ltr;letter-spacing:1px;">
@@ -86,7 +86,7 @@ $CMD_LABELS = [
       $platCounts[$p] = ($platCounts[$p] ?? 0) + 1;
   }
   $cards = [
-    ['کل دستگاه‌ها', (int)($stats['total'] ?? 0),   'tv',            '#38bdf8'],
+    ['کل دستگاه‌ها', (int)($stats['total'] ?? 0),   'tv',            '#4098db'],
     ['آنلاین',       (int)($stats['online'] ?? 0),  'circle-check',  '#22c55e'],
     ['آفلاین',       (int)($stats['offline'] ?? 0), 'circle-xmark',  '#ef4444'],
     ['منتظر تایید',  (int)($stats['pending'] ?? 0), 'hourglass-half','#f59e0b'],
@@ -215,9 +215,9 @@ $CMD_LABELS = [
       <button onclick="closeModal('installModal')" class="btn-ghost text-xs px-2"><i class="fas fa-times"></i></button>
     </div>
 
-    <div style="background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);border-radius:10px;padding:12px;margin-bottom:16px;">
+    <div style="background:rgba(64,152,219,.08);border:1px solid rgba(64,152,219,.2);border-radius:10px;padding:12px;margin-bottom:16px;">
       <div style="font-size:11px;color:#64748b;margin-bottom:4px;">آدرسی که باید وارد شود (برای همه یکسان):</div>
-      <div style="font-size:17px;font-family:monospace;color:#38bdf8;direction:ltr;"><?= htmlspecialchars($portalUrl) ?></div>
+      <div style="font-size:17px;font-family:monospace;color:#4098db;direction:ltr;"><?= htmlspecialchars($portalUrl) ?></div>
     </div>
 
     <!-- LG -->
@@ -256,7 +256,7 @@ $CMD_LABELS = [
     <div class="guide">
       <h4 style="color:#22c55e;"><i class="fas fa-android ml-2"></i>Android TV</h4>
       <ol>
-        <li>فایل APK را از بخش <a href="/admin/app" style="color:#38bdf8;">به‌روزرسانی اپ</a> روی دستگاه نصب کنید.</li>
+        <li>فایل APK را از بخش <a href="/admin/app" style="color:#4098db;">به‌روزرسانی اپ</a> روی دستگاه نصب کنید.</li>
         <li>در اولین اجرا، آدرس سرور را وارد کنید: <code><?= htmlspecialchars($portalUrl) ?></code></li>
         <li>اپ خودش را ثبت می‌کند. روی Android TV همه‌ی فرمان‌ها (ریبوت، صدا، روشنایی) در دسترس است.</li>
       </ol>
@@ -302,7 +302,7 @@ $CMD_LABELS = [
       </select>
       <button type="submit" class="btn-primary text-xs" style="padding:8px 14px;">ساخت</button>
       <label style="grid-column:1/-1;font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:7px;cursor:pointer;">
-        <input type="checkbox" id="tAuto" checked style="accent-color:#38bdf8;">
+        <input type="checkbox" id="tAuto" checked style="accent-color:#4098db;">
         دستگاه‌های تازه بدون نیاز به تایید، فعال شوند
       </label>
     </form>
@@ -317,7 +317,7 @@ $CMD_LABELS = [
             <?= $t['group_name'] ? ' · ' . htmlspecialchars((string)$t['group_name']) : '' ?>
           </div>
         </div>
-        <code style="font-size:10px;color:#38bdf8;direction:ltr;background:rgba(0,0,0,.25);padding:4px 9px;border-radius:6px;">
+        <code style="font-size:10px;color:#4098db;direction:ltr;background:rgba(0,0,0,.25);padding:4px 9px;border-radius:6px;">
           /tv?t=<?= htmlspecialchars(substr((string)$t['token'], 0, 12)) ?>…
         </code>
         <button onclick="delToken(<?= (int)$t['id'] ?>)" class="btn-ghost text-xs px-2" style="color:#ef4444;">
@@ -379,7 +379,7 @@ $CMD_LABELS = [
 
 <style>
 .pf{font-size:11px;padding:5px 12px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:#94a3b8;cursor:pointer;}
-.pf.active{background:rgba(56,189,248,.15);border-color:rgba(56,189,248,.4);color:#7dd3fc;}
+.pf.active{background:rgba(64,152,219,.15);border-color:rgba(64,152,219,.4);color:#7dd3fc;}
 .dev.hide{display:none;}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;}
 .modal-box{background:#0f172a;border:1px solid rgba(255,255,255,.1);border-radius:16px;width:100%;max-height:88vh;overflow:auto;padding:20px;}
@@ -520,8 +520,8 @@ async function history(id) {
          <span style="color:#475569;">${esc(e.created_at)}</span>
        </div>`).join('');
     document.getElementById('histBody').innerHTML =
-      `<h4 style="font-size:12px;color:#38bdf8;margin:8px 0;">فرمان‌ها</h4>${cmds || '<div style="color:#475569;font-size:11px;padding:6px;">موردی نیست</div>'}
-       <h4 style="font-size:12px;color:#38bdf8;margin:14px 0 8px;">رویدادها</h4>${evs || '<div style="color:#475569;font-size:11px;padding:6px;">موردی نیست</div>'}`;
+      `<h4 style="font-size:12px;color:#4098db;margin:8px 0;">فرمان‌ها</h4>${cmds || '<div style="color:#475569;font-size:11px;padding:6px;">موردی نیست</div>'}
+       <h4 style="font-size:12px;color:#4098db;margin:14px 0 8px;">رویدادها</h4>${evs || '<div style="color:#475569;font-size:11px;padding:6px;">موردی نیست</div>'}`;
   } catch (e) {
     document.getElementById('histBody').innerHTML = `<div style="color:#f87171;padding:14px;">${esc(e.message)}</div>`;
   }

@@ -13,7 +13,7 @@
       <tr><td colspan="6" class="text-center py-12 text-slate-600"><i class="fas fa-users text-4xl mb-3 block opacity-20"></i>کاربری وجود ندارد</td></tr>
       <?php else: foreach ($users as $u): ?>
       <tr class="table-row border-b border-white/3">
-        <td class="p-3"><div class="flex items-center gap-2"><div style="width:32px;height:32px;background:linear-gradient(135deg,#f97316,#c2570b);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;"><?=mb_substr($u['name'],0,1)?></div><?=e($u['name'])?></div></td>
+        <td class="p-3"><div class="flex items-center gap-2"><div style="width:32px;height:32px;background:linear-gradient(135deg,#1a7ac4,#12558f);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;"><?=mb_substr($u['name'],0,1)?></div><?=e($u['name'])?></div></td>
         <td class="p-3 text-slate-400 font-mono text-xs"><?=e($u['email'])?></td>
         <td class="p-3"><span class="badge-pending px-2 py-0.5 rounded-full text-xs border"><?=e($u['role'])?></span></td>
         <td class="p-3"><span class="<?=$u['is_active']?'badge-online':'badge-offline'?> px-2 py-0.5 rounded-full text-xs border"><?=$u['is_active']?'فعال':'غیرفعال'?></span></td>

@@ -27,8 +27,8 @@ $list = $playlists['data'] ?? $playlists ?? [];
 
     <div class="flex items-start justify-between mb-3">
       <div class="flex items-center gap-3">
-        <div style="width:42px;height:42px;background:rgba(249,115,22,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <i class="fas fa-film" style="color:#f97316;font-size:17px;"></i>
+        <div style="width:42px;height:42px;background:rgba(26,122,196,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fas fa-film" style="color:#1a7ac4;font-size:17px;"></i>
         </div>
         <div>
           <h3 style="font-size:14px;font-weight:700;color:#fff;"><?= e($p['name']) ?></h3>

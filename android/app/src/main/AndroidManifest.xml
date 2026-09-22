@@ -54,6 +54,18 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
             </intent-filter>
+
+            <!-- اپ به‌عنوان صفحه‌ی خانه.
+                 بدون این، مهمان با یک بار زدن دکمه‌ی HOME روی منوی خود
+                 تلویزیون است و به همه‌ی تنظیمات دسترسی دارد.
+                 با Device Owner، KioskManager این را با
+                 addPersistentPreferredActivity پیش‌فرض می‌کند تا
+                 دیالوگ «با کدام برنامه؟» هم نیاید. -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.HOME"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
         </activity>
 
         <!-- OTA Update Service -->
@@ -79,6 +91,27 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+            </intent-filter>
+        </receiver>
+
+        <!-- مدیر دستگاه — شرط لازمِ Device Owner شدن.
+             هتل یک‌بار موقع آماده‌سازی، روی دستگاهِ تازه ریست‌شده و
+             بدون حساب گوگل، این را اجرا می‌کند:
+
+               adb shell dpm set-device-owner \
+                 com.signagecms.player/.kiosk.KioskAdminReceiver
+
+             اگر انجام نشود اپ باز هم کار می‌کند، فقط قفلش ضعیف‌تر
+             است (اندروید موقع ورود به حالت قفل تایید می‌گیرد). -->
+        <receiver
+            android:name=".kiosk.KioskAdminReceiver"
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin"/>
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
             </intent-filter>
         </receiver>
 

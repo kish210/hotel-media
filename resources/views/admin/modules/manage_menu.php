@@ -17,7 +17,7 @@ $catCount       = count($categories);
 <div class="flex items-center justify-between mb-6">
   <div>
     <h1 class="text-xl font-bold text-white flex items-center gap-2">
-      <i class="fas fa-utensils" style="color:#f97316;"></i> منوی رستوران
+      <i class="fas fa-utensils" style="color:#1a7ac4;"></i> منوی رستوران
     </h1>
     <p class="text-sm text-slate-500 mt-1">مدیریت دسته‌بندی‌ها و آیتم‌های منو</p>
   </div>
@@ -34,8 +34,8 @@ $catCount       = count($categories);
 <!-- Stats -->
 <div class="grid grid-cols-3 gap-4 mb-6">
   <div class="stat-card flex items-center gap-4">
-    <div style="width:44px;height:44px;background:rgba(249,115,22,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;">
-      <i class="fas fa-folder" style="color:#f97316;font-size:18px;"></i>
+    <div style="width:44px;height:44px;background:rgba(26,122,196,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+      <i class="fas fa-folder" style="color:#1a7ac4;font-size:18px;"></i>
     </div>
     <div><div class="text-2xl font-bold text-white"><?= $catCount ?></div><div class="text-xs text-slate-500">دسته‌بندی</div></div>
   </div>
@@ -60,16 +60,16 @@ $catCount       = count($categories);
   <div class="card p-0 overflow-hidden">
     <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;">
       <span style="font-size:13px;font-weight:700;color:#fff;">دسته‌بندی‌ها</span>
-      <button onclick="openModal('catModal')" style="width:26px;height:26px;background:rgba(249,115,22,.15);border:none;border-radius:8px;color:#f97316;cursor:pointer;font-size:13px;">
+      <button onclick="openModal('catModal')" style="width:26px;height:26px;background:rgba(26,122,196,.15);border:none;border-radius:8px;color:#1a7ac4;cursor:pointer;font-size:13px;">
         <i class="fas fa-plus"></i>
       </button>
     </div>
     <div id="catList" style="padding:8px;">
       <button class="cat-btn active" data-cat="all" onclick="filterByCat('all',this)"
-        style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;border-radius:10px;cursor:pointer;font-family:Vazirmatn,sans-serif;font-size:13px;font-weight:500;background:rgba(249,115,22,.12);color:#f97316;margin-bottom:2px;text-align:right;">
+        style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;border-radius:10px;cursor:pointer;font-family:Vazirmatn,sans-serif;font-size:13px;font-weight:500;background:rgba(26,122,196,.12);color:#1a7ac4;margin-bottom:2px;text-align:right;">
         <i class="fas fa-th-large" style="width:16px;text-align:center;"></i>
         همه آیتم‌ها
-        <span style="margin-right:auto;background:rgba(249,115,22,.2);color:#f97316;font-size:10px;padding:1px 7px;border-radius:10px;"><?= $totalItems ?></span>
+        <span style="margin-right:auto;background:rgba(26,122,196,.2);color:#1a7ac4;font-size:10px;padding:1px 7px;border-radius:10px;"><?= $totalItems ?></span>
       </button>
       <?php foreach ($categories as $cat): ?>
       <?php $cnt = count($byCategory[$cat['id']] ?? []); ?>
@@ -77,7 +77,7 @@ $catCount       = count($categories);
         style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;border-radius:10px;cursor:pointer;font-family:Vazirmatn,sans-serif;font-size:13px;font-weight:500;background:transparent;color:#94a3b8;margin-bottom:2px;text-align:right;"
         onmouseover="this.style.background='rgba(255,255,255,0.05)'"
         onmouseout="if(!this.classList.contains('active'))this.style.background='transparent'">
-        <i class="<?= e($cat['icon'] ?? 'fas fa-circle') ?>" style="width:16px;text-align:center;color:<?= e($cat['color'] ?? '#f97316') ?>;"></i>
+        <i class="<?= e($cat['icon'] ?? 'fas fa-circle') ?>" style="width:16px;text-align:center;color:<?= e($cat['color'] ?? '#1a7ac4') ?>;"></i>
         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= e($cat['name']) ?></span>
         <span style="background:rgba(255,255,255,0.07);color:#64748b;font-size:10px;padding:1px 7px;border-radius:10px;"><?= $cnt ?></span>
         <span onclick="event.stopPropagation();openEditCat(<?= htmlspecialchars(json_encode($cat), ENT_QUOTES) ?>)"
@@ -109,8 +109,8 @@ $catCount       = count($categories);
           <img src="<?= e($item['image']) ?>" alt="" style="width:100%;height:100%;object-fit:cover;">
         </div>
         <?php else: ?>
-        <div style="height:80px;background:linear-gradient(135deg,rgba(249,115,22,.08),rgba(249,115,22,.03));display:flex;align-items:center;justify-content:center;">
-          <i class="fas fa-utensils" style="font-size:28px;color:rgba(249,115,22,.25);"></i>
+        <div style="height:80px;background:linear-gradient(135deg,rgba(26,122,196,.08),rgba(26,122,196,.03));display:flex;align-items:center;justify-content:center;">
+          <i class="fas fa-utensils" style="font-size:28px;color:rgba(26,122,196,.25);"></i>
         </div>
         <?php endif; ?>
 
@@ -133,7 +133,7 @@ $catCount       = count($categories);
 
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <div>
-              <span style="font-size:16px;font-weight:800;color:#f97316;"><?= number_format((float)$item['price']) ?></span>
+              <span style="font-size:16px;font-weight:800;color:#1a7ac4;"><?= number_format((float)$item['price']) ?></span>
               <span style="font-size:11px;color:#475569;margin-right:3px;">تومان</span>
               <?php if (!empty($item['original_price']) && $item['original_price'] > 0): ?>
               <span style="font-size:11px;color:#475569;text-decoration:line-through;margin-right:6px;"><?= number_format((float)$item['original_price']) ?></span>
@@ -229,7 +229,7 @@ $catCount       = count($categories);
           </div>
           <div>
             <label class="form-label">رنگ</label>
-            <input name="color" type="color" class="form-input" style="height:42px;padding:4px;" value="#f97316">
+            <input name="color" type="color" class="form-input" style="height:42px;padding:4px;" value="#1a7ac4">
           </div>
         </div>
         <div>
@@ -300,11 +300,11 @@ $catCount       = count($categories);
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px;background:rgba(255,255,255,.03);border-radius:10px;border:1px solid rgba(255,255,255,.06);">
-            <input type="checkbox" name="is_available" id="iAvail" value="1" checked style="accent-color:#f97316;width:16px;height:16px;">
+            <input type="checkbox" name="is_available" id="iAvail" value="1" checked style="accent-color:#1a7ac4;width:16px;height:16px;">
             <span style="font-size:13px;color:#94a3b8;">موجود است</span>
           </label>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px;background:rgba(255,255,255,.03);border-radius:10px;border:1px solid rgba(255,255,255,.06);">
-            <input type="checkbox" name="is_active" id="iActive" value="1" checked style="accent-color:#f97316;width:16px;height:16px;">
+            <input type="checkbox" name="is_active" id="iActive" value="1" checked style="accent-color:#1a7ac4;width:16px;height:16px;">
             <span style="font-size:13px;color:#94a3b8;">فعال</span>
           </label>
         </div>
@@ -336,8 +336,8 @@ function filterByCat(catId, btn) {
     b.style.color = '#94a3b8';
   });
   btn.classList.add('active');
-  btn.style.background = 'rgba(249,115,22,.12)';
-  btn.style.color = '#f97316';
+  btn.style.background = 'rgba(26,122,196,.12)';
+  btn.style.color = '#1a7ac4';
 
   // show/hide items
   const cards = document.querySelectorAll('.item-card');
@@ -358,7 +358,7 @@ function openEditCat(cat) {
   f.querySelector('[name=name]').value       = cat.name || '';
   f.querySelector('[name=name_en]').value    = cat.name_en || '';
   f.querySelector('[name=icon]').value       = cat.icon || 'fas fa-utensils';
-  f.querySelector('[name=color]').value      = cat.color || '#f97316';
+  f.querySelector('[name=color]').value      = cat.color || '#1a7ac4';
   f.querySelector('[name=sort_order]').value = cat.sort_order || 0;
   openModal('catModal');
 }

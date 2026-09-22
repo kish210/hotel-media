@@ -21,7 +21,7 @@
   <?php
   $cats = count(array_unique(array_column($channels ?? [],'category')));
   foreach([
-    ['کل کانال‌ها', count($channels??[]), 'fa-tv','#f97316'],
+    ['کل کانال‌ها', count($channels??[]), 'fa-tv','#1a7ac4'],
     ['RTSP/RTMP', count(array_filter($channels??[],fn($c)=>in_array($c['protocol']??'',['rtsp','rtmp']))), 'fa-signal','#ef4444'],
     ['HLS', count(array_filter($channels??[],fn($c)=>($c['protocol']??'')==='hls')), 'fa-play-circle','#22c55e'],
     ['دسته‌بندی', $cats, 'fa-folder','#a855f7'],
@@ -157,7 +157,7 @@
     <form method="POST" action="/admin/iptv/import" class="space-y-3" enctype="multipart/form-data" id="importForm">
       <?=csrf_field()?>
       <div style="display:flex;gap:4px;background:rgba(0,0,0,.3);border-radius:8px;padding:3px;">
-        <button type="button" onclick="impType('url')" id="ibt-url" style="flex:1;padding:7px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:'Vazirmatn',sans-serif;background:rgba(249,115,22,.2);color:#f97316;">🔗 از URL</button>
+        <button type="button" onclick="impType('url')" id="ibt-url" style="flex:1;padding:7px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:'Vazirmatn',sans-serif;background:rgba(26,122,196,.2);color:#1a7ac4;">🔗 از URL</button>
         <button type="button" onclick="impType('file')" id="ibt-file" style="flex:1;padding:7px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:'Vazirmatn',sans-serif;background:transparent;color:#64748b;">📁 فایل</button>
       </div>
       <div id="isc-url"><label class="form-label">آدرس M3U</label>
@@ -206,8 +206,8 @@ function impType(t) {
   document.getElementById('isc-file').style.display = t==='file' ? '' : 'none';
   ['url','file'].forEach(x => {
     const b = document.getElementById('ibt-'+x);
-    b.style.background = x===t ? 'rgba(249,115,22,.2)' : 'transparent';
-    b.style.color = x===t ? '#f97316' : '#64748b';
+    b.style.background = x===t ? 'rgba(26,122,196,.2)' : 'transparent';
+    b.style.color = x===t ? '#1a7ac4' : '#64748b';
   });
 }
 

@@ -35,8 +35,8 @@ body,html{width:1920px;height:1080px;overflow:hidden;background:#000;}
 #clock{position:absolute;top:14px;right:14px;padding:7px 16px;background:rgba(0,0,0,.55);border-radius:8px;font:700 28px/1 monospace;color:#fff;<?= $clk?'':'display:none;'?>}
 #act{position:absolute;top:0;left:0;width:1920px;height:1080px;background:#09090f;display:flex;align-items:center;justify-content:center;}
 #act-box{background:#111;border-radius:16px;padding:40px;text-align:center;width:380px;}
-#act-inp{font:700 28px/1 monospace;letter-spacing:12px;padding:14px;width:100%;background:#0d0d14;border:2px solid rgba(249,115,22,.4);border-radius:12px;color:#fff;text-align:center;text-transform:uppercase;}
-#act-btn{width:100%;margin-top:14px;padding:15px;font-size:17px;background:linear-gradient(135deg,#f97316,#c2570b);color:#fff;border:0;border-radius:12px;cursor:pointer;}
+#act-inp{font:700 28px/1 monospace;letter-spacing:12px;padding:14px;width:100%;background:#0d0d14;border:2px solid rgba(26,122,196,.4);border-radius:12px;color:#fff;text-align:center;text-transform:uppercase;}
+#act-btn{width:100%;margin-top:14px;padding:15px;font-size:17px;background:linear-gradient(135deg,#1a7ac4,#12558f);color:#fff;border:0;border-radius:12px;cursor:pointer;}
 #act-msg{font-size:13px;margin-top:12px;min-height:20px;color:#ef4444;}
 </style>
 </head>
@@ -62,6 +62,16 @@ body,html{width:1920px;height:1080px;overflow:hidden;background:#000;}
 </div>
 
 <script>
+/* play() تا Chromium 50 چیزی برنمی‌گرداند، پس .catch روی آن TypeError
+   می‌دهد و کل تابع پخش نیمه‌کاره رها می‌شود — دقیقا روی همان
+   تلویزیون‌های قدیمی که این پروفایل برایشان نوشته شده. */
+function tvPlay(el) {
+  if (!el || !el.play) return;
+  var pr;
+  try { pr = el.play(); } catch (e) { return; }
+  if (pr && pr.catch) pr.catch(function () {});
+}
+
 var SERVER = window.location.origin;
 var CODE   = '<?= e($screen['code']??'') ?>';
 var pl = [], ci = 0, tm = null, curSlide = null;
@@ -172,8 +182,12 @@ function play(i) {
     tm = setTimeout(nextItem, dur);
 
   // ─ VIDEO ─
+  /* multicast مستقیم اینجا با ویدیو یکی می‌شود: تلویزیون هتلی Tizen
+     خودش udp:// را می‌خواند و سرور هیچ باری نمی‌گیرد. تا پیش از این،
+     چنین آدرسی به شاخه‌ی iframe می‌افتاد و کانال اصلا پخش نمی‌شد. */
   } else if (type === 'video' || src.match(/\.(mp4|webm|ogv|mov)(\?|$)/i) ||
-             src.match(/\.m3u8(\?|$)/i)) {
+             src.match(/\.m3u8(\?|$)/i) ||
+             src.indexOf('udp://') === 0 || src.indexOf('rtp://') === 0) {
 
     var vid = document.createElement('video');
     vid.style.cssText = 'width:1920px;height:1080px;display:block;background:#000;';
@@ -190,7 +204,7 @@ function play(i) {
 
     // Samsung Tizen video events
     vid.oncanplaythrough = function() {
-      vid.play().catch(function(){});
+      tvPlay(vid);
     };
     vid.onended = nextItem;
     vid.onerror = function() {
@@ -212,10 +226,9 @@ function play(i) {
     div.appendChild(vid);
     swapSlide(div);
     vid.load();
-    vid.play().catch(function(){
-      // Samsung: autoplay blocked → silent play
-      setTimeout(function(){ vid.play().catch(function(){}); }, 500);
-    });
+    // Samsung گاهی پخش خودکار را رد می‌کند؛ یک تلاش دوباره با تاخیر
+    tvPlay(vid);
+    setTimeout(function () { tvPlay(vid); }, 500);
 
     if (dur > 0 && dur < 7200000) tm = setTimeout(nextItem, dur);
 
