@@ -12,8 +12,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>صفحه‌نمایش یافت نشد</title>
-<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
-<link rel="stylesheet" href="/assets/css/tv-base.css">
+<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css<?= v() ?>">
+<link rel="stylesheet" href="/assets/css/tv-base.css<?= v() ?>">
 <style>
 body {
   display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
@@ -41,7 +41,7 @@ body {
 </head>
 <body>
 <div>
-  <img class="nf-logo" src="/assets/img/sama-logo.svg" alt="">
+  <img class="nf-logo" src="/assets/img/sama-logo.svg<?= v() ?>" alt="">
   <div class="nf-code">۴۰۴</div>
   <div class="nf-msg">این صفحه‌نمایش شناخته نشد</div>
   <div class="nf-scr"><?= e($notFoundCode ?? '') ?></div>

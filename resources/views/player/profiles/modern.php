@@ -51,11 +51,11 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>تابلو — <?= e($screen['name'] ?? 'Signage') ?></title>
 
-<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
-<link rel="stylesheet" href="/assets/css/tv-base.css">
-<link rel="stylesheet" href="/assets/css/tv-signage.css">
-<script src="/assets/vendor/hls/hls.min.js"></script>
-<script src="/assets/js/tv-base.js"></script>
+<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css<?= v() ?>">
+<link rel="stylesheet" href="/assets/css/tv-base.css<?= v() ?>">
+<link rel="stylesheet" href="/assets/css/tv-signage.css<?= v() ?>">
+<script src="/assets/vendor/hls/hls.min.js<?= v() ?>"></script>
+<script src="/assets/js/tv-base.js<?= v() ?>"></script>
 <style>
 /* فقط چیزهای مخصوص این صفحه. بدون var() ، clamp() ، gap ، inset. */
 html, body { background: #000; }
@@ -250,7 +250,7 @@ html, body { background: #000; }
 <?php if (!$isActive): ?>
   <div id="activation">
     <div id="act-card">
-      <img id="act-logo" src="/assets/img/sama-logo.svg" alt="">
+      <img id="act-logo" src="/assets/img/sama-logo.svg<?= v() ?>" alt="">
       <div id="act-title">Hotel Media</div>
       <div id="act-sub">این تابلو هنوز فعال نشده است</div>
       <div id="act-screen">کد صفحه: <b><?= e($screenCode ?: '—') ?></b></div>

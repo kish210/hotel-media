@@ -29,11 +29,11 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>IPTV — <?= e($screenName) ?></title>
 
-<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
-<link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
-<link rel="stylesheet" href="/assets/css/tv-base.css">
-<script src="/assets/vendor/hls/hls.min.js"></script>
-<script src="/assets/js/tv-base.js"></script>
+<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css<?= v() ?>">
+<link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css<?= v() ?>">
+<link rel="stylesheet" href="/assets/css/tv-base.css<?= v() ?>">
+<script src="/assets/vendor/hls/hls.min.js<?= v() ?>"></script>
+<script src="/assets/js/tv-base.js<?= v() ?>"></script>
 <style>
 /* فقط چیزهایی که مخصوص همین صفحه‌اند. بقیه در tv-base.css است.
    یادآوری: بدون var() ، clamp() ، gap ، inset ، backdrop-filter. */
@@ -228,7 +228,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 <!-- ══ فعال‌سازی ══ -->
 <div id="activation">
   <div id="act-card">
-    <img id="act-logo" src="/assets/img/sama-logo.svg" alt="">
+    <img id="act-logo" src="/assets/img/sama-logo.svg<?= v() ?>" alt="">
     <div id="act-title">Hotel Media</div>
     <div id="act-sub">این تلویزیون هنوز فعال نشده است</div>
     <div id="act-screen">کد صفحه: <b><?= e($screenCode) ?></b></div>

@@ -47,6 +47,27 @@ function csrf_token(): string { return \App\Middleware\CsrfMiddleware::generate(
 function csrf_field(): string { return '<input type="hidden" name="_token" value="' . csrf_token() . '">'; }
 function e(mixed $str): string { return htmlspecialchars((string)$str, ENT_QUOTES, 'UTF-8'); }
 function asset(string $path): string { return env('APP_URL', '') . '/assets/' . ltrim($path, '/'); }
+
+/**
+ * مهر نسخه برای شکستن کش — مثل: /assets/css/tv-base.css<?= v() ?>
+ *
+ * چرا لازم است: روی LG و سامسونگ، «اپِ» تلویزیون همان صفحه‌ی وبی
+ * است که سرور می‌دهد. پس با به‌روزرسانی سرور باید خودبه‌خود عوض شود.
+ * ولی مرورگر این تلویزیون‌ها تهاجمی کش می‌کند و اعتبارسنجی مجدد را
+ * هم اغلب نادیده می‌گیرد؛ نتیجه اینکه سرور به‌روز می‌شد و تلویزیون‌ها
+ * روزها همان CSS و JS قدیمی را نشان می‌دادند.
+ *
+ * با تغییر نسخه، آدرس فایل عوض می‌شود و کش ناچار دور می‌خورد.
+ */
+function v(): string
+{
+    static $v = null;
+    if ($v === null) {
+        $f = ROOT_PATH . '/VERSION';
+        $v = '?v=' . rawurlencode(is_file($f) ? trim((string)file_get_contents($f)) : '0');
+    }
+    return $v;
+}
 function url(string $path): string  { return env('APP_URL', '') . '/' . ltrim($path, '/'); }
 
 // ── Multilingual helper ──────────────────────────────────
@@ -68,6 +89,33 @@ function timeAgo(string $datetime): string {
         $diff < 604800 => floor($diff/86400) . ' روز پیش',
         default        => date('Y/m/d', strtotime($datetime)),
     };
+}
+
+/**
+ * خواندن از config/*.php — مثل config('app.version').
+ * فایل‌ها یک‌بار خوانده و نگه داشته می‌شوند.
+ *
+ * پیش از این چنین تابعی نبود و نماها مقدارها را hardcode می‌کردند؛
+ * نتیجه‌اش این شد که نسخه در سه جا سه عدد مختلف بود.
+ */
+function config(string $key, mixed $default = null): mixed
+{
+    static $cache = [];
+
+    $parts = explode('.', $key);
+    $file  = array_shift($parts);
+
+    if (!array_key_exists($file, $cache)) {
+        $path = CONFIG_PATH . '/' . $file . '.php';
+        $cache[$file] = is_file($path) ? (require $path) : [];
+    }
+
+    $val = $cache[$file];
+    foreach ($parts as $p) {
+        if (!is_array($val) || !array_key_exists($p, $val)) return $default;
+        $val = $val[$p];
+    }
+    return $val;
 }
 
 /* app/Helpers/helpers.php هیچ‌جا require نمی‌شد — نه اینجا، نه با

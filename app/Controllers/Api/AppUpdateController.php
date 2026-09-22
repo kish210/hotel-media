@@ -42,17 +42,34 @@ class AppUpdateController extends Controller
     public function download(Request $req, array $params): void
     {
         $filename = basename($params['filename'] ?? '');
-        $path     = BASE_PATH . '/public/apk/' . $filename;
 
-        if (!$filename || !file_exists($path) || !str_ends_with($filename, '.apk')) {
+        /* اینجا BASE_PATH نوشته شده بود که هیچ‌جای پروژه تعریف نشده —
+           یعنی این مسیر همیشه با خطای کشنده می‌افتاد و هیچ تلویزیونی
+           هیچ‌وقت نتوانسته APK را از سرور بگیرد. */
+        $path = PUBLIC_PATH . '/apk/' . $filename;
+
+        if (!$filename || !str_ends_with($filename, '.apk') || !is_file($path)) {
+            Response::error('فایل یافت نشد', 404); return;
+        }
+
+        /* نام از basename گذشته، ولی realpath هم بررسی می‌شود تا هیچ
+           مسیری بیرون از پوشه‌ی apk سرو نشود. */
+        $real = realpath($path);
+        $base = realpath(PUBLIC_PATH . '/apk');
+        if ($real === false || $base === false || !str_starts_with($real, $base)) {
             Response::error('فایل یافت نشد', 404); return;
         }
 
         header('Content-Type: application/vnd.android.package-archive');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Content-Length: ' . filesize($path));
+        header('Content-Length: ' . (string)filesize($real));
         header('Cache-Control: no-cache');
-        readfile($path);
+
+        /* بافر خروجی را خالی کن — وگرنه APK چند مگابایتی کامل در
+           حافظه‌ی PHP جمع می‌شود و با ۳۰۰ تلویزیونِ همزمان سرور
+           می‌خوابد. */
+        while (ob_get_level() > 0) ob_end_clean();
+        readfile($real);
         exit;
     }
 }

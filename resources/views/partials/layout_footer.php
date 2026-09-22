@@ -17,7 +17,7 @@
        style="color:#c8943a;text-decoration:none;letter-spacing:0.3px;">kishwifi.com</a>
   </div>
   <div style="display:flex;align-items:center;gap:16px;">
-    <span style="color:#1e293b;">Hotel Media v1.6.0</span>
+    <span style="color:#1e293b;">Hotel Media v<?= e(config('app.version')) ?></span>
     <a href="https://github.com/kish210/hotel-media" target="_blank" rel="noopener"
        style="color:#475569;text-decoration:none;display:flex;align-items:center;gap:4px;">
       <i class="fab fa-github" style="font-size:13px;"></i> GitHub

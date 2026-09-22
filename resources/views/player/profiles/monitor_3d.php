@@ -31,7 +31,7 @@ $floatDuration = $depthLevels[$depthLevel] ?? '2.5s';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>3D Monitor — <?= e($screen['name'] ?? 'Hotel Media') ?></title>
-<script src="/assets/vendor/hls/hls.min.js"></script>
+<script src="/assets/vendor/hls/hls.min.js<?= v() ?>"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 

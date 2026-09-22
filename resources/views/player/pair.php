@@ -17,12 +17,12 @@ $paired = isset($pairingScreen);
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hotel Media — راه‌اندازی</title>
-<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
+<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css<?= v() ?>">
 <!-- در نسخه‌ی قبلی این لینک ته body بود، پس آیکون‌ها دیر می‌آمدند و
      دکمه یک لحظه بدون آیکون می‌پرید. -->
-<link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
-<link rel="stylesheet" href="/assets/css/tv-base.css">
-<script src="/assets/js/tv-base.js"></script>
+<link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css<?= v() ?>">
+<link rel="stylesheet" href="/assets/css/tv-base.css<?= v() ?>">
+<script src="/assets/js/tv-base.js<?= v() ?>"></script>
 <style>
 body {
   display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
@@ -199,7 +199,7 @@ body {
 
 <?php else: ?>
   <div class="card">
-    <img class="logo" src="/assets/img/sama-logo.svg" alt="">
+    <img class="logo" src="/assets/img/sama-logo.svg<?= v() ?>" alt="">
     <div class="title">راه‌اندازی صفحه‌نمایش</div>
     <div class="sub">کد فعال‌سازی را از پنل مدیریت دریافت و وارد کنید</div>
 

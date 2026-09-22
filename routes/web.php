@@ -204,6 +204,14 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
     $r->get('/settings',   [\App\Controllers\Web\SettingsController::class, 'index']);
     $r->post('/settings',  [\App\Controllers\Web\SettingsController::class, 'update']);
 
+    /* به‌روزرسانی سیستم — فقط مدیر ارشد (بررسی نقش داخل کنترلر).
+       زنجیره: گیت‌هاب (انتشار پایدار) → سرور هتل → ۳۰۰ تلویزیون */
+    $r->get('/system/update',         [\App\Controllers\Web\SystemUpdateController::class, 'index']);
+    $r->get('/system/update/check',   [\App\Controllers\Web\SystemUpdateController::class, 'check']);
+    $r->get('/system/update/state',   [\App\Controllers\Web\SystemUpdateController::class, 'state']);
+    $r->post('/system/update/apply',  [\App\Controllers\Web\SystemUpdateController::class, 'apply']);
+    $r->post('/system/update/backup', [\App\Controllers\Web\SystemUpdateController::class, 'backup']);
+
     // Reports
     $r->get('/reports', [\App\Controllers\Web\ReportController::class, 'index']);
 

@@ -17,8 +17,8 @@ $isActive   = ($screen['status'] ?? '') === 'active';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>پخش — <?= e($screen['name'] ?? '') ?></title>
-<link rel="stylesheet" href="/assets/css/tv-base.css">
-<script src="/assets/js/tv-base.js"></script>
+<link rel="stylesheet" href="/assets/css/tv-base.css<?= v() ?>">
+<script src="/assets/js/tv-base.js<?= v() ?>"></script>
 <style>
 /* سبک عمدی: هیچ ترنزیشنی نیست تا روی CPU ضعیف تپق نزند */
 #c { width: 100%; height: 100%; background: #000; }

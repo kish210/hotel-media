@@ -16,10 +16,10 @@ $isActive   = ($screen['status'] ?? '') === 'active';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>کیوسک — <?= e($screen['name'] ?? '') ?></title>
-<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css">
-<link rel="stylesheet" href="/assets/css/tv-base.css">
-<script src="/assets/vendor/hls/hls.min.js"></script>
-<script src="/assets/js/tv-base.js"></script>
+<link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css<?= v() ?>">
+<link rel="stylesheet" href="/assets/css/tv-base.css<?= v() ?>">
+<script src="/assets/vendor/hls/hls.min.js<?= v() ?>"></script>
+<script src="/assets/js/tv-base.js<?= v() ?>"></script>
 <style>
 * { -webkit-tap-highlight-color: transparent; }
 
@@ -89,7 +89,7 @@ $isActive   = ($screen['status'] ?? '') === 'active';
 </div>
 
 <div id="idle">
-  <img id="idle-logo" src="/assets/img/sama-logo.svg" alt="">
+  <img id="idle-logo" src="/assets/img/sama-logo.svg<?= v() ?>" alt="">
   <div id="idle-title">خوش آمدید</div>
   <div id="idle-sub">برای شروع صفحه را لمس کنید</div>
   <div id="idle-hint">👆 لمس کنید</div>

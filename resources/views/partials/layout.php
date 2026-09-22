@@ -89,7 +89,7 @@ if (!function_exists('modOn')) {
       <div class="brand-name">Hotel Media</div>
       <a class="brand-sub" href="https://kishwifi.com" target="_blank" rel="noopener">سماع رایانه کیش</a>
     </div>
-    <span class="brand-ver">v1.6.0</span>
+    <span class="brand-ver">v<?= e(config('app.version')) ?></span>
   </div>
 
   <!-- ── اصلی ── -->
@@ -249,6 +249,14 @@ if (!function_exists('modOn')) {
   <a href="/admin/settings"  class="sidebar-link <?= isActive('/admin/settings') ?>">
     <span class="icon"><i class="fas fa-gear"></i></span> تنظیمات
   </a>
+  <?php /* به‌روزرسانی سرور فایل‌های کد را جایگزین و مهاجرت دیتابیس
+           اجرا می‌کند. کارمند پذیرش نباید حتی دکمه‌اش را ببیند. */ ?>
+  <?php if (($authUser['role'] ?? '') === 'super_admin'): ?>
+  <a href="/admin/system/update" class="sidebar-link <?= isActive('/admin/system/update') ?>">
+    <span class="icon"><i class="fas fa-cloud-arrow-down" style="color:#4098db;"></i></span>
+    به‌روزرسانی سیستم
+  </a>
+  <?php endif; ?>
   <a href="/admin/help"  class="sidebar-link <?= isActive('/admin/help') ?>">
     <span class="icon"><i class="fas fa-circle-question" style="color:#818cf8;"></i></span> راهنما
   </a>
