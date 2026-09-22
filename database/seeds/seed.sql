@@ -11,11 +11,17 @@ INSERT INTO `tenants` (`id`,`slug`,`name`,`plan`,`storage_limit`,`screen_limit`,
 (2,'demo','Demo Restaurant','basic',5368709120,5,1);
 
 -- Users (password: Admin@123456 bcrypt hash)
+-- فقط یک حساب مدیر ساخته می‌شود.
+--
+-- سه کاربر نمونه‌ی قبلی (manager/editor/demo با دامنه‌ی برند
+-- قدیمی) حذف شدند: روی سرور هتل سه حساب اضافه بودند که هر سه
+-- همان رمز مدیر را داشتند و هیچ‌کس از وجودشان خبر نداشت.
+--
+-- هش با password_verify تایید شده — تست SeedPasswordTest همین
+-- را می‌سنجد، چون نسخه‌ی قبلی با رمز اعلام‌شده نمی‌خورد و بعد
+-- از نصب هیچ‌کس نمی‌توانست وارد پنل شود.
 INSERT INTO `users` (`id`,`tenant_id`,`name`,`email`,`password`,`role`,`language`,`is_active`) VALUES
-(1,1,'مدیر سیستم','admin@hotelmedia.com','$2y$12$LKBgQQKBT4jz.MvLuWm7X.2Dj1mhlL4ZxPaSfW5jzsFVh/XEDyREO','super_admin','fa',1),
-(2,1,'مدیر رستوران','manager@signagecms.com','$2y$12$LKBgQQKBT4jz.MvLuWm7X.2Dj1mhlL4ZxPaSfW5jzsFVh/XEDyREO','manager','fa',1),
-(3,1,'ویرایشگر محتوا','editor@signagecms.com','$2y$12$LKBgQQKBT4jz.MvLuWm7X.2Dj1mhlL4ZxPaSfW5jzsFVh/XEDyREO','editor','fa',1),
-(4,2,'Demo Admin','demo@signagecms.com','$2y$12$LKBgQQKBT4jz.MvLuWm7X.2Dj1mhlL4ZxPaSfW5jzsFVh/XEDyREO','admin','en',1);
+(1,1,'مدیر سیستم','admin@hotelmedia.com','$2y$12$DW3hzyu97mMggSGmcgbBReIh7NFeWG4lDHzmF1yu.4Q6p8c7cdvna','super_admin','fa',1);
 
 -- Locations
 INSERT INTO `locations` (`id`,`tenant_id`,`name`,`address`,`city`,`country`,`timezone`) VALUES

@@ -404,6 +404,7 @@ match ($command) {
             'tv-platform-sim.js',
             'tv-compat-lint.js',
             'php-syntax.js',
+            'seed-password-check.js',
         ];
 
         // Node ممکن است روی سرور هتل نصب نباشد — تست‌ها رد می‌شوند نه شکست
