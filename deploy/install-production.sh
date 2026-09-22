@@ -85,13 +85,42 @@ apt-get install -y -qq \
     "php${PHP_VER}-fpm" "php${PHP_VER}-cli" "php${PHP_VER}-mysql" \
     "php${PHP_VER}-mbstring" "php${PHP_VER}-xml" "php${PHP_VER}-curl" \
     "php${PHP_VER}-gd" "php${PHP_VER}-zip" "php${PHP_VER}-intl" \
-    "php${PHP_VER}-opcache" "php${PHP_VER}-bcmath" >/dev/null
+    "php${PHP_VER}-opcache" "php${PHP_VER}-bcmath" >/dev/null 2>&1 || {
+
+    # ‏ISO آفلاین بسته‌های .deb را همراه خودش دارد. سرور هتل ممکن است
+    # اصلا به اینترنت وصل نباشد، پس شکست apt پایان کار نیست.
+    OFFLINE_POOL="$(dirname "${BASH_SOURCE[0]}")/../offline-pool"
+    if [[ -d "$OFFLINE_POOL" ]] && compgen -G "$OFFLINE_POOL/*.deb" >/dev/null; then
+        warn "مخزن اینترنتی در دسترس نیست — نصب از بسته‌های داخل ISO"
+        # ‏-i بارها اجرا می‌شود چون ترتیب وابستگی‌ها از پیش معلوم نیست
+        for _ in 1 2 3; do
+            dpkg -i "$OFFLINE_POOL"/*.deb >/dev/null 2>&1 || true
+        done
+        apt-get install -y -qq -f >/dev/null 2>&1 || true
+    else
+        die "نصب بسته‌ها ناموفق بود — اتصال اینترنت سرور را بررسی کنید"
+    fi
+}
+
+# بررسی اینکه واقعا چیزی که لازم داریم نصب شده — apt ممکن است بی‌صدا
+# بخشی را جا بیندازد و خطا بعدا در جای نامربوطی ظاهر شود
+for BIN in nginx mysqld php; do
+    command -v "$BIN" >/dev/null 2>&1 || \
+        command -v "php${PHP_VER}" >/dev/null 2>&1 || \
+        [[ -x "/usr/sbin/$BIN" ]] || \
+        die "بسته‌ی ضروری نصب نشد: $BIN"
+done
 
 command -v composer >/dev/null 2>&1 || {
     info "نصب Composer"
-    curl -fsSL https://getcomposer.org/installer -o /tmp/composer-setup.php
-    php /tmp/composer-setup.php --quiet --install-dir=/usr/local/bin --filename=composer
-    rm -f /tmp/composer-setup.php
+    if curl -fsSL --max-time 30 https://getcomposer.org/installer -o /tmp/composer-setup.php; then
+        php /tmp/composer-setup.php --quiet --install-dir=/usr/local/bin --filename=composer
+        rm -f /tmp/composer-setup.php
+    else
+        # ‏ISO با vendor/ از پیش نصب‌شده ساخته می‌شود، پس نبودن composer
+        # روی سرور آفلاین لزوما مشکلی نیست
+        warn "Composer دانلود نشد — اگر vendor/ همراه برنامه باشد مشکلی نیست"
+    fi
 }
 
 ok "nginx · PHP ${PHP_VER} · MariaDB · ffmpeg · Composer"
@@ -223,8 +252,17 @@ else
     ok ".env موجود حفظ شد"
 fi
 
-composer install --no-dev --optimize-autoloader --quiet --no-interaction
-ok "وابستگی‌های PHP نصب شدند"
+# ‏ISO سفارشی vendor/ را از قبل همراه دارد؛ روی سرور آفلاین composer
+# نه در دسترس است نه لازم.
+if [[ -f vendor/autoload.php ]]; then
+    ok "وابستگی‌های PHP از قبل همراه برنامه هستند"
+elif command -v composer >/dev/null 2>&1; then
+    composer install --no-dev --optimize-autoloader --quiet --no-interaction \
+        && ok "وابستگی‌های PHP نصب شدند" \
+        || die "نصب وابستگی‌های PHP ناموفق بود"
+else
+    die "نه vendor/ موجود است نه composer — برنامه بدون وابستگی‌ها اجرا نمی‌شود"
+fi
 
 php artisan db:migrate
 [[ -f database/seeds/seed.sql ]] && mysql "${DB_NAME}" < database/seeds/seed.sql 2>/dev/null || true

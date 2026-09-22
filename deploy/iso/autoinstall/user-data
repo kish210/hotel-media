@@ -1,0 +1,110 @@
+#cloud-config
+# ══════════════════════════════════════════════════════════════════════
+#  Hotel Media — نصب خودکار Ubuntu Server
+#  سماع رایانه کیش | kishwifi.com
+#
+#  این فایل را نصب‌کننده‌ی Ubuntu (subiquity) می‌خواند و کل نصب را بدون
+#  هیچ سؤالی انجام می‌دهد: پارتیشن، کاربر، شبکه، بسته‌ها، و در پایان
+#  نصب خود Hotel Media.
+#
+#  هشدار: کل دیسک پاک می‌شود. فقط روی سروری که برای همین کار آماده شده
+#  بوت کنید.
+# ══════════════════════════════════════════════════════════════════════
+autoinstall:
+  version: 1
+
+  # ── زبان و صفحه‌کلید ───────────────────────────────────────────────
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+    # فارسی به‌عنوان چیدمان دوم؛ کنسول سرور با us راحت‌تر است
+    variants: ''
+    toggle: alt_shift_toggle
+
+  timezone: Asia/Tehran
+
+  # ── شبکه ──────────────────────────────────────────────────────────
+  # DHCP روی هر کارت شبکه‌ای که پیدا شود. بعد از نصب باید IP ثابت
+  # بگذارید — آدرس پورتال در منوی همه‌ی تلویزیون‌ها ثابت وارد می‌شود.
+  network:
+    version: 2
+    ethernets:
+      any-nic:
+        match:
+          name: "en*"
+        dhcp4: true
+        optional: true
+
+  # ── کاربر ─────────────────────────────────────────────────────────
+  # رمز پیش‌فرض: HotelMedia@2026  — در اولین ورود عوضش کنید
+  identity:
+    hostname: hotel-media
+    username: hotel
+    # ‏hash واقعی SHA-512 رمز بالا. برای عوض کردنش:
+    #     openssl passwd -6 'رمز-دلخواه'
+    password: "$6$rcZweElU1uTRCbRt$dmpGEuIQdXTkE57C6XNDcdq58Uw0VyfUlYGw4kqThr9ftBx947VK0u6/Z6d.fMEvtyk9MPJgL4GFKIM6RoqWP."
+
+  ssh:
+    install-server: true
+    allow-pw: true
+
+  # ── ذخیره‌سازی ────────────────────────────────────────────────────
+  # ‏LVM روی کل دیسک: بعدا می‌شود فضای محتوای VOD را بدون نصب دوباره
+  # بزرگ کرد، که در هتل واقعی اتفاق می‌افتد.
+  storage:
+    layout:
+      name: lvm
+
+  # ── بسته‌ها ───────────────────────────────────────────────────────
+  # پیش‌نیازهای Hotel Media از همین‌جا نصب می‌شوند تا late-commands
+  # کار کمتری داشته باشد و نصب آفلاین هم ممکن شود.
+  packages:
+    - nginx
+    - mariadb-server
+    - php8.3-fpm
+    - php8.3-cli
+    - php8.3-mysql
+    - php8.3-mbstring
+    - php8.3-xml
+    - php8.3-curl
+    - php8.3-gd
+    - php8.3-zip
+    - php8.3-intl
+    - php8.3-opcache
+    - php8.3-bcmath
+    - ffmpeg
+    - tvheadend
+    - udpxy
+    - composer
+    - curl
+    - unzip
+    - git
+    - rsync
+
+  # ‏tvheadend وگرنه وسط نصب سؤال تعاملی می‌پرسد و نصب خودکار معلق می‌ماند
+  debconf-selections: |
+    tvheadend tvheadend/admin_username string hotelmedia
+    tvheadend tvheadend/admin_password password ChangeMe@2026
+    tvheadend tvheadend/admin_password_again password ChangeMe@2026
+    postfix postfix/main_mailer_type select No configuration
+
+  # به‌روزرسانی‌ها بعد از نصب — تا نصب طول نکشد و آفلاین هم کار کند
+  updates: security
+  shutdown: reboot
+
+  # ── مرحله‌ی پایانی ────────────────────────────────────────────────
+  # فایل‌های برنامه از خود ISO کپی می‌شوند (مسیر /cdrom) نه از اینترنت،
+  # تا نصب در هتلِ بدون اینترنت هم کامل شود.
+  late-commands:
+    - mkdir -p /target/opt/hotel-media-src
+    - cp -a /cdrom/hotel-media/. /target/opt/hotel-media-src/ || true
+    # اسکریپت پس از اولین بوت — نصب اینجا انجام نمی‌شود چون در محیط
+    # نصب‌کننده سرویس‌ها بالا نمی‌آیند و MariaDB قابل راه‌اندازی نیست.
+    - cp /cdrom/hotel-media/deploy/iso/firstboot.sh /target/usr/local/sbin/hotel-media-firstboot.sh
+    - chmod +x /target/usr/local/sbin/hotel-media-firstboot.sh
+    - cp /cdrom/hotel-media/deploy/iso/hotel-media-firstboot.service /target/etc/systemd/system/
+    - curtin in-target --target=/target -- systemctl enable hotel-media-firstboot.service
+
+  # در صورت خطا، لاگ کامل روی خود سیستم می‌ماند
+  error-commands:
+    - tar -czf /target/var/log/autoinstall-fail.tar.gz /var/log/installer || true

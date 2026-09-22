@@ -138,7 +138,21 @@
 > دیسک سرو می‌شود و اصلاً وارد PHP نمی‌شود.
 > جزئیات کامل: [راهنمای نصب ۳۰۰ اتاق](docs/INSTALL-300-ROOMS.md)
 
-### 🐧 هتل بزرگ — Ubuntu Server LTS
+### 💿 ساده‌ترین راه — ISO سفارشی (پیشنهادی برای نصب حرفه‌ای)
+
+یک فایل ISO که روی سرور بوت می‌شود، اوبونتو را **بدون هیچ سؤالی** نصب
+می‌کند و در پایان Hotel Media آماده و در حال اجراست — به‌همراه nginx،
+PHP-FPM، MariaDB، TVHeadend، ffmpeg و udpxy.
+
+```bash
+sudo bash deploy/iso/build-iso.sh            # ساخت ISO
+sudo OFFLINE=1 bash deploy/iso/build-iso.sh  # برای هتل بدون اینترنت
+```
+
+سپس USB بوتیبل بسازید، روی سرور بوت کنید و گزینه‌ی اول را بزنید.
+راهنمای کامل: [deploy/iso/README.md](deploy/iso/README.md)
+
+### 🐧 نصب روی Ubuntu موجود
 
 ```bash
 git clone https://github.com/kish210/hotel-media.git

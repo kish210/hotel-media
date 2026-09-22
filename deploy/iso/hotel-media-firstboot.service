@@ -1,0 +1,18 @@
+[Unit]
+Description=Hotel Media — first boot setup
+# دیتابیس و شبکه باید بالا باشند، وگرنه نصب وسط کار شکست می‌خورد
+After=network-online.target mariadb.service
+Wants=network-online.target
+ConditionPathExists=!/var/lib/hotel-media-installed
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/hotel-media-firstboot.sh
+RemainAfterExit=yes
+# نصب کامل چند دقیقه طول می‌کشد؛ مهلت پیش‌فرض systemd کافی نیست
+TimeoutStartSec=1800
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target
