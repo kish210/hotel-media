@@ -78,7 +78,7 @@ class PlayerController extends Controller
             $p = $screenModel->getCurrentPlaylist($screen['id']);
             if ($p) {
                 $playlistModel = new Playlist();
-                $playlist = $playlistModel->getForPlayer((int)$p['id']);
+                $playlist = $playlistModel->getForPlayer((int)$p['id'], $screen);
             }
         }
 

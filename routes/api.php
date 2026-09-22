@@ -375,3 +375,17 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
     $r->put('/content/{id}',       [\App\Controllers\Api\ContentController::class, 'update']);
     $r->delete('/content/{id}',    [\App\Controllers\Api\ContentController::class, 'destroy']);
 });
+
+// ── محل‌های هتل و رویدادها — محیط عمومی (protected) ──────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    $r->get('/venues',                    [\App\Controllers\Api\VenueController::class, 'index']);
+    $r->post('/venues',                   [\App\Controllers\Api\VenueController::class, 'store']);
+    $r->put('/venues/{id}',               [\App\Controllers\Api\VenueController::class, 'update']);
+    $r->delete('/venues/{id}',            [\App\Controllers\Api\VenueController::class, 'destroy']);
+    $r->post('/venues/{id}/assign-screen',[\App\Controllers\Api\VenueController::class, 'assignScreen']);
+    // رویدادهای سالن
+    $r->get('/events',                    [\App\Controllers\Api\VenueController::class, 'events']);
+    $r->post('/events',                   [\App\Controllers\Api\VenueController::class, 'storeEvent']);
+    $r->put('/events/{id}',               [\App\Controllers\Api\VenueController::class, 'updateEvent']);
+    $r->delete('/events/{id}',            [\App\Controllers\Api\VenueController::class, 'destroyEvent']);
+});

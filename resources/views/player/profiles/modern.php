@@ -271,6 +271,181 @@ if (CLOCK_ON) {
 }
 
 // ─── Media Type Detection ────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+//  محتوای پویای محیط عمومی هتل
+// ══════════════════════════════════════════════════════════════════
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function hm(dt) {
+  if (!dt) return '';
+  // «2026-09-22 14:30:00» — بدون Date() چون فرمت روی موتورهای قدیمی
+  // تلویزیون گاهی NaN می‌دهد
+  const m = String(dt).match(/(\d{2}):(\d{2})/);
+  return m ? m[1] + ':' + m[2] : '';
+}
+
+function renderDynamic(c) {
+  switch (c.kind) {
+    case 'event_board': return renderEventBoard(c);
+    case 'menu_board':  return renderMenuBoard(c);
+    case 'news':        return renderNewsBoard(c);
+    case 'directory':   return renderDirectoryBoard(c);
+    case 'venue_info':  return renderVenueInfo(c);
+    case 'info_bar':    return renderInfoBar(c);
+    case 'live_tv':     return renderLiveCard(c);
+    default:            return '';
+  }
+}
+
+function renderEventBoard(c) {
+  const title = c.venue ? esc(c.venue.name) : 'برنامه امروز';
+  const rows = (c.events || []).map(e => {
+    const state = e.is_cancelled ? 'لغو شد'
+                : e.is_now       ? 'در حال برگزاری'
+                : e.minutes_away < 60 ? e.minutes_away + ' دقیقه دیگر' : '';
+    const color = e.is_cancelled ? '#ef4444' : e.is_now ? '#22c55e' : '#94a3b8';
+    return `<div style="display:flex;align-items:center;gap:24px;padding:18px 28px;
+              border-bottom:1px solid rgba(255,255,255,.07);
+              ${e.is_cancelled ? 'opacity:.5;' : ''}">
+        <div style="font-size:34px;font-weight:800;color:${e.color || '#d4af37'};min-width:150px;">
+          ${hm(e.start_at)}${e.end_at ? ' - ' + hm(e.end_at) : ''}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:30px;font-weight:700;color:#fff;
+               ${e.is_cancelled ? 'text-decoration:line-through;' : ''}">${esc(e.title)}</div>
+          ${e.organizer ? `<div style="font-size:19px;color:#94a3b8;margin-top:5px;">${esc(e.organizer)}</div>` : ''}
+        </div>
+        ${e.venue_name && !c.venue
+          ? `<div style="font-size:22px;color:#cbd5e1;text-align:left;min-width:190px;">
+               ${esc(e.venue_name)}${e.venue_floor ? '<br><span style="font-size:16px;color:#64748b;">طبقه ' + esc(e.venue_floor) + '</span>' : ''}
+             </div>` : ''}
+        ${state ? `<div style="font-size:19px;color:${color};min-width:160px;text-align:left;">${state}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  return `<div style="width:100%;height:100%;background:linear-gradient(160deg,#0b0f1a,#131a2b);
+            display:flex;flex-direction:column;padding:44px;">
+      <div style="font-size:50px;font-weight:900;color:#fff;margin-bottom:8px;">${title}</div>
+      <div style="font-size:22px;color:#64748b;margin-bottom:26px;">برنامه امروز</div>
+      <div style="flex:1;overflow:hidden;">${rows}</div>
+    </div>`;
+}
+
+function renderMenuBoard(c) {
+  const pages = c.pages || [];
+  if (!pages.length) return '';
+
+  // چند صفحه‌ای: صفحه بر اساس ثانیه عوض می‌شود تا کل منو دیده شود
+  const idx = Math.floor(Date.now() / 12000) % pages.length;
+  const p   = pages[idx];
+
+  return `<div style="width:100%;height:100%;background:#0b0f1a;position:relative;
+            display:flex;align-items:center;justify-content:center;">
+      <img src="${esc(p.image_url)}" alt="${esc(c.title)}"
+           style="max-width:100%;max-height:100%;object-fit:contain;">
+      ${pages.length > 1
+        ? `<div style="position:absolute;bottom:22px;left:50%;transform:translateX(-50%);
+             background:rgba(0,0,0,.55);color:#fff;padding:7px 18px;border-radius:20px;font-size:17px;">
+             ${idx + 1} / ${pages.length}</div>` : ''}
+    </div>`;
+}
+
+function renderNewsBoard(c) {
+  const rows = (c.items || []).map(n => `
+    <div style="display:flex;gap:22px;padding:20px 0;border-bottom:1px solid rgba(255,255,255,.07);">
+      ${n.image_url ? `<img src="${esc(n.image_url)}" style="width:160px;height:104px;object-fit:cover;border-radius:10px;flex-shrink:0;">` : ''}
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:27px;font-weight:700;color:#fff;">${esc(n.title)}</div>
+        ${n.extra ? `<div style="font-size:17px;color:#64748b;margin-top:7px;">${esc(n.extra)}</div>` : ''}
+      </div>
+    </div>`).join('');
+
+  return `<div style="width:100%;height:100%;background:linear-gradient(160deg,#0b0f1a,#131a2b);padding:44px;">
+      <div style="font-size:46px;font-weight:900;color:#fff;margin-bottom:22px;">اخبار</div>
+      <div>${rows}</div>
+    </div>`;
+}
+
+function renderDirectoryBoard(c) {
+  const rows = (c.items || []).map(d => `
+    <div style="display:flex;justify-content:space-between;align-items:center;
+         padding:16px 22px;border-bottom:1px solid rgba(255,255,255,.07);">
+      <span style="font-size:28px;color:#fff;">${esc(d.title)}</span>
+      <span style="font-size:34px;font-weight:800;color:#38bdf8;font-family:monospace;">${esc(d.extra)}</span>
+    </div>`).join('');
+
+  return `<div style="width:100%;height:100%;background:linear-gradient(160deg,#0b0f1a,#131a2b);padding:44px;">
+      <div style="font-size:46px;font-weight:900;color:#fff;margin-bottom:22px;">شماره‌های داخلی</div>
+      <div>${rows}</div>
+    </div>`;
+}
+
+function renderVenueInfo(c) {
+  const open = c.open_now === true ? 'باز است' : c.open_now === false ? 'بسته است' : '';
+  const color = c.open_now === true ? '#22c55e' : '#ef4444';
+
+  return `<div style="width:100%;height:100%;background:linear-gradient(160deg,#0b0f1a,#131a2b);
+            display:flex;flex-direction:column;justify-content:center;padding:64px;">
+      <div style="font-size:64px;font-weight:900;color:#fff;">${esc(c.name)}</div>
+      ${c.floor ? `<div style="font-size:26px;color:#94a3b8;margin-top:10px;">طبقه ${esc(c.floor)}</div>` : ''}
+      ${c.description ? `<div style="font-size:24px;color:#cbd5e1;margin-top:22px;max-width:70%;line-height:1.9;">${esc(c.description)}</div>` : ''}
+      ${(c.open_from && c.open_to) ? `
+        <div style="margin-top:34px;display:flex;align-items:center;gap:18px;">
+          <span style="font-size:30px;color:#fff;">${hm(c.open_from)} تا ${hm(c.open_to)}</span>
+          ${open ? `<span style="font-size:22px;color:${color};border:2px solid ${color};padding:5px 18px;border-radius:20px;">${open}</span>` : ''}
+        </div>` : ''}
+      ${c.now_playing ? `
+        <div style="margin-top:34px;padding:20px 26px;background:rgba(34,197,94,.12);
+             border-right:5px solid #22c55e;border-radius:10px;">
+          <div style="font-size:18px;color:#4ade80;">در حال برگزاری</div>
+          <div style="font-size:30px;color:#fff;font-weight:700;margin-top:6px;">${esc(c.now_playing.title)}</div>
+        </div>` : ''}
+    </div>`;
+}
+
+function renderInfoBar(c) {
+  const d = c.data || {};
+  const parts = [];
+
+  if ((c.widgets || []).indexOf('clock') >= 0) {
+    const t = new Date();
+    parts.push(`<div style="font-size:78px;font-weight:900;color:#fff;">
+        ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}</div>`);
+  }
+  if (d.weather) {
+    parts.push(`<div style="text-align:center;">
+        <div style="font-size:56px;color:#38bdf8;">${esc(d.weather.temp)}°</div>
+        <div style="font-size:22px;color:#94a3b8;">${esc(d.weather.description)}</div></div>`);
+  }
+  if (d.prayer) {
+    parts.push(`<div style="font-size:22px;color:#cbd5e1;line-height:2;">
+        اذان صبح ${esc(d.prayer.fajr)} · ظهر ${esc(d.prayer.dhuhr)} · مغرب ${esc(d.prayer.maghrib)}</div>`);
+  }
+  if (d.currency) {
+    const rates = Object.keys(d.currency).slice(0, 3)
+      .map(k => `${k.toUpperCase()} ${Number(d.currency[k]).toLocaleString('fa-IR')}`).join(' · ');
+    parts.push(`<div style="font-size:22px;color:#cbd5e1;">${esc(rates)}</div>`);
+  }
+
+  return `<div style="width:100%;height:100%;background:linear-gradient(160deg,#0b0f1a,#131a2b);
+            display:flex;align-items:center;justify-content:space-around;padding:44px;">
+      ${parts.join('')}</div>`;
+}
+
+function renderLiveCard(c) {
+  // پخش واقعی را مسیر hls می‌گیرد؛ این کارت وقتی است که آیتم
+  // به‌صورت پویا آمده و فقط باید معرفی شود
+  return `<div style="width:100%;height:100%;background:#000;display:flex;
+            align-items:center;justify-content:center;flex-direction:column;gap:22px;">
+      ${c.logo_url ? `<img src="${esc(c.logo_url)}" style="max-height:130px;">` : ''}
+      <div style="font-size:46px;color:#fff;font-weight:800;">${esc(c.name)}</div>
+      ${c.now ? `<div style="font-size:26px;color:#94a3b8;">${esc(c.now.title)}</div>` : ''}
+    </div>`;
+}
+
 function detectMediaType(item) {
   const src  = item.file_url || item.src || item.file_path || '';
   const type = item.type || item.media_type || '';
@@ -288,9 +463,18 @@ function detectMediaType(item) {
 // ─── Render Media Item ───────────────────────────────────────────────────
 function renderItem(item) {
   const src       = item.file_url || item.src || item.url || '';
-  const mediaType = detectMediaType(item);
   const div       = document.createElement('div');
   div.className   = 'media-item';
+
+  // محتوای پویا (تابلوی رویداد، منوی تصویری، اخبار) فایل نیست و سرور
+  // داده‌اش را در item.content می‌فرستد. رندر سمت پلیر انجام می‌شود تا
+  // هر بار تازه باشد.
+  if (item.type === 'dynamic' && item.content) {
+    div.innerHTML = renderDynamic(item.content);
+    return div;
+  }
+
+  const mediaType = detectMediaType(item);
 
   switch (mediaType) {
 

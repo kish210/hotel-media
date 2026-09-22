@@ -97,7 +97,12 @@ class Playlist
         }
     }
 
-    public function getForPlayer(int $playlistId): array
+    /**
+     * @param array<string,mixed>|null $screen ردیف screens — برای محتوای پویای
+     *        وابسته به محل (تابلوی رویداد سالن، منوی رستوران). بدون آن،
+     *        آیتم‌های پویا فقط با ref_id صریح خودشان کار می‌کنند.
+     */
+    public function getForPlayer(int $playlistId, ?array $screen = null): array
     {
         $playlist = $this->find($playlistId);
         if (!$playlist) return [];
@@ -145,6 +150,40 @@ class Playlist
             // duration
             $item['duration'] = (int)($item['duration'] ?? $item['media_duration'] ?? 10);
         }
+        unset($item);
+
+        // ── محتوای پویا ────────────────────────────────────────────
+        // آیتم‌هایی که فایل نیستند (تابلوی رویداد، منوی تصویری، اخبار)
+        // هر بار از دیتابیس ساخته می‌شوند. آیتمی که الان چیزی برای نمایش
+        // ندارد — سالنی بدون رویداد امروز — حذف می‌شود تا پلیر روی یک
+        // صفحه‌ی خالی گیر نکند.
+        $svc     = new \App\Services\SignageContentService($this->db);
+        $resolved = [];
+
+        foreach ($playlist['items'] as $item) {
+            $type = $item['item_type'] ?? 'media';
+
+            if ($type === 'media' || !in_array($type, \App\Services\SignageContentService::DYNAMIC_TYPES, true)) {
+                $resolved[] = $item;
+                continue;
+            }
+
+            try {
+                $content = $screen !== null ? $svc->resolve($item, $screen) : null;
+            } catch (\Throwable $e) {
+                // یک ویجت خراب نباید کل پخش صفحه را قطع کند
+                error_log('[SIGNAGE CONTENT] ' . $e->getMessage());
+                $content = null;
+            }
+
+            if ($content === null) continue;
+
+            $item['type']    = 'dynamic';
+            $item['content'] = $content;
+            $resolved[]      = $item;
+        }
+
+        $playlist['items'] = array_values($resolved);
 
         return $playlist;
     }

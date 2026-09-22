@@ -157,7 +157,7 @@ class ScreenController extends Controller
         if (!$playlist) Response::success(null, 'هیچ پلی‌لیستی تنظیم نشده');
 
         $model = new \App\Models\Playlist();
-        Response::success($model->getForPlayer((int)$playlist['id']));
+        Response::success($model->getForPlayer((int)$playlist['id'], $screen));
     }
 
     public function command(Request $req, array $params): void
