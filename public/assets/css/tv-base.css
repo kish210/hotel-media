@@ -510,3 +510,68 @@ body {
 .tv-input-state.is-off { color: #79849a; }
 
 .tv-inputs-back { margin-top: 2rem; }
+
+/* ── انتخاب زیرنویس و صدا ────────────────────────────────────────
+   مهمان وسط فیلم دکمه‌ی زیرنویس ریموت را می‌زند. صفحه نباید پخش را
+   قطع کند، پس این یک لایه‌ی شناور روی ویدیو است نه صفحه‌ی جدا. */
+.tv-tracks {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 70;
+  background: rgba(4, 7, 12, .72);
+  display: none;
+}
+.tv-tracks.is-on {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center;
+  -ms-flex-pack: center; justify-content: center;
+}
+.tv-tracks-box {
+  width: 26rem;
+  max-width: 90%;
+  padding: 1.6rem 1.4rem;
+  border-radius: 1.1rem;
+  background: #10151d;
+  border: 1px solid rgba(255, 255, 255, .13);
+  box-shadow: 0 1.2rem 3.2rem rgba(0, 0, 0, .7);
+}
+.tv-tracks-title {
+  font-size: 1.35rem; font-weight: 800;
+  margin-bottom: 1rem; text-align: center;
+}
+.tv-tracks-group { margin-bottom: 1.2rem; }
+.tv-tracks-label {
+  font-size: .85rem; font-weight: 400;
+  color: #8c99ad; margin-bottom: .4rem;
+}
+.tv-track {
+  display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center;
+  -ms-flex-align: center; align-items: center;
+  padding: .6rem .9rem;
+  margin-bottom: .3rem;
+  border-radius: .6rem;
+  border: 2px solid transparent;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+.tv-track.is-focused {
+  background: rgba(26, 122, 196, .24);
+  border-color: #4098db;
+}
+/* تیک انتخاب‌شده — فوکوس و انتخاب دو چیز جدا هستند و مهمان باید
+   هر دو را هم‌زمان ببیند، وگرنه نمی‌فهمد الان کدام فعال است. */
+.tv-track-tick {
+  width: 1.3rem;
+  margin-left: .6rem;
+  color: #32d17a;
+  font-size: .95rem;
+}
+.tv-track.is-off { color: #8c99ad; }
+.tv-tracks-hint {
+  font-size: .8rem; font-weight: 400;
+  color: #79849a; text-align: center;
+  margin-top: .8rem;
+}

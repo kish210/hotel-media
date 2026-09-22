@@ -178,7 +178,13 @@
     403:'RED',  404:'GREEN', 405:'YELLOW', 406:'BLUE',
     415:'PLAY', 19: 'PAUSE', 413:'STOP',
     412:'REWIND', 417:'FORWARD',
-    10182:'EXIT'                    /* Tizen */
+    10182:'EXIT',                   /* Tizen */
+
+    /* زیرنویس — روی ریموت هتلی همیشه دکمه‌ی جدا ندارد، پس دکمه‌ی
+       زرد هم همین کار را می‌کند. کد ۴۶۰ روی webOS و ۱۰۲۲۱ روی Tizen. */
+    460: 'SUBTITLE', 10221: 'SUBTITLE',
+    /* انتخاب صدا — فقط بعضی ریموت‌ها دارند */
+    10190: 'AUDIO'
   };
 
   TV.keyName = function (ev) {
@@ -548,6 +554,148 @@
     }
 
     cb(new Error('این دستگاه تعویض ورودی را پشتیبانی نمی‌کند'), false);
+  };
+
+  /* ── زیرنویس و باند صوتی ──────────────────────────────────────────
+     مهمان خارجی در هتل ایرانی فیلم فارسی می‌بیند و برعکس. هر دو به
+     زیرنویس نیاز دارند و بعضی فیلم‌ها دوبله هم دارند.
+
+     سه مسیر متفاوت، یک API:
+
+       زیرنویس فایلی   تگ <track> — از Chromium 23 هست، یعنی حتی روی
+                       Tizen 2.3 و webOS 3 کار می‌کند. تنها راهی که
+                       همه‌جا جواب می‌دهد.
+
+       زیرنویس داخل HLS  hls.subtitleTrack
+
+       صدای فایلی      فایل ویدیوی جداگانه با صدای دوبله؛ منبع عوض
+                       می‌شود و زمان فعلی نگه داشته می‌شود
+
+       صدای داخل HLS   hls.audioTrack — بدون قطع تصویر
+
+     چرا چند باند صوتی داخل یک MP4 پشتیبانی نمی‌شود: مرورگرهای
+     Chromium خاصیت audioTracks را اصلا ندارند (فقط سافاری دارد) و از
+     سمت صفحه هیچ راهی برای تعویض باند داخل MP4 وجود ندارد. */
+  TV.tracks = {};
+
+  /**
+   * زیرنویس‌های فایلی را روی المان ویدیو سوار می‌کند.
+   * list: [{id,lang,label,file_path,is_default}]
+   */
+  TV.tracks.attachSubtitles = function (video, list) {
+    if (!video || !list || !list.length) return;
+
+    var i, t, el;
+    for (i = 0; i < list.length; i++) {
+      t = list[i];
+      if (!t.file_path) continue;
+
+      el = document.createElement('track');
+      el.kind    = 'subtitles';
+      el.srclang = t.lang || '';
+      el.label   = t.label || t.lang || '';
+      el.src     = t.file_path;
+      /* default فقط روی یکی — اگر روی چندتا باشد مرورگر دلبخواهی
+         یکی را می‌گیرد و رفتار بین تلویزیون‌ها فرق می‌کند. */
+      if (t.is_default) el.setAttribute('default', 'default');
+      video.appendChild(el);
+    }
+  };
+
+  /**
+   * روشن‌کردن یک زیرنویس. index === -1 یعنی خاموش.
+   *
+   * mode روی textTracks ست می‌شود نه حذف المان: با حذف، برگرداندنش
+   * نیاز به بارگذاری دوباره‌ی فایل دارد و روی شبکه‌ی کند هتل مکث
+   * محسوسی می‌دهد.
+   */
+  TV.tracks.showSubtitle = function (video, index, hls) {
+    /* اگر زیرنویس داخل جریان HLS است */
+    if (hls && hls.subtitleTracks && hls.subtitleTracks.length) {
+      try {
+        hls.subtitleTrack   = index;
+        hls.subtitleDisplay = index >= 0;
+      } catch (e) {}
+      return;
+    }
+
+    if (!video || !video.textTracks) return;
+    var tt = video.textTracks, i;
+    for (i = 0; i < tt.length; i++) {
+      /* 'showing' و 'disabled' — نه 'hidden'. با hidden مرورگر
+         همچنان رویداد cue می‌دهد ولی چیزی نشان نمی‌دهد، و بعضی
+         تلویزیون‌ها آن را مثل showing رفتار می‌کنند. */
+      try { tt[i].mode = (i === index) ? 'showing' : 'disabled'; } catch (e2) {}
+    }
+  };
+
+  /** کدام زیرنویس الان روشن است؛ -1 یعنی هیچ‌کدام */
+  TV.tracks.currentSubtitle = function (video, hls) {
+    if (hls && hls.subtitleTracks && hls.subtitleTracks.length) {
+      return (typeof hls.subtitleTrack === 'number') ? hls.subtitleTrack : -1;
+    }
+    if (!video || !video.textTracks) return -1;
+    var tt = video.textTracks, i;
+    for (i = 0; i < tt.length; i++) if (tt[i].mode === 'showing') return i;
+    return -1;
+  };
+
+  /**
+   * تعویض باند صوتی.
+   *
+   * برای kind='hls' فقط یک انتساب است. برای kind='file' منبع ویدیو
+   * عوض می‌شود و زمان فعلی نگه داشته می‌شود — وگرنه مهمان وسط فیلم
+   * به ابتدای آن پرت می‌شود.
+   *
+   * cb(err)
+   */
+  TV.tracks.selectAudio = function (video, item, hls, cb) {
+    cb = cb || function () {};
+    if (!item) { cb(new Error('باند صوتی مشخص نشده')); return; }
+
+    if (item.kind === 'hls') {
+      if (!hls) { cb(new Error('این جریان باند چندگانه ندارد')); return; }
+      try {
+        hls.audioTrack = Number(item.track_index) || 0;
+        cb(null);
+      } catch (e) { cb(e); }
+      return;
+    }
+
+    if (!video || !item.file_path) { cb(new Error('فایل صوتی موجود نیست')); return; }
+
+    var at     = video.currentTime || 0;
+    var paused = video.paused;
+    var done   = false;
+
+    function resume() {
+      if (done) return;
+      done = true;
+      try {
+        /* پرش به زمان قبلی فقط وقتی ممکن است که متادیتا آمده باشد */
+        if (at > 0) video.currentTime = at;
+      } catch (e) {}
+      if (!paused) {
+        var pr;
+        try { pr = video.play(); } catch (e2) {}
+        if (pr && pr.catch) pr.catch(function () {});
+      }
+      cb(null);
+    }
+
+    /* loadedmetadata یک‌بار مصرف است؛ روی تلویزیون‌های قدیمی
+       گزینه‌ی once پشتیبانی نمی‌شود پس دستی برمی‌داریم. */
+    function onMeta() {
+      if (video.removeEventListener) video.removeEventListener('loadedmetadata', onMeta, false);
+      resume();
+    }
+    TV.on(video, 'loadedmetadata', onMeta);
+
+    /* اگر متادیتا نیامد، صفحه نباید برای همیشه منتظر بماند */
+    setTimeout(resume, 8000);
+
+    video.src = item.file_path;
+    try { video.load(); } catch (e3) {}
   };
 
   /* ── قفل‌گاه ──────────────────────────────────────────────────────

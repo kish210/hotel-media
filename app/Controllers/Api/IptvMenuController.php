@@ -311,8 +311,19 @@ class IptvMenuController extends Controller
 
     private function insertItem(int $menuId, array $data, int $order = 0): int|string
     {
-        $validTypes = ['live','vod','news','info','weather','fids','hotel','corporate','retail','url','custom'];
-        $type       = in_array($data['type'] ?? '', $validTypes) ? $data['type'] : 'live';
+        /* این فهرست از انواع واقعی ستون type عقب مانده بود: هر آیتمی
+           با نوع radio، quran، book، directory، folio، services، epg
+           یا input بی‌صدا به 'live' تبدیل می‌شد و اپراتور نمی‌فهمید
+           چرا کاشی‌اش کار نمی‌کند.
+
+           هم‌ارز با ENUM در مهاجرت‌های ۰۰۹ و ۰۲۹. اگر آنجا نوعی اضافه
+           شد، اینجا هم باید اضافه شود. */
+        $validTypes = [
+            'live', 'vod', 'news', 'info', 'weather', 'fids', 'hotel',
+            'corporate', 'retail', 'url', 'custom', 'radio', 'quran',
+            'book', 'directory', 'folio', 'services', 'epg', 'input',
+        ];
+        $type = in_array($data['type'] ?? '', $validTypes, true) ? $data['type'] : 'live';
 
         $config = $data['config'] ?? null;
         if (is_array($config)) $config = json_encode($config, JSON_UNESCAPED_UNICODE);

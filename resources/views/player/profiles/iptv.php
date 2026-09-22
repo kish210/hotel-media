@@ -320,6 +320,26 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 
 <div id="stage-player"></div>
 
+<!-- انتخاب زیرنویس و صدا. مهمان وسط فیلم دکمه‌ی زیرنویس ریموت را
+     می‌زند؛ پخش نباید قطع شود، پس لایه‌ی شناور است نه صفحه‌ی جدا. -->
+<div class="tv-tracks" id="tracks-screen">
+  <div class="tv-tracks-box">
+    <div class="tv-tracks-title">زیرنویس و صدا</div>
+    <div class="tv-tracks-group" id="tracks-subs-group">
+      <div class="tv-tracks-label">زیرنویس</div>
+      <div id="tracks-subs"></div>
+    </div>
+    <div class="tv-tracks-group" id="tracks-audio-group">
+      <div class="tv-tracks-label">صدا</div>
+      <div id="tracks-audio"></div>
+    </div>
+    <div class="tv-tracks-hint">
+      <span class="tv-key">OK</span> انتخاب &nbsp;·&nbsp;
+      <span class="tv-key">↩</span> بستن
+    </div>
+  </div>
+</div>
+
 <!-- اتصال دستگاه مهمان. منوی خود تلویزیون در اتاق قفل است، پس وصل‌کردن
      موبایل یا کنسول بازی باید از همین‌جا شدنی باشد. -->
 <div class="tv-inputs" id="inputs-screen">
@@ -402,6 +422,13 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   var autoTimer  = null;
   var hlsInst    = null;
   var playing    = false;
+  var curVideo   = null;    /* المان ویدیوی در حال پخش */
+
+  /* زیرنویس و باند صوتی فیلم در حال پخش */
+  var trackData  = { subtitles: [], audio: [] };
+  var trackRows  = [];
+  var trackFocus = 0;
+  var tracksOpen = false;
   var accent     = '#1a7ac4';
   var accentRgb  = '26,122,196';
 
@@ -584,11 +611,24 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   }
 
   function play(it) {
-    playing = true;
+    playing  = true;
+    curVideo = null;
     TV.hide(TV.id('stage'));
 
     TV.text(TV.id('back-label'), it.label || 'بازگشت');
     TV.addClass(TV.id('back-btn'), 'is-on');
+
+    /* زیرنویس و صدا همراه خود آیتم می‌آیند، پس درخواست اضافه‌ای به
+       سرور نمی‌خورد. آیتم‌هایی که ندارند فقط فهرست خالی دارند. */
+    trackData = {
+      subtitles: it.subtitles || [],
+      audio:     it.audio || []
+    };
+    /* باند پیش‌فرض را علامت بزن تا تیک درست نشان داده شود */
+    var t;
+    for (t = 0; t < trackData.audio.length; t++) {
+      trackData.audio[t]._active = (t === 0) || !!trackData.audio[t].is_default;
+    }
 
     destroyHls();
     var host = TV.id('stage-player');
@@ -631,6 +671,8 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 
   function hls(src, host) {
     var v = mkVideo(false);
+    curVideo = v;
+    TV.tracks.attachSubtitles(v, trackData.subtitles);
     host.appendChild(v);
 
     /* ترتیب مهم است: تلویزیون‌هایی که HLS بومی دارند باید از آن استفاده
@@ -665,6 +707,8 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
      سوییچ یا هیچ‌چیز پخش نمی‌کند یا به همه‌ی پورت‌ها flood می‌کند. */
   function multicast(src, host) {
     var v = mkVideo(true);
+    curVideo = v;
+    TV.tracks.attachSubtitles(v, trackData.subtitles);
     var settled = false;
 
     function giveUp() {
@@ -692,6 +736,8 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 
   function video(src, host) {
     var v = mkVideo(false);
+    curVideo = v;
+    TV.tracks.attachSubtitles(v, trackData.subtitles);
     v.src = src;
     v.onended = back;
     v.onerror = back;
@@ -721,7 +767,10 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   function back() {
     clearTimeout(autoTimer);
     destroyHls();
-    playing = false;
+    closeTracks();
+    playing  = false;
+    curVideo = null;
+    trackData = { subtitles: [], audio: [] };
     var host = TV.id('stage-player');
     TV.removeClass(host, 'is-on');
     host.innerHTML = '';
@@ -750,8 +799,26 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
       return;
     }
 
+    /* لایه‌ی زیرنویس و صدا روی پخش است */
+    if (tracksOpen) {
+      if (k === 'BACK' || k === 'EXIT') { closeTracks(); if (e.preventDefault) e.preventDefault(); return; }
+      if (k === 'OK') { pickTrack(trackFocus); if (e.preventDefault) e.preventDefault(); return; }
+      if (k === 'UP')   { focusTrack(trackFocus - 1); if (e.preventDefault) e.preventDefault(); return; }
+      if (k === 'DOWN') { focusTrack(trackFocus + 1); if (e.preventDefault) e.preventDefault(); return; }
+      return;
+    }
+
     if (playing) {
-      if (k === 'BACK' || k === 'EXIT') { back(); if (e.preventDefault) e.preventDefault(); }
+      if (k === 'BACK' || k === 'EXIT') { back(); if (e.preventDefault) e.preventDefault(); return; }
+
+      /* دکمه‌ی زرد ریموت و SUBTITLE هر دو زیرنویس را باز می‌کنند.
+         روی ریموت هتلی معمولا دکمه‌ی SUBTITLE جدا نیست، ولی چهار
+         دکمه‌ی رنگی همیشه هست — و مهمان با راهنمای روی صفحه یاد
+         می‌گیرد کدام است. */
+      if (k === 'YELLOW' || k === 'SUBTITLE') {
+        openTracks();
+        if (e.preventDefault) e.preventDefault();
+      }
       return;
     }
     if (!tiles.length) return;
@@ -770,6 +837,128 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 
     if (k === 'BACK') { dismissPopup(); dismissBanner(); }
   });
+
+  /* ── زیرنویس و صدا ────────────────────────────────────────────────
+     مهمان خارجی فیلم فارسی می‌بیند و مهمان ایرانی فیلم خارجی. هر دو
+     زیرنویس می‌خواهند، و بعضی فیلم‌ها دوبله هم دارند.
+
+     فهرست از همان پاسخی می‌آید که آدرس ویدیو را داد، پس درخواست
+     اضافه‌ای به سرور نمی‌خورد. */
+  function hasTracks() {
+    return (trackData.subtitles && trackData.subtitles.length) ||
+           (trackData.audio && trackData.audio.length);
+  }
+
+  function openTracks() {
+    if (!playing || !hasTracks()) return;
+    tracksOpen = true;
+    buildTracks();
+    TV.addClass(TV.id('tracks-screen'), 'is-on');
+  }
+
+  function closeTracks() {
+    tracksOpen = false;
+    TV.removeClass(TV.id('tracks-screen'), 'is-on');
+  }
+
+  function buildTracks() {
+    var subs  = trackData.subtitles || [];
+    var audio = trackData.audio || [];
+    trackRows = [];
+
+    /* گزینه‌ی خاموش همیشه اول — مهمانی که زیرنویس نمی‌خواهد نباید
+       دنبال راه خاموش‌کردنش بگردد. */
+    var subHtml = '';
+    if (subs.length) {
+      subHtml += trackRow('sub', -1, 'خاموش',
+                          TV.tracks.currentSubtitle(curVideo, hlsInst) === -1);
+      var cur = TV.tracks.currentSubtitle(curVideo, hlsInst), i;
+      for (i = 0; i < subs.length; i++) {
+        subHtml += trackRow('sub', i,
+          subs[i].label + (subs[i].is_sdh ? ' (ناشنوایان)' : ''), cur === i);
+      }
+      TV.show(TV.id('tracks-subs-group'));
+    } else {
+      TV.hide(TV.id('tracks-subs-group'));
+    }
+    TV.id('tracks-subs').innerHTML = subHtml;
+
+    var audHtml = '';
+    if (audio.length > 1) {
+      var j;
+      for (j = 0; j < audio.length; j++) {
+        audHtml += trackRow('aud', j, audio[j].label, !!audio[j]._active);
+      }
+      TV.show(TV.id('tracks-audio-group'));
+    } else {
+      /* یک باند یعنی انتخابی در کار نیست؛ نشان‌دادن فهرست تک‌گزینه‌ای
+         فقط مهمان را گیج می‌کند. */
+      TV.hide(TV.id('tracks-audio-group'));
+    }
+    TV.id('tracks-audio').innerHTML = audHtml;
+
+    trackRows = TV.all('.tv-track', TV.id('tracks-screen'));
+    var k;
+    for (k = 0; k < trackRows.length; k++) {
+      (function (idx) {
+        TV.on(trackRows[idx], 'click', function () { pickTrack(idx); });
+      })(k);
+    }
+    focusTrack(0);
+  }
+
+  function trackRow(kind, idx, label, active) {
+    return '<div class="tv-track' + (active ? '' : ' is-off') + '"' +
+             ' data-kind="' + kind + '" data-idx="' + idx + '">' +
+             '<span class="tv-track-tick">' + (active ? '✓' : '') + '</span>' +
+             '<span>' + TV.esc(label) + '</span>' +
+           '</div>';
+  }
+
+  function focusTrack(i) {
+    if (!trackRows.length) return;
+    if (i < 0) i = 0;
+    if (i >= trackRows.length) i = trackRows.length - 1;
+    var n;
+    for (n = 0; n < trackRows.length; n++) {
+      TV.toggleClass(trackRows[n], 'is-focused', n === i);
+    }
+    trackFocus = i;
+  }
+
+  function pickTrack(i) {
+    var row = trackRows[i];
+    if (!row) return;
+
+    var kind = row.getAttribute('data-kind');
+    var idx  = parseInt(row.getAttribute('data-idx'), 10);
+
+    if (kind === 'sub') {
+      TV.tracks.showSubtitle(curVideo, idx, hlsInst);
+      buildTracks();          /* تیک‌ها به‌روز شوند */
+      focusTrack(i);
+      return;
+    }
+
+    var item = (trackData.audio || [])[idx];
+    if (!item) return;
+
+    var a;
+    for (a = 0; a < trackData.audio.length; a++) {
+      trackData.audio[a]._active = (a === idx);
+    }
+
+    TV.tracks.selectAudio(curVideo, item, hlsInst, function (err) {
+      if (err) {
+        /* مهمان باید بفهمد چرا چیزی عوض نشد */
+        TV.id('tracks-audio').innerHTML =
+          '<div class="tv-track is-off">تغییر صدا انجام نشد</div>';
+        return;
+      }
+      buildTracks();
+      focusTrack(i);
+    });
+  }
 
   /* ── اتصال دستگاه مهمان ───────────────────────────────────────────
      مهمان می‌خواهد گوشی یا کنسول بازی‌اش را وصل کند. چون منوی خود

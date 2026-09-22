@@ -144,6 +144,35 @@ class VodController extends Controller
         if (!$v) Response::notFound('ویدیو پیدا نشد');
         // افزایش بازدید
         $this->db->query("UPDATE vod_videos SET views=views+1 WHERE id=?", [(int)$p['id']]);
+
+        /* زیرنویس و باند صوتی همراه خود ویدیو برمی‌گردد، نه با درخواست
+           جدا — پلیر تلویزیون روی شبکه‌ی کند هتل نباید برای شروع پخش
+           منتظر دو رفت‌وبرگشت بماند.
+
+           زبان اتاق (اگر پذیرش ثبت کرده) بر پیش‌فرض اپراتور مقدم است:
+           مهمانی که فارسی نمی‌داند نباید در منوی ناآشنا دنبال تنظیمات
+           زیرنویس بگردد. */
+        $lang = null;
+        $code = trim((string)$req->get('screen', ''));
+        if ($code !== '') {
+            /* ارتباط از سمت صفحه است (screens.iptv_room_id)، نه از سمت
+               اتاق. و زبان مهمان از قبل در guest_lang بود — ستون جدید
+               لازم نبود. */
+            $lang = $this->db->value(
+                'SELECT r.guest_lang
+                   FROM screens s
+                   JOIN iptv_rooms r ON r.id = s.iptv_room_id
+                  WHERE s.code = ? AND s.tenant_id = ?',
+                [$code, $this->tid]
+            );
+        }
+
+        $tracks = (new \App\Services\SubtitleService($this->db))
+            ->forPlayer((int)$p['id'], $lang ? (string)$lang : null);
+
+        $v['subtitles'] = $tracks['subtitles'];
+        $v['audio']     = $tracks['audio'];
+
         Response::success($v);
     }
 
