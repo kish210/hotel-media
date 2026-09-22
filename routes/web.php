@@ -199,6 +199,26 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
     $r->post('/campaigns',        [\App\Controllers\Web\CampaignController::class, 'store']);
     $r->post('/campaigns/{id}/broadcast', [\App\Controllers\Web\CampaignController::class, 'broadcast']);
 
+    /* تعریف ساختار هتل — شعبه، گروه، اتاق. فقط مدیر ارشد (بررسی نقش
+       داخل کنترلر). این‌ها یک‌بار موقع راه‌اندازی تعریف می‌شوند؛
+       کارمند پذیرش نباید بتواند اتاق را حذف کند یا شماره‌اش را عوض
+       کند — حذف یک اتاق یعنی قطع تلویزیونش و ازدست‌رفتن صورتحسابش. */
+    $r->get('/property/rooms',                [\App\Controllers\Web\PropertyController::class, 'rooms']);
+    $r->post('/property/rooms',               [\App\Controllers\Web\PropertyController::class, 'storeRoom']);
+    $r->post('/property/rooms/bulk',          [\App\Controllers\Web\PropertyController::class, 'bulkRooms']);
+    $r->post('/property/rooms/{id}',          [\App\Controllers\Web\PropertyController::class, 'updateRoom']);
+    $r->post('/property/rooms/{id}/delete',   [\App\Controllers\Web\PropertyController::class, 'deleteRoom']);
+
+    $r->get('/property/groups',               [\App\Controllers\Web\PropertyController::class, 'groups']);
+    $r->post('/property/groups',              [\App\Controllers\Web\PropertyController::class, 'storeGroup']);
+    $r->post('/property/groups/{id}',         [\App\Controllers\Web\PropertyController::class, 'updateGroup']);
+    $r->post('/property/groups/{id}/delete',  [\App\Controllers\Web\PropertyController::class, 'deleteGroup']);
+
+    $r->get('/property/locations',              [\App\Controllers\Web\PropertyController::class, 'locations']);
+    $r->post('/property/locations',             [\App\Controllers\Web\PropertyController::class, 'storeLocation']);
+    $r->post('/property/locations/{id}',        [\App\Controllers\Web\PropertyController::class, 'updateLocation']);
+    $r->post('/property/locations/{id}/delete', [\App\Controllers\Web\PropertyController::class, 'deleteLocation']);
+
     // Settings
     $r->get('/settings',   [\App\Controllers\Web\SettingsController::class, 'index']);
     $r->post('/settings',  [\App\Controllers\Web\SettingsController::class, 'update']);

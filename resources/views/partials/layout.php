@@ -225,6 +225,20 @@ if (!function_exists('modOn')) {
   <a href="/admin/reports"   class="sidebar-link <?= isActive('/admin/reports') ?>">
     <span class="icon"><i class="fas fa-chart-bar"></i></span> گزارش‌ها
   </a>
+  <?php /* تعریف ساختار هتل — فقط مدیر ارشد. این‌ها یک‌بار موقع
+           راه‌اندازی تعریف می‌شوند و کارمند پذیرش نباید ببیندشان. */ ?>
+  <?php if (($authUser['role'] ?? '') === 'super_admin'): ?>
+  <a href="/admin/property/rooms" class="sidebar-link <?= isActive('/admin/property/rooms') ?>">
+    <span class="icon"><i class="fas fa-door-closed"></i></span> تعریف اتاق‌ها
+  </a>
+  <a href="/admin/property/groups" class="sidebar-link <?= isActive('/admin/property/groups') ?>">
+    <span class="icon"><i class="fas fa-object-group"></i></span> تعریف گروه‌ها
+  </a>
+  <a href="/admin/property/locations" class="sidebar-link <?= isActive('/admin/property/locations') ?>">
+    <span class="icon"><i class="fas fa-building"></i></span> تعریف شعبه‌ها
+  </a>
+  <?php endif; ?>
+
   <?php /* مدیریت ماژول‌ها جای واقعی‌اش اینجاست نه بالای فهرست: کاری
            است که یک‌بار موقع راه‌اندازی انجام می‌شود، نه هر روز. */ ?>
   <a href="/admin/modules" class="sidebar-link <?= isActive('/admin/modules') ?>">
