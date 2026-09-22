@@ -291,6 +291,68 @@ match ($command) {
         if ($down) exit(1);
     })(),
 
+    'multicast:start' => (function() use ($argv) {
+        /* همه‌ی کانال‌هایی که آدرس multicast دارند را روی تی‌وی‌هدند
+           روشن می‌کند.
+
+           چرا لازم است: جریان‌های UDP با ریستارت سرور یا تی‌وی‌هدند
+           از بین می‌روند. تلویزیون‌ها تصویر سیاه نشان می‌دهند و هیچ
+           خطایی هم جایی ثبت نمی‌شود — از بیرون شبیه خرابی شبکه است.
+
+           برای cron: هر ۵ دقیقه. شروع دوباره‌ی جریانی که از قبل روشن
+           است بی‌ضرر است، پس اجرای مکرر مشکلی ندارد.
+
+           خط cron (ستاره‌ی اول با اسلش، اینجا عمدا نوشته نشده چون
+           دنباله‌ی ستاره-اسلش کامنت PHP را می‌بندد):
+
+               هر پنج دقیقه →  cd /var/www/hotel-media
+                               php artisan multicast:start
+        */
+        $tenant = (int)($argv[2] ?? 1);
+        $svc    = new \App\Services\TvheadendApiService();
+        $r      = $svc->startAll($tenant);
+
+        printf("  \033[32m✓\033[0m %d جریان روشن است\n", $r['started']);
+        if ($r['failed']) {
+            printf("  \033[31m✗\033[0m %d ناموفق\n", $r['failed']);
+            foreach (array_slice($r['errors'], 0, 10) as $e) echo "      $e\n";
+            exit(1);
+        }
+    })(),
+
+    'tvheadend:status' => (function() use ($argv) {
+        /* تیونرهای مشغول و اشتراک‌های در حال پخش.
+           مهم‌ترین عددی که اپراتور هتل لازم دارد: چند تیونر آزاد
+           مانده. وقتی همه مشغول‌اند کانال بعدی پخش نمی‌شود و علتش
+           از بیرون شبیه خرابی شبکه به نظر می‌رسد. */
+        $tenant = (int)($argv[2] ?? 1);
+        $svc    = new \App\Services\TvheadendApiService();
+
+        $src = $svc->source($tenant);
+        if (!$src) { echo "منبع تی‌وی‌هدند تنظیم نشده است.\n"; exit(1); }
+
+        $st = $svc->liveStatus($src);
+        if (!$st['ok']) { echo "\033[31m✗\033[0m {$st['message']}\n"; exit(1); }
+
+        echo "\n  \033[36mتیونرها\033[0m\n";
+        foreach ($st['inputs'] as $in) {
+            printf("    %-34s %s\n", $in['input'] ?? '—', $in['stream'] ?? '');
+        }
+
+        printf("\n  \033[36maشتراک‌های فعال: %d\033[0m\n", count($st['subscriptions']));
+        foreach ($st['subscriptions'] as $s) {
+            printf("    %-30s %s\n", $s['channel'] ?? '—', $s['state'] ?? '');
+        }
+
+        $ts = $svc->timeshiftStatus($src);
+        if ($ts['ok']) {
+            echo "\n  تایم‌شیفت: " . ($ts['enabled']
+                ? "\033[32mفعال\033[0m"
+                : "\033[33mخاموش — مکث روی پخش زنده کار نمی‌کند\033[0m") . "\n";
+        }
+        echo "\n";
+    })(),
+
     'pms:push' => (function() use ($argv) {
         // اقلام صورتحساب را به سیستم هتلداری می‌فرستد.
         // برای cron: هر ۵ دقیقه — قلم‌هایی که PMS در دسترس نبوده در صف
@@ -341,6 +403,7 @@ match ($command) {
         $nodeTests = [
             'tv-platform-sim.js',
             'tv-compat-lint.js',
+            'php-syntax.js',
         ];
 
         // Node ممکن است روی سرور هتل نصب نباشد — تست‌ها رد می‌شوند نه شکست

@@ -35,6 +35,19 @@ info() { echo -e "  ${B}→${N} $1"; }
 warn() { echo -e "  ${Y}!${N} $1"; }
 die()  { echo -e "  ${R}✘ $1${N}"; exit 1; }
 
+# با set -e هر فرمانی که کد غیرصفر بدهد نصب را متوقف می‌کند — ولی
+# بی‌صدا. در نصب واقعی روی اوبونتو ۲۴.۰۴ همین اتفاق افتاد: یک
+# debconf-set-selections کد ۱ برگرداند و کل نصب وسط راه ایستاد بدون
+# اینکه هیچ پیامی بدهد. تکنسین فکر می‌کرد نصب تمام شده.
+#
+# این تله محل دقیق شکست را می‌گوید تا دفعه‌ی بعد دنبالش نگردید.
+trap 'rc=$?; [[ $rc -ne 0 ]] && {
+    echo -e "\n  ${R}✘ نصب در خط ${LINENO} متوقف شد (کد خروج ${rc})${N}"
+    echo -e "  ${Y}فرمان:${N} ${BASH_COMMAND}"
+    echo -e "  ${Y}بعد از رفع مشکل، همین اسکریپت را دوباره اجرا کنید —${N}"
+    echo -e "  ${Y}مراحلی که انجام شده‌اند دوباره اجرا نمی‌شوند.${N}"
+}' EXIT
+
 [[ $EUID -eq 0 ]] || die "این اسکریپت باید با sudo اجرا شود"
 
 echo -e "${B}"
@@ -132,13 +145,26 @@ if [[ "$INSTALL_TVHEADEND" == "1" ]]; then
         ok "TVHeadend از قبل نصب است"
         # رمز نصب قبلی را نمی‌دانیم؛ اگر فایل ما هست از آن بخوان
         [[ -f /etc/hotel-media/tvheadend.cred ]] && . /etc/hotel-media/tvheadend.cred
+    elif ! apt-cache show tvheadend >/dev/null 2>&1; then
+        # Ubuntu 24.04 بسته‌ی tvheadend را ندارد — بعد از 22.04 از مخازن
+        # برداشته شده. بدون این بررسی، خط بعدی روی سیستمی که بسته را
+        # ندارد خطا می‌داد و چون اسکریپت set -e دارد، کل نصب همان‌جا و
+        # بدون هیچ پیامی می‌مرد.
+        warn "بسته‌ی TVHeadend در مخازن این نسخه‌ی اوبونتو نیست"
+        info "نصب دستی:  https://tvheadend.org/projects/tvheadend/wiki/AptRepository"
+        info "بعد از نصب:  sudo -u www-data php ${APP_DIR}/artisan tvheadend:setup"
+        INSTALL_TVHEADEND=0
     else
         info "نصب TVHeadend"
         TVH_PASS="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20)"
 
-        # نصب tvheadend وگرنه سؤال تعاملی برای کاربر ادمین می‌پرسد و
-        # اسکریپت وسط نصب معلق می‌ماند. با debconf از قبل پاسخ می‌دهیم.
-        debconf-set-selections <<DEBCONF
+        # پاسخ از پیش به پرسش‌های نصب، وگرنه نصب برای کاربر ادمین سؤال
+        # تعاملی می‌پرسد و اسکریپت معلق می‌ماند.
+        #
+        # «|| true» لازم است: debconf-set-selections روی قالبی که هنوز
+        # ثبت نشده هشدار می‌دهد و با کد ۱ برمی‌گردد. با set -e همین یک
+        # کد خروج کل نصب را بی‌صدا متوقف می‌کرد.
+        debconf-set-selections <<DEBCONF 2>/dev/null || true
 tvheadend tvheadend/admin_username string ${TVH_USER}
 tvheadend tvheadend/admin_password password ${TVH_PASS}
 tvheadend tvheadend/admin_password_again password ${TVH_PASS}
@@ -401,6 +427,10 @@ fi
 
 # ── پایان ────────────────────────────────────────────────────────────
 SERVER_IP="$(hostname -I | awk '{print $1}')"
+
+# از اینجا به بعد نصب تمام است؛ تله‌ی شکست برداشته می‌شود وگرنه
+# روی خروج موفق هم پیام خطا چاپ می‌کند.
+trap - EXIT
 
 echo ""
 echo -e "${G}╔══════════════════════════════════════════════════════════╗${N}"
