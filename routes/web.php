@@ -4,13 +4,12 @@ $router->get('/player/module/{type}', function(\App\Core\Request $req, array $p)
     $type     = preg_replace('/[^a-z_]/', '', $p['type'] ?? '');
     $settings = json_decode($req->get('settings', '{}'), true) ?: [];
 
+    /* فقط ماژول‌های هتل. ماژول‌های صنف‌های دیگر به شاخه‌ی
+       non-hotel-verticals منتقل شدند؛ اگر اینجا بمانند، روتر کلاسِ
+       ناموجود را صدا می‌زند و کل برنامه می‌افتد. */
     $classMap = [
-        'fids'      => \App\Modules\FIDS\FIDSModule::class,
-        'hotel'     => \App\Modules\Hotel\HotelModule::class,
-        'menu'      => \App\Modules\Menu\MenuModule::class,
-        'corporate' => \App\Modules\Corporate\CorporateModule::class,
-        'retail'    => \App\Modules\Retail\RetailModule::class,
-        'transport' => \App\Modules\Transport\TransportModule::class,
+        'hotel' => \App\Modules\Hotel\HotelModule::class,
+        'menu'  => \App\Modules\Menu\MenuModule::class,
     ];
 
     if (!isset($classMap[$type])) {
@@ -247,10 +246,6 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     $r->post('/modules/{id}/settings', [\App\Controllers\Web\ModuleWebController::class, 'saveSettings']);
 
     // FIDS Admin
-    $r->get('/modules/fids/flights',               [\App\Controllers\Web\FIDSWebController::class, 'flights']);
-    $r->post('/modules/fids/flights',              [\App\Controllers\Web\FIDSWebController::class, 'storeFlight']);
-    $r->post('/modules/fids/flights/{id}',         [\App\Controllers\Web\FIDSWebController::class, 'updateFlight']);
-    $r->post('/modules/fids/flights/{id}/delete',  [\App\Controllers\Web\FIDSWebController::class, 'deleteFlight']);
 
     // Hotel Admin
     $r->get('/modules/hotel',                      [\App\Controllers\Web\HotelWebController::class, 'index']);
@@ -260,15 +255,8 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     $r->post('/modules/hotel/amenities',           [\App\Controllers\Web\HotelWebController::class, 'storeAmenity']);
 
     // Retail Admin
-    $r->get('/modules/retail',                     [\App\Controllers\Web\RetailWebController::class, 'index']);
-    $r->post('/modules/retail/products',           [\App\Controllers\Web\RetailWebController::class, 'storeProduct']);
-    $r->post('/modules/retail/products/{id}',      [\App\Controllers\Web\RetailWebController::class, 'updateProduct']);
 
     // Corporate Admin
-    $r->get('/modules/corporate',                  [\App\Controllers\Web\CorporateWebController::class, 'index']);
-    $r->post('/modules/corporate/kpi',             [\App\Controllers\Web\CorporateWebController::class, 'storeKpi']);
-    $r->post('/modules/corporate/kpi/{id}',        [\App\Controllers\Web\CorporateWebController::class, 'updateKpi']);
-    $r->post('/modules/corporate/news',            [\App\Controllers\Web\CorporateWebController::class, 'storeNews']);
 
     // Menu Admin
     $r->get('/modules/menu',                         [\App\Controllers\Web\MenuController::class, 'index']);
@@ -283,8 +271,6 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     $r->get('/screens/{id}/media-list',      [\App\Controllers\Web\BroadcastWebController::class, 'mediaList']);
     $r->post('/screens/{id}/broadcast',      [\App\Controllers\Web\BroadcastWebController::class, 'send']);
     $r->post('/screens/{id}/broadcast/clear',[\App\Controllers\Web\BroadcastWebController::class, 'clear']);
-
-
 
     // ── Transcoder ────────────────────────────────────────────
     $r->get('/transcoder',              [\App\Controllers\Web\TranscoderController::class, 'index']);
@@ -330,7 +316,6 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     // ── Help ───────────────────────────────────────────────────
     $r->get('/help',                              [\App\Controllers\Web\HelpController::class, 'index']);
     // ── In-Flight Display ──────────────────────────────────────
-    $r->get('/inflight',            [\App\Controllers\Web\InflightWebController::class, 'index']);
 
     // ── VOD ────────────────────────────────────────────────────
     $r->get('/vod', [\App\Controllers\Web\VodWebController::class, 'index']);
@@ -346,7 +331,6 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     // ── Notifications ──────────────────────────────────────────
     $r->get('/notifications',                [\App\Controllers\Web\NotificationController::class, 'index']);
     $r->post('/notifications/mark-all-read', [\App\Controllers\Web\NotificationController::class, 'markAllRead']);
-
 
 });
 // ── HLS Stream serve (public)

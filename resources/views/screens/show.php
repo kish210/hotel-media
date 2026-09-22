@@ -1,6 +1,5 @@
 <?php
 use App\Core\Auth;
-use App\Services\AirportIrFetcher;
 $settings  = json_decode($screen['settings'] ?? '{}', true) ?: [];
 $isOnline  = (bool)($screen['is_online'] ?? false);
 $isActive  = ($screen['status'] ?? '') === 'active';
@@ -694,7 +693,7 @@ include VIEWS_PATH . '/partials/layout.php';
     </h2>
     <!-- نوع محتوا -->
     <div style="display:flex;flex-wrap:wrap;gap:4px;background:rgba(0,0,0,.3);border-radius:8px;padding:3px;margin-bottom:14px;">
-      <?php foreach([['image','🖼 تصویر'],['video','🎬 ویدیو'],['url','🌐 وب'],['text','📝 متن'],['fids_live','✈ FIDS زنده']] as [$t,$l]): ?>
+      <?php foreach([['image','🖼 تصویر'],['video','🎬 ویدیو'],['url','🌐 وب'],['text','📝 متن']] as [$t,$l]): ?>
       <button onclick="bcType('<?=$t?>')" id="bc-<?=$t?>"
         style="flex:1;min-width:70px;padding:8px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600;
                font-family:'Vazirmatn',sans-serif;transition:all .2s;
@@ -719,56 +718,6 @@ include VIEWS_PATH . '/partials/layout.php';
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
         <div><label class="form-label">رنگ متن</label><input id="bc-tc" type="color" class="form-input" style="height:36px;padding:3px;" value="#ffffff"></div>
         <div><label class="form-label">رنگ زمینه</label><input id="bc-bg" type="color" class="form-input" style="height:36px;padding:3px;" value="#000000"></div>
-      </div>
-    </div>
-
-    <!-- ─── FIDS زنده ─── -->
-    <div id="bc-fids_live-wrap" style="display:none;">
-      <div style="background:rgba(14,165,233,.07);border:1px solid rgba(14,165,233,.2);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
-          <i class="fas fa-satellite-dish" style="color:#0ea5e9;font-size:14px;"></i>
-          <span style="font-size:12px;font-weight:700;color:#0ea5e9;">تابلو زنده از fids.airport.ir</span>
-        </div>
-        <div>
-          <label class="form-label" style="font-size:11px;">فرودگاه / شهر</label>
-          <select id="bc-fids-airport" class="form-input" style="font-size:12px;">
-            <?php foreach(\App\Services\AirportIrFetcher::AIRPORTS as $aid => $ainfo): ?>
-            <option value="<?= $aid ?>" <?= $aid === 2 ? 'selected' : '' ?>><?= e($ainfo['name']) ?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div>
-            <label class="form-label" style="font-size:11px;">نوع پرواز</label>
-            <select id="bc-fids-direction" class="form-input" style="font-size:12px;">
-              <option value="departure">خروجی (Departures)</option>
-              <option value="arrival">ورودی (Arrivals)</option>
-              <option value="all">هر دو</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label" style="font-size:11px;">مسیر پرواز</label>
-            <select id="bc-fids-route" class="form-input" style="font-size:12px;">
-              <option value="domestic">داخلی</option>
-              <option value="international">خارجی</option>
-              <option value="all">هر دو</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div>
-            <label class="form-label" style="font-size:11px;">تعداد ردیف</label>
-            <input id="bc-fids-rows" type="number" class="form-input" style="font-size:12px;" value="14" min="5" max="30">
-          </div>
-          <div>
-            <label class="form-label" style="font-size:11px;">تم رنگی</label>
-            <select id="bc-fids-theme" class="form-input" style="font-size:12px;">
-              <option value="dark">تاریک</option>
-              <option value="airport">فرودگاهی</option>
-              <option value="navy">Navy</option>
-            </select>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -947,7 +896,7 @@ function hx(h){return parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+',
 let _bcType='image', _bcMediaId=null;
 function bcType(t) {
   _bcType=t; _bcMediaId=null;
-  ['image','video','url','text','fids_live'].forEach(x=>{
+  ['image','video','url','text'].forEach(x=>{
     const b=document.getElementById('bc-'+x);
     if(!b)return;
     b.style.background=x===t?'rgba(26,122,196,.2)':'transparent';
@@ -956,8 +905,6 @@ function bcType(t) {
   document.getElementById('bc-media-wrap').style.display=['image','video'].includes(t)?'':'none';
   document.getElementById('bc-url-wrap').style.display=t==='url'?'':'none';
   document.getElementById('bc-text-wrap').style.display=t==='text'?'':'none';
-  const fidsWrap=document.getElementById('bc-fids_live-wrap');
-  if(fidsWrap) fidsWrap.style.display=t==='fids_live'?'':'none';
   if(['image','video'].includes(t)) loadBcMedia(t==='video'?'video':'image');
 }
 
@@ -990,26 +937,7 @@ async function bcSend(sid) {
   fd.append('duration',document.getElementById('bc-dur').value);
   fd.append('target',document.getElementById('bc-tgt').value);
 
-  if(_bcType==='fids_live'){
-    // ── FIDS زنده: ساخت URL به module renderer ──────────────────────
-    const airportId  = document.getElementById('bc-fids-airport').value;
-    const direction  = document.getElementById('bc-fids-direction').value;
-    const routeType  = document.getElementById('bc-fids-route').value;
-    const rows       = document.getElementById('bc-fids-rows').value;
-    const theme      = document.getElementById('bc-fids-theme').value;
-    const settings   = JSON.stringify({
-      zone_type:'fids_live_board',
-      airport_id: airportId,
-      direction:  direction,
-      route_type: routeType,
-      rows:       rows,
-      color_scheme: theme,
-      refresh_sec: '60',
-    });
-    const fidsUrl = window.location.origin + '/player/module/fids?settings=' + encodeURIComponent(settings);
-    fd.append('type','url');
-    fd.append('content', fidsUrl);
-  } else if(_bcType==='text'){
+  if(_bcType==='text'){
     const txt=document.getElementById('bc-txt').value.trim();
     if(!txt){alert('متن الزامی است');return;}
     fd.append('type','text');
@@ -1033,9 +961,7 @@ async function bcSend(sid) {
   if(d.success){
     document.getElementById('bc-stop-btn').style.display='';
     document.getElementById('bc-preview').style.display='';
-    const previewLabel=_bcType==='fids_live'
-      ? '✈ تابلو FIDS زنده در حال پخش...'
-      : '✅ '+(d.message||'ارسال شد');
+    const previewLabel='✅ '+(d.message||'ارسال شد');
     document.getElementById('bc-preview-inner').textContent=previewLabel;
     const dur=parseInt(document.getElementById('bc-dur').value);
     if(dur>0) setTimeout(()=>bcStop(sid,true),dur*1000);

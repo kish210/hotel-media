@@ -14,17 +14,19 @@ class ModuleRegistry
     private static bool  $booted   = false;
     private static int   $tenantId = 1;
 
-    /** تمام کلاس‌های ماژول داخلی */
+    /**
+     * ماژول‌های داخلی.
+     *
+     * این شاخه فقط هتل است. ماژول‌های صنف‌های دیگر — فرودگاه (FIDS)،
+     * حمل‌ونقل، فروشگاه، سازمانی و داخل‌پرواز — به شاخه‌ی
+     * non-hotel-verticals منتقل شدند تا نصب هتل سبک بماند و کد
+     * بی‌ربط جلوی چشم اپراتور هتل نباشد.
+     */
     private static array $moduleClasses = [
-        \App\Modules\FIDS\FIDSModule::class,
         \App\Modules\Hotel\HotelModule::class,
-        \App\Modules\Menu\MenuModule::class,
-        \App\Modules\Transport\TransportModule::class,
-        \App\Modules\Retail\RetailModule::class,
-        \App\Modules\Corporate\CorporateModule::class,
         \App\Modules\IPTV\IPTVModule::class,
-        \App\Modules\Inflight\InflightModule::class,
         \App\Modules\VOD\VODModule::class,
+        \App\Modules\Menu\MenuModule::class,
     ];
 
     public static function boot(int $tenantId = 1): void
@@ -127,16 +129,12 @@ class ModuleRegistry
 
     public static function make(string $type): ?object
     {
+        /* فقط ماژول‌های هتل — بقیه در شاخه‌ی non-hotel-verticals */
         $map = [
-            'fids'      => \App\Modules\FIDS\FIDSModule::class,
-            'hotel'     => \App\Modules\Hotel\HotelModule::class,
-            'menu'      => \App\Modules\Menu\MenuModule::class,
-            'corporate' => \App\Modules\Corporate\CorporateModule::class,
-            'retail'    => \App\Modules\Retail\RetailModule::class,
-            'transport' => \App\Modules\Transport\TransportModule::class,
-            'iptv'      => \App\Modules\IPTV\IPTVModule::class,
-            'inflight'  => \App\Modules\Inflight\InflightModule::class,
-            'vod'       => \App\Modules\VOD\VODModule::class,
+            'hotel' => \App\Modules\Hotel\HotelModule::class,
+            'iptv'  => \App\Modules\IPTV\IPTVModule::class,
+            'vod'   => \App\Modules\VOD\VODModule::class,
+            'menu'  => \App\Modules\Menu\MenuModule::class,
         ];
         if (!isset($map[$type])) return null;
         return new $map[$type]();

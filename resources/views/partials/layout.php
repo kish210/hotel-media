@@ -132,13 +132,6 @@ if (!function_exists('modOn')) {
     <?php endif; ?>
   </a>
 
-  <!-- FIDS -->
-  <?php if (modOn('fids')): ?>
-  <a href="/admin/modules/fids/flights" class="sidebar-link <?= isActive('/admin/modules/fids') ?>">
-    <span class="icon"><i class="fas fa-plane-departure" style="color:#4098db;"></i></span> پروازها (FIDS)
-  </a>
-  <?php endif; ?>
-
   <!-- Hotel -->
   <?php if (modOn('hotel')): ?>
   <a href="/admin/modules/hotel" class="sidebar-link <?= isActive('/admin/modules/hotel') ?>">
@@ -150,27 +143,6 @@ if (!function_exists('modOn')) {
   <?php if (modOn('menu')): ?>
   <a href="/admin/modules/menu" class="sidebar-link <?= isActive('/admin/modules/menu') ?>">
     <span class="icon"><i class="fas fa-utensils" style="color:#1a7ac4;"></i></span> منوی رستوران
-  </a>
-  <?php endif; ?>
-
-  <!-- Retail -->
-  <?php if (modOn('retail')): ?>
-  <a href="/admin/modules/retail" class="sidebar-link <?= isActive('/admin/modules/retail') ?>">
-    <span class="icon"><i class="fas fa-store" style="color:#f472b6;"></i></span> فروشگاه
-  </a>
-  <?php endif; ?>
-
-  <!-- Corporate -->
-  <?php if (modOn('corporate')): ?>
-  <a href="/admin/modules/corporate" class="sidebar-link <?= isActive('/admin/modules/corporate') ?>">
-    <span class="icon"><i class="fas fa-building-columns" style="color:#818cf8;"></i></span> سازمانی
-  </a>
-  <?php endif; ?>
-
-  <!-- Transport -->
-  <?php if (modOn('transport')): ?>
-  <a href="/admin/modules/transport" class="sidebar-link <?= isActive('/admin/modules/transport') ?>">
-    <span class="icon"><i class="fas fa-bus" style="color:#34d399;"></i></span> حمل‌ونقل
   </a>
   <?php endif; ?>
 
@@ -196,13 +168,6 @@ if (!function_exists('modOn')) {
   </a>
   <a href="/admin/guest-services" class="sidebar-link <?= isActive('/admin/guest-services') ?>">
     <span class="icon"><i class="fas fa-concierge-bell" style="color:#f59e0b;"></i></span> خدمات مهمان
-  </a>
-  <?php endif; ?>
-
-  <!-- Inflight -->
-  <?php if (modOn('inflight')): ?>
-  <a href="/admin/inflight" class="sidebar-link <?= isActive('/admin/inflight') ?>">
-    <span class="icon"><i class="fas fa-plane" style="color:#00b4d8;"></i></span> نمایش پرواز ✈
   </a>
   <?php endif; ?>
 

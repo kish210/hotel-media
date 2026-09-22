@@ -96,18 +96,7 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
     $r->get('/modules/{id}/preview',       [\App\Controllers\Api\ModuleController::class, 'preview']);
 
     // FIDS — Flight Information Display
-    $r->get('/fids/flights',               [\App\Controllers\Api\FIDSController::class, 'flights']);
-    $r->post('/fids/flights',              [\App\Controllers\Api\FIDSController::class, 'storeFlight']);
-    $r->put('/fids/flights/{id}',          [\App\Controllers\Api\FIDSController::class, 'updateFlight']);
-    $r->delete('/fids/flights/{id}',       [\App\Controllers\Api\FIDSController::class, 'deleteFlight']);
-    $r->post('/fids/flights/{id}/status',  [\App\Controllers\Api\FIDSController::class, 'updateStatus']);
-    $r->get('/fids/airlines',              [\App\Controllers\Api\FIDSController::class, 'airlines']);
-    $r->get('/fids/stats',                 [\App\Controllers\Api\FIDSController::class, 'stats']);
     // FIDS Live — proxy to fids.airport.ir
-    $r->get('/fids/live',                  [\App\Controllers\Api\FIDSController::class, 'live']);
-    $r->get('/fids/airports',              [\App\Controllers\Api\FIDSController::class, 'airportList']);
-    $r->post('/fids/live/bust',            [\App\Controllers\Api\FIDSController::class, 'bustCache']);
-    $r->post('/fids/sync-live',            [\App\Controllers\Api\FIDSController::class, 'syncLive']);
 
     // Hotel Information
     $r->get('/hotel/info',                 [\App\Controllers\Api\HotelController::class, 'info']);
@@ -127,55 +116,20 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
     $r->get('/hotel/weather',              [\App\Controllers\Api\HotelController::class, 'weather']);
 
     // Corporate Information
-    $r->get('/corporate/kpi',              [\App\Controllers\Api\CorporateController::class, 'kpi']);
-    $r->post('/corporate/kpi',             [\App\Controllers\Api\CorporateController::class, 'storeKpi']);
-    $r->put('/corporate/kpi/{id}',         [\App\Controllers\Api\CorporateController::class, 'updateKpi']);
-    $r->delete('/corporate/kpi/{id}',      [\App\Controllers\Api\CorporateController::class, 'deleteKpi']);
-    $r->get('/corporate/news',             [\App\Controllers\Api\CorporateController::class, 'news']);
-    $r->post('/corporate/news',            [\App\Controllers\Api\CorporateController::class, 'storeNews']);
-    $r->put('/corporate/news/{id}',        [\App\Controllers\Api\CorporateController::class, 'updateNews']);
-    $r->delete('/corporate/news/{id}',     [\App\Controllers\Api\CorporateController::class, 'deleteNews']);
-    $r->get('/corporate/departments',      [\App\Controllers\Api\CorporateController::class, 'departments']);
-    $r->post('/corporate/departments',     [\App\Controllers\Api\CorporateController::class, 'storeDept']);
-    $r->put('/corporate/departments/{id}', [\App\Controllers\Api\CorporateController::class, 'updateDept']);
-    $r->delete('/corporate/departments/{id}', [\App\Controllers\Api\CorporateController::class, 'deleteDept']);
 
     // Retail & Shopping
-    $r->get('/retail/products',            [\App\Controllers\Api\RetailController::class, 'products']);
-    $r->post('/retail/products',           [\App\Controllers\Api\RetailController::class, 'storeProduct']);
-    $r->put('/retail/products/{id}',       [\App\Controllers\Api\RetailController::class, 'updateProduct']);
-    $r->delete('/retail/products/{id}',    [\App\Controllers\Api\RetailController::class, 'deleteProduct']);
-    $r->get('/retail/queue',               [\App\Controllers\Api\RetailController::class, 'queue']);
-    $r->post('/retail/queue/call',         [\App\Controllers\Api\RetailController::class, 'callNext']);
-    $r->get('/retail/currency',            [\App\Controllers\Api\RetailController::class, 'currency']);
 
     // Transport
-    $r->get('/transport/schedules',        [\App\Controllers\Api\TransportController::class, 'schedules']);
-    $r->post('/transport/schedules',       [\App\Controllers\Api\TransportController::class, 'storeSchedule']);
-    $r->put('/transport/schedules/{id}',   [\App\Controllers\Api\TransportController::class, 'updateSchedule']);
-    $r->delete('/transport/schedules/{id}',[\App\Controllers\Api\TransportController::class, 'deleteSchedule']);
 });
 
 // FIDS — public (for screens without auth)
-$router->get('/api/v1/fids/flights',      [\App\Controllers\Api\FIDSController::class, 'flights']);
-$router->get('/api/v1/fids/live',         [\App\Controllers\Api\FIDSController::class, 'live']);
-$router->get('/api/v1/fids/airports',     [\App\Controllers\Api\FIDSController::class, 'airportList']);
-$router->get('/api/v1/fids/ping',         [\App\Controllers\Api\FIDSController::class, 'ping']);
 // FIDS Cron — public with token auth (no JWT needed)
-$router->get('/api/v1/fids/cron-sync',   [\App\Controllers\Api\FIDSController::class, 'cronSync']);
 $router->get('/api/v1/hotel/events',    [\App\Controllers\Api\HotelController::class, 'events']);
 $router->get('/api/v1/hotel/amenities', [\App\Controllers\Api\HotelController::class, 'amenities']);
 $router->get('/api/v1/hotel/info',      [\App\Controllers\Api\HotelController::class, 'info']);
 $router->get('/api/v1/hotel/room-service', [\App\Controllers\Api\HotelController::class, 'roomService']);
 $router->get('/api/v1/hotel/attractions',  [\App\Controllers\Api\HotelController::class, 'attractions']);
 $router->get('/api/v1/hotel/weather',      [\App\Controllers\Api\HotelController::class, 'weather']);
-$router->get('/api/v1/corporate/kpi',      [\App\Controllers\Api\CorporateController::class, 'kpi']);
-$router->get('/api/v1/corporate/news',     [\App\Controllers\Api\CorporateController::class, 'news']);
-$router->get('/api/v1/corporate/departments', [\App\Controllers\Api\CorporateController::class, 'departments']);
-$router->get('/api/v1/retail/products',    [\App\Controllers\Api\RetailController::class, 'products']);
-$router->get('/api/v1/retail/queue',       [\App\Controllers\Api\RetailController::class, 'queue']);
-$router->get('/api/v1/retail/currency',    [\App\Controllers\Api\RetailController::class, 'currency']);
-$router->get('/api/v1/transport/schedules',[\App\Controllers\Api\TransportController::class, 'schedules']);
 
 // ── VOD ──────────────────────────────────────────────────────
 $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
@@ -242,20 +196,9 @@ $router->post('/api/v1/pms/message',   [\App\Controllers\Api\IptvRoomController:
 
 // ── Inflight Display (protected) ─────────────────────────────────────────────
 $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
-    $r->get('/inflight',            [\App\Controllers\Api\InflightController::class, 'index']);
-    $r->post('/inflight',           [\App\Controllers\Api\InflightController::class, 'store']);
-    $r->get('/inflight/{id}',       [\App\Controllers\Api\InflightController::class, 'show']);
-    $r->put('/inflight/{id}',       [\App\Controllers\Api\InflightController::class, 'update']);
-    $r->put('/inflight/{id}/live',         [\App\Controllers\Api\InflightController::class, 'updateLive']);
-    $r->delete('/inflight/{id}',           [\App\Controllers\Api\InflightController::class, 'destroy']);
     // RPi bridge endpoints
-    $r->post('/inflight/{id}/rpi-save',        [\App\Controllers\Api\InflightController::class, 'rpiSave']);
-    $r->get('/inflight/{id}/rpi-status',       [\App\Controllers\Api\InflightController::class, 'rpiStatus']);
-    $r->post('/inflight/{id}/rpi-sync',        [\App\Controllers\Api\InflightController::class, 'rpiSync']);
-    $r->post('/inflight/{id}/rpi-push-config', [\App\Controllers\Api\InflightController::class, 'rpiPushConfig']);
 });
 // Inflight public — player endpoint (no auth)
-$router->get('/api/v1/inflight/player/{id}', [\App\Controllers\Api\InflightController::class, 'playerFlight']);
 
 // ── Broadcast — پخش فوری
 $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
