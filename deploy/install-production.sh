@@ -159,16 +159,59 @@ if [[ "$INSTALL_TVHEADEND" == "1" ]]; then
         ok "TVHeadend از قبل نصب است"
         # رمز نصب قبلی را نمی‌دانیم؛ اگر فایل ما هست از آن بخوان
         [[ -f /etc/hotel-media/tvheadend.cred ]] && . /etc/hotel-media/tvheadend.cred
-    elif ! apt-cache show tvheadend >/dev/null 2>&1; then
-        # Ubuntu 24.04 بسته‌ی tvheadend را ندارد — بعد از 22.04 از مخازن
-        # برداشته شده. بدون این بررسی، خط بعدی روی سیستمی که بسته را
-        # ندارد خطا می‌داد و چون اسکریپت set -e دارد، کل نصب همان‌جا و
-        # بدون هیچ پیامی می‌مرد.
-        warn "بسته‌ی TVHeadend در مخازن این نسخه‌ی اوبونتو نیست"
-        info "نصب دستی:  https://tvheadend.org/projects/tvheadend/wiki/AptRepository"
-        info "بعد از نصب:  sudo -u www-data php ${APP_DIR}/artisan tvheadend:setup"
-        INSTALL_TVHEADEND=0
     else
+        # ── مخزن رسمی TVHeadend ──────────────────────────────────────
+        # بسته‌ی tvheadend بعد از Ubuntu 22.04 از مخازن اوبونتو برداشته
+        # شد؛ روی 24.04 اصلا وجود ندارد:
+        #     E: Unable to locate package tvheadend
+        #
+        # پس مخزن رسمی خود پروژه اضافه می‌شود. این بهتر از کامپایل از
+        # سورس است چون با apt به‌روز می‌شود و همان مسیری است که خود
+        # TVHeadend توصیه می‌کند. میزبانی روی Cloudsmith است.
+        if ! apt-cache show tvheadend >/dev/null 2>&1; then
+            info "افزودن مخزن رسمی TVHeadend"
+
+            apt-get install -y -qq apt-transport-https gnupg >/dev/null 2>&1 || true
+
+            TVH_KEYRING=/usr/share/keyrings/tvheadend-archive-keyring.gpg
+            TVH_LIST=/etc/apt/sources.list.d/tvheadend.list
+            TVH_CODENAME="${VERSION_CODENAME:-noble}"
+
+            # کلید امضا. بدون signed-by، بسته‌های این مخزن روی کل سیستم
+            # اعتبار پیدا می‌کنند — که نباید.
+            if curl -1sLf --max-time 30 \
+                 'https://dl.cloudsmith.io/public/tvheadend/tvheadend/gpg.C6CC06BD69B430C6.key' \
+                 | gpg --dearmor > "$TVH_KEYRING" 2>/dev/null
+            then
+                printf 'deb [signed-by=%s] https://dl.cloudsmith.io/public/tvheadend/tvheadend/deb/ubuntu %s main\n' \
+                    "$TVH_KEYRING" "$TVH_CODENAME" > "$TVH_LIST"
+
+                apt-get update -qq 2>/dev/null || true
+
+                if apt-cache show tvheadend >/dev/null 2>&1; then
+                    ok "مخزن رسمی TVHeadend اضافه شد (${TVH_CODENAME})"
+                else
+                    warn "مخزن اضافه شد ولی بسته‌ای برای «${TVH_CODENAME}» ندارد"
+                    rm -f "$TVH_LIST" "$TVH_KEYRING"
+                fi
+            else
+                warn "کلید مخزن TVHeadend دانلود نشد — سرور اینترنت دارد؟"
+                rm -f "$TVH_KEYRING"
+            fi
+        fi
+    fi
+
+    # بعد از تلاش برای افزودن مخزن، دوباره بررسی کن
+    if [[ "$INSTALL_TVHEADEND" == "1" ]] \
+       && ! systemctl list-unit-files 2>/dev/null | grep -q '^tvheadend' \
+       && ! apt-cache show tvheadend >/dev/null 2>&1; then
+        warn "بسته‌ی TVHeadend در دسترس نیست — بدون آن ادامه می‌دهیم"
+        info "بعد از نصب دستی:  sudo -u www-data php ${APP_DIR}/artisan tvheadend:setup"
+        INSTALL_TVHEADEND=0
+    fi
+
+    if [[ "$INSTALL_TVHEADEND" == "1" ]] \
+       && ! systemctl list-unit-files 2>/dev/null | grep -q '^tvheadend'; then
         info "نصب TVHeadend"
         TVH_PASS="$(randstr 20)"
 
