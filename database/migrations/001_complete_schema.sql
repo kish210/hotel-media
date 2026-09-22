@@ -7,11 +7,10 @@ SET FOREIGN_KEY_CHECKS = 0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
-CREATE DATABASE IF NOT EXISTS `signage_cms`
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-USE `signage_cms`;
-
+-- نام دیتابیس اینجا نمی‌آید: اتصال از قبل روی دیتابیس درست باز شده
+-- (از .env). با CREATE DATABASE و USE، نصبی که نام دیتابیس دیگری
+-- دارد با خطای ۱۰۴۴ «Access denied» شکست می‌خورد و اسکیما اعمال
+-- نمی‌شود — روی سرور واقعی همین اتفاق افتاد و پنل بدون کاربر ماند.
 -- ─────────────────────────────────────────
 -- TENANTS (Multi-tenant support)
 -- ─────────────────────────────────────────

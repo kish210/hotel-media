@@ -1,6 +1,4 @@
 -- Module tables migration — run if upgrading from v1.0 to v1.1
-USE `signage_cms`;
-
 -- این دستورات برای databaseهای موجود که از v1.0 ارتقا می‌یابند
 -- با IF NOT EXISTS safe هستند
 

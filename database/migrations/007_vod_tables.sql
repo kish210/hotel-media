@@ -1,8 +1,6 @@
 -- ============================================================
 -- VOD (Video on Demand) Tables — SignageCMS v1.4
 -- ============================================================
-USE `signage_cms`;
-
 -- ─── دسته‌بندی‌های VOD ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS `vod_categories` (
   `id`          INT UNSIGNED      NOT NULL AUTO_INCREMENT,
