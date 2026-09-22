@@ -24,11 +24,26 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Download Gradle Wrapper JAR
+      # ‏gradle-wrapper.jar در مخزن نیست، پس هر بار دانلود می‌شود.
+      # این JAR مستقیم اجرا می‌شود، یعنی اگر دستکاری شود مهاجم روی
+      # runner کد اجرا می‌کند و APK آلوده بیرون می‌آید — و چون APK بعدا
+      # روی ۳۰۰ تلویزیون هتل نصب می‌شود، این جدی‌تر از یک build معمولی
+      # است. پس چک‌سام پین شده.
+      #
+      # مقدار از فهرست رسمی Gradle است:
+      #   https://gradle.org/release-checksums/  →  8.0  →  Wrapper JAR
+      # موقع بالا بردن نسخه‌ی Gradle، هم distributionUrl در
+      # gradle-wrapper.properties و هم این دو خط باید با هم عوض شوند.
+      - name: Download and verify Gradle Wrapper JAR
         working-directory: android/gradle/wrapper
+        env:
+          WRAPPER_VERSION: '8.0.0'
+          WRAPPER_SHA256:  '91941f522fbfd4431cf57e445fc3d5200c85f957bda2de5251353cf11174f4b5'
         run: |
+          set -euo pipefail
           curl -fsSL -o gradle-wrapper.jar \
-            "https://github.com/gradle/gradle/raw/v8.0.0/gradle/wrapper/gradle-wrapper.jar"
+            "https://github.com/gradle/gradle/raw/v${WRAPPER_VERSION}/gradle/wrapper/gradle-wrapper.jar"
+          echo "${WRAPPER_SHA256}  gradle-wrapper.jar" | sha256sum -c -
 
       - name: Grant execute permission to gradlew
         working-directory: android
@@ -38,8 +53,13 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
+      # نسخه‌ی release علاوه بر tag، با اجرای دستی هم ساخته می‌شود.
+      # ‏APK دیباگ debuggable=true دارد؛ روی تلویزیون اتاق هتل یعنی هر
+      # کسی که به شبکه برسد می‌تواند با ADB به اپ وصل شود. پس چیزی که
+      # واقعا نصب می‌شود باید release باشد، نه دیباگ — و برای گرفتنش
+      # نباید مجبور بود tag زد.
       - name: Build Release APK
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         working-directory: android
         env:
           KEYSTORE_BASE64:  ${{ secrets.KEYSTORE_BASE64 }}
@@ -67,7 +87,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Release APK
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v7
         with:
           name: Hotel Media-Release-APK
