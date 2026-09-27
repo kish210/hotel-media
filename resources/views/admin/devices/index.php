@@ -318,9 +318,14 @@ $CMD_LABELS = [
       آدرس <code>/tv</code> از آخرین توکن فعال استفاده می‌کند.
     </p>
 
-    <form onsubmit="return addToken(event)" style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:7px;margin-bottom:16px;">
+    <form onsubmit="return addToken(event)" style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:7px;margin-bottom:16px;">
       <input id="tLabel" placeholder="عنوان، مثلا «طبقه ۳»" required
              style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px;color:#fff;font-size:12px;">
+      <select id="tType" title="نوع صفحه‌ای که این توکن می‌سازد"
+              style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px;color:#fff;font-size:12px;">
+        <option value="iptv">تلویزیون اتاق (IPTV)</option>
+        <option value="signage">تابلو (Signage)</option>
+      </select>
       <select id="tGroup" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px;color:#fff;font-size:12px;">
         <option value="">بدون گروه</option>
         <?php foreach ($groups as $g): ?>
@@ -565,6 +570,7 @@ async function addToken(ev) {
   try {
     await api('/api/v1/devices/tokens', 'POST', {
       label:        document.getElementById('tLabel').value.trim(),
+      screen_type:  document.getElementById('tType').value,
       group_id:     Number(document.getElementById('tGroup').value) || 0,
       menu_id:      Number(document.getElementById('tMenu').value) || 0,
       auto_approve: document.getElementById('tAuto').checked,

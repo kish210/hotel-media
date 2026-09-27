@@ -76,7 +76,10 @@ class PlayerController extends Controller
 
         // فعال‌سازی خودکار برای رنج‌های مورد اعتماد — تلویزیون هتلی با ریموت
         // نمی‌تواند کد تایپ کند. REMOTE_ADDR مستقیم (نه XFF که جعل‌شدنی است).
-        if (($screen['status'] ?? '') !== 'active') {
+        //
+        // فقط pending: وضعیت inactive یعنی مدیر عمدا صفحه را بسته است و
+        // whitelist نباید تصمیم او را باطل کند.
+        if (($screen['status'] ?? '') === 'pending') {
             $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
             if ($ip !== '' &&
                 (new \App\Services\IpWhitelistService($this->db))->matches($ip, (int)($screen['tenant_id'] ?? 1))) {
