@@ -318,6 +318,64 @@ final class TvheadendApiService
     }
 
     // ══════════════════════════════════════════════════════════════
+    //  ضبط خودکار (Autorec) — پایه‌ی Catch-up
+    // ══════════════════════════════════════════════════════════════
+
+    /**
+     * یک قانون ضبط خودکار می‌سازد که **همه‌ی** برنامه‌های یک کانال را
+     * ضبط می‌کند و بعد از $retentionDays روز پاک می‌کند. این پایه‌ی
+     * catch-up است: مهمان برنامه‌ی گذشته را می‌بیند چون از قبل ضبط شده.
+     * عنوان خالی یعنی هر برنامه‌ای مطابقت می‌کند.
+     *
+     * @return array{ok:bool,message:string,uuid:string}
+     */
+    public function createAutorec(array $src, string $channelUuid, string $name, int $retentionDays = 2): array
+    {
+        $conf = json_encode([
+            'enabled' => true,
+            'name'    => $name,
+            'title'   => '',
+            'channel' => $channelUuid,
+            'removal' => max(1, $retentionDays),
+        ], JSON_UNESCAPED_UNICODE);
+
+        $res = $this->call($src, '/api/dvr/autorec/create?conf=' . rawurlencode((string)$conf));
+        if (!$res['ok']) return ['ok' => false, 'message' => $res['error'], 'uuid' => ''];
+
+        $d = json_decode($res['body'], true);
+        return ['ok' => true, 'message' => 'ضبط خودکار کانال فعال شد',
+                'uuid' => (string)($d['uuid'] ?? '')];
+    }
+
+    /** @return array{ok:bool,message:string} */
+    public function deleteAutorec(array $src, string $uuid): array
+    {
+        // autorec یک idnode است؛ حذفش از مسیر عمومی idnode انجام می‌شود
+        $res = $this->call($src, '/api/idnode/delete?uuid=' . rawurlencode($uuid));
+        return $res['ok']
+            ? ['ok' => true,  'message' => 'ضبط خودکار حذف شد']
+            : ['ok' => false, 'message' => $res['error']];
+    }
+
+    /**
+     * یک برنامه‌ی گذشته‌ی ضبط‌شده را از روی event_id پیدا می‌کند تا
+     * catch-up بتواند آدرس پخشش را بدهد. اگر ضبط نشده باشد، خالی.
+     *
+     * @return array{ok:bool,message:string,uuid:string}
+     */
+    public function findRecordingByEvent(array $src, int $eventId): array
+    {
+        $res = $this->recordings($src, 'finished', 300);
+        if (!$res['ok']) return ['ok' => false, 'message' => $res['message'], 'uuid' => ''];
+        foreach ($res['items'] as $e) {
+            if ((int)($e['broadcast'] ?? 0) === $eventId || (int)($e['dvb_eid'] ?? 0) === $eventId) {
+                return ['ok' => true, 'message' => '', 'uuid' => (string)($e['uuid'] ?? '')];
+            }
+        }
+        return ['ok' => false, 'message' => 'این برنامه ضبط نشده', 'uuid' => ''];
+    }
+
+    // ══════════════════════════════════════════════════════════════
     //  تگ کانال — دسته‌بندی که در تی‌وی‌هدند تعریف شده
     // ══════════════════════════════════════════════════════════════
 

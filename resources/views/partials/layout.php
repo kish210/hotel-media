@@ -200,6 +200,9 @@ if (!function_exists('modOn')) {
   <a href="/admin/iptv/tvheadend" class="sidebar-link <?= isActive('/admin/iptv/tvheadend') ?>">
     <span class="icon"><i class="fas fa-tower-broadcast"></i></span> هدِند (TVHeadend)
   </a>
+  <a href="/admin/iptv/dvr" class="sidebar-link <?= isActive('/admin/iptv/dvr') ?>">
+    <span class="icon"><i class="fas fa-record-vinyl"></i></span> ضبط و Catch-up
+  </a>
   <?php if (modOn('vod')): ?>
   <a href="/admin/transcoder" class="sidebar-link <?= isActive('/admin/transcoder') ?>">
     <span class="icon"><i class="fas fa-wand-magic-sparkles"></i></span> ترنسکد
@@ -257,6 +260,10 @@ if (!function_exists('modOn')) {
   <a href="/admin/system/update" class="sidebar-link <?= isActive('/admin/system/update') ?>">
     <span class="icon"><i class="fas fa-cloud-arrow-down" style="color:#4098db;"></i></span>
     به‌روزرسانی سیستم
+  </a>
+  <a href="/admin/system/logs" class="sidebar-link <?= isActive('/admin/system/logs') ?>">
+    <span class="icon"><i class="fas fa-bug" style="color:#f59e0b;"></i></span>
+    لاگ و عیب‌یابی
   </a>
   <?php endif; ?>
   <a href="/admin/help"  class="sidebar-link <?= isActive('/admin/help') ?>">
