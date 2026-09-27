@@ -1169,5 +1169,7 @@ html, body { background: #000; }
 <?php endif; ?>
 })();
 </script>
+<!-- صفحه‌کلید عددی فعال‌سازی با ریموت (همه‌ی مدل‌ها) -->
+<script src="/assets/js/tv-activate.js"></script>
 </body>
 </html>

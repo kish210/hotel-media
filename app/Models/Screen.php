@@ -110,7 +110,18 @@ class Screen
 
     public function generateActivationCode(int $id): string
     {
-        $code = strtoupper(substr(md5(uniqid((string)$id, true)), 0, 6));
+        // ۶ رقمی (نه هگز) تا با ریموتِ عددیِ تلویزیون قابل‌تایپ باشد.
+        // یکتا میان کدهای فعالِ منقضی‌نشده تا دو صفحه یک کد نگیرند.
+        $code = '';
+        for ($i = 0; $i < 30; $i++) {
+            $candidate = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $taken = $this->db->value(
+                "SELECT 1 FROM screens WHERE activation_code=? AND activation_expires_at > NOW() LIMIT 1",
+                [$candidate]
+            );
+            if (!$taken) { $code = $candidate; break; }
+        }
+        if ($code === '') $code = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $this->db->update('screens', [
             'activation_code'       => $code,
             'activation_expires_at' => date('Y-m-d H:i:s', time() + 86400), // 24 hours

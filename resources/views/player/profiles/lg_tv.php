@@ -324,6 +324,7 @@ function doActivate() {
 
 // LG remote OK button (Enter key)
 document.addEventListener('keydown', function(e) {
+  if (window.__tvaOwnsKeys) return;
   if (e.keyCode === 13 || e.keyCode === 461) {
     var actDiv = document.getElementById('act');
     if (actDiv) doActivate();
@@ -337,5 +338,7 @@ loadPlaylist();
 heartbeat();
 <?php endif; ?>
 </script>
+<!-- صفحه‌کلید عددی فعال‌سازی با ریموت (همه‌ی مدل‌ها) -->
+<script src="/assets/js/tv-activate.js"></script>
 </body>
 </html>

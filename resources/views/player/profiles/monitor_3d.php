@@ -625,5 +625,7 @@ const s = document.createElement('style');
 s.textContent = '@keyframes fadeOut3d{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(0.95)}}';
 document.head.appendChild(s);
 </script>
+<!-- صفحه‌کلید عددی فعال‌سازی با ریموت (همه‌ی مدل‌ها) -->
+<script src="/assets/js/tv-activate.js"></script>
 </body>
 </html>

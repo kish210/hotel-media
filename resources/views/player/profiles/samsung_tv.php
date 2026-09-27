@@ -323,7 +323,9 @@ function doActivate() {
 }
 
 // Samsung Remote: Enter (keyCode 13) + Return (keyCode 10009)
+// وقتی صفحه‌کلید عددیِ tv-activate.js فعال است، کلیدها مال اوست.
 document.addEventListener('keydown', function(e) {
+  if (window.__tvaOwnsKeys) return;
   if (e.keyCode===13 || e.keyCode===10009) {
     var a=document.getElementById('act');
     if(a) doActivate();
@@ -337,5 +339,7 @@ loadPlaylist();
 heartbeat();
 <?php endif; ?>
 </script>
+<!-- صفحه‌کلید عددی فعال‌سازی با ریموت (همه‌ی مدل‌ها) -->
+<script src="/assets/js/tv-activate.js"></script>
 </body>
 </html>

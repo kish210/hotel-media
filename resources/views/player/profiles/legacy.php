@@ -148,5 +148,7 @@ function activate() {
   xhr.send(JSON.stringify({activation_code: code, screen_code: SCREEN}));
 }
 </script>
+<!-- صفحه‌کلید عددی فعال‌سازی با ریموت (همه‌ی مدل‌ها) -->
+<script src="/assets/js/tv-activate.js"></script>
 </body>
 </html>

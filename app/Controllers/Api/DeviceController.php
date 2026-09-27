@@ -42,6 +42,7 @@ class DeviceController extends Controller
         if ($token === '') { Response::error('توکن ثبت الزامی است', 422); return; }
 
         $data['user_agent'] = $req->userAgent();
+        $data['ip']         = (string)($_SERVER['REMOTE_ADDR'] ?? '');
         $result = $this->svc->enroll($token, $data);
 
         if (!$result['ok']) {
@@ -99,6 +100,40 @@ class DeviceController extends Controller
 
         if (!$ok) { Response::error('فرمان یافت نشد یا قبلا بسته شده', 404); return; }
         Response::success(null, 'ثبت شد');
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  رنج‌های مورد اعتماد (whitelist) — فعال‌سازی بدون کد
+    // ══════════════════════════════════════════════════════════════
+
+    /** GET /api/v1/devices/whitelist */
+    public function whitelist(Request $req): void
+    {
+        $wl = new \App\Services\IpWhitelistService($this->db);
+        Response::success($wl->all(Auth::tenantId()));
+    }
+
+    /** POST /api/v1/devices/whitelist  body: label, range_spec */
+    public function storeWhitelist(Request $req): void
+    {
+        $data = $req->json() ?: $req->post() ?: [];
+        $wl   = new \App\Services\IpWhitelistService($this->db);
+        $res  = $wl->add(
+            Auth::tenantId(),
+            (string)($data['label'] ?? ''),
+            (string)($data['range_spec'] ?? $data['range'] ?? '')
+        );
+        if (!$res['ok']) { Response::error($res['message'], 422); return; }
+        $this->log('whitelist.add', 'IpWhitelist', $res['id'] ?? 0);
+        Response::success(['id' => $res['id'] ?? null], $res['message'], 201);
+    }
+
+    /** DELETE /api/v1/devices/whitelist/{id} */
+    public function destroyWhitelist(Request $req, array $params): void
+    {
+        $wl = new \App\Services\IpWhitelistService($this->db);
+        $wl->delete(Auth::tenantId(), (int)($params['id'] ?? 0));
+        Response::success(null, 'رنج حذف شد');
     }
 
     // ══════════════════════════════════════════════════════════════
