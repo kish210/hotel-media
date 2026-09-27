@@ -13,7 +13,8 @@ $profiles  = [
   'modern'     => ['🎬','مدرن','Chrome / کامپیوتر','#1a7ac4'],
   'android_tv' => ['📱','Android TV','TV Box / Android','#22c55e'],
   'lg_tv'      => ['🔵','LG WebOS','تلویزیون LG','#006eb6'],
-  'samsung_tv' => ['⚫','Samsung','تلویزیون Samsung','#1428a0'],
+  'samsung_tv' => ['⚫','Samsung Tizen','تلویزیون Samsung ۲۰۱۵+','#1428a0'],
+  'orsay_tv'   => ['⬛','Samsung Orsay','تلویزیون Samsung ۲۰۱۳','#0f1e6e'],
   'legacy'     => ['🖥','سازگار','مرورگر قدیمی','#60a5fa'],
   'minimal'    => ['⚡','حداقل','Raspberry Pi','#64748b'],
   'kiosk'      => ['👆','کیوسک','صفحه لمسی','#a855f7'],
@@ -874,7 +875,7 @@ function showTab(t) {
   if(t==='broadcast'){try{bcType('image');loadBcMedia('image');}catch(e){}}
 }
 
-var ppColors={modern:'#1a7ac4',android_tv:'#22c55e',lg_tv:'#006eb6',samsung_tv:'#1428a0',legacy:'#60a5fa',minimal:'#64748b',kiosk:'#a855f7'};
+var ppColors={modern:'#1a7ac4',android_tv:'#22c55e',lg_tv:'#006eb6',samsung_tv:'#1428a0',orsay_tv:'#0f1e6e',legacy:'#60a5fa',minimal:'#64748b',kiosk:'#a855f7'};
 function setProfile(p){
   var inp=document.getElementById('pp-input');
   if(inp)inp.value=p;

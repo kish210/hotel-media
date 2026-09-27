@@ -23,7 +23,7 @@ use App\Core\Database;
  */
 class DeviceService
 {
-    public const PLATFORMS = ['android', 'webos', 'tizen', 'windows', 'browser', 'unknown'];
+    public const PLATFORMS = ['android', 'webos', 'tizen', 'orsay', 'windows', 'browser', 'unknown'];
 
     /** فرمان‌هایی که هر پلتفرم واقعا می‌تواند اجرا کند */
     public const CAPABILITIES = [
@@ -37,6 +37,8 @@ class DeviceService
         'webos'   => ['refresh', 'volume', 'channel', 'message', 'open_url', 'clear_cache'],
         // ‏Samsung LYNK REACH / URL Launcher — همان محدودیت
         'tizen'   => ['refresh', 'volume', 'channel', 'message', 'open_url', 'clear_cache'],
+        // ‏Samsung Orsay/۲۰۱۳ — فقط صفحه HTML؛ صدا/کانال روی این نسل از اپ کنترل نمی‌شود
+        'orsay'   => ['refresh', 'message', 'open_url', 'clear_cache'],
         // مرورگر معمولی (تست یا کیوسک)
         'browser' => ['refresh', 'message', 'open_url', 'clear_cache'],
         'unknown' => ['refresh', 'message'],
@@ -104,7 +106,12 @@ class DeviceService
         }
 
         $platform = $this->detectPlatform($info);
+        // فعال‌سازی خودکار: توکنِ auto_approve یا IP در رنج مورد اعتماد
         $approve  = (int)$tok['auto_approve'] === 1;
+        $ip       = trim((string)($info['ip'] ?? ''));
+        if (!$approve && $ip !== '' && (new IpWhitelistService($this->db))->matches($ip, $tid)) {
+            $approve = true;
+        }
         $code     = $this->uniqueCode($tid);
 
         $name = trim((string)($info['name'] ?? ''))
@@ -302,6 +309,8 @@ class DeviceService
         // ترتیب مهم است: تلویزیون سامسونگ هم رشته‌ی Linux دارد
         return match (true) {
             str_contains($ua, 'webos') || str_contains($ua, 'web0s')      => 'webos',
+            // ‏Orsay/۲۰۱۳ قبل از Tizen چک شود: UA اش «Maple»/«SmartHub» دارد و «Tizen» ندارد
+            str_contains($ua, 'maple') || str_contains($ua, 'smarthub')   => 'orsay',
             str_contains($ua, 'tizen') || str_contains($ua, 'smart-tv')   => 'tizen',
             str_contains($ua, 'android')                                  => 'android',
             str_contains($ua, 'electron') || str_contains($ua, 'windows') => 'windows',
@@ -316,6 +325,7 @@ class DeviceService
             'android' => 'Android TV',
             'webos'   => 'LG webOS',
             'tizen'   => 'Samsung Tizen',
+            'orsay'   => 'Samsung Orsay (۲۰۱۳)',
             'windows' => 'Windows',
             'browser' => 'مرورگر',
             default   => 'نامشخص',

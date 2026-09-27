@@ -74,6 +74,17 @@ class PlayerController extends Controller
         $screenModel = new Screen();
         $playlist    = null;
 
+        // فعال‌سازی خودکار برای رنج‌های مورد اعتماد — تلویزیون هتلی با ریموت
+        // نمی‌تواند کد تایپ کند. REMOTE_ADDR مستقیم (نه XFF که جعل‌شدنی است).
+        if (($screen['status'] ?? '') !== 'active') {
+            $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+            if ($ip !== '' &&
+                (new \App\Services\IpWhitelistService($this->db))->matches($ip, (int)($screen['tenant_id'] ?? 1))) {
+                $this->db->update('screens', ['status' => 'active'], ['id' => $screen['id']]);
+                $screen['status'] = 'active';
+            }
+        }
+
         if ($screen['status'] === 'active') {
             $p = $screenModel->getCurrentPlaylist($screen['id']);
             if ($p) {
@@ -101,9 +112,19 @@ class PlayerController extends Controller
                 $screen['cfg_3d'] = [];
             }
         } else {
-            $profile  = $settings['player_profile'] ?? 'modern';
-            $profiles = ['modern', 'android_tv', 'lg_tv', 'samsung_tv', 'legacy', 'minimal', 'kiosk'];
-            if (!in_array($profile, $profiles)) $profile = 'modern';
+            $profiles = ['modern', 'android_tv', 'lg_tv', 'samsung_tv', 'orsay_tv', 'legacy', 'minimal', 'kiosk'];
+            $profile  = $settings['player_profile'] ?? '';
+            // انتخاب خودکار بر اساس پلتفرمِ ثبت‌شده‌ی دستگاه (اگر دستی انتخاب نشده)
+            if ($profile === '') {
+                $profile = match ($screen['platform'] ?? '') {
+                    'orsay'   => 'orsay_tv',
+                    'tizen'   => 'samsung_tv',
+                    'webos'   => 'lg_tv',
+                    'android' => 'android_tv',
+                    default   => 'modern',
+                };
+            }
+            if (!in_array($profile, $profiles, true)) $profile = 'modern';
         }
 
         $profileView = VIEWS_PATH . '/player/profiles/' . $profile . '.php';

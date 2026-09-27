@@ -14,6 +14,7 @@ $PLATFORMS = [
   'android' => ['Android TV',    'android',  '#22c55e'],
   'webos'   => ['LG webOS',      'tv',       '#ef4444'],
   'tizen'   => ['Samsung Tizen', 'tv',       '#3b82f6'],
+  'orsay'   => ['Samsung Orsay', 'tv',       '#6366f1'],
   'windows' => ['Windows',       'desktop',  '#0ea5e9'],
   'browser' => ['مرورگر',        'globe',    '#a855f7'],
   'unknown' => ['نامشخص',        'question', '#64748b'],
@@ -50,6 +51,9 @@ $CMD_LABELS = [
     </button>
     <button onclick="openModal('tokenModal')" class="btn-ghost text-sm px-3">
       <i class="fas fa-key text-xs ml-1"></i>توکن ثبت
+    </button>
+    <button onclick="openWhitelist()" class="btn-ghost text-sm px-3">
+      <i class="fas fa-shield-halved text-xs ml-1"></i>رنج‌های مورد اعتماد
     </button>
     <button onclick="openModal('bulkModal')" class="btn-primary text-sm">
       <i class="fas fa-bolt text-xs ml-1"></i>فرمان گروهی
@@ -269,6 +273,35 @@ $CMD_LABELS = [
       نه اپ. به همین دلیل این فرمان‌ها برای این دو برند در لیست نمایش داده نمی‌شوند.
       روی Android TV که اپ بومی داریم، همه‌ی فرمان‌ها کار می‌کنند.
     </div>
+  </div>
+</div>
+
+<!-- ═══ مودال رنج‌های مورد اعتماد ═══ -->
+<div id="wlModal" class="hidden modal-bg">
+  <div class="modal-box" style="max-width:620px;">
+    <div class="modal-head">
+      <h3>رنج‌های IP مورد اعتماد</h3>
+      <button onclick="closeModal('wlModal')" class="btn-ghost text-xs px-2"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.22);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:#94a3b8;line-height:1.9;">
+      <b style="color:#22c55e;">چرا این بخش:</b>
+      تلویزیون هتلی با ریموت نمی‌تواند کد فعال‌سازی تایپ کند. هر دستگاهی که
+      IP اش در این رنج‌ها باشد، <b>بدون کد</b> و خودکار فعال می‌شود.<br>
+      قالب‌های مجاز: <code style="color:#60a5fa;">172.33.0.0/20</code> ·
+      <code style="color:#60a5fa;">172.16.100.1-172.16.100.254</code> ·
+      <code style="color:#60a5fa;">172.16.100.44</code>
+    </div>
+
+    <form onsubmit="return addWhitelist(event)" style="display:grid;grid-template-columns:1.4fr 1.2fr auto;gap:7px;margin-bottom:16px;">
+      <input id="wlLabel" placeholder="عنوان، مثلا «رنج تلویزیون‌های هتل»" required
+             style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px;color:#fff;font-size:12px;">
+      <input id="wlSpec" placeholder="172.33.0.0/20" required dir="ltr"
+             style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px;color:#fff;font-size:12px;font-family:monospace;">
+      <button type="submit" class="btn-primary text-xs" style="padding:8px 14px;">افزودن</button>
+    </form>
+
+    <div id="wlList" style="font-size:12px;color:#64748b;">در حال بارگذاری…</div>
   </div>
 </div>
 
@@ -539,6 +572,46 @@ async function addToken(ev) {
     showToast('توکن ساخته شد'); reload();
   } catch (e) { showToast(e.message, 'error'); }
   return false;
+}
+
+// ── رنج‌های مورد اعتماد ──
+function openWhitelist() { openModal('wlModal'); loadWhitelist(); }
+
+async function loadWhitelist() {
+  const box = document.getElementById('wlList');
+  try {
+    const d = await api('/api/v1/devices/whitelist');
+    const rows = d.data || [];
+    if (!rows.length) { box.innerHTML = 'هیچ رنجی ثبت نشده — تا وقتی رنجی نباشد، فعال‌سازی با کد انجام می‌شود.'; return; }
+    box.innerHTML = rows.map(r =>
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px;border-bottom:1px solid rgba(255,255,255,.05);">' +
+        '<div><div style="font-size:12px;color:#fff;font-weight:600;">' + esc(r.label) + '</div>' +
+        '<div style="font-size:11px;color:#60a5fa;font-family:monospace;direction:ltr;">' + esc(r.range_spec) + '</div></div>' +
+        '<button onclick="delWhitelist(' + Number(r.id) + ')" class="btn-ghost text-xs" style="padding:4px 9px;color:#f87171;">حذف</button>' +
+      '</div>'
+    ).join('');
+  } catch (e) { box.innerHTML = '<span style="color:#f87171;">' + esc(e.message) + '</span>'; }
+}
+
+async function addWhitelist(ev) {
+  ev.preventDefault();
+  try {
+    await api('/api/v1/devices/whitelist', 'POST', {
+      label:      document.getElementById('wlLabel').value.trim(),
+      range_spec: document.getElementById('wlSpec').value.trim(),
+    });
+    showToast('رنج اضافه شد');
+    document.getElementById('wlLabel').value = '';
+    document.getElementById('wlSpec').value  = '';
+    loadWhitelist();
+  } catch (e) { showToast(e.message, 'error'); }
+  return false;
+}
+
+async function delWhitelist(id) {
+  if (!confirm('این رنج حذف شود؟')) return;
+  try { await api('/api/v1/devices/whitelist/' + id, 'DELETE'); showToast('حذف شد'); loadWhitelist(); }
+  catch (e) { showToast(e.message, 'error'); }
 }
 
 async function delToken(id) {

@@ -33,6 +33,7 @@ var TV_FILES = [
   'resources/views/player/profiles/iptv.php',
   'resources/views/player/profiles/lg_tv.php',
   'resources/views/player/profiles/samsung_tv.php',
+  'resources/views/player/profiles/orsay_tv.php',
   'resources/views/player/profiles/android_tv.php',
   'resources/views/player/profiles/modern.php',
   'resources/views/player/profiles/legacy.php',
@@ -43,7 +44,8 @@ var TV_FILES = [
   'resources/views/player/pair.php',
   'resources/views/player/not_found.php',
   'public/assets/css/tv-base.css',
-  'public/assets/js/tv-base.js'
+  'public/assets/js/tv-base.js',
+  'public/assets/js/tv-activate.js'
 ];
 
 /* هر قانون: چه چیزی، از کدام Chromium، و جایگزینش چیست.
