@@ -203,6 +203,9 @@ if (!function_exists('modOn')) {
   <a href="/admin/iptv/dvr" class="sidebar-link <?= isActive('/admin/iptv/dvr') ?>">
     <span class="icon"><i class="fas fa-record-vinyl"></i></span> ضبط و Catch-up
   </a>
+  <a href="/admin/cameras" class="sidebar-link <?= isActive('/admin/cameras') ?>">
+    <span class="icon"><i class="fas fa-video"></i></span> دوربین مداربسته
+  </a>
   <?php if (modOn('vod')): ?>
   <a href="/admin/transcoder" class="sidebar-link <?= isActive('/admin/transcoder') ?>">
     <span class="icon"><i class="fas fa-wand-magic-sparkles"></i></span> ترنسکد

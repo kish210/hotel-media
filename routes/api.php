@@ -278,6 +278,20 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
     $r->post('/devices/{id}/command',         [\App\Controllers\Api\DeviceController::class, 'command']);
 });
 
+// ── دوربین مداربسته — پنل مدیریت (protected) ──────────────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    $r->get('/cameras',              [\App\Controllers\Api\CameraController::class, 'index']);
+    $r->post('/cameras',             [\App\Controllers\Api\CameraController::class, 'store']);
+    $r->post('/cameras/{id}/start',  [\App\Controllers\Api\CameraController::class, 'start']);
+    $r->post('/cameras/{id}/stop',   [\App\Controllers\Api\CameraController::class, 'stop']);
+    $r->get('/cameras/{id}/log',     [\App\Controllers\Api\CameraController::class, 'logTail']);
+    $r->put('/cameras/{id}',         [\App\Controllers\Api\CameraController::class, 'update']);
+    $r->delete('/cameras/{id}',      [\App\Controllers\Api\CameraController::class, 'destroy']);
+});
+
+// ── دوربین — سمت مهمان (بدون JWT، هویت با کد صفحه) ────────────────
+$router->get('/api/v1/guest/{code}/cameras', [\App\Controllers\Api\CameraController::class, 'guestList']);
+
 // ── DVR — پنل مدیریت (protected): PVR، سهمیه، Catch-up ────────────
 $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
     $r->get('/dvr',                 [\App\Controllers\Api\DvrController::class, 'index']);

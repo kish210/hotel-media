@@ -322,6 +322,7 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     $r->post('/epg/map',            [\App\Controllers\Web\EpgWebController::class, 'mapChannel'], [CsrfMiddleware::class]);
     // ── TVHeadend Live TV ──────────────────────────────────────
     $r->get('/iptv/dvr',                          [\App\Controllers\Web\DvrWebController::class, 'index']);
+    $r->get('/cameras',                           [\App\Controllers\Web\CameraWebController::class, 'index']);
     $r->get('/iptv/tvheadend',                    [\App\Controllers\Web\TvheadendController::class, 'index']);
     $r->post('/iptv/tvheadend',                   [\App\Controllers\Web\TvheadendController::class, 'store']);
     $r->post('/iptv/tvheadend/{id}/delete',       [\App\Controllers\Web\TvheadendController::class, 'delete']);
