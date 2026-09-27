@@ -250,6 +250,12 @@ $router->get('/api/v1/player/epg/{code}',   [\App\Controllers\Api\EpgController:
 $router->get('/api/v1/portal/{code}',      [\App\Controllers\Api\PortalController::class, 'home']);
 $router->get('/api/v1/portal/{code}/live', [\App\Controllers\Api\PortalController::class, 'live']);
 
+// ── DVR — سمت مهمان: ضبط شخصی و Catch-up (بدون JWT، هویت با کد صفحه) ──
+$router->post('/api/v1/dvr/room/{code}/record',              [\App\Controllers\Api\DvrController::class, 'guestRecord']);
+$router->get('/api/v1/dvr/room/{code}/recordings',           [\App\Controllers\Api\DvrController::class, 'guestList']);
+$router->delete('/api/v1/dvr/room/{code}/recordings/{id}',   [\App\Controllers\Api\DvrController::class, 'guestDelete']);
+$router->get('/api/v1/dvr/room/{code}/catchup',              [\App\Controllers\Api\DvrController::class, 'guestCatchup']);
+
 // ── Device — سمت تلویزیون (بدون JWT) ─────────────────────────────
 $router->post('/api/v1/device/enroll',            [\App\Controllers\Api\DeviceController::class, 'enroll']);
 $router->get('/api/v1/device/{code}/commands',    [\App\Controllers\Api\DeviceController::class, 'commands']);
@@ -261,12 +267,26 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
     $r->get('/devices/tokens',                [\App\Controllers\Api\DeviceController::class, 'tokens']);
     $r->post('/devices/tokens',               [\App\Controllers\Api\DeviceController::class, 'storeToken']);
     $r->delete('/devices/tokens/{id}',        [\App\Controllers\Api\DeviceController::class, 'destroyToken']);
+    $r->get('/devices/whitelist',             [\App\Controllers\Api\DeviceController::class, 'whitelist']);
+    $r->post('/devices/whitelist',            [\App\Controllers\Api\DeviceController::class, 'storeWhitelist']);
+    $r->delete('/devices/whitelist/{id}',     [\App\Controllers\Api\DeviceController::class, 'destroyWhitelist']);
     $r->post('/devices/bulk-command',         [\App\Controllers\Api\DeviceController::class, 'bulkCommand']);
     $r->get('/devices',                       [\App\Controllers\Api\DeviceController::class, 'index']);
     $r->get('/devices/{id}/history',          [\App\Controllers\Api\DeviceController::class, 'history']);
     $r->post('/devices/{id}/approve',         [\App\Controllers\Api\DeviceController::class, 'approve']);
     $r->post('/devices/{id}/assign-room',     [\App\Controllers\Api\DeviceController::class, 'assignRoom']);
     $r->post('/devices/{id}/command',         [\App\Controllers\Api\DeviceController::class, 'command']);
+});
+
+// ── DVR — پنل مدیریت (protected): PVR، سهمیه، Catch-up ────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    $r->get('/dvr',                 [\App\Controllers\Api\DvrController::class, 'index']);
+    $r->post('/dvr',                [\App\Controllers\Api\DvrController::class, 'store']);
+    $r->post('/dvr/sync',           [\App\Controllers\Api\DvrController::class, 'sync']);
+    $r->post('/dvr/catchup',        [\App\Controllers\Api\DvrController::class, 'catchup']);
+    $r->get('/dvr/quota/{roomId}',  [\App\Controllers\Api\DvrController::class, 'quota']);
+    $r->post('/dvr/quota/{roomId}', [\App\Controllers\Api\DvrController::class, 'setQuota']);
+    $r->delete('/dvr/{id}',         [\App\Controllers\Api\DvrController::class, 'destroy']);
 });
 
 // ── Folio / مینی‌بار / PPV / خروج سریع — مهمان (بدون JWT) ────────

@@ -178,6 +178,67 @@ class PlaylistController extends Controller
         $this->redirect('/admin/playlists/' . $playlistId);
     }
 
+    /**
+     * افزودن گروهی رسانه — چند عکس/ویدیو با یک درخواست.
+     * body: media_ids (آرایه یا JSON)، duration، start_at، end_at
+     * پاسخ JSON می‌دهد چون از مودال با fetch صدا زده می‌شود.
+     */
+    public function addItemsBulk(Request $req, array $params): void
+    {
+        $playlistId = (int)$params['id'];
+
+        $pl = $this->db->row(
+            "SELECT id FROM playlists WHERE id=? AND tenant_id=?",
+            [$playlistId, Auth::tenantId()]
+        );
+        if (!$pl) { \App\Core\Response::error('پلی‌لیست یافت نشد', 404); return; }
+
+        $ids = $req->post('media_ids', []);
+        if (is_string($ids)) $ids = json_decode($ids, true) ?: [];
+        // یکتا و مرتب: ترتیب انتخاب کاربر حفظ شود ولی تکراری‌ها حذف
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', (array)$ids),
+            static fn($v) => $v > 0
+        )));
+        if (!$ids) { \App\Core\Response::error('رسانه‌ای انتخاب نشده', 422); return; }
+
+        $duration = max(1, (int)$req->post('duration', 10));
+        $startAt  = $req->post('start_at') ?: null;
+        $endAt    = $req->post('end_at') ?: null;
+        $tid      = Auth::tenantId();
+
+        $maxOrder = (int)$this->db->value(
+            "SELECT COALESCE(MAX(sort_order),0) FROM playlist_items WHERE playlist_id=?",
+            [$playlistId]
+        );
+
+        $added = 0;
+        foreach ($ids as $mid) {
+            // فقط رسانه‌ی همین tenant — جلوی افزودن id دستکاری‌شده
+            $owns = $this->db->value(
+                "SELECT id FROM media WHERE id=? AND tenant_id=? AND deleted_at IS NULL",
+                [$mid, $tid]
+            );
+            if (!$owns) continue;
+
+            $this->db->insert('playlist_items', [
+                'playlist_id' => $playlistId,
+                'media_id'    => $mid,
+                'duration'    => $duration,
+                'start_at'    => $startAt,
+                'end_at'      => $endAt,
+                'sort_order'  => ++$maxOrder,
+                'is_active'   => 1,
+            ]);
+            $added++;
+        }
+
+        if (!$added) { \App\Core\Response::error('هیچ رسانه‌ی معتبری اضافه نشد', 422); return; }
+
+        $this->log('playlist.items.bulk', 'Playlist', $playlistId);
+        \App\Core\Response::success(['added' => $added], "$added رسانه به پلی‌لیست اضافه شد");
+    }
+
     public function removeItem(Request $req, array $params): void
     {
         $this->db->update(

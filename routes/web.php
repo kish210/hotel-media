@@ -159,6 +159,7 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
     $r->post('/playlists/{id}/items',       [\App\Controllers\Web\PlaylistController::class, 'addItem']);
     $r->post('/playlists/{id}/items/{iid}/delete', [\App\Controllers\Web\PlaylistController::class, 'removeItem']);
     $r->post('/playlists/{id}/items/reorder',      [\App\Controllers\Web\PlaylistController::class, 'reorderItems']);
+    $r->post('/playlists/{id}/items/bulk',         [\App\Controllers\Web\PlaylistController::class, 'addItemsBulk']);
     $r->post('/playlists/{id}/items/{iid}/edit',   [\App\Controllers\Web\PlaylistController::class, 'editItem']);
 
     // Media
@@ -225,6 +226,9 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
 
     /* به‌روزرسانی سیستم — فقط مدیر ارشد (بررسی نقش داخل کنترلر).
        زنجیره: گیت‌هاب (انتشار پایدار) → سرور هتل → ۳۰۰ تلویزیون */
+    // ── لاگ و عیب‌یابی (فقط مدیر ارشد؛ گیت داخل کنترلر) ──────────
+    $r->get('/system/logs',           [\App\Controllers\Web\LogViewerController::class, 'index']);
+    $r->post('/system/logs/clear',    [\App\Controllers\Web\LogViewerController::class, 'clear'], [CsrfMiddleware::class]);
     $r->get('/system/update',         [\App\Controllers\Web\SystemUpdateController::class, 'index']);
     $r->get('/system/update/check',   [\App\Controllers\Web\SystemUpdateController::class, 'check']);
     $r->get('/system/update/state',   [\App\Controllers\Web\SystemUpdateController::class, 'state']);
@@ -317,6 +321,7 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     $r->get('/epg',                 [\App\Controllers\Web\EpgWebController::class, 'index']);
     $r->post('/epg/map',            [\App\Controllers\Web\EpgWebController::class, 'mapChannel'], [CsrfMiddleware::class]);
     // ── TVHeadend Live TV ──────────────────────────────────────
+    $r->get('/iptv/dvr',                          [\App\Controllers\Web\DvrWebController::class, 'index']);
     $r->get('/iptv/tvheadend',                    [\App\Controllers\Web\TvheadendController::class, 'index']);
     $r->post('/iptv/tvheadend',                   [\App\Controllers\Web\TvheadendController::class, 'store']);
     $r->post('/iptv/tvheadend/{id}/delete',       [\App\Controllers\Web\TvheadendController::class, 'delete']);

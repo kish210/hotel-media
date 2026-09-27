@@ -333,6 +333,7 @@ $typeColors = [
     </div>
 
     <form method="POST" action="/admin/playlists/<?=$playlist['id']?>/items"
+      id="ai-form" onsubmit="return aiOnSubmit(event)"
       style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
       <?=csrf_field()?>
       <input type="hidden" name="media_id" id="ai-media-id" value="">
@@ -344,6 +345,17 @@ $typeColors = [
 <div style="flex:1;overflow-y:auto;padding:0 20px;min-height:0;">
       <!-- بخش رسانه -->
       <div id="ai-sec-media" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;padding:0 20px;">
+        <!-- آپلود مستقیم چند فایل بدون خروج از این صفحه -->
+        <div id="ai-dropzone" onclick="document.getElementById('ai-file-input').click()"
+          style="flex-shrink:0;margin-bottom:8px;border:1.5px dashed rgba(26,122,196,0.4);border-radius:10px;
+                 padding:12px;text-align:center;cursor:pointer;background:rgba(26,122,196,0.05);transition:all 0.15s;">
+          <i class="fas fa-cloud-upload-alt" style="color:#1a7ac4;font-size:18px;"></i>
+          <span style="color:#94a3b8;font-size:12px;margin-right:6px;">
+            عکس یا ویدیو را اینجا رها کن یا کلیک کن — چند فایل هم‌زمان مجاز است
+          </span>
+          <input type="file" id="ai-file-input" accept="image/*,video/*" multiple style="display:none;">
+        </div>
+        <div id="ai-upload-progress" style="display:none;flex-shrink:0;margin-bottom:8px;font-size:11px;color:#60a5fa;"></div>
         <div style="margin-bottom:10px;flex-shrink:0;">
           <input type="text" id="ai-search" class="form-input" placeholder="🔍 جستجو..." oninput="aiFilter(this.value)">
         </div>
@@ -352,9 +364,12 @@ $typeColors = [
             $thumb = $m['thumbnail_path'] ?? '';
             $type  = $m['type'];
           ?>
-          <div onclick="aiSelectMedia(<?=$m['id']?>,'<?=addslashes($m['name'])?>',this)"
-            class="ai-media-item" data-name="<?=strtolower(e($m['name']))?>"
-            style="border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,0.08);cursor:pointer;transition:all 0.15s;">
+          <div onclick="aiToggleMedia(<?=$m['id']?>,this)"
+            class="ai-media-item" data-id="<?=$m['id']?>" data-name="<?=strtolower(e($m['name']))?>"
+            style="position:relative;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,0.08);cursor:pointer;transition:all 0.15s;">
+            <span class="ai-check" style="display:none;position:absolute;top:4px;right:4px;z-index:2;width:20px;height:20px;
+              border-radius:50%;background:#1a7ac4;color:#fff;font-size:11px;line-height:20px;text-align:center;
+              box-shadow:0 1px 4px rgba(0,0,0,0.4);"><i class="fas fa-check"></i></span>
             <div style="height:72px;background:#0d0d14;overflow:hidden;">
               <?php if ($type==='image' && $thumb): ?>
               <img src="<?=e($thumb)?>" style="width:100%;height:100%;object-fit:cover;">
@@ -495,7 +510,7 @@ $typeColors = [
       <!-- submit -->
       <div style="display:flex;gap:10px;margin-top:12px;padding-bottom:4px;flex-shrink:0;">
         <button type="submit" id="ai-submit" class="btn-primary flex-1 py-3" style="font-size:14px;">
-          <i class="fas fa-plus text-xs ml-1"></i> افزودن به پلی‌لیست
+          <i class="fas fa-plus text-xs ml-1"></i> <span id="ai-submit-label">افزودن به پلی‌لیست</span>
         </button>
         <button type="button" onclick="document.getElementById('addItemModal').classList.add('hidden')"
           class="btn-ghost px-6">لغو</button>
@@ -575,23 +590,149 @@ function aiSetTab(t) {
   else dur.value = 10;
 }
 
-// ─── Media selection ───────────────────────────────────────────
-let selectedMediaId = null;
-function aiSelectMedia(id, name, el) {
-  selectedMediaId = id;
-  document.getElementById('ai-media-id').value = id;
-  document.querySelectorAll('.ai-media-item').forEach(e => {
-    e.style.borderColor = 'rgba(255,255,255,0.08)';
-    e.style.boxShadow = 'none';
-  });
-  el.style.borderColor = '#1a7ac4';
-  el.style.boxShadow = '0 0 0 2px rgba(26,122,196,0.3)';
+// ─── Media selection (چندتایی) ─────────────────────────────────
+// چند عکس/ویدیو با هم انتخاب و با یک درخواست اضافه می‌شوند.
+const selectedMedia = new Set();
+
+function aiToggleMedia(id, el) {
+  if (selectedMedia.has(id)) {
+    selectedMedia.delete(id);
+    el.style.borderColor = 'rgba(255,255,255,0.08)';
+    el.style.boxShadow = 'none';
+    const c = el.querySelector('.ai-check'); if (c) c.style.display = 'none';
+  } else {
+    selectedMedia.add(id);
+    el.style.borderColor = '#1a7ac4';
+    el.style.boxShadow = '0 0 0 2px rgba(26,122,196,0.3)';
+    const c = el.querySelector('.ai-check'); if (c) c.style.display = 'block';
+  }
+  aiRefreshSubmit();
+}
+
+// دکمه‌ی ثبت را با تعداد انتخاب‌شده هماهنگ می‌کند
+function aiRefreshSubmit() {
+  const label = document.getElementById('ai-submit-label');
+  if (!label) return;
+  const tab = document.getElementById('ai-content-type').value;
+  if (tab === 'media') {
+    const n = selectedMedia.size;
+    label.textContent = n > 0 ? ('افزودن ' + n + ' رسانه') : 'افزودن به پلی‌لیست';
+  } else {
+    label.textContent = 'افزودن به پلی‌لیست';
+  }
 }
 
 function aiFilter(q) {
   document.querySelectorAll('.ai-media-item').forEach(el => {
     el.style.display = (!q || el.dataset.name.includes(q.toLowerCase())) ? '' : 'none';
   });
+}
+
+// ─── آپلود مستقیم چند فایل از داخل مودال ────────────────────────
+(function () {
+  const input = document.getElementById('ai-file-input');
+  const zone  = document.getElementById('ai-dropzone');
+  if (!input || !zone) return;
+
+  input.addEventListener('change', function () { aiUploadFiles(this.files); this.value = ''; });
+
+  // کشیدن و رها کردن
+  ['dragenter','dragover'].forEach(ev => zone.addEventListener(ev, e => {
+    e.preventDefault(); zone.style.background = 'rgba(26,122,196,0.15)';
+  }));
+  ['dragleave','drop'].forEach(ev => zone.addEventListener(ev, e => {
+    e.preventDefault(); zone.style.background = 'rgba(26,122,196,0.05)';
+  }));
+  zone.addEventListener('drop', e => { if (e.dataTransfer && e.dataTransfer.files) aiUploadFiles(e.dataTransfer.files); });
+})();
+
+async function aiUploadFiles(fileList) {
+  const files = Array.prototype.slice.call(fileList || []);
+  if (!files.length) return;
+  const prog = document.getElementById('ai-upload-progress');
+  const token = document.querySelector('meta[name=csrf-token]').content;
+  let done = 0, failed = 0;
+
+  prog.style.display = 'block';
+  for (const f of files) {
+    prog.textContent = 'در حال آپلود ' + (done + failed + 1) + ' از ' + files.length + ' — ' + f.name;
+    const fd = new FormData();
+    fd.append('file', f);
+    fd.append('_token', token);
+    try {
+      const r = await fetch('/admin/media/upload', { method: 'POST', body: fd, credentials: 'same-origin' });
+      const d = await r.json();
+      if (r.ok && d.success && d.data) { aiAddCard(d.data); done++; }
+      else { failed++; }
+    } catch (e) { failed++; }
+  }
+
+  prog.textContent = done + ' فایل آپلود و انتخاب شد' + (failed ? ('، ' + failed + ' ناموفق') : '');
+  setTimeout(() => { prog.style.display = 'none'; }, 4000);
+  aiRefreshSubmit();
+}
+
+// کارت رسانه‌ی تازه‌آپلودشده را می‌سازد و خودکار انتخاب می‌کند
+function aiAddCard(m) {
+  const grid = document.getElementById('ai-media-grid');
+  const empty = grid.querySelector('div[style*="grid-column"]');
+  if (empty) empty.remove();
+
+  const card = document.createElement('div');
+  card.className = 'ai-media-item';
+  card.dataset.id = m.id;
+  card.dataset.name = (m.name || '').toLowerCase();
+  card.style.cssText = 'position:relative;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,0.08);cursor:pointer;transition:all 0.15s;';
+  const thumb = m.thumbnail_path || m.file_path || '';
+  const inner = m.type === 'image'
+    ? '<div style="height:72px;background:#0d0d14;overflow:hidden;"><img src="' + thumb + '" style="width:100%;height:100%;object-fit:cover;"></div>'
+    : '<div style="height:72px;background:#1a0a2e;display:flex;align-items:center;justify-content:center;"><i class="fas fa-play-circle" style="font-size:24px;color:#a855f7;"></i></div>';
+  card.innerHTML =
+    '<span class="ai-check" style="display:none;position:absolute;top:4px;right:4px;z-index:2;width:20px;height:20px;border-radius:50%;background:#1a7ac4;color:#fff;font-size:11px;line-height:20px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.4);"><i class="fas fa-check"></i></span>' +
+    inner +
+    '<div style="padding:5px 6px;font-size:10px;color:#94a3b8;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + (m.name || '') + '</div>';
+  card.setAttribute('onclick', 'aiToggleMedia(' + m.id + ',this)');
+  grid.insertBefore(card, grid.firstChild);
+
+  // تازه‌ها پیش‌فرض انتخاب می‌شوند
+  aiToggleMedia(m.id, card);
+}
+
+// ─── ثبت فرم ────────────────────────────────────────────────────
+// تب رسانه → افزودن گروهی با fetch؛ بقیه‌ی تب‌ها → همان ارسال تکی قبلی
+async function aiOnSubmit(ev) {
+  const tab = document.getElementById('ai-content-type').value;
+  if (tab !== 'media') return true; // stream/xml/url/module: رفتار قبلی
+
+  ev.preventDefault();
+  if (selectedMedia.size === 0) { alert('حداقل یک عکس یا ویدیو انتخاب کنید'); return false; }
+
+  const btn = document.getElementById('ai-submit');
+  btn.disabled = true;
+  const form = document.getElementById('ai-form');
+  const token = document.querySelector('meta[name=csrf-token]').content;
+  const dur = document.getElementById('ai-duration').value || 10;
+  const startAt = form.querySelector('input[name=start_at]').value || '';
+  const endAt   = form.querySelector('input[name=end_at]').value || '';
+
+  const body = new URLSearchParams();
+  body.append('media_ids', JSON.stringify(Array.from(selectedMedia)));
+  body.append('duration', dur);
+  if (startAt) body.append('start_at', startAt);
+  if (endAt)   body.append('end_at', endAt);
+  body.append('_token', token);
+
+  try {
+    const r = await fetch('/admin/playlists/' + PLAYLIST_ID + '/items/bulk', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: body.toString()
+    });
+    const d = await r.json();
+    if (r.ok && d.success) { location.reload(); }
+    else { alert(d.message || 'خطا در افزودن'); btn.disabled = false; }
+  } catch (e) { alert('خطای شبکه'); btn.disabled = false; }
+  return false;
 }
 
 // ─── Item editor ───────────────────────────────────────────────
