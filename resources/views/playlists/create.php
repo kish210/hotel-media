@@ -27,6 +27,20 @@ $playlist = $playlist ?? [];
           value="<?= e($playlist['description'] ?? '') ?>" placeholder="توضیح اختیاری">
       </div>
 
+      <?php /* دنیا — تعیین می‌کند این پلی‌لیست در انتخابگر کدام صفحه‌ها ظاهر شود */ ?>
+      <div>
+        <label class="form-label">این پلی‌لیست برای کجاست؟ *</label>
+        <?php $pw = $playlist['screen_type'] ?? 'signage'; ?>
+        <select name="screen_type" class="form-input">
+          <option value="signage" <?= $pw === 'signage' ? 'selected' : '' ?>>🖼 تابلو (Signage) — لابی، رستوران، ورودی</option>
+          <option value="iptv"    <?= $pw === 'iptv'    ? 'selected' : '' ?>>📺 تلویزیون اتاق (IPTV)</option>
+          <option value="any"     <?= $pw === 'any'     ? 'selected' : '' ?>>هر دو</option>
+        </select>
+        <p style="font-size:11px;color:#64748b;margin-top:5px;">
+          فقط در انتخابگر پلی‌لیستِ صفحه‌های همین نوع نمایش داده می‌شود.
+        </p>
+      </div>
+
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="form-label">چیدمان (Layout)</label>

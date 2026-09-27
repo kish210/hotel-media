@@ -63,6 +63,12 @@ class Screen
             $sql    .= " AND s.location_id = ?";
             $params[] = (int)$filters['location_id'];
         }
+        /* تفکیک دنیا — فقط وقتی ستون وجود دارد (نصب‌های قدیمی ندارند) */
+        if ($hasScreenType && !empty($filters['screen_type'])
+            && in_array($filters['screen_type'], ['signage','iptv','inflight','monitor_3d'], true)) {
+            $sql    .= " AND s.screen_type = ?";
+            $params[] = $filters['screen_type'];
+        }
         $sql .= " ORDER BY s.name ASC";
 
         $rows = $this->db->rows($sql, $params);

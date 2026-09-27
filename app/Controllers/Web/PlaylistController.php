@@ -10,8 +10,17 @@ class PlaylistController extends Controller
 
     public function index(Request $req): void
     {
-        $result = $this->playlist->all($req->get(), (int)$req->get('page', 1));
-        $this->view('playlists.index', ['title' => 'پلی‌لیست‌ها', 'playlists' => $result]);
+        // فیلتر دنیا: تابلو یا تلویزیون اتاق. خالی = هر دو
+        $world   = in_array($req->get('type'), ['signage', 'iptv'], true) ? $req->get('type') : '';
+        $filters = $req->get();
+        if ($world !== '') $filters['screen_type'] = $world;
+
+        $result = $this->playlist->all($filters, (int)$req->get('page', 1));
+        $this->view('playlists.index', [
+            'title'     => 'پلی‌لیست‌ها',
+            'playlists' => $result,
+            'world'     => $world,
+        ]);
     }
 
     public function create(Request $req): void
@@ -28,6 +37,8 @@ class PlaylistController extends Controller
         $data = [
             'name'             => $name,
             'description'      => $req->post('description') ?: null,
+            'screen_type'      => in_array($req->post('screen_type'), ['signage','iptv','any'], true)
+                                    ? $req->post('screen_type') : 'signage',
             'layout_id'        => $req->post('layout_id') ?: null,
             'transition'       => $req->post('transition','fade'),
             'default_duration' => (int)$req->post('default_duration', 10),

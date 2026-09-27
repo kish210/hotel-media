@@ -22,6 +22,7 @@ class ScreenController extends Controller
         $filters = array_filter([
             'status'      => $req->get('status'),
             'location_id' => $req->get('location_id'),
+            'screen_type' => $req->get('type'),
         ]);
         $screens   = $this->screen->all($filters, (int)$req->get('page', 1));
         $locations = $this->db->rows("SELECT * FROM locations WHERE tenant_id=? AND is_active=1 ORDER BY name", [$tid]);
@@ -94,7 +95,16 @@ class ScreenController extends Controller
             "SELECT * FROM heartbeats WHERE screen_id=? ORDER BY created_at DESC LIMIT 10",
             [$params['id']]
         );
-        $playlists  = $this->db->rows("SELECT id,name FROM playlists WHERE tenant_id=? AND is_active=1 ORDER BY name", [$tid]);
+        /* فقط پلی‌لیست‌های همین دنیا — وگرنه می‌شد محتوای اتاق را روی
+           تابلوی لابی گذاشت. 'any' عمدا در هر دو دیده می‌شود. */
+        $world     = in_array($screen['screen_type'] ?? 'signage', ['signage','iptv'], true)
+                       ? $screen['screen_type'] : 'signage';
+        $playlists = $this->db->rows(
+            "SELECT id,name,screen_type FROM playlists
+              WHERE tenant_id=? AND is_active=1 AND screen_type IN (?, 'any')
+              ORDER BY name",
+            [$tid, $world]
+        );
         $locations  = $this->db->rows("SELECT * FROM locations WHERE tenant_id=? AND is_active=1 ORDER BY name", [$tid]);
         $allGroups  = $this->db->rows("SELECT * FROM screen_groups WHERE tenant_id=? ORDER BY name", [$tid]) ?? [];
         $iptvMenus  = $this->loadIptvMenus($tid);

@@ -45,7 +45,8 @@ var TV_FILES = [
   'resources/views/player/not_found.php',
   'public/assets/css/tv-base.css',
   'public/assets/js/tv-base.js',
-  'public/assets/js/tv-activate.js'
+  'public/assets/js/tv-activate.js',
+  'public/assets/js/tv-trickplay.js'
 ];
 
 /* هر قانون: چه چیزی، از کدام Chromium، و جایگزینش چیست.

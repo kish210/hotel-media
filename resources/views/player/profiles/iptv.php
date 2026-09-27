@@ -34,6 +34,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 <link rel="stylesheet" href="/assets/css/tv-base.css<?= v() ?>">
 <script src="/assets/vendor/hls/hls.min.js<?= v() ?>"></script>
 <script src="/assets/js/tv-base.js<?= v() ?>"></script>
+<script src="/assets/js/tv-trickplay.js<?= v() ?>"></script>
 <style>
 /* فقط چیزهایی که مخصوص همین صفحه‌اند. بقیه در tv-base.css است.
    یادآوری: بدون var() ، clamp() ، gap ، inset ، backdrop-filter. */
@@ -423,6 +424,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   var hlsInst    = null;
   var playing    = false;
   var curVideo   = null;    /* المان ویدیوی در حال پخش */
+  var trick      = null;    /* کنترلر trick-play — فقط روی منبع قابل جست‌وجو */
 
   /* زیرنویس و باند صوتی فیلم در حال پخش */
   var trackData  = { subtitles: [], audio: [] };
@@ -672,6 +674,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   function hls(src, host) {
     var v = mkVideo(false);
     curVideo = v;
+    attachTrick(v, host);
     TV.tracks.attachSubtitles(v, trackData.subtitles);
     host.appendChild(v);
 
@@ -737,6 +740,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   function video(src, host) {
     var v = mkVideo(false);
     curVideo = v;
+    attachTrick(v, host);
     TV.tracks.attachSubtitles(v, trackData.subtitles);
     v.src = src;
     v.onended = back;
@@ -764,8 +768,20 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
     hlsInst = null;
   }
 
+  /* ‏trick-play فقط روی VOD و ضبط معنی دارد؛ روی پخش زنده duration
+     بی‌نهایت است و خودِ ماژول پرش را رد می‌کند، پس وصل‌کردنش بی‌ضرر است. */
+  function attachTrick(v, host) {
+    destroyTrick();
+    if (window.TVTrick) { trick = window.TVTrick.attach(v, host); }
+  }
+
+  function destroyTrick() {
+    if (trick) { try { trick.destroy(); } catch (e) {} trick = null; }
+  }
+
   function back() {
     clearTimeout(autoTimer);
+    destroyTrick();
     destroyHls();
     closeTracks();
     playing  = false;

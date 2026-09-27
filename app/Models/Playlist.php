@@ -27,6 +27,10 @@ class Playlist
         if (!empty($filters['search'])) {
             $sql .= " AND p.name LIKE ?"; $params[] = "%{$filters['search']}%";
         }
+        /* تفکیک دو دنیا: 'any' همیشه دیده می‌شود چون عمدا مشترک است */
+        if (!empty($filters['screen_type']) && in_array($filters['screen_type'], ['signage','iptv'], true)) {
+            $sql .= " AND p.screen_type IN (?, 'any')"; $params[] = $filters['screen_type'];
+        }
         $sql .= " ORDER BY p.updated_at DESC";
         return $this->db->paginate($sql, $params, $page, $perPage);
     }
@@ -51,7 +55,7 @@ class Playlist
     }
 
     private const ALLOWED_COLS = ['name','description','layout_id','transition','transition_duration',
-        'default_duration','loop','shuffle','is_active','tags'];
+        'default_duration','loop','shuffle','is_active','tags','screen_type'];
 
     public function update(int $id, array $data): bool
     {

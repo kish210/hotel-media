@@ -10,8 +10,22 @@
 </div>
 
 <?php
-$list = $playlists['data'] ?? $playlists ?? [];
+$list  = $playlists['data'] ?? $playlists ?? [];
+$world = $world ?? '';
+$tabs  = ['' => 'همه', 'signage' => '🖼 تابلو', 'iptv' => '📺 تلویزیون اتاق'];
 ?>
+
+<!-- تفکیک دو دنیا — پلی‌لیست تابلو و اتاق قاطی نشوند -->
+<div style="display:flex;gap:3px;background:rgba(0,0,0,.35);border-radius:10px;padding:4px;margin-bottom:16px;max-width:430px;">
+  <?php foreach ($tabs as $k => $label):
+    $on = ($world === $k); ?>
+    <a href="/admin/playlists<?= $k ? '?type=' . $k : '' ?>"
+       style="flex:1;text-align:center;padding:8px 6px;border-radius:7px;font-size:12px;font-weight:600;
+              text-decoration:none;transition:all .2s;
+              background:<?= $on ? 'rgba(26,122,196,.22)' : 'transparent' ?>;
+              color:<?= $on ? '#4098db' : '#64748b' ?>;"><?= $label ?></a>
+  <?php endforeach; ?>
+</div>
 
 <?php if (empty($list)): ?>
 <div class="card text-center py-16">
@@ -31,7 +45,16 @@ $list = $playlists['data'] ?? $playlists ?? [];
           <i class="fas fa-film" style="color:#1a7ac4;font-size:17px;"></i>
         </div>
         <div>
-          <h3 style="font-size:14px;font-weight:700;color:#fff;"><?= e($p['name']) ?></h3>
+          <h3 style="font-size:14px;font-weight:700;color:#fff;">
+            <?= e($p['name']) ?>
+            <?php
+              $wt = $p['screen_type'] ?? 'signage';
+              $wl = ['signage' => ['تابلو', '#1a7ac4'], 'iptv' => ['اتاق', '#a855f7'], 'any' => ['هر دو', '#64748b']];
+              [$wLabel, $wColor] = $wl[$wt] ?? $wl['signage'];
+            ?>
+            <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;vertical-align:middle;
+                         background:<?= $wColor ?>22;color:<?= $wColor ?>;"><?= $wLabel ?></span>
+          </h3>
           <span style="font-size:11px;color:#475569;">
             <?= (int)($p['item_count'] ?? 0) ?> رسانه
             <?php if ($p['default_duration'] ?? 0): ?>

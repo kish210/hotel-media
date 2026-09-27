@@ -27,6 +27,16 @@ $playlist = $playlist ?? [];
           value="<?= e($playlist['description'] ?? '') ?>" placeholder="توضیح اختیاری">
       </div>
 
+      <div>
+        <label class="form-label">این پلی‌لیست برای کجاست؟ *</label>
+        <?php $pw = $playlist['screen_type'] ?? 'signage'; ?>
+        <select name="screen_type" class="form-input">
+          <option value="signage" <?= $pw === 'signage' ? 'selected' : '' ?>>🖼 تابلو (Signage)</option>
+          <option value="iptv"    <?= $pw === 'iptv'    ? 'selected' : '' ?>>📺 تلویزیون اتاق (IPTV)</option>
+          <option value="any"     <?= $pw === 'any'     ? 'selected' : '' ?>>هر دو</option>
+        </select>
+      </div>
+
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="form-label">چیدمان (Layout)</label>
