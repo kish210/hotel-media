@@ -154,8 +154,8 @@
 </div>
 
 <!-- ══ مودال ضبط جدید ══ -->
-<div id="recModal" class="hidden modal-bg">
-  <div class="modal-box" style="max-width:520px;">
+<div id="recModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:520px;">
     <div class="modal-head">
       <h3>ضبط جدید</h3>
       <button onclick="closeM('recModal')" class="btn-ghost text-xs px-2"><i class="fas fa-times"></i></button>

@@ -28,8 +28,8 @@
 <div id="camList" class="card" style="padding:16px;font-size:13px;color:#64748b;">در حال بارگذاری…</div>
 
 <!-- ══ مودال افزودن/ویرایش ══ -->
-<div id="camModal" class="hidden modal-bg">
-  <div class="modal-box" style="max-width:560px;">
+<div id="camModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:560px;">
     <div class="modal-head">
       <h3 id="camModalTitle">افزودن دوربین</h3>
       <button onclick="closeM('camModal')" class="btn-ghost text-xs px-2"><i class="fas fa-times"></i></button>
@@ -73,8 +73,8 @@
 </div>
 
 <!-- ══ مودال لاگ ══ -->
-<div id="logModal" class="hidden modal-bg">
-  <div class="modal-box" style="max-width:720px;">
+<div id="logModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:720px;">
     <div class="modal-head">
       <h3>لاگ ffmpeg</h3>
       <button onclick="closeM('logModal')" class="btn-ghost text-xs px-2"><i class="fas fa-times"></i></button>
@@ -212,6 +212,6 @@ async function showLog(id) {
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('[onclick="openM(\'camModal\')"]').addEventListener('click', clearForm);
   loadCams();
-  setInterval(() => { if (!document.querySelector('.modal-bg:not(.hidden)')) loadCams(); }, 20000);
+  setInterval(() => { if (!document.querySelector('.modal-overlay:not(.hidden)')) loadCams(); }, 20000);
 });
 </script>

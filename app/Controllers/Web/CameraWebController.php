@@ -15,16 +15,11 @@ class CameraWebController extends Controller
     {
         $svc = new CameraService($this->db);
 
-        $cameras  = [];
-        $ffmpegOk = $svc->ffmpegAvailable();
-        try {
-            $cameras = $svc->all(Auth::tenantId());
-        } catch (\Throwable $e) {}
-
+        /* فهرست را خودِ صفحه از /api/v1/cameras می‌گیرد، چون وضعیت زنده‌ی
+           رله هر ۲۰ ثانیه تازه می‌شود. پس اینجا کوئری نمی‌زنیم. */
         $this->view('admin.cameras.index', [
             'title'    => 'دوربین مداربسته',
-            'cameras'  => $cameras,
-            'ffmpegOk' => $ffmpegOk,
+            'ffmpegOk' => $svc->ffmpegAvailable(),
         ]);
     }
 }

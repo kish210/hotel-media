@@ -516,6 +516,15 @@ tbody tr:last-child td { border-bottom: none; }
   animation: sheet-in var(--t-slow);
 }
 
+/* سرِ مودال — عنوان در یک طرف و دکمه‌ی بستن در طرف دیگر.
+   این چیدمان در همه‌ی مودال‌ها تکرار می‌شد؛ یک‌بار اینجا تعریف شد. */
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s3);
+  margin-bottom: var(--s5);
+}
+.modal-head h3 { font-size: 15px; font-weight: 800; color: #fff; }
+
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes sheet-in {
   from { opacity: 0; transform: translateY(12px) scale(.985); }

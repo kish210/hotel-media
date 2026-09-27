@@ -69,7 +69,10 @@
                  align-items:center;justify-content:center;backdrop-filter:blur(4px); }
 .modal-box  { background:#16161f;border:1px solid rgba(255,255,255,.1);border-radius:16px;
               width:min(900px,95vw);max-height:92vh;overflow:hidden;display:flex;flex-direction:column; }
-.modal-head { padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px; }
+/* ‏margin-bottom صریحا صفر: قانون سراسری .modal-head در design-system
+   فاصله‌ی زیر دارد و اینجا سرِ مودال یک نوار با خط جداکننده است، نه
+   عنوانی که از بدنه فاصله بگیرد. */
+.modal-head { padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px;margin-bottom:0; }
 .modal-body { overflow-y:auto;flex:1; }
 
 /* stats bar */

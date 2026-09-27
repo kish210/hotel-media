@@ -212,8 +212,8 @@ $CMD_LABELS = [
 </div>
 
 <!-- ═══ مودال راهنمای نصب ═══ -->
-<div id="installModal" class="hidden modal-bg">
-  <div class="modal-box" style="max-width:820px;">
+<div id="installModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:820px;">
     <div class="modal-head">
       <h3>راهنمای نصب روی تلویزیون هتل</h3>
       <button onclick="closeModal('installModal')" class="btn-ghost text-xs px-2"><i class="fas fa-times"></i></button>
@@ -277,8 +277,8 @@ $CMD_LABELS = [
 </div>
 
 <!-- ═══ مودال رنج‌های مورد اعتماد ═══ -->
-<div id="wlModal" class="hidden modal-bg">
-  <div class="modal-box" style="max-width:620px;">
+<div id="wlModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:620px;">
     <div class="modal-head">
       <h3>رنج‌های IP مورد اعتماد</h3>
       <button onclick="closeModal('wlModal')" class="btn-ghost text-xs px-2"><i class="fas fa-times"></i></button>
@@ -306,8 +306,8 @@ $CMD_LABELS = [
 </div>
 
 <!-- ═══ مودال توکن ═══ -->
-<div id="tokenModal" class="hidden modal-bg">
-  <div class="modal-box" style="max-width:700px;">
+<div id="tokenModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:700px;">
     <div class="modal-head">
       <h3>توکن ثبت دستگاه</h3>
       <button onclick="closeModal('tokenModal')" class="btn-ghost text-xs px-2"><i class="fas fa-times"></i></button>
@@ -367,8 +367,8 @@ $CMD_LABELS = [
 </div>
 
 <!-- ═══ مودال فرمان گروهی ═══ -->
-<div id="bulkModal" class="hidden modal-bg">
-  <div class="modal-box" style="max-width:520px;">
+<div id="bulkModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:520px;">
     <div class="modal-head">
       <h3>فرمان گروهی</h3>
       <button onclick="closeModal('bulkModal')" class="btn-ghost text-xs px-2"><i class="fas fa-times"></i></button>
@@ -403,8 +403,8 @@ $CMD_LABELS = [
 </div>
 
 <!-- ═══ مودال تاریخچه ═══ -->
-<div id="histModal" class="hidden modal-bg">
-  <div class="modal-box" style="max-width:640px;">
+<div id="histModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:640px;">
     <div class="modal-head">
       <h3>تاریخچه دستگاه</h3>
       <button onclick="closeModal('histModal')" class="btn-ghost text-xs px-2"><i class="fas fa-times"></i></button>
@@ -419,10 +419,8 @@ $CMD_LABELS = [
 .pf{font-size:11px;padding:5px 12px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:#94a3b8;cursor:pointer;}
 .pf.active{background:rgba(64,152,219,.15);border-color:rgba(64,152,219,.4);color:#7dd3fc;}
 .dev.hide{display:none;}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;}
-.modal-box{background:#0f172a;border:1px solid rgba(255,255,255,.1);border-radius:16px;width:100%;max-height:88vh;overflow:auto;padding:20px;}
-.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
-.modal-head h3{font-size:15px;font-weight:800;color:#fff;}
+/* مودال و سرش از design-system.css می‌آیند — تعریف محلی حذف شد تا
+   این صفحه با بقیه‌ی پنل یکسان بماند. */
 .guide{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:11px;padding:14px;margin-bottom:12px;}
 .guide h4{font-size:13px;font-weight:700;margin-bottom:9px;}
 .guide ol{padding-right:19px;font-size:12px;color:#cbd5e1;line-height:2.1;}
@@ -628,7 +626,7 @@ async function delToken(id) {
 
 // ── وضعیت زنده ──
 setInterval(async () => {
-  if (document.querySelector('.modal-bg:not(.hidden)')) return;
+  if (document.querySelector('.modal-overlay:not(.hidden)')) return;
   try {
     const r = await fetch('/admin/devices/feed', { credentials: 'same-origin' });
     const d = await r.json();
