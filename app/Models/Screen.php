@@ -171,11 +171,30 @@ class Screen
 
     public function heartbeat(int $id, array $data): void
     {
-        $this->db->update('screens', [
+        $fields = [
             'is_online'    => 1,
             'last_seen_at' => date('Y-m-d H:i:s'),
             'last_ip'      => $data['ip'] ?? null,
-        ], ['id' => $id]);
+        ];
+
+        /* اندازه‌های واقعی دستگاه را نگه می‌داریم.
+           هنگام ثبت فقط screen.width ذخیره می‌شد، که اندازه‌ی پنل است
+           نه بومِ چیدمان مرورگر. وقتی این دو فرق کنند — که روی
+           تلویزیون‌های قدیمی زیاد پیش می‌آید — چیدمانِ تمام‌عرض روی
+           بومِ کوچک‌تر رسم می‌شود و بقیه‌ی پنل سیاه می‌ماند. بدون این
+           عددها، تشخیص علت از راه دور ممکن نیست. */
+        if (!empty($data['metrics']) && is_array($data['metrics'])) {
+            $row  = $this->db->row('SELECT device_info FROM screens WHERE id = ?', [$id]);
+            $info = json_decode((string)($row['device_info'] ?? '{}'), true);
+            if (!is_array($info)) $info = [];
+
+            $info['metrics']    = $data['metrics'];
+            $info['metrics_at'] = date('Y-m-d H:i:s');
+
+            $fields['device_info'] = json_encode($info, JSON_UNESCAPED_UNICODE);
+        }
+
+        $this->db->update('screens', $fields, ['id' => $id]);
 
         $this->db->insert('heartbeats', [
             'screen_id'      => $id,

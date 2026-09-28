@@ -87,6 +87,22 @@ function tvPlay(el) {
   try { el.play(); } catch (e) {}
 }
 
+/* WebKit 537.42 روی Maple ویدیو را با عرض/ارتفاع درصدی مقیاس نمی‌دهد؛
+   آن را در اندازه‌ی ذاتی فایل می‌کشد. یک کلیپ 848×480 روی صحنه‌ی
+   1280×720 حدود یک‌سومِ صفحه را خالی می‌گذاشت. پس اندازه را همیشه
+   به پیکسل و از خودِ صحنه می‌دهیم، هم روی style هم روی attribute
+   (این نسخه attribute را ترجیح می‌دهد). */
+function sizeVideo(v) {
+  if (!v) return;
+  var c = document.getElementById('c');
+  var w = (c && c.offsetWidth)  || screen.width  || 1280;
+  var h = (c && c.offsetHeight) || screen.height || 720;
+  v.setAttribute('width',  w);
+  v.setAttribute('height', h);
+  v.style.width  = w + 'px';
+  v.style.height = h + 'px';
+}
+
 var SERVER = window.location.origin;
 var CODE   = '<?= e($screen['code']??'') ?>';
 var pl = [], ci = 0, tm = null, curSlide = null;
@@ -215,10 +231,15 @@ function play(i) {
     vid.loop  = false;
     vid.onended = nextItem;
     vid.onerror = function() { setTimeout(nextItem, 1000); };
-    vid.oncanplay = function() { tvPlay(vid); };
+    vid.oncanplay = function() { sizeVideo(vid); tvPlay(vid); };
+    /* ابعاد ذاتی تا loadedmetadata معلوم نیست، ولی چون اندازه را از
+       صحنه می‌گیریم نه از فایل، می‌شود از همان اول هم ست کرد. */
+    vid.onloadedmetadata = function() { sizeVideo(vid); };
+    sizeVideo(vid);
     vid.src = src;
 
     div.appendChild(vid);
+    sizeVideo(vid);
     swapSlide(div);
     try { vid.load(); } catch(e) {}
     tvPlay(vid);
@@ -249,14 +270,47 @@ function heartbeat() {
       var d = JSON.parse(x.responseText);
       var cmds = (d.data && d.data.commands) ? d.data.commands : [];
       for (var i=0; i<cmds.length; i++) {
-        if (cmds[i].command==='reload') loadPlaylist();
-        if (cmds[i].command==='reboot') window.location.reload();
-        if (cmds[i].command==='instant_media') showInstant(cmds[i].data);
-        if (cmds[i].command==='clear_instant') clearInstant();
+        /* سرور کلید cmd می‌فرستد (ScreenController)، ولی صف قدیمی
+           command داشت. هر دو را می‌پذیریم — تا امروز فقط command
+           خوانده می‌شد و هیچ فرمانی از پنل روی این تلویزیون اجرا
+           نمی‌شد، بدون اینکه جایی خطایی ثبت شود. */
+        var n = cmds[i].cmd || cmds[i].command;
+        var p = cmds[i].payload || cmds[i].data;
+
+        if (n==='reload' || n==='refresh') loadPlaylist();
+        if (n==='reboot') window.location.reload();
+        if (n==='instant_media' || n==='emergency') showInstant(p);
+        if (n==='clear_instant') clearInstant();
       }
     } catch(e) {}
   };
-  x.send(JSON.stringify({version:'samsung-orsay', item:ci}));
+  /* اندازه‌ی واقعی را گزارش می‌کنیم، نه فقط screen.width.
+     این دو روی تلویزیون یکی نیستند: screen اندازه‌ی پنل است و
+     clientWidth اندازه‌ی بومِ چیدمان مرورگر. وقتی فرق کنند، چیدمانِ
+     تمام‌عرض روی بومِ کوچک‌تر رسم می‌شود و بقیه‌ی پنل سیاه می‌ماند. */
+  var c = document.getElementById('c');
+  x.send(JSON.stringify({
+    version: 'samsung-orsay',
+    item: ci,
+    metrics: {
+      screen:  screen.width + 'x' + screen.height,
+      avail:   (screen.availWidth||0) + 'x' + (screen.availHeight||0),
+      client:  document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight,
+      inner:   (window.innerWidth||0) + 'x' + (window.innerHeight||0),
+      body:    document.body.offsetWidth + 'x' + document.body.offsetHeight,
+      stage:   c ? (c.offsetWidth + 'x' + c.offsetHeight) : '-',
+      dpr:     window.devicePixelRatio || 1,
+      /* اندازه‌ی واقعیِ عنصر ویدیو در برابر اندازه‌ی ذاتی فایل — تنها
+         راهِ دیدنِ اینکه sizeVideo روی خود دستگاه اثر کرده یا نه. */
+      vid:     (function(){
+                 var vs = document.getElementsByTagName('video');
+                 var v = vs.length ? vs[vs.length-1] : null;
+                 if (!v) return '-';
+                 return v.offsetWidth + 'x' + v.offsetHeight +
+                        ' (ذاتی ' + (v.videoWidth||0) + 'x' + (v.videoHeight||0) + ')';
+               })()
+    }
+  }));
 }
 setInterval(heartbeat, 15000);
 
@@ -275,7 +329,8 @@ function showInstant(data) {
     box.style.backgroundImage = 'url("' + fixUrl(data.content) + '")';
     ov.appendChild(box);
   } else if (data.type==='video') {
-    ov.innerHTML = '<video src="'+fixUrl(data.content)+'" autoplay muted playsinline style="width:100%;height:100%;background:#000;" onended="clearInstant()"></video>';
+    ov.innerHTML = '<video src="'+fixUrl(data.content)+'" autoplay muted playsinline style="background:#000;" onended="clearInstant()"></video>';
+    sizeVideo(ov.getElementsByTagName('video')[0]);
   } else if (data.type==='text') {
     var t={text:'',color:'#fff',bg:'#000'};
     try { t=JSON.parse(data.content); } catch(e) { t.text=data.content; }

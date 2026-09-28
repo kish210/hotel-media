@@ -65,14 +65,40 @@ class ScreenController extends Controller
         $screen = $this->screen->findByCode($params['code']);
         if (!$screen) Response::notFound('صفحه یافت نشد');
 
-        $this->screen->heartbeat($screen['id'], array_merge($req->post(), ['ip' => $req->ip()]));
+        /* هر پخش‌کننده ضربان را با بدنه‌ی JSON می‌فرستد، ولی post()
+           فقط $_POST را می‌خواند که برای Content-Type: application/json
+           خالی است. نتیجه: نسخه‌ی پلیر، آیتم جاری و اندازه‌های دستگاه
+           هیچ‌وقت ذخیره نمی‌شدند — ستون player_version همیشه NULL بود
+           و کسی متوجه نمی‌شد چون خطایی رخ نمی‌داد. */
+        $body = $req->post() ?: [];
+        if (!$body) $body = $req->json();
 
-        // Return any pending commands
+        $this->screen->heartbeat($screen['id'], array_merge($body, ['ip' => $req->ip()]));
+
+        /* هر فرمان با هر دو کلید فرستاده می‌شود.
+           سرور cmd می‌دهد ولی پخش‌کننده‌هایی که همین حالا روی
+           تلویزیون‌های هتل در حال اجرا هستند دنبال command می‌گردند —
+           و چون آن‌ها را نمی‌شود از راه دور به‌روز کرد مگر با همین
+           فرمان‌ها، بدون این سازگاری هیچ راهی برای نجاتشان نیست. */
+        $cmd = static fn(string $name, mixed $data = null): array => array_filter([
+            'cmd'     => $name,
+            'command' => $name,
+            'data'    => $data,
+            'payload' => $data,
+        ], static fn($v) => $v !== null);
+
         $cmds = [];
-        if ($screen['reboot_requested'])  { $cmds[] = ['cmd' => 'reboot'];  $this->screen->update($screen['id'], ['reboot_requested' => 0]); }
-        if ($screen['refresh_requested']) { $cmds[] = ['cmd' => 'refresh']; $this->screen->update($screen['id'], ['refresh_requested' => 0]); }
+        if ($screen['reboot_requested']) {
+            $cmds[] = $cmd('reboot');
+            $this->screen->update($screen['id'], ['reboot_requested' => 0]);
+        }
+        if ($screen['refresh_requested']) {
+            /* پخش‌کننده‌های قدیمی فقط reload را می‌شناسند، نه refresh */
+            $cmds[] = $cmd('reload');
+            $this->screen->update($screen['id'], ['refresh_requested' => 0]);
+        }
         if ($screen['emergency_broadcast']) {
-            $cmds[] = ['cmd' => 'emergency', 'data' => $screen['emergency_broadcast']];
+            $cmds[] = $cmd('emergency', $screen['emergency_broadcast']);
             $this->screen->update($screen['id'], ['emergency_broadcast' => null]);
         }
 
@@ -112,21 +138,29 @@ class ScreenController extends Controller
         try {
             $svc = new \App\Services\DeviceService($this->db);
 
-            // اطلاعات سخت‌افزاری که پلیر در heartbeat می‌فرستد را تازه نگه دار
+            /* از همان بدنه‌ای خوانده می‌شود که بالا حل شد — نه $_POST،
+               چون پلیر JSON می‌فرستد. */
             $info = array_filter([
-                'platform'    => $req->post('platform'),
-                'model'       => $req->post('model'),
-                'firmware'    => $req->post('firmware'),
-                'serial'      => $req->post('serial'),
-                'mac'         => $req->post('mac'),
-                'app_version' => $req->post('app_version'),
-                'resolution'  => $req->post('resolution'),
+                'platform'    => $body['platform']    ?? null,
+                'model'       => $body['model']       ?? null,
+                'firmware'    => $body['firmware']    ?? null,
+                'serial'      => $body['serial']      ?? null,
+                'mac'         => $body['mac']         ?? null,
+                'app_version' => $body['app_version'] ?? null,
+                'resolution'  => $body['resolution']  ?? null,
                 'user_agent'  => $req->userAgent(),
             ], static fn($v) => $v !== null && $v !== '');
 
             if (count($info) > 1) $svc->updateDeviceInfo((int)$screen['id'], $info);
 
+            /* فرمان‌های صف هم با هر دو کلید، به همان دلیل بالا */
             foreach ($svc->pullCommands((int)$screen['id']) as $queued) {
+                if (isset($queued['cmd']) && !isset($queued['command'])) {
+                    $queued['command'] = $queued['cmd'];
+                }
+                if (isset($queued['payload']) && !isset($queued['data'])) {
+                    $queued['data'] = $queued['payload'];
+                }
                 $cmds[] = $queued;
             }
         } catch (\Throwable $e) {
