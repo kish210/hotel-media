@@ -106,6 +106,46 @@ $playlist = $playlist ?? [];
           </p>
         </div>
 
+        <?php /* جاهای خالیِ ویدیو. ویدیویی که نسبت تصویرش با صفحه یکی
+                 نیست نوار سیاه می‌گذارد و روی تابلوی تبلیغاتی آن سیاهی
+                 مثل خرابی دیده می‌شود. */ ?>
+        <div class="pt-4 border-t border-white/5">
+          <label class="form-label">جاهای خالی اطراف ویدیو</label>
+          <p class="text-xs text-slate-500 mb-3">
+            وقتی اندازه‌ی ویدیو با صفحه جور نیست، این پشتِ آن دیده می‌شود.
+          </p>
+
+          <?php $bd = $playlist['backdrop_mode'] ?? 'black'; ?>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+            <?php foreach ([
+              'black' => 'سیاه (پیش‌فرض)',
+              'color' => 'یک رنگ',
+              'logo'  => 'تکرار لوگو',
+              'image' => 'تصویر دلخواه',
+            ] as $val => $lbl): ?>
+            <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-xl
+                          bg-white/5 border border-white/10 hover:bg-white/10">
+              <input type="radio" name="backdrop_mode" value="<?= $val ?>"
+                     class="accent-orange-500"
+                     <?= $bd === $val ? 'checked' : '' ?>>
+              <span class="text-xs text-slate-300"><?= $lbl ?></span>
+            </label>
+            <?php endforeach; ?>
+          </div>
+
+          <div class="flex items-center gap-3 flex-wrap">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-500">رنگ:</span>
+              <input type="color" name="backdrop_color"
+                     value="<?= e($playlist['backdrop_color'] ?? '#000000') ?>"
+                     class="w-12 h-9 rounded-lg bg-transparent border border-white/10 cursor-pointer">
+            </div>
+            <p class="text-xs text-slate-500">
+              رنگ برای حالت «یک رنگ» و برای زمینه‌ی پشتِ «تکرار لوگو» به کار می‌رود.
+            </p>
+          </div>
+        </div>
+
         <div class="grid grid-cols-3 gap-3 items-end">
           <label class="flex items-center gap-2 cursor-pointer col-span-3 sm:col-span-1">
             <input type="hidden" name="weather_enabled" value="0">
@@ -174,6 +214,41 @@ $playlist = $playlist ?? [];
       </div>
 
       <p class="text-xs text-slate-500 mt-3">PNG، JPG یا WebP — حداکثر ۳ مگابایت.</p>
+
+      <div class="mt-6 pt-6 border-t border-white/5">
+        <div class="text-sm font-semibold text-slate-300 mb-1">تصویر پس‌زمینه</div>
+        <p class="text-xs text-slate-500 mb-4">
+          فقط وقتی به کار می‌رود که بالا «تصویر دلخواه» را انتخاب کرده باشید.
+        </p>
+
+        <div class="flex items-center gap-4 flex-wrap">
+          <?php if (!empty($playlist['backdrop_image'])): ?>
+            <div class="p-1 rounded-xl bg-slate-200 border border-white/10">
+              <img src="<?= e($playlist['backdrop_image']) ?>" alt="پس‌زمینه‌ی فعلی"
+                   class="h-12 w-auto block rounded-lg">
+            </div>
+          <?php else: ?>
+            <div class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-500">
+              تصویری انتخاب نشده
+            </div>
+          <?php endif; ?>
+
+          <form method="POST" action="/admin/playlists/<?= (int)$playlist['id'] ?>/backdrop"
+                enctype="multipart/form-data" class="flex items-center gap-2 flex-wrap">
+            <input type="file" name="backdrop" accept="image/png,image/jpeg,image/webp"
+                   class="form-input text-xs py-2" required>
+            <button type="submit" class="btn-primary px-5 py-2 text-sm">بارگذاری</button>
+          </form>
+
+          <?php if (!empty($playlist['backdrop_image'])): ?>
+          <form method="POST" action="/admin/playlists/<?= (int)$playlist['id'] ?>/backdrop"
+                onsubmit="return confirm('تصویر پس‌زمینه حذف شود؟');">
+            <input type="hidden" name="remove" value="1">
+            <button type="submit" class="btn-ghost px-4 py-2 text-sm">حذف</button>
+          </form>
+          <?php endif; ?>
+        </div>
+      </div>
     </div>
     <?php endif; ?>
   </div>

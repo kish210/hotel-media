@@ -42,7 +42,12 @@ body,html{width:100%;height:100%;overflow:hidden;background:#000;}
 /* تصویر با background-size:cover — چون object-fit روی Maple نیست */
 .slide-img{width:100%;height:100%;background-repeat:no-repeat;background-position:center center;
            -webkit-background-size:cover;background-size:cover;}
-.slide video{width:100%;height:100%;display:block;background:#000;}
+<?php /* ویدیو پس‌زمینه‌ی خودش را ندارد: اگر سیاه باشد، نوارهای خالیِ
+        بالا-پایین را خودش سیاه می‌کند و پس‌زمینه‌ی تابلو هیچ‌وقت دیده
+        نمی‌شود. زیرش .slide-bg است که آن نوارها را پر می‌کند. */ ?>
+.slide video{width:100%;height:100%;display:block;background:transparent;position:relative;z-index:2;}
+<?php /* لایه‌ی پس‌زمینه — پشت ویدیو، به اندازه‌ی کل اسلاید */ ?>
+.slide-bg{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;}
 .slide iframe{width:100%;height:100%;border:0;}
 #ticker{position:absolute;bottom:0;left:0;width:100%;height:40px;background:rgba(0,0,0,.8);overflow:hidden;<?= $ticker?'':'display:none;'?>}
 <?php /* فاصله‌ی پیش از تکرار متن تیکر را JS از عرض واقعی صفحه ست
@@ -146,6 +151,58 @@ function sizeVideo(v) {
   v.style.height = h + 'px';
 }
 
+/* ── پس‌زمینه‌ی پشت ویدیو ────────────────────────────────────────
+   ویدیویی که نسبت تصویرش با صفحه یکی نیست، نوار خالی می‌گذارد. این
+   لایه آن نوار را پر می‌کند.
+
+   عمدا هیچ‌جا به videoWidth تکیه نمی‌شود: روی موتور ماپل آن عدد
+   غلط است (روی تلویزیون واقعی همین هتل برای یک فایل ۱۶:۹ مقدار
+   1280x1280 گزارش شد)، پس هر محاسبه‌ای بر پایه‌ی آن روی همان
+   تلویزیون‌هایی می‌شکند که این پروفایل برایشان نوشته شده. پس‌زمینه
+   به اندازه‌ی ویدیو کاری ندارد و همیشه درست است. */
+var BACKDROP = null;   // از /playlist می‌آید
+var VIDEO_FIT = 'fit';
+
+function applyBackdrop(div) {
+  if (!BACKDROP || BACKDROP.mode === 'black') return;
+
+  var bg = document.createElement('div');
+  bg.className = 'slide-bg';
+
+  var c = document.getElementById('c');
+  var w = (c && c.offsetWidth) || screen.width || 1280;
+
+  if (BACKDROP.mode === 'color') {
+    bg.style.backgroundColor = BACKDROP.color || '#000000';
+
+  } else if (BACKDROP.mode === 'image') {
+    bg.style.backgroundImage    = 'url("' + BACKDROP.image + '")';
+    bg.style.backgroundRepeat   = 'no-repeat';
+    bg.style.backgroundPosition = 'center center';
+    /* cover تا تصویر پس‌زمینه خودش نوار خالی نسازد */
+    bg.style.webkitBackgroundSize = 'cover';
+    bg.style.backgroundSize       = 'cover';
+
+  } else if (BACKDROP.mode === 'logo') {
+    /* لوگوی تکرارشونده. اندازه‌ی کاشی از عرض صفحه حساب می‌شود، نه
+       عدد ثابت — روی ۱۲۸۰ و ۱۹۲۰ هر دو باید یک‌جور دیده شود.
+
+       رنگ روی خودِ اسلاید می‌نشیند نه روی این لایه: opacity کل لایه را
+       محو می‌کند و اگر رنگ هم همین‌جا بود، رنگ پس‌زمینه هم کم‌رنگ
+       می‌شد و نوار خالی دوباره خاکستریِ بی‌رنگ می‌شد. */
+    var tile = Math.max(60, Math.round(w / 9));
+    div.style.backgroundColor = BACKDROP.color || '#0b1220';
+    bg.style.backgroundImage  = 'url("' + BACKDROP.image + '")';
+    bg.style.backgroundRepeat = 'repeat';
+    bg.style.webkitBackgroundSize = tile + 'px auto';
+    bg.style.backgroundSize       = tile + 'px auto';
+    /* کم‌رنگ، وگرنه پس‌زمینه با خودِ آگهی رقابت می‌کند */
+    bg.style.opacity = 0.18;
+  }
+
+  div.appendChild(bg);
+}
+
 var SERVER = window.location.origin;
 var CODE   = '<?= e($screen['code']??'') ?>';
 var pl = [], ci = 0, tm = null, curSlide = null;
@@ -221,6 +278,9 @@ function loadPlaylist() {
    جایش می‌ماند. */
 function applyBrand(b) {
   if (!b) return;
+
+  if (b.backdrop) BACKDROP = b.backdrop;
+  if (b.video_fit) VIDEO_FIT = b.video_fit;
 
   if (b.logo) {
     var bi = document.getElementById('brand-img');
@@ -348,6 +408,11 @@ function play(i) {
     vid.loop  = false;
     vid.onended = nextItem;
     vid.onerror = function() { setTimeout(nextItem, 1000); };
+    /* پس‌زمینه قبل از ویدیو به اسلاید اضافه می‌شود تا در همان فریم
+       اول زیرش باشد — اگر بعد اضافه شود، لحظه‌ی اول نوار سیاه دیده
+       می‌شود و روی تابلو همان لحظه به چشم می‌آید. */
+    applyBackdrop(div);
+
     vid.oncanplay = function() { sizeVideo(vid); tvPlay(vid); };
     /* ابعاد ذاتی تا loadedmetadata معلوم نیست، ولی چون اندازه را از
        صحنه می‌گیریم نه از فایل، می‌شود از همان اول هم ست کرد. */

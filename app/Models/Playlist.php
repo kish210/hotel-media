@@ -58,7 +58,8 @@ class Playlist
         'default_duration','loop','shuffle','is_active','tags','screen_type',
         /* برندینگ تابلو — لوگو و زیرنویس و دما روی خود پلی‌لیست‌اند تا
            هتلی که چند تابلو دارد بتواند هرکدام را جدا تنظیم کند */
-        'logo_path','ticker_text','weather_enabled','weather_every','weather_show'];
+        'logo_path','ticker_text','weather_enabled','weather_every','weather_show',
+        'backdrop_mode','backdrop_color','backdrop_image','video_fit'];
 
     public function update(int $id, array $data): bool
     {
@@ -223,9 +224,32 @@ class Playlist
         $tset    = json_decode((string)($tenant['settings'] ?? ''), true);
         $weather = (is_array($tset) && isset($tset['weather'])) ? $tset['weather'] : null;
 
+        /* پس‌زمینه‌ی حالت image مثل لوگو مطلق می‌شود — تلویزیون مسیر
+           نسبی را نسبت به آدرس خودش حل می‌کند، نه سرور. */
+        $bdImg = (string)($playlist['backdrop_image'] ?? '');
+        if ($bdImg !== '' && !str_starts_with($bdImg, 'http')) {
+            $bdImg = $baseUrl . (str_starts_with($bdImg, '/') ? '' : '/') . $bdImg;
+        }
+
+        $bdMode = (string)($playlist['backdrop_mode'] ?? 'black');
+        /* حالت logo بدون لوگو، و حالت image بدون تصویر، به سیاه
+           برمی‌گردند — وگرنه تابلو پس‌زمینه‌ی نیمه‌ساخته نشان می‌دهد. */
+        if ($bdMode === 'logo'  && $logo  === '') $bdMode = 'black';
+        if ($bdMode === 'image' && $bdImg === '') $bdMode = 'black';
+
         $playlist['brand'] = [
             'logo'        => $logo !== '' ? $logo : null,
             'ticker_text' => (string)($playlist['ticker_text'] ?? ''),
+            'backdrop'    => [
+                'mode'  => $bdMode,
+                'color' => (string)($playlist['backdrop_color'] ?? '#000000'),
+                /* در حالت logo همان لوگوی تابلو کاشی می‌شود، پس تصویر
+                   از آنجا می‌آید نه از ستون backdrop_image. */
+                'image' => $bdMode === 'logo'
+                    ? ($logo !== '' ? $logo : null)
+                    : ($bdImg !== '' ? $bdImg : null),
+            ],
+            'video_fit'   => ($playlist['video_fit'] ?? 'fit') === 'stretch' ? 'stretch' : 'fit',
             'weather'     => [
                 /* اگر همگام‌ساز هنوز اجرا نشده، دما null است و پلیر
                    اصلا چیزی نشان نمی‌دهد — بهتر از کادر خالی. */

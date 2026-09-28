@@ -103,18 +103,37 @@ class PlaylistController extends Controller
      */
     public function uploadLogo(Request $req, array $params): void
     {
-        $id = (int)$params['id'];
+        $this->storeImage($req, (int)$params['id'], 'logo_path', 'logo', 'لوگو');
+    }
+
+    /**
+     * تصویر پس‌زمینه‌ی پشت ویدیو — همان مسیر آپلود، ستون دیگر.
+     */
+    public function uploadBackdrop(Request $req, array $params): void
+    {
+        $this->storeImage($req, (int)$params['id'], 'backdrop_image', 'backdrop', 'تصویر پس‌زمینه');
+    }
+
+    /**
+     * آپلود مشترکِ تصویرهای برندینگ پلی‌لیست.
+     *
+     * یکی شدنشان عمدی است: دو نسخه‌ی جدا یعنی دو جا برای فراموش کردنِ
+     * بررسی نوع فایل، و همان یک جا سوراخ امنیتی می‌شود.
+     */
+    private function storeImage(
+        Request $req, int $id, string $column, string $field, string $label
+    ): void {
         $pl = $this->playlist->find($id);
         if (!$pl) { $this->redirect('/admin/playlists'); return; }
 
         $back = '/admin/playlists/' . $id . '/edit';
-        $file = $_FILES['logo'] ?? null;
+        $file = $_FILES[$field] ?? null;
 
-        /* حذف لوگو — کادر خالی یعنی برگرد به لوگوی هتل */
+        /* حذف — خالی یعنی برگرد به حالت پیش‌فرض */
         if ($req->post('remove') === '1') {
-            $this->deleteOldLogo((string)($pl['logo_path'] ?? ''));
-            $this->playlist->update($id, ['logo_path' => null]);
-            $this->flash('success', 'لوگو حذف شد — لوگوی هتل استفاده می‌شود');
+            $this->deleteOldImage((string)($pl[$column] ?? ''));
+            $this->playlist->update($id, [$column => null]);
+            $this->flash('success', $label . ' حذف شد');
             $this->redirect($back);
             return;
         }
@@ -125,7 +144,7 @@ class PlaylistController extends Controller
             return;
         }
         if ($file['size'] > 3 * 1024 * 1024) {
-            $this->flash('error', 'حجم لوگو نباید بیشتر از ۳ مگابایت باشد');
+            $this->flash('error', 'حجم ' . $label . ' نباید بیشتر از ۳ مگابایت باشد');
             $this->redirect($back);
             return;
         }
@@ -148,22 +167,22 @@ class PlaylistController extends Controller
             return;
         }
 
-        $name = 'logo_pl' . $id . '_' . time() . '.' . $extMap[$mime];
+        $name = $field . '_pl' . $id . '_' . time() . '.' . $extMap[$mime];
         if (!move_uploaded_file($file['tmp_name'], $dir . $name)) {
-            $this->flash('error', 'ذخیره‌ی لوگو روی سرور ناموفق بود');
+            $this->flash('error', 'ذخیره‌ی ' . $label . ' روی سرور ناموفق بود');
             $this->redirect($back);
             return;
         }
 
-        $this->deleteOldLogo((string)($pl['logo_path'] ?? ''));
-        $this->playlist->update($id, ['logo_path' => '/uploads/branding/' . $name]);
-        $this->log('playlist.logo', 'Playlist', $id);
-        $this->flash('success', 'لوگو جایگزین شد');
+        $this->deleteOldImage((string)($pl[$column] ?? ''));
+        $this->playlist->update($id, [$column => '/uploads/branding/' . $name]);
+        $this->log('playlist.' . $field, 'Playlist', $id);
+        $this->flash('success', $label . ' جایگزین شد');
         $this->redirect($back);
     }
 
     /** فایل قبلی را پاک می‌کند، ولی فقط اگر واقعا داخل پوشه‌ی برندینگ باشد */
-    private function deleteOldLogo(string $path): void
+    private function deleteOldImage(string $path): void
     {
         if ($path === '' || !str_starts_with($path, '/uploads/branding/')) return;
         $abs = PUBLIC_PATH . $path;

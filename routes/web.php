@@ -156,6 +156,7 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
     $r->get('/playlists/{id}/edit',   [\App\Controllers\Web\PlaylistController::class, 'edit']);
     $r->post('/playlists/{id}',       [\App\Controllers\Web\PlaylistController::class, 'update']);
     $r->post('/playlists/{id}/logo',        [\App\Controllers\Web\PlaylistController::class, 'uploadLogo']);
+    $r->post('/playlists/{id}/backdrop',    [\App\Controllers\Web\PlaylistController::class, 'uploadBackdrop']);
     $r->post('/playlists/{id}/delete',      [\App\Controllers\Web\PlaylistController::class, 'destroy']);
     $r->post('/playlists/{id}/items',       [\App\Controllers\Web\PlaylistController::class, 'addItem']);
     $r->post('/playlists/{id}/items/{iid}/delete', [\App\Controllers\Web\PlaylistController::class, 'removeItem']);
