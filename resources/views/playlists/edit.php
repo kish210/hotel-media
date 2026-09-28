@@ -97,12 +97,18 @@ $playlist = $playlist ?? [];
         <div class="text-sm font-semibold text-slate-300">نمایش روی تابلو</div>
 
         <div>
-          <label class="form-label">متن زیرنویس (نوار پایین صفحه)</label>
-          <input type="text" name="ticker_text" class="form-input"
-                 maxlength="500"
-                 value="<?= e($playlist['ticker_text'] ?? '') ?>">
+          <label class="form-label">زیرنویس متنی (نوار پایین صفحه)</label>
+          <?php /* textarea نه input: اپراتور باید بتواند چند پیام
+                   بگذارد — اطلاعات اقامتی، رویداد امروز، ساعت صبحانه —
+                   و هرکدام یک خط باشد. سرور آن‌ها را به یک نوار پیوسته
+                   وصل می‌کند و خط خالی را می‌اندازد. */ ?>
+          <textarea name="ticker_text" class="form-input" rows="4"
+                    maxlength="2000"
+                    placeholder="هر خط یک پیام&#10;مثال: صبحانه ۷ تا ۱۰ صبح در رستوران طبقه‌ی همکف&#10;مثال: شب موسیقی زنده، امشب ساعت ۲۱ در لابی"
+          ><?= e($playlist['ticker_text'] ?? '') ?></textarea>
           <p class="text-xs text-slate-500 mt-1">
-            متن نمونه گذاشته شده — هر چیزی بنویسید همان روی تلویزیون می‌رود.
+            هر خط یک پیام جدا. روی تلویزیون پشت سر هم با «•» می‌چرخند.
+            خط خالی نادیده گرفته می‌شود.
           </p>
         </div>
 

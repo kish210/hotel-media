@@ -72,6 +72,26 @@ class Playlist
         return $ok;
     }
 
+    /**
+     * چند خط پیام را به یک نوار پیوسته تبدیل می‌کند.
+     *
+     * خط خالی حذف می‌شود تا اپراتوری که بین پیام‌ها فاصله گذاشته،
+     * روی تابلو شکاف بی‌دلیل نبیند. جداکننده یک نقطه‌ی وسط است چون
+     * روی نوار متحرک، مرز پیام‌ها باید از یک نگاه معلوم باشد.
+     */
+    private static function joinTicker(string $raw): string
+    {
+        $lines = preg_split('/\r\n|\r|\n/', $raw) ?: [];
+        $out   = [];
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line !== '') $out[] = $line;
+        }
+
+        return implode('  •  ', $out);
+    }
+
     public function delete(int $id): bool
     {
         return $this->db->delete('playlists', ['id' => $id, 'tenant_id' => $this->tenantId]) > 0;
@@ -239,7 +259,11 @@ class Playlist
 
         $playlist['brand'] = [
             'logo'        => $logo !== '' ? $logo : null,
-            'ticker_text' => (string)($playlist['ticker_text'] ?? ''),
+            /* هر خط یک پیام است — اطلاعات اقامتی، رویداد امروز، ساعت
+               صبحانه. اینجا به یک رشته‌ی پیوسته تبدیل می‌شوند نه روی
+               تلویزیون: پردازش متن روی مرورگر ماپل گران است و هر ده
+               پروفایل هم به همین شکل از آن استفاده می‌کنند. */
+            'ticker_text' => self::joinTicker((string)($playlist['ticker_text'] ?? '')),
             'backdrop'    => [
                 'mode'  => $bdMode,
                 'color' => (string)($playlist['backdrop_color'] ?? '#000000'),

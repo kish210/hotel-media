@@ -130,6 +130,16 @@ body,html{width:100%;height:100%;overflow:hidden;background:#000;}
 <script>
 /* ES5 خالص — Maple/WebKit 534. نه const/let، نه arrow، نه template literal،
    نه fetch/Promise، نه classList. */
+/* reload() روی مرورگر این تلویزیون‌ها می‌تواند همان صفحه را از کش
+   داخلی خودش بردارد — سرور هم no-store می‌فرستد ولی مرورگرِ ماپل
+   همیشه رعایتش نمی‌کند. با یک پارامتر یکتا، آدرس دیگری می‌شود و
+   ناچار از سرور می‌گیرد. */
+function hardReload() {
+  var u = window.location.pathname + '?_bound=1&r=' +
+          (new Date().getTime()) + '' + Math.floor(Math.random() * 1000);
+  window.location.href = u;
+}
+
 function tvPlay(el) {
   if (!el || !el.play) return;
   try { el.play(); } catch (e) {}
@@ -202,6 +212,11 @@ function applyBackdrop(div) {
 
   div.appendChild(bg);
 }
+
+/* هر بار که این صفحه عوض می‌شود این عدد هم باید عوض شود — در ضربان
+   گزارش می‌شود و تنها راه فهمیدن اینکه تلویزیون کد تازه را گرفته یا
+   نسخه‌ی کش‌شده‌ی خودش را اجرا می‌کند. */
+var PAGE_BUILD = 'orsay-2026-09-28-c';
 
 var SERVER = window.location.origin;
 var CODE   = '<?= e($screen['code']??'') ?>';
@@ -537,7 +552,7 @@ function heartbeat() {
         var p = cmds[i].payload || cmds[i].data;
 
         if (n==='reload' || n==='refresh') loadPlaylist();
-        if (n==='reboot') window.location.reload();
+        if (n==='reboot') hardReload();
         if (n==='instant_media' || n==='emergency') showInstant(p);
         if (n==='clear_instant') clearInstant();
       }
@@ -552,6 +567,21 @@ function heartbeat() {
     version: 'samsung-orsay',
     item: ci,
     metrics: {
+      /* شناسه‌ی نسخه‌ی صفحه. بدون این نمی‌شود فهمید تلویزیون کد جدید را
+         اجرا می‌کند یا نسخه‌ی قدیمی را از کش خودش — و همه‌ی تشخیص‌های
+         بعدی روی همین حدس بنا می‌شود. */
+      build:   PAGE_BUILD,
+      /* وضعیت واقعیِ سه عنصری که دیده نمی‌شوند */
+      wx:      (function(){ var e = document.getElementById('wx');
+                  return e ? ((e.style.display || 'css') + '/' + (e.style.opacity === '' ? '-' : e.style.opacity)) : 'نیست'; })(),
+      logo:    (function(){ var e = document.getElementById('brand-img');
+                  return e ? (e.src ? 'دارد' : 'خالی') : 'نیست'; })(),
+      clock:   (function(){ var e = document.getElementById('clock');
+                  return e ? (e.style.display || 'css') : 'نیست'; })(),
+      items:   pl.length,
+      types:   (function(){ var a = [], i;
+                  for (i = 0; i < pl.length; i++) a.push(pl[i].type || '?');
+                  return a.join(','); })(),
       screen:  screen.width + 'x' + screen.height,
       avail:   (screen.availWidth||0) + 'x' + (screen.availHeight||0),
       client:  document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight,
@@ -621,7 +651,8 @@ function doActivate() {
     var d={}; try{d=JSON.parse(x.responseText);}catch(e){}
     if(d.success){
       msg.style.color='#22c55e'; msg.textContent='✅ موفق!';
-      setTimeout(function(){window.location.reload();},1200);
+      // بعد از فعال‌سازی هم از سرور بگیرد، نه از کش
+      setTimeout(hardReload,1200);
     } else {
       msg.style.color='#ef4444'; msg.textContent=d.message||'کد نامعتبر';
     }

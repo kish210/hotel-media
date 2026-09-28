@@ -167,13 +167,52 @@ class PlaylistController extends Controller
             return;
         }
 
-        $name = $field . '_pl' . $id . '_' . time() . '.' . $extMap[$mime];
+        /* WebP روی موتور مرورگرِ تلویزیون‌های نسل ۲۰۱۳ (ماپل/اورسی)
+           پشتیبانی نمی‌شود. هیچ خطایی هم نمی‌دهد — تصویر فقط بار
+           نمی‌شود و گوشه‌ی تابلو خالی می‌ماند، که از پشت پنل دقیقا
+           شبیه «آپلود نشده» دیده می‌شود. همین یک بار در همین هتل
+           اتفاق افتاد، پس به‌جای رد کردن فایل، تبدیلش می‌کنیم. */
+        $ext = $extMap[$mime];
+        if ($mime === 'image/webp' && function_exists('imagecreatefromwebp')) {
+            $img = @imagecreatefromwebp($file['tmp_name']);
+            if ($img !== false) {
+                imagealphablending($img, false);
+                imagesavealpha($img, true);
+                $tmpPng = $file['tmp_name'] . '.png';
+                if (@imagepng($img, $tmpPng)) {
+                    imagedestroy($img);
+                    $name = $field . '_pl' . $id . '_' . time() . '.png';
+                    if (!@rename($tmpPng, $dir . $name)) {
+                        @unlink($tmpPng);
+                        $this->flash('error', 'تبدیل ' . $label . ' ناموفق بود');
+                        $this->redirect($back);
+                        return;
+                    }
+                    @chmod($dir . $name, 0644);
+                    $this->finishImage($id, $pl, $column, $field, $label, $name, $back);
+                    return;
+                }
+                imagedestroy($img);
+            }
+            /* اگر تبدیل نشد، فایل اصلی ذخیره می‌شود — روی تلویزیون‌های
+               جدیدتر webp کار می‌کند و نباید آپلود را کلا رد کنیم. */
+        }
+
+        $name = $field . '_pl' . $id . '_' . time() . '.' . $ext;
         if (!move_uploaded_file($file['tmp_name'], $dir . $name)) {
             $this->flash('error', 'ذخیره‌ی ' . $label . ' روی سرور ناموفق بود');
             $this->redirect($back);
             return;
         }
 
+        $this->finishImage($id, $pl, $column, $field, $label, $name, $back);
+    }
+
+    /** ثبت مسیر تصویر تازه و پاک‌کردن قبلی — مشترک بین دو مسیر ذخیره */
+    private function finishImage(
+        int $id, array $pl, string $column, string $field,
+        string $label, string $name, string $back
+    ): void {
         $this->deleteOldImage((string)($pl[$column] ?? ''));
         $this->playlist->update($id, [$column => '/uploads/branding/' . $name]);
         $this->log('playlist.' . $field, 'Playlist', $id);
