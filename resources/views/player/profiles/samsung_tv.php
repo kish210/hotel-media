@@ -15,25 +15,29 @@ $posMap  = ['bottom-right'=>'bottom:14px;right:14px','bottom-left'=>'bottom:14px
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1920">
+<?php /* width=device-width نه عدد ثابت: این تلویزیون‌ها رزولوشن
+        یکسانی گزارش نمی‌کنند و چیدمانِ ثابتِ ۱۹۲۰ روی صفحه‌ی
+        کوچک‌تر با overflow:hidden فقط گوشه‌ی بالا-چپ را نشان
+        می‌دهد — تصویر بریده به نظر می‌رسد. */ ?>
+<meta name="viewport" content="width=device-width">
 <title>Hotel Media — Samsung</title>
 <!-- Samsung Tizen APIs -->
 <script type="text/javascript" src="$WEBAPIS/webapis/webapis.js" onerror=""></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body,html{width:1920px;height:1080px;overflow:hidden;background:#000;}
-#c{position:relative;width:1920px;height:1080px;}
-.slide{position:absolute;top:0;left:0;width:1920px;height:1080px;opacity:0;-webkit-transition:opacity .5s;transition:opacity .5s;}
+body,html{width:100%;height:100%;overflow:hidden;background:#000;}
+#c{position:relative;width:100%;height:100%;}
+.slide{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;-webkit-transition:opacity .5s;transition:opacity .5s;}
 .slide.on{opacity:1;}
-.slide img{width:1920px;height:1080px;object-fit:cover;display:block;}
-.slide video{width:1920px;height:1080px;display:block;background:#000;object-fit:contain;}
-.slide iframe{width:1920px;height:1080px;border:0;}
-#ticker{position:absolute;bottom:0;left:0;width:1920px;height:40px;background:rgba(0,0,0,.8);overflow:hidden;<?= $ticker?'':'display:none;'?>}
-#tick{position:absolute;top:0;height:40px;white-space:nowrap;font:600 19px/40px Arial,sans-serif;color:#fff;padding-right:1920px;}
+.slide img{width:100%;height:100%;object-fit:cover;display:block;}
+.slide video{width:100%;height:100%;display:block;background:#000;object-fit:contain;}
+.slide iframe{width:100%;height:100%;border:0;}
+#ticker{position:absolute;bottom:0;left:0;width:100%;height:40px;background:rgba(0,0,0,.8);overflow:hidden;<?= $ticker?'':'display:none;'?>}
+#tick{position:absolute;top:0;height:40px;white-space:nowrap;font:600 19px/40px Arial,sans-serif;color:#fff;}
 #logo{position:absolute;<?= $posMap[$logoPos]??$posMap['bottom-right'] ?>;opacity:.85;pointer-events:none;<?= $logoUrl?'':'display:none;'?>}
 #logo img{width:120px;}
 #clock{position:absolute;top:14px;right:14px;padding:7px 16px;background:rgba(0,0,0,.55);border-radius:8px;font:700 28px/1 monospace;color:#fff;<?= $clk?'':'display:none;'?>}
-#act{position:absolute;top:0;left:0;width:1920px;height:1080px;background:#09090f;display:flex;align-items:center;justify-content:center;}
+#act{position:absolute;top:0;left:0;width:100%;height:100%;background:#09090f;display:flex;align-items:center;justify-content:center;}
 #act-box{background:#111;border-radius:16px;padding:40px;text-align:center;width:380px;}
 #act-inp{font:700 28px/1 monospace;letter-spacing:12px;padding:14px;width:100%;background:#0d0d14;border:2px solid rgba(26,122,196,.4);border-radius:12px;color:#fff;text-align:center;text-transform:uppercase;}
 #act-btn{width:100%;margin-top:14px;padding:15px;font-size:17px;background:linear-gradient(135deg,#1a7ac4,#12558f);color:#fff;border:0;border-radius:12px;cursor:pointer;}
@@ -110,6 +114,10 @@ updateClock();
 <?php if ($ticker): ?>
 (function(){
   var t = document.getElementById('tick');
+  /* فاصله‌ی پیش از تکرار = یک عرض صفحه، هرچقدر که هست */
+  var vw = document.getElementById('c').offsetWidth || 1280;
+  t.style.paddingRight = vw + 'px';
+
   var pos = 0;
   setInterval(function(){
     pos -= 1.5;
@@ -175,7 +183,7 @@ function play(i) {
   // ─ IMAGE ─
   if (type === 'image' || src.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i)) {
     var img = new Image();
-    img.style.cssText = 'width:1920px;height:1080px;object-fit:cover;display:block;';
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
     img.onerror = function() { setTimeout(nextItem, 500); };
     img.onload  = function() { div.appendChild(img); swapSlide(div); };
     img.src = src;
@@ -190,7 +198,7 @@ function play(i) {
              src.indexOf('udp://') === 0 || src.indexOf('rtp://') === 0) {
 
     var vid = document.createElement('video');
-    vid.style.cssText = 'width:1920px;height:1080px;display:block;background:#000;';
+    vid.style.cssText = 'width:100%;height:100%;display:block;background:#000;';
     // Samsung Tizen critical attributes
     vid.setAttribute('autoplay',       '');
     vid.setAttribute('muted',          '');
@@ -236,7 +244,7 @@ function play(i) {
   } else {
     var ifr = document.createElement('iframe');
     ifr.src = src;
-    ifr.style.cssText = 'width:1920px;height:1080px;border:0;background:#000;';
+    ifr.style.cssText = 'width:100%;height:100%;border:0;background:#000;';
     ifr.setAttribute('sandbox', 'allow-scripts allow-same-origin');
     div.appendChild(ifr);
     swapSlide(div);
@@ -274,13 +282,13 @@ function showInstant(data) {
   clearInstant();
   var ov = document.createElement('div');
   ov.id = 'inst-ov';
-  ov.style.cssText = 'position:fixed;top:0;left:0;width:1920px;height:1080px;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;';
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;';
   var c = document.getElementById('c');
 
   if (data.type==='image') {
-    ov.innerHTML = '<img src="'+fixUrl(data.content)+'" style="max-width:1920px;max-height:1080px;object-fit:contain;">';
+    ov.innerHTML = '<img src="'+fixUrl(data.content)+'" style="max-width:100%;max-height:100%;object-fit:contain;">';
   } else if (data.type==='video') {
-    ov.innerHTML = '<video src="'+fixUrl(data.content)+'" autoplay muted playsinline style="max-width:1920px;max-height:1080px;" onended="clearInstant()"></video>';
+    ov.innerHTML = '<video src="'+fixUrl(data.content)+'" autoplay muted playsinline style="max-width:100%;max-height:100%;" onended="clearInstant()"></video>';
   } else if (data.type==='text') {
     var t={text:'',color:'#fff',bg:'#000'};
     try { t=JSON.parse(data.content); } catch(e) { t.text=data.content; }

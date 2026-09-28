@@ -23,26 +23,35 @@ $posMap  = ['bottom-right'=>'bottom:14px;right:14px','bottom-left'=>'bottom:14px
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1920">
+<?php /* width=device-width نه یک عدد ثابت.
+        این تلویزیون‌ها رزولوشن یکسانی ندارند: همین مدل در سایت واقعی
+        screen.width را ۱۲۸۰ گزارش می‌کند، نه ۱۹۲۰. با چیدمان ثابتِ
+        ۱۹۲۰ روی صفحه‌ی ۱۲۸۰ و overflow:hidden، فقط گوشه‌ی بالا-چپِ
+        تصویر دیده می‌شود و ویدیو بریده به نظر می‌رسد. */ ?>
+<meta name="viewport" content="width=device-width">
 <title>Hotel Media — Samsung Orsay</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body,html{width:1920px;height:1080px;overflow:hidden;background:#000;}
-#c{position:relative;width:1920px;height:1080px;}
+/* درصد به‌جای پیکسل ثابت — چیدمان با هر رزولوشنی که تلویزیون
+   گزارش کند جور درمی‌آید. درصد از WebKit خیلی قدیمی هم کار می‌کند. */
+body,html{width:100%;height:100%;overflow:hidden;background:#000;}
+#c{position:relative;width:100%;height:100%;}
 /* opacity مستقیم ست می‌شود؛ transition خودش انیمیت می‌کند (بدون classList) */
-.slide{position:absolute;top:0;left:0;width:1920px;height:1080px;opacity:0;background:#000;
+.slide{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;background:#000;
        -webkit-transition:opacity .5s;transition:opacity .5s;}
 /* تصویر با background-size:cover — چون object-fit روی Maple نیست */
-.slide-img{width:1920px;height:1080px;background-repeat:no-repeat;background-position:center center;
+.slide-img{width:100%;height:100%;background-repeat:no-repeat;background-position:center center;
            -webkit-background-size:cover;background-size:cover;}
-.slide video{width:1920px;height:1080px;display:block;background:#000;}
-.slide iframe{width:1920px;height:1080px;border:0;}
-#ticker{position:absolute;bottom:0;left:0;width:1920px;height:40px;background:rgba(0,0,0,.8);overflow:hidden;<?= $ticker?'':'display:none;'?>}
-#tick{position:absolute;top:0;height:40px;white-space:nowrap;font:600 19px/40px Arial,sans-serif;color:#fff;padding-right:1920px;}
+.slide video{width:100%;height:100%;display:block;background:#000;}
+.slide iframe{width:100%;height:100%;border:0;}
+#ticker{position:absolute;bottom:0;left:0;width:100%;height:40px;background:rgba(0,0,0,.8);overflow:hidden;<?= $ticker?'':'display:none;'?>}
+<?php /* فاصله‌ی پیش از تکرار متن تیکر را JS از عرض واقعی صفحه ست
+        می‌کند؛ عدد ثابت روی صفحه‌ی باریک‌تر شکاف بی‌جا می‌ساخت. */ ?>
+#tick{position:absolute;top:0;height:40px;white-space:nowrap;font:600 19px/40px Arial,sans-serif;color:#fff;}
 #logo{position:absolute;<?= $posMap[$logoPos]??$posMap['bottom-right'] ?>;opacity:.85;<?= $logoUrl?'':'display:none;'?>}
 #logo img{width:120px;}
 #clock{position:absolute;top:14px;right:14px;padding:7px 16px;background:rgba(0,0,0,.55);border-radius:8px;font:700 28px/1 monospace;color:#fff;<?= $clk?'':'display:none;'?>}
-#act{position:absolute;top:0;left:0;width:1920px;height:1080px;background:#09090f;text-align:center;}
+#act{position:absolute;top:0;left:0;width:100%;height:100%;background:#09090f;text-align:center;}
 #act-box{position:absolute;top:50%;left:50%;margin:-160px 0 0 -190px;width:380px;background:#111;border-radius:16px;padding:40px;}
 #act-inp{font:700 28px/1 monospace;letter-spacing:12px;padding:14px;width:100%;background:#0d0d14;border:2px solid rgba(26,122,196,.4);border-radius:12px;color:#fff;text-align:center;text-transform:uppercase;}
 #act-btn{width:100%;margin-top:14px;padding:15px;font-size:17px;background:#1a7ac4;color:#fff;border:0;border-radius:12px;cursor:pointer;}
@@ -107,6 +116,11 @@ setInterval(updateClock, 1000);
 <?php if ($ticker): ?>
 (function(){
   var t = document.getElementById('tick');
+  /* فاصله‌ی پیش از تکرار = یک عرض صفحه، هرچقدر که هست. با عدد ثابت
+     ۱۹۲۰ روی تلویزیون ۱۲۸۰ یک شکاف خالیِ طولانی وسط تیکر می‌افتاد. */
+  var vw = document.getElementById('c').offsetWidth || 1280;
+  t.style.paddingRight = vw + 'px';
+
   var pos = 0;
   setInterval(function(){
     pos -= 1.5;
@@ -252,21 +266,21 @@ function showInstant(data) {
   clearInstant();
   var ov = document.createElement('div');
   ov.id = 'inst-ov';
-  ov.style.cssText = 'position:absolute;top:0;left:0;width:1920px;height:1080px;z-index:9999;background:#000;';
+  ov.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;';
   var c = document.getElementById('c');
 
   if (data.type==='image') {
     var box = document.createElement('div');
-    box.style.cssText = 'width:1920px;height:1080px;background-repeat:no-repeat;background-position:center center;-webkit-background-size:contain;background-size:contain;';
+    box.style.cssText = 'width:100%;height:100%;background-repeat:no-repeat;background-position:center center;-webkit-background-size:contain;background-size:contain;';
     box.style.backgroundImage = 'url("' + fixUrl(data.content) + '")';
     ov.appendChild(box);
   } else if (data.type==='video') {
-    ov.innerHTML = '<video src="'+fixUrl(data.content)+'" autoplay muted playsinline style="width:1920px;height:1080px;background:#000;" onended="clearInstant()"></video>';
+    ov.innerHTML = '<video src="'+fixUrl(data.content)+'" autoplay muted playsinline style="width:100%;height:100%;background:#000;" onended="clearInstant()"></video>';
   } else if (data.type==='text') {
     var t={text:'',color:'#fff',bg:'#000'};
     try { t=JSON.parse(data.content); } catch(e) { t.text=data.content; }
     ov.style.background=t.bg||'#000';
-    ov.innerHTML='<div style="position:absolute;top:50%;left:0;width:1920px;margin-top:-60px;font-size:80px;font-weight:900;color:'+(t.color||'#fff')+';text-align:center;padding:0 60px;">'+(t.text||'')+'</div>';
+    ov.innerHTML='<div style="position:absolute;top:50%;left:0;width:100%;margin-top:-60px;font-size:80px;font-weight:900;color:'+(t.color||'#fff')+';text-align:center;padding:0 60px;">'+(t.text||'')+'</div>';
   }
   c.appendChild(ov);
   var dur=parseInt(data.duration,10)||30;
