@@ -78,7 +78,11 @@ class KishAirportFetcher
             'weather'    => $weatherOk,
             'message'    => $notes
                 ? implode(' | ', $notes)
-                : "خروجی: $dep، ورودی: $arr" . ($weatherOk ? '، دما به‌روز شد' : ''),
+                /* آکولاد لازم است: ویرگول فارسی بایتِ بالای 0x80 دارد و
+                   PHP آن را حرفِ معتبرِ نام متغیر می‌شمارد، پس "$dep،"
+                   به متغیرِ ناموجودِ «dep،» تبدیل می‌شود و عدد خروجی
+                   خالی چاپ می‌شد — بدون هیچ خطایی جز یک Warning. */
+                : "خروجی: {$dep}، ورودی: {$arr}" . ($weatherOk ? '، دما به‌روز شد' : ''),
         ];
     }
 
@@ -175,6 +179,10 @@ class KishAirportFetcher
             if (mb_strpos($text, 'پرواز کرد') !== false) return 'departed';
             if (mb_strpos($text, 'خروج') !== false)   return 'departed';
             if (mb_strpos($text, 'سوار') !== false)   return 'boarding';
+            /* عبارتی که فرودگاه کیش واقعا می‌فرستد — روی داده‌ی زنده
+               دیده شد. بدون آن، پروازی که دارد سوار می‌شود «طبق
+               برنامه» نشان داده می‌شد. */
+            if (mb_strpos($text, 'آماده پرواز') !== false) return 'boarding';
             if (mb_strpos($text, 'پذیرش') !== false)  return 'boarding';
             if (mb_strpos($text, 'تاخیر') !== false)  return 'delayed';
             if (mb_strpos($text, 'تأخیر') !== false)  return 'delayed';

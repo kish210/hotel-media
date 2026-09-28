@@ -82,6 +82,8 @@ check('«برخاست» → departed',             $m('برخاست') === 'depar
 check('«پرواز کرد» → departed',          $m('پرواز کرد') === 'departed');
 check('«سوار شوید» → boarding',          $m('سوار شوید') === 'boarding');
 check('«پذیرش» → boarding',              $m('پذیرش مسافر') === 'boarding');
+/* عبارت واقعیِ فرودگاه کیش، از داده‌ی زنده */
+check('«آماده پرواز» → boarding',        $m('آماده پرواز') === 'boarding', $m('آماده پرواز'));
 check('«تاخیر» → delayed',               $m('تاخیر دارد') === 'delayed');
 check('«تأخیر» با همزه هم شناخته می‌شود', $m('تأخیر دارد') === 'delayed');
 check('«طبق برنامه» → scheduled',        $m('طبق برنامه') === 'scheduled');
