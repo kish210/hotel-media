@@ -16,7 +16,10 @@ $s = json_decode($screen['settings'] ?? '{}', true) ?: [];
 $ticker  = $s['ticker_text'] ?? '';
 $logoUrl = $s['logo_url']    ?? '';
 $logoPos = $s['logo_position'] ?? 'bottom-right';
-$clk     = !empty($s['show_clock']);
+/* پیش‌فرض روشن: کلید نبودن یعنی «تنظیم نشده»، نه «خاموش». روی
+   صفحه‌های واقعی این هتل ستون settings خالی بود و با !empty هیچ
+   تلویزیونی ساعت نداشت بدون اینکه کسی آن را خاموش کرده باشد. */
+$clk     = !array_key_exists('show_clock', $s) || !empty($s['show_clock']);
 $posMap  = ['bottom-right'=>'bottom:14px;right:14px','bottom-left'=>'bottom:14px;left:14px',
             'top-right'=>'top:14px;right:14px','top-left'=>'top:14px;left:14px'];
 ?><!DOCTYPE html>
@@ -49,6 +52,8 @@ body,html{width:100%;height:100%;overflow:hidden;background:#000;}
 <?php /* لایه‌ی پس‌زمینه — پشت ویدیو، به اندازه‌ی کل اسلاید */ ?>
 .slide-bg{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;}
 .slide iframe{width:100%;height:100%;border:0;}
+<?php /* اگر تنظیماتِ صفحه متنی نداشته باشد پنهان شروع می‌شود، ولی متنِ
+        پلی‌لیست که رسید startTicker خودش نمایانش می‌کند. */ ?>
 #ticker{position:absolute;bottom:0;left:0;width:100%;height:40px;background:rgba(0,0,0,.8);overflow:hidden;<?= $ticker?'':'display:none;'?>}
 <?php /* فاصله‌ی پیش از تکرار متن تیکر را JS از عرض واقعی صفحه ست
         می‌کند؛ عدد ثابت روی صفحه‌ی باریک‌تر شکاف بی‌جا می‌ساخت. */ ?>
@@ -72,6 +77,10 @@ body,html{width:100%;height:100%;overflow:hidden;background:#000;}
 <?php /* ساعت از بالا-راست به پایین-راست رفت: جای بالا-راست حالا لوگوی
         همیشگی است و دو عنصر روی هم می‌افتادند. بالای نوار تیکر
         می‌نشیند تا وقتی تیکر روشن است پشتش پنهان نشود. */ ?>
+<?php /* ساعت پیش‌فرض روشن است. قبلا فقط با کلیدِ show_clock در تنظیماتِ
+        صفحه روشن می‌شد و آن تنظیمات روی صفحه‌های واقعی هتل خالی بود،
+        پس عملا هیچ تلویزیونی ساعت نداشت. برای خاموش کردنش باید
+        show_clock صراحتا false باشد. */ ?>
 #clock{position:absolute;bottom:54px;right:14px;padding:7px 16px;background:rgba(0,0,0,.55);border-radius:8px;font:700 28px/1 monospace;color:#fff;<?= $clk?'':'display:none;'?>}
 <?php /* تابلوی پرواز — با table نه flex: روی WebKit ماپل flex نسخه‌ی
         قدیمی است و ستون‌ها جابه‌جا می‌شوند. واحدها درصدی‌اند تا روی
@@ -216,7 +225,7 @@ function applyBackdrop(div) {
 /* هر بار که این صفحه عوض می‌شود این عدد هم باید عوض شود — در ضربان
    گزارش می‌شود و تنها راه فهمیدن اینکه تلویزیون کد تازه را گرفته یا
    نسخه‌ی کش‌شده‌ی خودش را اجرا می‌کند. */
-var PAGE_BUILD = 'orsay-2026-09-28-c';
+var PAGE_BUILD = 'orsay-2026-09-28-d';
 
 var SERVER = window.location.origin;
 var CODE   = '<?= e($screen['code']??'') ?>';
@@ -232,7 +241,10 @@ function syncTime() {
   };
   x.send();
 }
-<?php if ($clk): ?>
+<?php /* این بلوک دیگر پشت شرط PHP نیست. قبلا اگر تنظیماتِ صفحه در
+        لحظه‌ی رندر خالی بود، خودِ تابعِ ساعت داخل صفحه چاپ نمی‌شد و
+        هیچ کدی در زمان اجرا نمی‌توانست ساعت را روشن کند — روشن‌کردنش
+        نیاز به ویرایش دیتابیس و بارگذاری دوباره‌ی صفحه داشت. */ ?>
 function updateClock() {
   var d = new Date(Date.now() + _serverOffset);
   var h=d.getHours(), m=d.getMinutes(), s=d.getSeconds();
@@ -241,25 +253,44 @@ function updateClock() {
 }
 setInterval(syncTime, 300000);
 setInterval(updateClock, 1000);
-<?php endif; ?>
+updateClock();
 
 // ─── Ticker ───────────────────────────────────────────────────
-<?php if ($ticker): ?>
-(function(){
+<?php /* مثل ساعت، این هم دیگر پشت شرط PHP نیست. متن زیرنویس حالا از
+        پلی‌لیست می‌آید و ممکن است بعد از رندر صفحه برسد؛ با شرط PHP،
+        حلقه‌ی حرکت اصلا داخل صفحه چاپ نمی‌شد و متن بی‌حرکت می‌ماند —
+        بدون هیچ خطایی، فقط یک نوار ساکن. */ ?>
+var _tickTimer = null;
+
+function startTicker() {
   var t = document.getElementById('tick');
+  var w = document.getElementById('ticker');
+  if (!t || !w) return;
+
+  /* متن خالی یعنی نواری برای نشان دادن نیست */
+  if (!t.innerHTML || t.offsetWidth === 0) { w.style.display = 'none'; return; }
+
+  w.style.display = 'block';
+
   /* فاصله‌ی پیش از تکرار = یک عرض صفحه، هرچقدر که هست. با عدد ثابت
      ۱۹۲۰ روی تلویزیون ۱۲۸۰ یک شکاف خالیِ طولانی وسط تیکر می‌افتاد. */
   var vw = document.getElementById('c').offsetWidth || 1280;
   t.style.paddingRight = vw + 'px';
 
+  /* اگر متن عوض شود این دوباره صدا زده می‌شود؛ بدون پاک‌کردن تایمر
+     قبلی، دو حلقه هم‌زمان left را می‌نویسند و نوار تند و پرشی می‌شود. */
+  if (_tickTimer) clearInterval(_tickTimer);
+
   var pos = 0;
-  setInterval(function(){
+  t.style.left = '0px';
+  _tickTimer = setInterval(function(){
     pos -= 1.5;
-    if(pos < -t.offsetWidth/2) pos = 0;
+    if (pos < -t.offsetWidth / 2) pos = 0;
     t.style.left = pos + 'px';
   }, 16);
-})();
-<?php endif; ?>
+}
+
+startTicker();
 
 // ─── URL fix ─────────────────────────────────────────────────
 function fixUrl(u) {
@@ -315,8 +346,9 @@ function applyBrand(b) {
          کاری که رندر PHP هم می‌کند. */
       t.innerHTML = TV_esc(b.ticker_text) + '&nbsp;&nbsp;&nbsp;&nbsp;'
                   + TV_esc(b.ticker_text);
-      w.style.display = 'block';
-      sizeTicker();
+      /* حرکت را از نو راه می‌اندازد — نمایش دادنِ تنها کافی نیست،
+         نوارِ ساکن همان چیزی است که تا حالا دیده می‌شد. */
+      startTicker();
     }
   }
 
@@ -352,13 +384,6 @@ function startWeather(w) {
   function show() { box.style.opacity = 1; setTimeout(hide, showMs); }
 
   show();
-}
-
-function sizeTicker() {
-  var t = document.getElementById('tick');
-  if (!t) return;
-  var vw = document.getElementById('c').offsetWidth || 1280;
-  t.style.paddingRight = vw + 'px';
 }
 
 function makeSlide() {
@@ -577,7 +602,14 @@ function heartbeat() {
       logo:    (function(){ var e = document.getElementById('brand-img');
                   return e ? (e.src ? 'دارد' : 'خالی') : 'نیست'; })(),
       clock:   (function(){ var e = document.getElementById('clock');
-                  return e ? (e.style.display || 'css') : 'نیست'; })(),
+                  return e ? ((e.style.display || 'css') + '/' + (e.textContent || '-')) : 'نیست'; })(),
+      /* نوار ساکن و نوار متحرک از بیرون یک‌شکل‌اند؛ left تنها چیزی است
+         که فرقشان را نشان می‌دهد. */
+      tick:    (function(){ var e = document.getElementById('tick');
+                  var w = document.getElementById('ticker');
+                  if (!e || !w) return 'نیست';
+                  return (w.style.display || 'css') + '/left=' + (e.style.left || '-') +
+                         '/' + (_tickTimer ? 'متحرک' : 'ساکن'); })(),
       items:   pl.length,
       types:   (function(){ var a = [], i;
                   for (i = 0; i < pl.length; i++) a.push(pl[i].type || '?');
@@ -678,7 +710,7 @@ syncTime();
 loadPlaylist();
 heartbeat();
 <?php else: ?>
-<?php if ($clk): ?>syncTime();<?php endif; ?>
+syncTime();
 <?php endif; ?>
 </script>
 <!-- صفحه‌کلید عددی فعال‌سازی با ریموت (همه‌ی مدل‌ها) -->
