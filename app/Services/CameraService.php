@@ -32,13 +32,10 @@ class CameraService
     {
         $this->db = $db ?? Database::getInstance();
 
-        foreach (['/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg'] as $p) {
-            if (is_executable($p)) { $this->ffmpeg = $p; break; }
-        }
-        if ($this->ffmpeg === '') {
-            $found = shell_exec('which ffmpeg 2>/dev/null');
-            $this->ffmpeg = trim((string)$found);
-        }
+        /* is_executable اینجا کار نمی‌کند: pool مقدار open_basedir دارد و
+           هر بررسی فایل‌سیستمی بیرون از آن از سمت وب false می‌دهد، هرچند
+           باینری با shell اجرا می‌شود. تشخیص مشترک در MediaConvertService. */
+        $this->ffmpeg = MediaConvertService::locate('ffmpeg');
         if (!is_dir($this->hlsDir)) @mkdir($this->hlsDir, 0777, true);
     }
 

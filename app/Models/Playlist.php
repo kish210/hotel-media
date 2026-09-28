@@ -76,7 +76,7 @@ class Playlist
     public function getItems(int $playlistId): array
     {
         return $this->db->rows(
-            "SELECT pi.*, m.name AS media_name, m.type AS media_type, m.file_path, m.url, m.thumbnail_path, m.mime_type, m.duration AS media_duration
+            "SELECT pi.*, m.name AS media_name, m.type AS media_type, m.file_path, m.url, m.thumbnail_path, m.mime_type, m.duration AS media_duration, m.status AS media_status
              FROM playlist_items pi
              LEFT JOIN media m ON m.id=pi.media_id
              WHERE pi.playlist_id=? AND pi.is_active=1
@@ -110,6 +110,17 @@ class Playlist
     {
         $playlist = $this->find($playlistId);
         if (!$playlist) return [];
+
+        /* رسانه‌ای که هنوز در حال تبدیل است (یا تبدیلش شکست خورده) به
+           تلویزیون فرستاده نمی‌شود — وگرنه تابلو روی یک فایل ناقص یا
+           قالبی که پخش نمی‌شود سیاه می‌ماند. آیتم‌های بدون رسانه
+           (ماژول، آدرس، استریم) دست‌نخورده می‌مانند. */
+        $playlist['items'] = array_values(array_filter(
+            $playlist['items'] ?? [],
+            static fn($it) => empty($it['media_id'])
+                           || !isset($it['media_status'])
+                           || $it['media_status'] === 'ready'
+        ));
 
         // از IP/host واقعی سرور استفاده کن (نه APP_URL که localhost هست)
         $scheme  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';

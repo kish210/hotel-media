@@ -45,10 +45,14 @@ class MediaController extends Controller
         }
 
         try {
-            $allowed = ['image/jpeg','image/png','image/gif','image/webp','video/mp4','video/webm','video/ogg'];
+            $conv    = new \App\Services\MediaConvertService($this->db);
+            $allowed = array_merge(
+                \App\Services\MediaConvertService::ACCEPTED_IMAGE_MIME,
+                \App\Services\MediaConvertService::ACCEPTED_VIDEO_MIME
+            );
             $mime    = mime_content_type($file['tmp_name']);
 
-            if (!in_array($mime, $allowed)) {
+            if (!in_array($mime, $allowed, true)) {
                 \App\Core\Response::error("فرمت «$mime» مجاز نیست", 415);
                 return;
             }
@@ -92,27 +96,74 @@ class MediaController extends Controller
                 }
             }
 
+            /* ── تصمیم تبدیل ────────────────────────────────────────
+               بر اساس کدک، نه پسوند: یک .mp4 با H.265 هم روی تلویزیون
+               هتلی سیاه می‌ماند. اگر تبدیل لازم بود، رکورد از همین حالا
+               به مسیر خروجی .mp4 اشاره می‌کند و processing می‌ماند تا
+               ffmpeg در پس‌زمینه تمام کند. */
+            $needsConvert = false;
+            $convFailMsg  = null;
+
+            if ($type === 'video' && !$conv->isTvReady($destPath, $mime)) {
+                if ($conv->available()) {
+                    $needsConvert = true;
+                    $convName = pathinfo($filename, PATHINFO_FILENAME) . '.mp4';
+                    $convDest = $fullDir . '/' . $convName;
+                    $convUrl  = '/' . $subDir . '/' . $convName;
+                } else {
+                    // بدون ffmpeg نمی‌توان تبدیل کرد — صادقانه رد می‌کنیم
+                    @unlink($destPath);
+                    \App\Core\Response::error(
+                        'این ویدیو برای تلویزیون مناسب نیست و ffmpeg روی سرور نصب نیست تا تبدیل شود', 415
+                    );
+                    return;
+                }
+            }
+
             $mediaId = $this->db->insert('media', [
                 'tenant_id'      => $tid,
                 'uploaded_by'    => Auth::id() ?? 1,
                 'name'           => pathinfo($file['name'], PATHINFO_FILENAME),
                 'original_name'  => $file['name'],
-                'file_path'      => $urlPath,
-                'thumbnail_path' => $thumbPath ?? $urlPath,
-                'mime_type'      => $mime,
+                'file_path'      => $needsConvert ? $convUrl : $urlPath,
+                'thumbnail_path' => $thumbPath ?? ($needsConvert ? $convUrl : $urlPath),
+                'mime_type'      => $needsConvert ? 'video/mp4' : $mime,
                 'file_size'      => filesize($destPath),
+                'status'         => $needsConvert ? 'processing' : 'ready',
+                'meta'           => $needsConvert
+                                      ? json_encode(['original_file' => $urlPath, 'original_mime' => $mime],
+                                                    JSON_UNESCAPED_UNICODE)
+                                      : null,
                 'type'           => $type,
             ]);
+
+            if ($needsConvert) {
+                $r = $conv->startConversion((int)$mediaId, $destPath, $convDest);
+                if (!$r['ok']) {
+                    $this->db->update('media',
+                        ['status' => 'failed', 'conv_note' => $r['message']],
+                        ['id' => (int)$mediaId]);
+                    $convFailMsg = $r['message'];
+                }
+            }
+
+            $finalUrl = $needsConvert ? $convUrl : $urlPath;
 
             \App\Core\Response::success([
                 'id'             => $mediaId,
                 'name'           => pathinfo($file['name'], PATHINFO_FILENAME),
-                'file_path'      => $urlPath,
-                'thumbnail_path' => $thumbPath ?? $urlPath,
+                'file_path'      => $finalUrl,
+                'thumbnail_path' => $thumbPath ?? $finalUrl,
                 'type'           => $type,
                 'file_size'      => filesize($destPath),
-                'url'            => env('APP_URL') . $urlPath,
-            ], 'فایل آپلود شد', 201);
+                'status'         => $convFailMsg ? 'failed' : ($needsConvert ? 'processing' : 'ready'),
+                'url'            => env('APP_URL') . $finalUrl,
+            ], $convFailMsg
+                 ? ('آپلود شد ولی تبدیل شروع نشد: ' . $convFailMsg)
+                 : ($needsConvert
+                      ? 'آپلود شد — در حال تبدیل برای تلویزیون، تا پایان در پلی‌لیست پخش نمی‌شود'
+                      : 'فایل آپلود شد'),
+               201);
 
         } catch (\Throwable $e) {
             error_log('[UPLOAD ERROR] ' . $e->getMessage());

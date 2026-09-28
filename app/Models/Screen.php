@@ -239,19 +239,61 @@ class Screen
         }
     }
 
-    public function getCurrentPlaylist(int $screenId): ?array
-    {
-        $now  = date('Y-m-d H:i:s');
-        $day  = (int)date('w');
-        return $this->db->row(
-            "SELECT p.*,
+    /** ستون‌های مشترک هر سه حالت انتخاب پلی‌لیست */
+    private const PL_COLS = "p.*,
              COALESCE(p.transition, 'fade') AS transition,
              COALESCE(p.transition_duration, 0.5) AS transition_duration,
              COALESCE(p.shuffle, 0) AS shuffle,
-             COALESCE(p.`loop`, 1) AS playlist_loop
+             COALESCE(p.`loop`, 1) AS playlist_loop";
+
+    /**
+     * پلی‌لیستی که همین حالا باید روی این صفحه پخش شود.
+     *
+     * ترتیب اولویت — و دلیلش:
+     *   ۱. برنامه‌ی زمان‌بندی‌شده‌ی مخصوص همین صفحه. مشخص‌ترین حالت و
+     *      زمان‌آگاه است، پس بر همه مقدم است.
+     *   ۲. پلی‌لیستی که مستقیم روی خود صفحه انتخاب شده
+     *      (`current_playlist_id`). تا پیش از این، این ستون خوانده
+     *      **نمی‌شد**: اپراتور پلی‌لیست را روی صفحه ست می‌کرد و هیچ اتفاقی
+     *      نمی‌افتاد، چون فقط جدول schedules ملاک بود.
+     *   ۳. برنامه‌ی همگانی (`screen_id IS NULL`). عمدا آخر است تا یک
+     *      برنامه‌ی «همه‌ی صفحات» انتخاب صریح اپراتور روی یک صفحه را
+     *      باطل نکند.
+     */
+    public function getCurrentPlaylist(int $screenId): ?array
+    {
+        $row = $this->scheduledPlaylist($screenId, false);
+        if ($row) return $row;
+
+        $pinned = $this->db->row(
+            "SELECT " . self::PL_COLS . "
+               FROM screens s
+               JOIN playlists p ON p.id = s.current_playlist_id
+              WHERE s.id = ? AND p.is_active = 1",
+            [$screenId]
+        );
+        if ($pinned) return $pinned;
+
+        return $this->scheduledPlaylist($screenId, true);
+    }
+
+    /**
+     * @param bool $global true = برنامه‌های همه‌ی صفحات، false = مخصوص همین صفحه
+     */
+    private function scheduledPlaylist(int $screenId, bool $global): ?array
+    {
+        $now = date('Y-m-d H:i:s');
+        $day = (int)date('w');
+
+        $match  = $global ? "s.screen_id IS NULL" : "s.screen_id = ?";
+        $params = $global ? [] : [$screenId];
+        array_push($params, date('Y-m-d'), date('Y-m-d'), $now, $now, json_encode($day));
+
+        return $this->db->row(
+            "SELECT " . self::PL_COLS . "
              FROM schedules s
              JOIN playlists p ON p.id=s.playlist_id
-             WHERE (s.screen_id=? OR s.screen_id IS NULL)
+             WHERE $match
              AND (s.start_date IS NULL OR s.start_date <= ?)
              AND (s.end_date IS NULL OR s.end_date >= ?)
              AND (s.start_time IS NULL OR s.start_time <= TIME(?))
@@ -259,7 +301,7 @@ class Screen
              AND s.is_active=1 AND p.is_active=1
              AND (s.weekdays IS NULL OR JSON_CONTAINS(s.weekdays, ?))
              ORDER BY s.priority DESC LIMIT 1",
-            [$screenId, date('Y-m-d'), date('Y-m-d'), $now, $now, json_encode($day)]
+            $params
         );
     }
 

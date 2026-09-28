@@ -129,6 +129,30 @@ include VIEWS_PATH . '/partials/layout.php';
           <label class="form-label">برچسب‌ها</label>
           <input type="text" name="tags" class="form-input" value="<?= e($screen['tags'] ?? '') ?>" placeholder="tv-lobby, floor-1, ...">
         </div>
+
+        <?php /* انتخاب پلی‌لیست — تا پیش از این اصلا در این صفحه نبود و
+                 راهی برای وصل‌کردن پلی‌لیست به یک صفحه وجود نداشت.
+                 فقط پلی‌لیست‌های همین دنیا (+ «هر دو») فهرست می‌شوند. */ ?>
+        <div style="grid-column:1/-1;">
+          <label class="form-label">
+            پلی‌لیستی که روی این صفحه پخش شود
+          </label>
+          <select name="current_playlist_id" class="form-input">
+            <option value="">— هیچ‌کدام —</option>
+            <?php foreach ($playlists ?? [] as $pl):
+              $plw = $pl['screen_type'] ?? 'any';
+              $tag = $plw === 'any' ? ' (هر دو)' : ''; ?>
+              <option value="<?= (int)$pl['id'] ?>"
+                <?= ((int)($screen['current_playlist_id'] ?? 0) === (int)$pl['id']) ? 'selected' : '' ?>>
+                <?= e((string)$pl['name']) . $tag ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+          <p style="font-size:11px;color:#64748b;margin-top:5px;line-height:1.8;">
+            یک <b>برنامه‌ی زمان‌بندی‌شده‌ی مخصوص همین صفحه</b> بر این انتخاب مقدم است.
+            در عوض این انتخاب بر برنامه‌های «همه‌ی صفحات» مقدم می‌شود.
+          </p>
+        </div>
       </div>
 
       <!-- ── بخش IPTV: منو (فقط وقتی نوع صفحه = IPTV) ─────────── -->

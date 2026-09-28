@@ -86,6 +86,19 @@ match ($command) {
         $svc->run();
     })(),
 
+    /* بعد از پایان ffmpeg صدا زده می‌شود تا رکورد رسانه بسته شود.
+       آرگومان‌ها: شناسه‌ی رسانه و کد خروج ffmpeg.
+       عمدا یک دستور CLI است نه worker، چون تبدیل با nohup جدا می‌شود
+       و به این ترتیب نه cron لازم است نه سرویس دائمی. */
+    'media:converted' => (function() use ($argv) {
+        $id   = (int)($argv[2] ?? 0);
+        $code = (int)($argv[3] ?? 1);
+        if ($id <= 0) { echo "media:converted <mediaId> <exitCode>\n"; return; }
+
+        (new \App\Services\MediaConvertService())->finalize($id, $code);
+        echo "media #$id finalized (ffmpeg exit $code)\n";
+    })(),
+
     'db:migrate' => (function() {
         $db = \App\Core\Database::getInstance();
 
@@ -447,6 +460,7 @@ match ($command) {
             'user:create'     => 'Create a new user [name email password role]',
             'key:generate'    => 'Generate APP_KEY for .env',
             'monitor:screens' => 'Check screen online status & send alerts',
+            'media:converted' => 'Close out a background video conversion [mediaId exitCode]',
             'ws:start'        => 'Start WebSocket server',
             'storage:clean'   => 'Remove soft-deleted media files',
             'cache:clear'     => 'Clear application cache',

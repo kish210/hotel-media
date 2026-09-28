@@ -108,6 +108,21 @@
       <p style="font-size:12px;font-weight:600;color:#e2e8f0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-bottom:3px;">
         <?= e($m['name']) ?>
       </p>
+
+      <?php /* وضعیت تبدیل — تا ready نشود در پلی‌لیست پخش نمی‌شود */
+      $st = $m['status'] ?? 'ready';
+      if ($st === 'processing'): ?>
+        <div style="font-size:10px;color:#fbbf24;background:rgba(245,158,11,.12);border-radius:5px;padding:2px 6px;margin-bottom:4px;">
+          <i class="fas fa-spinner fa-spin" style="font-size:9px;"></i>
+          در حال تبدیل برای تلویزیون — هنوز پخش نمی‌شود
+        </div>
+      <?php elseif ($st === 'failed'): ?>
+        <div title="<?= e((string)($m['conv_note'] ?? '')) ?>"
+             style="font-size:10px;color:#f87171;background:rgba(239,68,68,.12);border-radius:5px;padding:2px 6px;margin-bottom:4px;">
+          <i class="fas fa-triangle-exclamation" style="font-size:9px;"></i>
+          تبدیل ناموفق — روی نشانگر بایستید تا دلیلش را ببینید
+        </div>
+      <?php endif; ?>
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:10px;color:#475569;font-family:monospace;background:rgba(255,255,255,0.05);padding:1px 5px;border-radius:4px;">
           <?= strtoupper($m['type']) ?>
