@@ -30,3 +30,7 @@ installer/hotelmedia/Output/
 # Generated at build time (compiled tray + icon)
 installer/hotelmedia/tray/HotelMediaTray.exe
 installer/hotelmedia/**/hotelmedia.ico
+
+# تنظیمات محلی Claude Code — مخصوص همین دستگاه است و در آن
+# رشته‌های مجوز ذخیره می‌شود که ممکن است توکن داشته باشند.
+.claude/settings.local.json
