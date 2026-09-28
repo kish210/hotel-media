@@ -142,7 +142,19 @@ var RULES = [
      قدیمی که این پروفایل‌ها برایشان نوشته شده‌اند می‌خوابد. */
   { id: 'js-playpromise', min: 50, re: /\.play\s*\(\s*\)\s*\.\s*(then|catch)/g,
     what: 'play().then / play().catch',
-    fix:  'var pr = el.play(); if (pr && pr.catch) pr.catch(function(){});' }
+    fix:  'var pr = el.play(); if (pr && pr.catch) pr.catch(function(){});' },
+
+  /* واحد viewport روی ماپل/اورسی (نسل ۲۰۱۳ سامسونگ) تضمین‌شده نیست.
+     اگر پشتیبانی نشود خطایی رخ نمی‌دهد — متن فقط به اندازه‌ی پیش‌فرض
+     مرورگر می‌افتد و جدول روی تلویزیون ریز و ناخوانا می‌شود، که از
+     پشت پنل دیده نمی‌شود. `only` یعنی این قانون فقط برای پروفایل‌های
+     همان نسل است؛ بقیه‌ی تلویزیون‌ها vw را دارند. */
+  { id: 'css-viewport-unit', min: 999,
+    only: ['resources/views/player/profiles/orsay_tv.php',
+           'resources/views/player/profiles/legacy.php'],
+    re: /:\s*[^;{}]*?\d+(\.\d+)?v(w|h|min|max)\b/g,
+    what: 'واحد vw/vh',
+    fix:  'اندازه را در JS از offsetWidth صحنه حساب کنید (مثل sizeBoard)' }
 ];
 
 /* سقف مجاز. عدد کوچک‌تر یعنی سخت‌گیرانه‌تر.
@@ -189,6 +201,8 @@ TV_FILES.forEach(function (rel) {
 
   RULES.forEach(function (rule) {
     if (rule.min <= TARGET) return;   // روی این هدف مجاز است
+    // قانون‌های مخصوص یک نسل خاص، فقط روی همان فایل‌ها
+    if (rule.only && rule.only.indexOf(rel) === -1) return;
     rule.re.lastIndex = 0;
     var m;
     while ((m = rule.re.exec(clean)) !== null) {

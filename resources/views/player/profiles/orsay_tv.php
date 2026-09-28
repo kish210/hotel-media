@@ -50,7 +50,45 @@ body,html{width:100%;height:100%;overflow:hidden;background:#000;}
 #tick{position:absolute;top:0;height:40px;white-space:nowrap;font:600 19px/40px Arial,sans-serif;color:#fff;}
 #logo{position:absolute;<?= $posMap[$logoPos]??$posMap['bottom-right'] ?>;opacity:.85;<?= $logoUrl?'':'display:none;'?>}
 #logo img{width:120px;}
-#clock{position:absolute;top:14px;right:14px;padding:7px 16px;background:rgba(0,0,0,.55);border-radius:8px;font:700 28px/1 monospace;color:#fff;<?= $clk?'':'display:none;'?>}
+<?php /* لوگوی پلی‌لیست همیشه بالا-راست می‌نشیند و پس‌زمینه ندارد؛
+        روی تصویر روشن هم باید خوانا بماند، پس یک سایه‌ی نرم دارد.
+        z-index بالاتر از اسلایدهاست تا با عوض شدن تصویر نپرد. */ ?>
+#brand{position:absolute;top:14px;right:14px;z-index:60;display:none;}
+#brand img{width:110px;display:block;
+           -webkit-filter:drop-shadow(0 2px 6px rgba(0,0,0,.55));}
+<?php /* دمای هوا: بالا-چپ، شفاف. عمدا بدون کادر توپر — روی تیزر
+        تبلیغاتی یک مستطیل مشکی مثل خرابی دیده می‌شود. */ ?>
+#wx{position:absolute;top:14px;left:14px;z-index:60;display:none;
+    color:#fff;font-family:Tahoma,Arial,sans-serif;
+    text-shadow:0 2px 6px rgba(0,0,0,.8),0 0 2px rgba(0,0,0,.9);
+    -webkit-transition:opacity .6s;transition:opacity .6s;opacity:0;}
+#wx-t{font-size:34px;font-weight:700;line-height:1;}
+#wx-s{font-size:15px;margin-top:4px;opacity:.9;}
+<?php /* ساعت از بالا-راست به پایین-راست رفت: جای بالا-راست حالا لوگوی
+        همیشگی است و دو عنصر روی هم می‌افتادند. بالای نوار تیکر
+        می‌نشیند تا وقتی تیکر روشن است پشتش پنهان نشود. */ ?>
+#clock{position:absolute;bottom:54px;right:14px;padding:7px 16px;background:rgba(0,0,0,.55);border-radius:8px;font:700 28px/1 monospace;color:#fff;<?= $clk?'':'display:none;'?>}
+<?php /* تابلوی پرواز — با table نه flex: روی WebKit ماپل flex نسخه‌ی
+        قدیمی است و ستون‌ها جابه‌جا می‌شوند. واحدها درصدی‌اند تا روی
+        ۱۲۸۰ و ۱۹۲۰ هر دو درست بنشیند. */ ?>
+<?php /* اندازه‌ها em هستند و font-size پایه را JS از عرض واقعی صحنه ست
+        می‌کند. عمدا vw استفاده نشده: واحد viewport روی این نسل ماپل
+        تضمین‌شده نیست و اگر پشتیبانی نشود، متن به اندازه‌ی پیش‌فرض
+        مرورگر می‌افتد و جدول روی تلویزیون ریز و ناخوانا می‌شود. */ ?>
+.fb{width:100%;height:100%;background:#071018;padding:3% 4%;color:#e2e8f0;
+    font-family:Tahoma,Arial,sans-serif;font-size:20px;}
+.fb-h{font-size:1.7em;font-weight:700;color:#fff;margin-bottom:2%;
+      border-bottom:2px solid rgba(255,255,255,.18);padding-bottom:1.2%;}
+.fb-tb{width:100%;border-collapse:collapse;font-size:1.05em;}
+.fb-tb td{padding:1.1% 0.6%;border-bottom:1px solid rgba(255,255,255,.08);
+          white-space:nowrap;overflow:hidden;}
+.fb-t{font-weight:700;color:#fff;width:16%;}
+.fb-new{color:#f59e0b;margin-right:8px;font-size:.8em;}
+.fb-n{width:14%;color:#93c5fd;}
+.fb-a{width:28%;}
+.fb-lg{width:1em;height:1em;vertical-align:middle;margin-left:8px;}
+.fb-c{width:18%;color:#fff;}
+.fb-s{width:24%;text-align:left;}
 #act{position:absolute;top:0;left:0;width:100%;height:100%;background:#09090f;text-align:center;}
 #act-box{position:absolute;top:50%;left:50%;margin:-160px 0 0 -190px;width:380px;background:#111;border-radius:16px;padding:40px;}
 #act-inp{font:700 28px/1 monospace;letter-spacing:12px;padding:14px;width:100%;background:#0d0d14;border:2px solid rgba(26,122,196,.4);border-radius:12px;color:#fff;text-align:center;text-transform:uppercase;}
@@ -74,6 +112,11 @@ body,html{width:100%;height:100%;overflow:hidden;background:#000;}
   </div>
   <?php else: ?>
   <div id="logo"><?= $logoUrl ? '<img src="'.e($logoUrl).'" alt="" onerror="this.parentNode.style.display=\'none\'">' : '' ?></div>
+  <?php /* لوگوی پلی‌لیست — منبعش از /playlist می‌آید، پس اینجا خالی
+           ساخته می‌شود و JS پرش می‌کند. onerror مخفی‌اش می‌کند تا یک
+           آدرس خراب، آیکن شکسته‌ی گوشه‌ی تابلو نشود. */ ?>
+  <div id="brand"><img id="brand-img" src="" alt=""></div>
+  <div id="wx"><div id="wx-t">--°</div><div id="wx-s"></div></div>
   <div id="clock">--:--</div>
   <div id="ticker"><div id="tick"><?= e($ticker).'&nbsp;&nbsp;&nbsp;&nbsp;'.e($ticker) ?></div></div>
   <?php endif; ?>
@@ -161,12 +204,86 @@ function loadPlaylist() {
     try {
       var d = JSON.parse(x.responseText);
       if (d.success && d.data && d.data.items && d.data.items.length) {
-        pl = d.data.items; ci = 0; play(0);
+        pl = d.data.items; ci = 0;
+        applyBrand(d.data.brand);
+        play(0);
       } else { setTimeout(loadPlaylist, 30000); }
     } catch(e) { setTimeout(loadPlaylist, 15000); }
   };
   x.ontimeout = x.onerror = function() { setTimeout(loadPlaylist, 15000); };
   x.send();
+}
+
+/* ── برند تابلو: لوگو، زیرنویس، دما ─────────────────────────────
+   هر سه از پلی‌لیست می‌آیند نه از تنظیمات صفحه، چون هتل بیش از یک
+   تابلو دارد و متن یا لوگوی هرکدام می‌تواند فرق کند. اگر پلی‌لیست
+   چیزی نداده باشد، همان مقدارِ تنظیماتِ صفحه که PHP رندر کرده سر
+   جایش می‌ماند. */
+function applyBrand(b) {
+  if (!b) return;
+
+  if (b.logo) {
+    var bi = document.getElementById('brand-img');
+    var bx = document.getElementById('brand');
+    if (bi && bx) {
+      bi.onerror = function() { bx.style.display = 'none'; };
+      bi.onload  = function() { bx.style.display = 'block'; };
+      bi.src = b.logo;
+    }
+  }
+
+  if (b.ticker_text) {
+    var t = document.getElementById('tick');
+    var w = document.getElementById('ticker');
+    if (t && w) {
+      /* دو نسخه پشت سر هم تا حلقه‌ی متن شکاف نداشته باشد — همان
+         کاری که رندر PHP هم می‌کند. */
+      t.innerHTML = TV_esc(b.ticker_text) + '&nbsp;&nbsp;&nbsp;&nbsp;'
+                  + TV_esc(b.ticker_text);
+      w.style.display = 'block';
+      sizeTicker();
+    }
+  }
+
+  if (b.weather && b.weather.enabled && b.weather.data) startWeather(b.weather);
+}
+
+/* ES5 و بدون وابستگی: سه کاراکتر خطرناک HTML کافی است چون متن فقط
+   داخل یک div متنی می‌نشیند. */
+function TV_esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* دما هر «every» ثانیه ظاهر و «show» ثانیه دیده می‌شود.
+   محوشدن با opacity است نه display، تا روی تیزر ناگهانی نپرد. */
+function startWeather(w) {
+  var box = document.getElementById('wx');
+  if (!box) return;
+
+  var d = w.data;
+  document.getElementById('wx-t').innerHTML = Math.round(d.temp) + '°';
+  document.getElementById('wx-s').innerHTML =
+    TV_esc((d.label ? d.label + ' · ' : '') + (d.city || ''));
+
+  box.style.display = 'block';
+
+  var showMs  = Math.max(10, w.show  || 60)  * 1000;
+  var everyMs = Math.max(30, w.every || 240) * 1000;
+  /* «هر ۴ دقیقه، ۱ دقیقه» یعنی فاصله‌ی بین دو ظهور ۴ دقیقه است،
+     پس خوابِ بین آن‌ها everyMs منهای مدت نمایش است. */
+  var gapMs   = Math.max(5000, everyMs - showMs);
+
+  function hide() { box.style.opacity = 0; setTimeout(show, gapMs); }
+  function show() { box.style.opacity = 1; setTimeout(hide, showMs); }
+
+  show();
+}
+
+function sizeTicker() {
+  var t = document.getElementById('tick');
+  if (!t) return;
+  var vw = document.getElementById('c').offsetWidth || 1280;
+  t.style.paddingRight = vw + 'px';
 }
 
 function makeSlide() {
@@ -247,6 +364,15 @@ function play(i) {
 
     if (dur > 0 && dur < 7200000) tm = setTimeout(nextItem, dur);
 
+  // ─ محتوای پویا (تابلوی پرواز و مانند آن) ─
+  } else if (type === 'dynamic' && item.content) {
+    var html = renderDynamic(item.content);
+    if (!html) { setTimeout(nextItem, 300); return; }
+    div.innerHTML = html;
+    sizeBoard(div);
+    swapSlide(div);
+    tm = setTimeout(nextItem, dur);
+
   // ─ IFRAME (صفحه وب) ─ best-effort روی Maple
   } else {
     var ifr = document.createElement('iframe');
@@ -258,6 +384,74 @@ function play(i) {
 }
 
 function nextItem() { ci = (ci+1) % pl.length; play(ci); }
+
+/* ── محتوای پویا ────────────────────────────────────────────────
+   فعلا فقط تابلوی پرواز. بقیه‌ی انواع (تابلوی رویداد، منو، اخبار)
+   روی این نسل تلویزیون هنوز رندر ندارند و رد می‌شوند تا پخش روی یک
+   صفحه‌ی خالی گیر نکند. */
+/* font-size پایه‌ی تابلو از عرض واقعی صحنه — همان کاری که برای ویدیو
+   هم می‌کنیم، و به همان دلیل: این تلویزیون‌ها ۱۲۸۰ گزارش می‌کنند نه
+   ۱۹۲۰، و عدد ثابت روی یکی‌شان غلط است. */
+function sizeBoard(div) {
+  var c = document.getElementById('c');
+  var w = (c && c.offsetWidth) || screen.width || 1280;
+  var box = div.getElementsByTagName('div')[0];
+  if (box) box.style.fontSize = Math.max(14, Math.round(w / 45)) + 'px';
+}
+
+function renderDynamic(c) {
+  if (c.kind === 'flight_board') return renderFlights(c);
+  return '';
+}
+
+/* جدول با table چیده می‌شود نه flex: روی WebKit ماپل flex-box نسخه‌ی
+   قدیمی و ناپایدار است و ستون‌ها جابه‌جا می‌شوند. */
+function renderFlights(c) {
+  var list = c.flights || [], i, f, rows = '', color;
+  if (!list.length) return '';
+
+  for (i = 0; i < list.length; i++) {
+    f = list[i];
+
+    if (f.status === 'cancelled')                       color = '#ef4444';
+    else if (f.status === 'delayed' || f.delay_minutes) color = '#f59e0b';
+    else if (f.status === 'boarding')                   color = '#22c55e';
+    else if (f.status === 'departed' || f.status === 'arrived') color = '#94a3b8';
+    else                                                color = '#e2e8f0';
+
+    rows +=
+      '<tr>' +
+        '<td class="fb-t">' + TV_esc(hhmm(f.scheduled_at)) +
+          (f.delay_minutes
+            ? '<span class="fb-new">' + TV_esc(hhmm(f.estimated_at)) + '</span>' : '') +
+        '</td>' +
+        '<td class="fb-n">' + TV_esc(f.flight_number) + '</td>' +
+        '<td class="fb-a">' +
+          (f.airline_logo
+            ? '<img src="' + TV_esc(f.airline_logo) + '" class="fb-lg" onerror="this.style.display=\'none\'">'
+            : '') +
+          TV_esc(f.airline) +
+        '</td>' +
+        '<td class="fb-c">' + TV_esc(f.city) + '</td>' +
+        '<td class="fb-s" style="color:' + color + '">' +
+          TV_esc(f.status_text || f.status_label) +
+        '</td>' +
+      '</tr>';
+  }
+
+  return '<div class="fb">' +
+           '<div class="fb-h">' + TV_esc(c.title) + '</div>' +
+           '<table class="fb-tb">' + rows + '</table>' +
+         '</div>';
+}
+
+/* «2026-09-28 18:15:00» → «18:15». عمدا با برش رشته نه Date: سازنده‌ی
+   Date روی این موتور برای رشته‌ی با فاصله نتیجه‌ی NaN می‌دهد. */
+function hhmm(s) {
+  if (!s) return '';
+  var m = String(s).match(/(\d{2}):(\d{2})/);
+  return m ? m[1] + ':' + m[2] : '';
+}
 
 // ─── Heartbeat ────────────────────────────────────────────────
 function heartbeat() {

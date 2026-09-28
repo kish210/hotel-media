@@ -55,7 +55,10 @@ class Playlist
     }
 
     private const ALLOWED_COLS = ['name','description','layout_id','transition','transition_duration',
-        'default_duration','loop','shuffle','is_active','tags','screen_type'];
+        'default_duration','loop','shuffle','is_active','tags','screen_type',
+        /* برندینگ تابلو — لوگو و زیرنویس و دما روی خود پلی‌لیست‌اند تا
+           هتلی که چند تابلو دارد بتواند هرکدام را جدا تنظیم کند */
+        'logo_path','ticker_text','weather_enabled','weather_every','weather_show'];
 
     public function update(int $id, array $data): bool
     {
@@ -199,6 +202,39 @@ class Playlist
         }
 
         $playlist['items'] = array_values($resolved);
+
+        /* ── برندینگ و دما ─────────────────────────────────────────
+           لوگو، متن زیرنویس و دمای هوا به خود پلی‌لیست چسبیده‌اند، نه
+           به آیتم‌ها: روی تابلو همیشه دیده می‌شوند و نباید با عوض شدن
+           اسلاید ناپدید شوند.
+
+           لوگو اگر روی پلی‌لیست تعریف نشده باشد به لوگوی مستاجر
+           برمی‌گردد — هتلی که یک لوگو دارد نباید مجبور باشد آن را در
+           هر پلی‌لیست جدا آپلود کند. */
+        $tenantId = (int)($playlist['tenant_id'] ?? ($screen['tenant_id'] ?? 1));
+        $tenant   = $this->db->row('SELECT logo, settings FROM tenants WHERE id=?', [$tenantId]) ?: [];
+
+        $logo = (string)($playlist['logo_path'] ?? '');
+        if ($logo === '') $logo = (string)($tenant['logo'] ?? '');
+        if ($logo !== '' && !str_starts_with($logo, 'http')) {
+            $logo = $baseUrl . (str_starts_with($logo, '/') ? '' : '/') . $logo;
+        }
+
+        $tset    = json_decode((string)($tenant['settings'] ?? ''), true);
+        $weather = (is_array($tset) && isset($tset['weather'])) ? $tset['weather'] : null;
+
+        $playlist['brand'] = [
+            'logo'        => $logo !== '' ? $logo : null,
+            'ticker_text' => (string)($playlist['ticker_text'] ?? ''),
+            'weather'     => [
+                /* اگر همگام‌ساز هنوز اجرا نشده، دما null است و پلیر
+                   اصلا چیزی نشان نمی‌دهد — بهتر از کادر خالی. */
+                'enabled' => (int)($playlist['weather_enabled'] ?? 1) === 1 && $weather !== null,
+                'every'   => max(30, (int)($playlist['weather_every'] ?? 240)),
+                'show'    => max(10, (int)($playlist['weather_show']  ?? 60)),
+                'data'    => $weather,
+            ],
+        ];
 
         return $playlist;
     }

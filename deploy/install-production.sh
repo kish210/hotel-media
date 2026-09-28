@@ -468,6 +468,8 @@ PATH=/usr/local/bin:/usr/bin:/bin
 0 3 * * * www-data cd ${APP_DIR} && php artisan epg:sync >/dev/null 2>&1
 # دریافت خبر از منابع RSS
 0 * * * * www-data cd ${APP_DIR} && php artisan news:sync >/dev/null 2>&1
+# پروازهای فرودگاه کیش و دمای هوا — تابلو از دیتابیس می‌خواند نه اینترنت
+*/5 * * * * www-data cd ${APP_DIR} && php artisan flights:sync >/dev/null 2>&1
 # ارسال اقلام صورتحساب به PMS — اقلامی که PMS قطع بوده در صف مانده‌اند
 */5 * * * * www-data cd ${APP_DIR} && php artisan pms:push >/dev/null 2>&1
 # پاک‌سازی فایل‌های حذف‌شده، یکشنبه‌ها

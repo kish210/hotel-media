@@ -67,19 +67,65 @@ $playlist = $playlist ?? [];
             <?php endforeach; ?>
           </select>
         </div>
+        <?php /* هر چک‌باکس یک hidden با مقدار ۰ جلوتر از خودش دارد.
+                 بدون آن، چک‌باکسِ تیک‌نخورده اصلا POST نمی‌شود و چون
+                 به‌روزرسانی فقط کلیدهای موجود را می‌نویسد، خاموش‌کردن
+                 «پخش تصادفی» یا «فعال» هیچ‌وقت ذخیره نمی‌شد — فرم
+                 بی‌صدا تیک را برمی‌گرداند. */ ?>
         <div class="flex flex-col gap-2 pt-5">
           <label class="flex items-center gap-2 cursor-pointer">
+            <input type="hidden" name="shuffle" value="0">
             <input type="checkbox" name="shuffle" value="1" class="accent-orange-500 w-4 h-4"
               <?= !empty($playlist['shuffle']) ? 'checked' : '' ?>>
             <span class="text-sm text-slate-400">پخش تصادفی</span>
           </label>
           <label class="flex items-center gap-2 cursor-pointer">
+            <input type="hidden" name="is_active" value="0">
             <input type="checkbox" name="is_active" value="1" class="accent-orange-500 w-4 h-4"
               <?= ($playlist['is_active'] ?? 1) ? 'checked' : '' ?>>
             <span class="text-sm text-slate-400">فعال</span>
           </label>
         </div>
       </div>
+
+      <?php if ($isEdit): ?>
+      <?php /* زیرنویس و دما داخل همین فرم‌اند چون ستون پلی‌لیست‌اند و
+               با همان دکمه‌ی ذخیره می‌روند. لوگو فرم جداگانه دارد،
+               چون آپلود فایل به enctype دیگری نیاز دارد و اگر این فرم
+               multipart می‌شد، بقیه‌ی فیلدها هم از آن مسیر می‌رفتند. */ ?>
+      <div class="pt-5 mt-5 border-t border-white/5 space-y-4">
+        <div class="text-sm font-semibold text-slate-300">نمایش روی تابلو</div>
+
+        <div>
+          <label class="form-label">متن زیرنویس (نوار پایین صفحه)</label>
+          <input type="text" name="ticker_text" class="form-input"
+                 maxlength="500"
+                 value="<?= e($playlist['ticker_text'] ?? '') ?>">
+          <p class="text-xs text-slate-500 mt-1">
+            متن نمونه گذاشته شده — هر چیزی بنویسید همان روی تلویزیون می‌رود.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 items-end">
+          <label class="flex items-center gap-2 cursor-pointer col-span-3 sm:col-span-1">
+            <input type="hidden" name="weather_enabled" value="0">
+            <input type="checkbox" name="weather_enabled" value="1" class="accent-orange-500 w-4 h-4"
+              <?= ($playlist['weather_enabled'] ?? 1) ? 'checked' : '' ?>>
+            <span class="text-sm text-slate-400">نمایش دمای هوا</span>
+          </label>
+          <div>
+            <label class="form-label">هر چند ثانیه یک‌بار</label>
+            <input type="number" name="weather_every" class="form-input" min="30" max="3600"
+                   value="<?= (int)($playlist['weather_every'] ?? 240) ?>">
+          </div>
+          <div>
+            <label class="form-label">چند ثانیه بماند</label>
+            <input type="number" name="weather_show" class="form-input" min="10" max="600"
+                   value="<?= (int)($playlist['weather_show'] ?? 60) ?>">
+          </div>
+        </div>
+      </div>
+      <?php endif; ?>
 
       <div class="flex gap-3 pt-4 border-t border-white/5">
         <button type="submit" class="btn-primary flex-1 py-3">
@@ -88,6 +134,48 @@ $playlist = $playlist ?? [];
         <a href="/admin/playlists" class="btn-ghost px-6">لغو</a>
       </div>
     </form>
+
+    <?php if ($isEdit): ?>
+    <div class="mt-6 pt-6 border-t border-white/5">
+      <div class="text-sm font-semibold text-slate-300 mb-1">لوگوی گوشه‌ی تابلو</div>
+      <p class="text-xs text-slate-500 mb-4">
+        همیشه بالا-راست صفحه دیده می‌شود، روی تبلیغات هم. اگر چیزی
+        نگذارید، لوگوی هتل استفاده می‌شود.
+      </p>
+
+      <div class="flex items-center gap-4 flex-wrap">
+        <?php if (!empty($playlist['logo_path'])): ?>
+          <?php /* پس‌زمینه‌ی روشن عمدی: لوگوهای سفید روی کارت تیره
+                   نامرئی می‌شوند و اپراتور فکر می‌کند آپلود نشده. */ ?>
+          <div class="p-3 rounded-xl bg-slate-200 border border-white/10">
+            <img src="<?= e($playlist['logo_path']) ?>" alt="لوگوی فعلی"
+                 class="h-12 w-auto block">
+          </div>
+        <?php else: ?>
+          <div class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-500">
+            لوگویی انتخاب نشده
+          </div>
+        <?php endif; ?>
+
+        <form method="POST" action="/admin/playlists/<?= (int)$playlist['id'] ?>/logo"
+              enctype="multipart/form-data" class="flex items-center gap-2 flex-wrap">
+          <input type="file" name="logo" accept="image/png,image/jpeg,image/webp"
+                 class="form-input text-xs py-2" required>
+          <button type="submit" class="btn-primary px-5 py-2 text-sm">جایگزینی</button>
+        </form>
+
+        <?php if (!empty($playlist['logo_path'])): ?>
+        <form method="POST" action="/admin/playlists/<?= (int)$playlist['id'] ?>/logo"
+              onsubmit="return confirm('لوگوی این پلی‌لیست حذف شود؟');">
+          <input type="hidden" name="remove" value="1">
+          <button type="submit" class="btn-ghost px-4 py-2 text-sm">حذف</button>
+        </form>
+        <?php endif; ?>
+      </div>
+
+      <p class="text-xs text-slate-500 mt-3">PNG، JPG یا WebP — حداکثر ۳ مگابایت.</p>
+    </div>
+    <?php endif; ?>
   </div>
 </div>
 

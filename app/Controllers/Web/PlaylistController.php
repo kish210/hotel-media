@@ -94,6 +94,82 @@ class PlaylistController extends Controller
         $this->redirect('/admin/playlists/' . $params['id'] . '/edit');
     }
 
+    /**
+     * جایگزینی لوگوی همیشگیِ گوشه‌ی تابلو.
+     *
+     * لوگو روی پلی‌لیست است نه روی صفحه: هتل ممکن است تابلوی لابی را با
+     * لوگوی هتل و تابلوی سالن را با لوگوی همایش بزند، و اگر عمومی بود
+     * تعویض یکی همه را عوض می‌کرد.
+     */
+    public function uploadLogo(Request $req, array $params): void
+    {
+        $id = (int)$params['id'];
+        $pl = $this->playlist->find($id);
+        if (!$pl) { $this->redirect('/admin/playlists'); return; }
+
+        $back = '/admin/playlists/' . $id . '/edit';
+        $file = $_FILES['logo'] ?? null;
+
+        /* حذف لوگو — کادر خالی یعنی برگرد به لوگوی هتل */
+        if ($req->post('remove') === '1') {
+            $this->deleteOldLogo((string)($pl['logo_path'] ?? ''));
+            $this->playlist->update($id, ['logo_path' => null]);
+            $this->flash('success', 'لوگو حذف شد — لوگوی هتل استفاده می‌شود');
+            $this->redirect($back);
+            return;
+        }
+
+        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            $this->flash('error', 'فایلی انتخاب نشده یا آپلود ناقص ماند');
+            $this->redirect($back);
+            return;
+        }
+        if ($file['size'] > 3 * 1024 * 1024) {
+            $this->flash('error', 'حجم لوگو نباید بیشتر از ۳ مگابایت باشد');
+            $this->redirect($back);
+            return;
+        }
+
+        /* پسوند فایل قابل اعتماد نیست — نوع واقعی خوانده می‌شود.
+           SVG عمدا پذیرفته نمی‌شود: می‌تواند اسکریپت داشته باشد و روی
+           صفحه‌ی پنل اجرا شود. */
+        $mime    = (string)@mime_content_type($file['tmp_name']);
+        $extMap  = ['image/png' => 'png', 'image/jpeg' => 'jpg', 'image/webp' => 'webp'];
+        if (!isset($extMap[$mime])) {
+            $this->flash('error', 'فرمت نامعتبر — فقط PNG، JPG یا WebP');
+            $this->redirect($back);
+            return;
+        }
+
+        $dir = PUBLIC_PATH . '/uploads/branding/';
+        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+            $this->flash('error', 'پوشه‌ی آپلود ساخته نشد');
+            $this->redirect($back);
+            return;
+        }
+
+        $name = 'logo_pl' . $id . '_' . time() . '.' . $extMap[$mime];
+        if (!move_uploaded_file($file['tmp_name'], $dir . $name)) {
+            $this->flash('error', 'ذخیره‌ی لوگو روی سرور ناموفق بود');
+            $this->redirect($back);
+            return;
+        }
+
+        $this->deleteOldLogo((string)($pl['logo_path'] ?? ''));
+        $this->playlist->update($id, ['logo_path' => '/uploads/branding/' . $name]);
+        $this->log('playlist.logo', 'Playlist', $id);
+        $this->flash('success', 'لوگو جایگزین شد');
+        $this->redirect($back);
+    }
+
+    /** فایل قبلی را پاک می‌کند، ولی فقط اگر واقعا داخل پوشه‌ی برندینگ باشد */
+    private function deleteOldLogo(string $path): void
+    {
+        if ($path === '' || !str_starts_with($path, '/uploads/branding/')) return;
+        $abs = PUBLIC_PATH . $path;
+        if (is_file($abs)) @unlink($abs);
+    }
+
     public function destroy(Request $req, array $params): void
     {
         $this->playlist->delete((int)$params['id']);
