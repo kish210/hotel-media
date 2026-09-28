@@ -182,17 +182,15 @@ class PlaylistController extends Controller
                 if (@imagepng($img, $tmpPng)) {
                     imagedestroy($img);
                     $name = $field . '_pl' . $id . '_' . time() . '.png';
-                    if (!@rename($tmpPng, $dir . $name)) {
-                        @unlink($tmpPng);
-                        $this->flash('error', 'تبدیل ' . $label . ' ناموفق بود');
-                        $this->redirect($back);
+                    if (@rename($tmpPng, $dir . $name)) {
+                        @chmod($dir . $name, 0644);
+                        $this->finishImage($id, $pl, $column, $field, $label, $name, $back);
                         return;
                     }
-                    @chmod($dir . $name, 0644);
-                    $this->finishImage($id, $pl, $column, $field, $label, $name, $back);
-                    return;
+                    @unlink($tmpPng);
+                } else {
+                    imagedestroy($img);
                 }
-                imagedestroy($img);
             }
             /* اگر تبدیل نشد، فایل اصلی ذخیره می‌شود — روی تلویزیون‌های
                جدیدتر webp کار می‌کند و نباید آپلود را کلا رد کنیم. */

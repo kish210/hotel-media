@@ -228,6 +228,16 @@ $outNoScreen = $model->getForPlayer($plId, null);
 check('بدون صفحه، آیتم‌های پویا حذف می‌شوند نه کرش',
     count(array_filter($outNoScreen['items'] ?? [], fn($i) => ($i['item_type'] ?? '') !== 'media')) === 0);
 
+// زیرنویس چندخطی — هر خط یک پیام، خط خالی و CRLF ویندوز نباید شکاف بسازند
+$db->update('playlists', ['ticker_text' => "صبحانه ۷ تا ۱۰\r\n\r\n  شب موسیقی ساعت ۲۱  \nترانسفر فرودگاه\n"], ['id' => $plId]);
+$outTicker = $model->getForPlayer($plId, $screenRest);
+check('زیرنویس چندخطی با «•» به یک نوار وصل شد',
+    ($outTicker['brand']['ticker_text'] ?? '') === 'صبحانه ۷ تا ۱۰  •  شب موسیقی ساعت ۲۱  •  ترانسفر فرودگاه',
+    (string)($outTicker['brand']['ticker_text'] ?? '(نیست)'));
+$db->update('playlists', ['ticker_text' => "\n  \n"], ['id' => $plId]);
+check('زیرنویسِ فقط خط خالی، رشته‌ی خالی می‌دهد',
+    ($model->getForPlayer($plId, $screenRest)['brand']['ticker_text'] ?? null) === '');
+
 echo "\n" . str_repeat('─', 58) . "\n";
 echo $fail === 0 ? "✅ هر $pass تست پاس شد\n" : "❌ $fail شکست از " . ($pass + $fail) . " تست\n";
 
