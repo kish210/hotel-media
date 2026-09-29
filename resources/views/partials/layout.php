@@ -321,6 +321,32 @@ if (!function_exists('modOn')) {
     <?php endforeach; ?>
     <?php endif; ?>
 
+    <!-- ── شعبه (هتل زنجیره‌ای) ─────────────────────────── -->
+    <?php
+      $_branchLocked = \App\Core\Branch::locked();
+      $_branches = [];
+      try { $_branches = \App\Core\Database::getInstance()->rows('SELECT id, name FROM locations WHERE tenant_id=? AND is_active=1 ORDER BY name', [\App\Core\Auth::tenantId()]); } catch (\Throwable $e) {}
+      $_branchNow = \App\Core\Branch::current();
+    ?>
+    <?php if ($_branchLocked !== null): ?>
+      <?php foreach ($_branches as $_b) if ((int)$_b['id'] === $_branchLocked): ?>
+      <span title="حساب شما به این شعبه محدود است" style="font-size:12px;color:#fbbf24;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:8px;padding:5px 10px;">
+        <i class="fas fa-building ml-1"></i><?= e($_b['name']) ?>
+      </span>
+      <?php endif; ?>
+    <?php elseif (count($_branches) > 1): ?>
+    <form method="POST" action="/admin/branch" style="margin:0;">
+      <?= csrf_field() ?>
+      <select name="location_id" onchange="this.form.submit()" title="نمایش فقط یک شعبه"
+              style="font-size:12px;background:<?= $_branchNow ? 'rgba(251,191,36,.08)' : 'rgba(255,255,255,0.04)' ?>;color:<?= $_branchNow ? '#fbbf24' : '#cbd5e1' ?>;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:5px 8px;">
+        <option value="0">همه‌ی شعبه‌ها</option>
+        <?php foreach ($_branches as $_b): ?>
+        <option value="<?= (int)$_b['id'] ?>" <?= $_branchNow === (int)$_b['id'] ? 'selected' : '' ?>><?= e($_b['name']) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </form>
+    <?php endif; ?>
+
     <!-- ── Language switcher ─────────────────────────── -->
     <div style="position:relative;" id="lang-menu-wrap">
       <button onclick="document.getElementById('lang-dropdown').style.display = document.getElementById('lang-dropdown').style.display==='block'?'none':'block'"

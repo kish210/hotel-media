@@ -200,9 +200,11 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
     $r->post('/menu/items/{id}/delete',      [\App\Controllers\Web\MenuController::class, 'deleteItem']);
 
     // Users
+    // شعبه‌ای که مدیر زنجیره می‌خواهد ببیند (TODO ۵.۱۴)
+    $r->post('/branch',       [\App\Controllers\Web\BranchController::class, 'switch'], [CsrfMiddleware::class]);
     $r->get('/users',         [\App\Controllers\Web\UserController::class, 'index']);
-    $r->post('/users',        [\App\Controllers\Web\UserController::class, 'store']);
-    $r->post('/users/{id}',   [\App\Controllers\Web\UserController::class, 'update']);
+    $r->post('/users',        [\App\Controllers\Web\UserController::class, 'store'],  [CsrfMiddleware::class]);
+    $r->post('/users/{id}',   [\App\Controllers\Web\UserController::class, 'update'], [CsrfMiddleware::class]);
 
     // Campaigns / Emergency
     $r->get('/campaigns',         [\App\Controllers\Web\CampaignController::class, 'index']);

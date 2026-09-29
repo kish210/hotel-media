@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace App\Controllers\Web;
 
-use App\Core\{Controller, Request, Auth};
+use App\Core\{Controller, Request, Auth, Branch};
 use App\Models\Screen;
 
 class ScreenController extends Controller
@@ -24,6 +24,8 @@ class ScreenController extends Controller
             'location_id' => $req->get('location_id'),
             'screen_type' => $req->get('type'),
         ]);
+        /* کارمند یک شعبه فقط همان را می‌بیند؛ ?location_id= نمی‌تواند دورش بزند */
+        if (($b = Branch::current()) !== null) $filters['location_id'] = $b;
         $screens   = $this->screen->all($filters, (int)$req->get('page', 1));
         $locations = $this->db->rows("SELECT * FROM locations WHERE tenant_id=? AND is_active=1 ORDER BY name", [$tid]);
         $groups    = [];
@@ -78,6 +80,7 @@ class ScreenController extends Controller
         if (isset($data['tags']) && trim((string)$data['tags']) === '') {
             $data['tags'] = null;
         }
+        $data['location_id'] = Branch::forNew($data['location_id'] ?? null);
         $id = $this->screen->create($data);
         $actCode = $this->screen->generateActivationCode((int)$id);
         $this->flash('success', "صفحه ایجاد شد — کد فعال‌سازی: $actCode");
@@ -87,8 +90,8 @@ class ScreenController extends Controller
 
     public function show(Request $req, array $params): void
     {
-        $screen = $this->screen->find((int)$params['id']);
-        if (!$screen) { $this->redirect('/admin/screens'); return; }
+        $screen = $this->ownScreen((int)$params['id']);
+        if (!$screen) return;
 
         $tid        = Auth::tenantId();
         $heartbeats = $this->db->rows(
@@ -124,6 +127,7 @@ class ScreenController extends Controller
     {
         $id     = (int)$params['id'];
         $action = $req->post('_action', 'update');
+        if (!$this->ownScreen($id)) return;
 
         if ($action === 'regenerate_code') {
             $code = $this->screen->generateActivationCode($id);
@@ -153,6 +157,9 @@ class ScreenController extends Controller
         foreach (['location_id', 'layout_id', 'current_playlist_id', 'group_id', 'iptv_menu_id', 'iptv_room_id', 'inflight_flight_id'] as $field) {
             if (array_key_exists($field, $data) && $data[$field] === '') $data[$field] = null;
         }
+
+        /* کارمند شعبه نمی‌تواند صفحه را به شعبه‌ی دیگری ببرد */
+        if (array_key_exists('location_id', $data)) $data['location_id'] = Branch::forNew($data['location_id']);
 
         // فیلدهای JSON — رشته خالی یا invalid JSON → null
         foreach (['tags'] as $jsonField) {
@@ -193,6 +200,7 @@ class ScreenController extends Controller
 
     public function destroy(Request $req, array $params): void
     {
+        if (!$this->ownScreen((int)$params['id'])) return;
         $this->screen->delete((int)$params['id']);
         $this->flash('success', 'صفحه حذف شد');
         $this->log('screen.delete', 'Screen', (int)$params['id']);
@@ -202,6 +210,7 @@ class ScreenController extends Controller
     public function monitor(Request $req): void
     {
         $tid = Auth::tenantId();
+        $mp  = [];
 
         $screens = $this->db->rows(
             "SELECT s.*,
@@ -219,9 +228,9 @@ class ScreenController extends Controller
              LEFT JOIN heartbeats hb ON hb.id = (
                  SELECT MAX(id) FROM heartbeats WHERE screen_id = s.id
              )
-             WHERE s.tenant_id=? AND s.status != 'inactive'
+             WHERE s.tenant_id=? AND s.status != 'inactive'" . Branch::sql('s.location_id', $mp) . "
              ORDER BY s.is_online DESC, s.name ASC",
-            [$tid]
+            array_merge([$tid], $mp)
         );
 
         // آمار کلی
@@ -289,5 +298,15 @@ class ScreenController extends Controller
         } catch (\Throwable $e) {
             return [];
         }
+    }
+
+    /** صفحه‌ی همین مستاجر و (برای کارمند شعبه) همین شعبه؛ وگرنه برمی‌گرداند به فهرست */
+    private function ownScreen(int $id): ?array
+    {
+        $s = $this->screen->find($id);
+        if ($s && Branch::allows($s['location_id'] ?? null)) return $s;
+        $this->flash('error', 'صفحه یافت نشد');
+        $this->redirect('/admin/screens');
+        return null;
     }
 }

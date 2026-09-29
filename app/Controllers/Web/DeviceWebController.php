@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace App\Controllers\Web;
 
-use App\Core\{Controller, Request, Auth};
+use App\Core\{Controller, Request, Auth, Branch};
 use App\Services\DeviceService;
 
 /**
@@ -14,6 +14,7 @@ class DeviceWebController extends Controller
     public function index(Request $req): void
     {
         $tid = Auth::tenantId();
+        $bp  = []; $rp = [];
 
         $devices = $this->db->rows(
             "SELECT s.*, r.room_number, r.room_name, r.floor, g.name AS group_name,
@@ -23,9 +24,9 @@ class DeviceWebController extends Controller
                FROM screens s
                LEFT JOIN iptv_rooms    r ON r.id = s.iptv_room_id
                LEFT JOIN screen_groups g ON g.id = s.group_id
-              WHERE s.tenant_id = ?
+              WHERE s.tenant_id = ?" . Branch::sql('s.location_id', $bp) . "
               ORDER BY r.floor IS NULL, r.floor, r.room_number, s.name",
-            [$tid]
+            array_merge([$tid], $bp)
         ) ?: [];
 
         $tokens = $this->db->rows(
@@ -40,8 +41,8 @@ class DeviceWebController extends Controller
 
         $rooms = $this->db->rows(
             'SELECT id, room_number, room_name, floor FROM iptv_rooms
-              WHERE tenant_id = ? ORDER BY floor, room_number',
-            [$tid]
+              WHERE tenant_id = ?' . Branch::sql('location_id', $rp) . ' ORDER BY floor, room_number',
+            array_merge([$tid], $rp)
         ) ?: [];
 
         $groups = $this->db->rows(
@@ -90,14 +91,15 @@ class DeviceWebController extends Controller
     public function feed(Request $req): void
     {
         $tid = Auth::tenantId();
+        $bp  = [];
 
         $rows = $this->db->rows(
             "SELECT s.id, s.code, s.status, s.platform, s.app_version, s.last_ip,
                     TIMESTAMPDIFF(SECOND, s.last_seen_at, NOW()) AS seconds_ago,
                     (SELECT COUNT(*) FROM screen_commands c
                       WHERE c.screen_id = s.id AND c.status IN ('pending','sent')) AS pending_commands
-               FROM screens s WHERE s.tenant_id = ?",
-            [$tid]
+               FROM screens s WHERE s.tenant_id = ?" . Branch::sql('s.location_id', $bp) . "",
+            array_merge([$tid], $bp)
         ) ?: [];
 
         $online = 0;

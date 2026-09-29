@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace App\Controllers\Web;
 
-use App\Core\{Controller, Request, Auth};
+use App\Core\{Controller, Request, Auth, Branch};
 
 /**
  * پنل کارکنان — صف درخواست‌های مهمان و کاتالوگ خدمات
@@ -13,6 +13,7 @@ class GuestServiceWebController extends Controller
     public function index(Request $req): void
     {
         $tid = Auth::tenantId();
+        $bp  = [];
 
         $requests = $this->db->rows(
             "SELECT r.*, rm.room_number, rm.room_name, rm.floor,
@@ -21,13 +22,13 @@ class GuestServiceWebController extends Controller
              FROM guest_requests r
              JOIN iptv_rooms rm ON rm.id = r.room_id
              LEFT JOIN users  u  ON u.id = r.assigned_to
-             WHERE r.tenant_id = ?
+             WHERE r.tenant_id = ?" . Branch::sql('rm.location_id', $bp) . "
                AND (r.status IN ('pending','accepted','in_progress')
                     OR r.created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY))
              ORDER BY FIELD(r.status,'pending','accepted','in_progress','done','cancelled'),
                       r.created_at ASC
              LIMIT 200",
-            [$tid]
+            array_merge([$tid], $bp)
         ) ?: [];
 
         // اقلام همه درخواست‌ها در یک کوئری — جلوگیری از N+1
@@ -80,6 +81,7 @@ class GuestServiceWebController extends Controller
     public function feed(Request $req): void
     {
         $tid = Auth::tenantId();
+        $bp  = [];
 
         $rows = $this->db->rows(
             "SELECT r.id, r.category, r.status, r.note, r.scheduled_at, r.total_price,
@@ -87,10 +89,10 @@ class GuestServiceWebController extends Controller
                     TIMESTAMPDIFF(MINUTE, r.created_at, NOW()) AS age_minutes
              FROM guest_requests r
              JOIN iptv_rooms rm ON rm.id = r.room_id
-             WHERE r.tenant_id = ? AND r.status IN ('pending','accepted','in_progress')
+             WHERE r.tenant_id = ? AND r.status IN ('pending','accepted','in_progress')" . Branch::sql('rm.location_id', $bp) . "
              ORDER BY r.created_at ASC
              LIMIT 100",
-            [$tid]
+            array_merge([$tid], $bp)
         ) ?: [];
 
         header('Content-Type: application/json; charset=utf-8');

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace App\Controllers\Api;
 
-use App\Core\{Controller, Request, Response, Auth};
+use App\Core\{Controller, Request, Response, Auth, Branch};
 use App\Services\DeviceService;
 
 /**
@@ -159,6 +159,7 @@ class DeviceController extends Controller
                   LEFT JOIN screen_groups g ON g.id = s.group_id
                  WHERE s.tenant_id = ?";
         $params = [$tid];
+        $sql   .= Branch::sql('s.location_id', $params);
 
         if ($p = $req->get('platform')) {
             if (!in_array($p, DeviceService::PLATFORMS, true)) { Response::error('پلتفرم نامعتبر است', 422); return; }
@@ -223,7 +224,7 @@ class DeviceController extends Controller
     {
         $tid    = Auth::tenantId();
         $id     = (int)($params['id'] ?? 0);
-        $screen = $this->db->row('SELECT * FROM screens WHERE id=? AND tenant_id=?', [$id, $tid]);
+        $screen = $this->ownScreen($id, $tid);
 
         if (!$screen) { Response::notFound('دستگاه یافت نشد'); return; }
 
@@ -242,7 +243,7 @@ class DeviceController extends Controller
     {
         $tid    = Auth::tenantId();
         $id     = (int)($params['id'] ?? 0);
-        $screen = $this->db->row('SELECT id FROM screens WHERE id=? AND tenant_id=?', [$id, $tid]);
+        $screen = $this->ownScreen($id, $tid);
 
         if (!$screen) { Response::notFound('دستگاه یافت نشد'); return; }
 
@@ -250,7 +251,8 @@ class DeviceController extends Controller
         $roomId = (int)($data['room_id'] ?? 0);
 
         if ($roomId) {
-            if (!$this->db->exists('iptv_rooms', ['id' => $roomId, 'tenant_id' => $tid])) {
+            $room = $this->db->row('SELECT id, location_id FROM iptv_rooms WHERE id=? AND tenant_id=?', [$roomId, $tid]);
+            if (!$room || !Branch::allows($room['location_id'])) {
                 Response::error('اتاق انتخابی معتبر نیست', 422); return;
             }
             // یک اتاق نباید دو تلویزیون فعال داشته باشد که هر دو خود را «TV اتاق» بدانند
@@ -277,7 +279,7 @@ class DeviceController extends Controller
     {
         $tid    = Auth::tenantId();
         $id     = (int)($params['id'] ?? 0);
-        $screen = $this->db->row('SELECT * FROM screens WHERE id=? AND tenant_id=?', [$id, $tid]);
+        $screen = $this->ownScreen($id, $tid);
 
         if (!$screen) { Response::notFound('دستگاه یافت نشد'); return; }
 
@@ -339,7 +341,7 @@ class DeviceController extends Controller
         $tid = Auth::tenantId();
         $id  = (int)($params['id'] ?? 0);
 
-        if (!$this->db->exists('screens', ['id' => $id, 'tenant_id' => $tid])) {
+        if (!$this->ownScreen($id, $tid)) {
             Response::notFound('دستگاه یافت نشد'); return;
         }
 
@@ -463,9 +465,10 @@ class DeviceController extends Controller
             if (!$ids) return [];
 
             $ph = implode(',', array_fill(0, count($ids), '?'));
+            $bp = array_merge([$tenantId], $ids);
             return $this->db->rows(
-                "SELECT * FROM screens WHERE tenant_id = ? AND id IN ($ph)",
-                array_merge([$tenantId], $ids)
+                "SELECT * FROM screens WHERE tenant_id = ? AND id IN ($ph)" . Branch::sql('location_id', $bp),
+                $bp
             );
         }
 
@@ -489,6 +492,15 @@ class DeviceController extends Controller
         // فیلتر خالی یعنی «همه‌ی هتل» — باید صریح خواسته شده باشد
         if (count($params) === 1 && empty($filter['all'])) return [];
 
+        /* «همه‌ی هتل» برای کارمند یک شعبه یعنی همه‌ی همان شعبه */
+        $sql .= Branch::sql('s.location_id', $params);
         return $this->db->rows($sql, $params);
+    }
+
+    /** دستگاه همین مستاجر و (برای کارمند شعبه) همین شعبه */
+    private function ownScreen(int $id, int $tid): ?array
+    {
+        $s = $this->db->row('SELECT * FROM screens WHERE id=? AND tenant_id=?', [$id, $tid]);
+        return $s && Branch::allows($s['location_id'] ?? null) ? $s : null;
     }
 }

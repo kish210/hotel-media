@@ -2,13 +2,14 @@
 declare(strict_types=1);
 namespace App\Controllers\Web;
 
-use App\Core\{Controller, Request, Auth};
+use App\Core\{Controller, Request, Auth, Branch};
 
 class IptvRoomWebController extends Controller
 {
     public function index(Request $req): void
     {
         $tid = Auth::tenantId();
+        $bp  = [];
 
         $iptvGroups = $this->db->rows(
             "SELECT * FROM screen_groups WHERE tenant_id=? AND type='iptv' AND is_active=1 ORDER BY sort_order, name",
@@ -24,9 +25,9 @@ class IptvRoomWebController extends Controller
              FROM iptv_rooms r
              LEFT JOIN screen_groups g ON g.id = r.group_id
              LEFT JOIN screens       s ON s.iptv_room_id = r.id AND s.tenant_id = r.tenant_id
-             WHERE r.tenant_id = ?
+             WHERE r.tenant_id = ?" . Branch::sql('r.location_id', $bp) . "
              ORDER BY r.floor ASC, r.room_number ASC",
-            [$tid]
+            array_merge([$tid], $bp)
         ) ?: [];
 
         $pmsIntegrations = $this->db->rows(

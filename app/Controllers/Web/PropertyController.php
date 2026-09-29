@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controllers\Web;
 
-use App\Core\{Controller, Request, Response, Auth};
+use App\Core\{Controller, Request, Response, Auth, Branch};
 
 /**
  * تعریف ساختار هتل — شعبه، گروه، اتاق.
@@ -48,6 +48,7 @@ class PropertyController extends Controller
         if (!$this->guard()) return;
 
         $tid = Auth::tenantId();
+        $bp  = [];
 
         /* صفحه‌ی متصل به هر اتاق هم لازم است: اپراتور باید ببیند کدام
            اتاق تلویزیون دارد و کدام هنوز وصل نشده. */
@@ -62,9 +63,9 @@ class PropertyController extends Controller
           LEFT JOIN screen_groups g ON g.id = r.group_id
           LEFT JOIN locations     l ON l.id = r.location_id
           LEFT JOIN screens       s ON s.iptv_room_id = r.id
-              WHERE r.tenant_id = ?
+              WHERE r.tenant_id = ?' . Branch::sql('r.location_id', $bp) . '
            ORDER BY r.building, r.floor, r.room_number',
-            [$tid]
+            array_merge([$tid], $bp)
         );
 
         $groups    = $this->groupList($tid);
@@ -274,6 +275,7 @@ class PropertyController extends Controller
         if (!$this->guard()) return;
 
         $tid = Auth::tenantId();
+        $bp  = [];
 
         /* تعداد عضو هر گروه — گروه خالی یعنی اپراتور یادش رفته
            دستگاه‌ها را داخلش بگذارد. */
@@ -284,9 +286,9 @@ class PropertyController extends Controller
                     (SELECT COUNT(*) FROM screen_group_members m WHERE m.group_id = g.id) AS screen_count
                FROM screen_groups g
           LEFT JOIN locations l ON l.id = g.location_id
-              WHERE g.tenant_id = ?
+              WHERE g.tenant_id = ?" . Branch::sql('g.location_id', $bp) . "
            ORDER BY g.type, g.sort_order, g.name",
-            [$tid]
+            array_merge([$tid], $bp)
         );
 
         $locations = $this->locationList($tid);

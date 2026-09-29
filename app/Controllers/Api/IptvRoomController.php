@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace App\Controllers\Api;
 
-use App\Core\{Controller, Request, Response, Auth};
+use App\Core\{Controller, Request, Response, Auth, Branch};
 
 /**
  * IPTV Room Controller
@@ -35,6 +35,7 @@ class IptvRoomController extends Controller
                 LEFT JOIN screens       s ON s.iptv_room_id = r.id AND s.tenant_id = r.tenant_id
                 WHERE r.tenant_id = ?";
         $params = [$tid];
+        $sql   .= Branch::sql('r.location_id', $params);
 
         if ($floor  !== null && $floor  !== '') { $sql .= ' AND r.floor = ?';     $params[] = (int)$floor; }
         if ($type)                               { $sql .= ' AND r.room_type = ?'; $params[] = $type; }
@@ -70,6 +71,7 @@ class IptvRoomController extends Controller
             'room_type'   => $data['room_type']   ?? null,
             'pms_room_id' => trim($data['pms_room_id'] ?? '') ?: null,
             'notes'       => trim($data['notes']       ?? '') ?: null,
+            'location_id' => Branch::forNew($data['location_id'] ?? null),
         ]);
 
         $this->log('iptv_room.create', 'IptvRoom', (int)$id);
@@ -377,9 +379,11 @@ class IptvRoomController extends Controller
     //  Helpers
     // ══════════════════════════════════════════════════════════════
 
+    /* همه‌ی کارهای روی یک اتاق (ورود، خروج، پیام، حذف) از اینجا
+       می‌گذرند؛ اتاق شعبه‌ی دیگر برای کارمند یک شعبه «یافت نشد» است */
     private function getRoom(int $id): ?array
     {
-        return $this->db->row(
+        $r = $this->db->row(
             'SELECT r.*, g.name AS group_name, s.name AS screen_name, s.code AS screen_code
              FROM iptv_rooms r
              LEFT JOIN screen_groups g ON g.id = r.group_id
@@ -387,6 +391,7 @@ class IptvRoomController extends Controller
              WHERE r.id=? AND r.tenant_id=?',
             [$id, Auth::tenantId()]
         );
+        return $r && Branch::allows($r['location_id'] ?? null) ? $r : null;
     }
 
     private function getActiveMessages(int $roomId, int $tid = 0): array
