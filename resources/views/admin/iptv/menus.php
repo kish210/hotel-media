@@ -14,6 +14,7 @@ $ITEM_TYPES = [
   'retail'    => ['فروشگاه',      'fas fa-store',          '#10b981'],
   'url'       => ['لینک سفارشی',  'fas fa-link',           '#64748b'],
   'custom'    => ['سفارشی',       'fas fa-grip-dots',      '#1a7ac4'],
+  'reserve'   => ['رزرو رستوران و امکانات', 'fas fa-calendar-check', '#14b8a6'],
 ];
 
 // گروه‌های IPTV و منوهاشون رو از PHP variable دریافت می‌کنیم

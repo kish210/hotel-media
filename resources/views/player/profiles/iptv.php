@@ -424,6 +424,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   var hlsInst    = null;
   var playing    = false;
   var curVideo   = null;    /* المان ویدیوی در حال پخش */
+  var guestFrame = null;    /* صفحه‌ی تعاملی مهمان (رزرو) که کلید ریموت می‌گیرد */
   var trick      = null;    /* کنترلر trick-play — فقط روی منبع قابل جست‌وجو */
 
   /* زیرنویس و باند صوتی فیلم در حال پخش */
@@ -609,6 +610,11 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
        بدون این، کاشی به شاخه‌ی ماژول می‌افتاد و iframe خالی می‌ساخت. */
     if (it.type === 'input' || it.type === 'hdmi') { openInputs(); return; }
 
+    /* صفحه‌های تعاملی مهمان محتوا نیستند که پخش شوند؛ چند مرحله دارند
+       و کلید ریموت لازم دارند. آدرسشان به کد همین صفحه بسته است، پس
+       یک کاشی در منوی مشترک برای همه‌ی اتاق‌ها کار می‌کند. */
+    if (GUEST_VIEWS[it.type]) { openGuest(it); return; }
+
     play(it);
   }
 
@@ -659,6 +665,38 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 
     /* بازگشت خودکار بعد از ۵ دقیقه تا تلویزیون روی یک صفحه گیر نکند */
     autoTimer = setTimeout(back, 300000);
+  }
+
+  var GUEST_VIEWS = { reserve: 1 };
+
+  function openGuest(it) {
+    playing  = true;
+    curVideo = null;
+    TV.hide(TV.id('stage'));
+    TV.text(TV.id('back-label'), it.label || 'بازگشت');
+    TV.addClass(TV.id('back-btn'), 'is-on');
+
+    var host = TV.id('stage-player');
+    host.innerHTML = '';
+    TV.addClass(host, 'is-on');
+
+    var f = document.createElement('iframe');
+    f.src = ORIGIN + '/tv/guest/' + encodeURIComponent(SCREEN_CODE) + '/' + it.type;
+    host.appendChild(f);
+    guestFrame = f;
+    autoTimer = setTimeout(back, 300000);
+  }
+
+  /* کلید را به صفحه‌ی مهمان می‌دهد. true یعنی آن صفحه مصرفش کرد.
+     هم‌مبدا است، پس فراخوانی مستقیم کار می‌کند و postMessage لازم نیست. */
+  function guestKey(k) {
+    var w = null;
+    try { w = guestFrame && guestFrame.contentWindow; } catch (e) { w = null; }
+    if (!w || typeof w.TVGuestKey !== 'function') return false;
+    /* مهمانی که دارد رزرو می‌کند وسط کار بیرون انداخته نشود */
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(back, 300000);
+    try { return !!w.TVGuestKey(k); } catch (e2) { return false; }
   }
 
   function mkVideo(loop) {
@@ -786,6 +824,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
     closeTracks();
     playing  = false;
     curVideo = null;
+    guestFrame = null;
     trackData = { subtitles: [], audio: [] };
     var host = TV.id('stage-player');
     TV.removeClass(host, 'is-on');
@@ -825,6 +864,11 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
     }
 
     if (playing) {
+      if (guestFrame) {
+        if (guestKey(k)) { if (e.preventDefault) e.preventDefault(); return; }
+        if (k === 'BACK' || k === 'EXIT') { back(); if (e.preventDefault) e.preventDefault(); }
+        return;
+      }
       if (k === 'BACK' || k === 'EXIT') { back(); if (e.preventDefault) e.preventDefault(); return; }
 
       /* دکمه‌ی زرد ریموت و SUBTITLE هر دو زیرنویس را باز می‌کنند.

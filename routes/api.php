@@ -230,6 +230,21 @@ $router->get('/api/v1/guest/{code}/requests',                 [\App\Controllers\
 $router->post('/api/v1/guest/{code}/requests',                [\App\Controllers\Api\GuestPortalController::class, 'store']);
 $router->post('/api/v1/guest/{code}/requests/{id}/cancel',    [\App\Controllers\Api\GuestPortalController::class, 'cancel']);
 
+// ── رزرو رستوران و امکانات (پنل کارکنان، protected) ──────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    $r->get('/reservations/slots',        [\App\Controllers\Api\ReservationController::class, 'slots']);
+    $r->get('/reservations',              [\App\Controllers\Api\ReservationController::class, 'index']);
+    $r->post('/reservations',             [\App\Controllers\Api\ReservationController::class, 'store']);
+    $r->put('/reservations/{id}/status',  [\App\Controllers\Api\ReservationController::class, 'updateStatus']);
+});
+
+// ── رزرو از تلویزیون اتاق (بدون JWT، هویت با کد صفحه‌نمایش)
+$router->get('/api/v1/guest/{code}/reservations/venues',       [\App\Controllers\Api\ReservationController::class, 'guestVenues']);
+$router->get('/api/v1/guest/{code}/reservations/slots',        [\App\Controllers\Api\ReservationController::class, 'guestSlots']);
+$router->get('/api/v1/guest/{code}/reservations',              [\App\Controllers\Api\ReservationController::class, 'guestList']);
+$router->post('/api/v1/guest/{code}/reservations',             [\App\Controllers\Api\ReservationController::class, 'guestStore']);
+$router->post('/api/v1/guest/{code}/reservations/{id}/cancel', [\App\Controllers\Api\ReservationController::class, 'guestCancel']);
+
 // ── EPG — راهنمای الکترونیکی برنامه‌ها (پنل، protected) ──────────
 $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
     // منابع

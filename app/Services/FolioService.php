@@ -18,7 +18,7 @@ use App\Core\Database;
  */
 class FolioService
 {
-    public const SOURCES = ['minibar', 'room_service', 'laundry', 'ppv', 'service', 'manual', 'pms'];
+    public const SOURCES = ['minibar', 'room_service', 'laundry', 'ppv', 'service', 'manual', 'pms', 'reservation'];
 
     private Database $db;
 

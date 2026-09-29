@@ -120,7 +120,24 @@ class VenueController extends Controller
             $fields['menu_board_id'] = $b;
         }
 
+        /* تنظیمات رزرو (۰۴۲). مرزها سخت‌گیرانه‌اند چون مستقیم شبکه‌ی
+           نوبت‌های تلویزیون را می‌سازند: نوبت ۱ دقیقه‌ای یعنی ۱۴۴۰ دکمه. */
+        if (isset($data['bookable']))      $fields['bookable']      = (int)(bool)$data['bookable'];
+        if (isset($data['slot_minutes']))  $fields['slot_minutes']  = max(15, min(480, (int)$data['slot_minutes']));
+        if (isset($data['max_party']))     $fields['max_party']     = max(1, min(50, (int)$data['max_party']));
+        if (isset($data['booking_price'])) $fields['booking_price'] = round(max(0, (float)$data['booking_price']), 2);
+        if (isset($data['days_ahead']))    $fields['days_ahead']    = max(0, min(60, (int)$data['days_ahead']));
+
         if (!$fields) { Response::error('چیزی برای به‌روزرسانی ارسال نشده', 422); return; }
+
+        /* روشن کردن رزرو بدون ساعت کاری، محلی می‌سازد که روی تلویزیون
+           هست ولی هیچ نوبتی ندارد — مهمان فقط صفحه‌ی خالی می‌بیند. */
+        if (($fields['bookable'] ?? 0) === 1) {
+            $cur = $this->db->row('SELECT open_from, open_to FROM venues WHERE id = ?', [$id]) ?: [];
+            $from = array_key_exists('open_from', $fields) ? $fields['open_from'] : ($cur['open_from'] ?? null);
+            $to   = array_key_exists('open_to', $fields)   ? $fields['open_to']   : ($cur['open_to'] ?? null);
+            if (!$from || !$to) { Response::error('برای رزرو، ساعت کاری محل را وارد کنید', 422); return; }
+        }
 
         $this->db->update('venues', $fields, ['id' => $id, 'tenant_id' => $tid]);
         Response::success(null, 'به‌روزرسانی شد');

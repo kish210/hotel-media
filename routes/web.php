@@ -257,6 +257,8 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
 // (MUTE → 1 → 1 → 9 → ENTER) همین آدرس در همه‌ی دستگاه‌ها وارد می‌شود.
 // مسیرها کوتاه‌اند چون بعضی منوها فقط IP و پورت می‌پذیرند.
 $router->get('/tv',              [\App\Controllers\Web\TvBootstrapController::class, 'index']);
+// صفحه‌های تعاملی مهمان — پورتال IPTV در iframe بازشان می‌کند
+$router->get('/tv/guest/{code}/{view}', [\App\Controllers\Web\TvGuestController::class, 'show']);
 
 $router->get('/player',          [\App\Controllers\Web\PlayerController::class, 'index']);
 $router->get('/player/{code}',   [\App\Controllers\Web\PlayerController::class, 'show']);
@@ -320,6 +322,7 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     // ── Guest Services — خدمات مهمان ───────────────────────────
     $r->get('/guest-services',      [\App\Controllers\Web\GuestServiceWebController::class, 'index']);
     $r->get('/guest-services/feed', [\App\Controllers\Web\GuestServiceWebController::class, 'feed']);
+    $r->get('/reservations',        [\App\Controllers\Web\ReservationWebController::class, 'index']);
     // ── Devices — مدیریت تلویزیون‌ها ───────────────────────────
     $r->get('/devices',       [\App\Controllers\Web\DeviceWebController::class, 'index']);
     $r->get('/devices/feed',  [\App\Controllers\Web\DeviceWebController::class, 'feed']);

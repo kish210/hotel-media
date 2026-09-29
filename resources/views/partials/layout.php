@@ -165,6 +165,9 @@ if (!function_exists('modOn')) {
   <a href="/admin/guest-services" class="sidebar-link <?= isActive('/admin/guest-services') ?>">
     <span class="icon"><i class="fas fa-concierge-bell"></i></span> خدمات مهمان
   </a>
+  <a href="/admin/reservations" class="sidebar-link <?= isActive('/admin/reservations') ?>">
+    <span class="icon"><i class="fas fa-calendar-check"></i></span> رزرو رستوران و امکانات
+  </a>
   <a href="/admin/messages" class="sidebar-link <?= isActive('/admin/messages') ?>">
     <span class="icon"><i class="fas fa-message"></i></span> پیام به اتاق
   </a>

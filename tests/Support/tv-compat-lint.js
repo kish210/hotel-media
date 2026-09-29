@@ -43,6 +43,7 @@ var TV_FILES = [
   'resources/views/player/bootstrap.php',
   'resources/views/player/pair.php',
   'resources/views/player/not_found.php',
+  'resources/views/player/guest/reserve.php',
   'public/assets/css/tv-base.css',
   'public/assets/js/tv-base.js',
   'public/assets/js/tv-activate.js',

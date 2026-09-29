@@ -316,12 +316,13 @@ class IptvMenuController extends Controller
            یا input بی‌صدا به 'live' تبدیل می‌شد و اپراتور نمی‌فهمید
            چرا کاشی‌اش کار نمی‌کند.
 
-           هم‌ارز با ENUM در مهاجرت‌های ۰۰۹ و ۰۲۹. اگر آنجا نوعی اضافه
+           هم‌ارز با ENUM در مهاجرت‌های ۰۰۹، ۰۲۹ و ۰۴۲. اگر آنجا نوعی اضافه
            شد، اینجا هم باید اضافه شود. */
         $validTypes = [
             'live', 'vod', 'news', 'info', 'weather', 'fids', 'hotel',
             'corporate', 'retail', 'url', 'custom', 'radio', 'quran',
             'book', 'directory', 'folio', 'services', 'epg', 'input',
+            'reserve',
         ];
         $type = in_array($data['type'] ?? '', $validTypes, true) ? $data['type'] : 'live';
 
@@ -354,6 +355,7 @@ class IptvMenuController extends Controller
             'corporate' => 'fas fa-building-columns',
             'retail'    => 'fas fa-store',
             'url'       => 'fas fa-link',
+            'reserve'   => 'fas fa-calendar-check',
             default     => 'fas fa-grip-dots',
         };
     }
@@ -371,6 +373,7 @@ class IptvMenuController extends Controller
             'corporate' => '#6366f1',
             'retail'    => '#10b981',
             'url'       => '#64748b',
+            'reserve'   => '#14b8a6',
             default     => '#f97316',
         };
     }

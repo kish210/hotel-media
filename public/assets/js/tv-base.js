@@ -137,7 +137,17 @@
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) return;
       var ok = (xhr.status >= 200 && xhr.status < 300) || xhr.status === 304;
-      if (!ok) { finish(new Error('HTTP ' + xhr.status), null); return; }
+      if (!ok) {
+        /* متن خطای سرور («این نوبت پر شده») برای مهمان مفیدتر از
+           «HTTP 409» است. پیام خود Error عوض نمی‌شود تا صفحه‌هایی که
+           آن را نشان می‌دهند رفتارشان تغییر نکند؛ صفحه‌ای که پیام
+           سرور را می‌خواهد err.data.message را می‌خواند. */
+        var fe = new Error('HTTP ' + xhr.status);
+        fe.status = xhr.status;
+        try { fe.data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (e5) { fe.data = null; }
+        finish(fe, null);
+        return;
+      }
       var data = null;
       try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; }
       catch (e3) { finish(new Error('پاسخ JSON نبود'), null); return; }
