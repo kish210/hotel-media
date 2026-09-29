@@ -153,7 +153,14 @@ class CameraService
         $pf   = $this->pidFile($cam);
         if (is_file($pf)) $pid = (int)trim((string)@file_get_contents($pf));
 
-        $alive = $pid > 0 && is_dir('/proc/' . $pid);
+        /* نه is_dir('/proc/…'): در production، open_basedir پول PHP-FPM
+           دسترسی به /proc نمی‌دهد و آن بررسی همیشه «مرده» می‌گفت — هر
+           «شروع» رله‌ی سالم را می‌کشت و از نو می‌ساخت. ps محدودیتی ندارد و
+           خط فرمان را هم می‌دهد تا pid بازیافته با رله اشتباه نشود. */
+        $alive = $pid > 0 && str_contains(
+            (string)shell_exec('ps -o args= -p ' . $pid . ' 2>/dev/null'),
+            '/' . $cam['stream_name'] . '/'
+        );
 
         $m3u8 = $this->dir($cam) . '/index.m3u8';
         $age  = is_file($m3u8) ? (time() - (int)filemtime($m3u8)) : -1;
