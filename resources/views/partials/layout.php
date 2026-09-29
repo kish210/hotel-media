@@ -168,6 +168,9 @@ if (!function_exists('modOn')) {
   <a href="/admin/reservations" class="sidebar-link <?= isActive('/admin/reservations') ?>">
     <span class="icon"><i class="fas fa-calendar-check"></i></span> رزرو رستوران و امکانات
   </a>
+  <a href="/admin/offers" class="sidebar-link <?= isActive('/admin/offers') ?>">
+    <span class="icon"><i class="fas fa-ticket"></i></span> تخفیف کسب‌وکارهای اطراف
+  </a>
   <a href="/admin/messages" class="sidebar-link <?= isActive('/admin/messages') ?>">
     <span class="icon"><i class="fas fa-message"></i></span> پیام به اتاق
   </a>

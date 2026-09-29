@@ -27,6 +27,7 @@ $ITEM_TYPES = [
   'quran'     => ['قرآن کریم',        'fas fa-book-quran',     '#16a34a'],
   'book'      => ['کتابخانه',         'fas fa-book-open',      '#d97706'],
   'directory' => ['دفترچه تلفن',      'fas fa-address-book',   '#64748b'],
+  'offers'    => ['تخفیف‌های اطراف',  'fas fa-ticket',         '#e11d48'],
 ];
 
 // گروه‌های IPTV و منوهاشون رو از PHP variable دریافت می‌کنیم

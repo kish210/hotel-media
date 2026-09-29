@@ -17,7 +17,7 @@ use App\Models\Screen;
  */
 class TvGuestController extends Controller
 {
-    private const VIEWS = ['reserve', 'services', 'folio', 'live', 'content', 'cameras', 'guide'];
+    private const VIEWS = ['reserve', 'services', 'folio', 'live', 'content', 'cameras', 'guide', 'offers'];
 
     /** GET /tv/guest/{code}/{view} */
     public function show(Request $req, array $params): void

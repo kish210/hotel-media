@@ -252,6 +252,19 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
     $r->put('/reservations/{id}/status',  [\App\Controllers\Api\ReservationController::class, 'updateStatus']);
 });
 
+// ── تخفیف کسب‌وکارهای محلی (پنل، protected) — TODO ۴.۳ ─────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    $r->get('/offers',                    [\App\Controllers\Api\OfferController::class, 'index']);
+    $r->post('/offers',                   [\App\Controllers\Api\OfferController::class, 'store']);
+    $r->get('/offers/claims',             [\App\Controllers\Api\OfferController::class, 'claims']);
+    $r->post('/offers/redeem',            [\App\Controllers\Api\OfferController::class, 'redeem']);
+    $r->post('/offers/claims/{id}/void',  [\App\Controllers\Api\OfferController::class, 'void']);
+    $r->put('/offers/{id}',               [\App\Controllers\Api\OfferController::class, 'update']);
+    $r->post('/offers/{id}/rotate',       [\App\Controllers\Api\OfferController::class, 'rotate']);
+});
+$router->get('/api/v1/guest/{code}/offers',             [\App\Controllers\Api\OfferController::class, 'guestList']);
+$router->post('/api/v1/guest/{code}/offers/{id}/claim', [\App\Controllers\Api\OfferController::class, 'guestClaim']);
+
 // ── رزرو از تلویزیون اتاق (بدون JWT، هویت با کد صفحه‌نمایش)
 $router->get('/api/v1/guest/{code}/reservations/venues',       [\App\Controllers\Api\ReservationController::class, 'guestVenues']);
 $router->get('/api/v1/guest/{code}/reservations/slots',        [\App\Controllers\Api\ReservationController::class, 'guestSlots']);

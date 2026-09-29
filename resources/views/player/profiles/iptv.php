@@ -696,7 +696,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   }
 
   var GUEST_VIEWS = { reserve: 1, services: 1, folio: 1, live: 1, radio: 1,
-                      news: 1, quran: 1, book: 1, directory: 1, epg: 1, cameras: 1 };
+                      news: 1, quran: 1, book: 1, directory: 1, epg: 1, cameras: 1, offers: 1 };
   var CONTENT_KINDS = { news: 1, quran: 1, book: 1, directory: 1 };
 
   function openGuest(it) {

@@ -50,6 +50,7 @@ var TV_FILES = [
   'resources/views/player/guest/content.php',
   'resources/views/player/guest/cameras.php',
   'resources/views/player/guest/guide.php',
+  'resources/views/player/guest/offers.php',
   'public/assets/js/tv-guest.js',
   'public/assets/css/tv-guest.css',
   'public/assets/css/tv-base.css',
