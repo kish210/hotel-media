@@ -239,6 +239,12 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
 
     // عیب‌یابی سرور و شبکه — فقط خواندنی، فقط مدیر ارشد
     $r->get('/system/diagnostics',      [\App\Controllers\Web\DiagnosticsController::class, 'index']);
+    // ── درایورهای ترنسکدر و کارت کپچر (فقط super_admin) ─────────
+    $r->get('/system/drivers',               [\App\Controllers\Web\DriverController::class, 'index']);
+    $r->get('/system/drivers/status',        [\App\Controllers\Web\DriverController::class, 'status']);
+    $r->get('/system/drivers/{id}/log',      [\App\Controllers\Web\DriverController::class, 'jobLog']);
+    $r->post('/system/drivers/{id}/install', [\App\Controllers\Web\DriverController::class, 'install'], [CsrfMiddleware::class]);
+    $r->post('/system/drivers/{id}/upload',  [\App\Controllers\Web\DriverController::class, 'upload'],  [CsrfMiddleware::class]);
     $r->get('/system/diagnostics/json', [\App\Controllers\Web\DiagnosticsController::class, 'json']);
 
     // Reports

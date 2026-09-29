@@ -473,6 +473,16 @@ if [[ "$INSTALL_TVHEADEND" == "1" ]]; then
     fi
 fi
 
+# ابزار نصب درایور از پنل — تنها فرمانی که www-data بدون رمز با root اجرا می‌کند.
+# همه‌ی بررسی‌های امنیتی داخل خود اسکریپت است (deploy/hotel-media-driver.sh).
+install -o root -g root -m 0755 "$APP_DIR/deploy/hotel-media-driver.sh" /usr/local/sbin/hotel-media-driver
+sed -i "s#__APP_DIR__#${APP_DIR}#" /usr/local/sbin/hotel-media-driver
+echo 'www-data ALL=(root) NOPASSWD: /usr/local/sbin/hotel-media-driver' > /etc/sudoers.d/hotel-media-driver
+chmod 0440 /etc/sudoers.d/hotel-media-driver
+visudo -cf /etc/sudoers.d/hotel-media-driver >/dev/null || { rm -f /etc/sudoers.d/hotel-media-driver; warn "sudoers درایور نامعتبر بود و حذف شد"; }
+install -d -o www-data -g www-data "$APP_DIR/storage/drivers"
+ok "ابزار نصب درایور آماده شد"
+
 # کارهای زمان‌بندی‌شده
 cat > /etc/cron.d/hotel-media <<CRON
 # Hotel Media — کارهای زمان‌بندی‌شده

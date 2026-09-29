@@ -271,6 +271,10 @@ if (!function_exists('modOn')) {
            را نشان می‌دهد (سرویس، شبکه، مهاجرت)، آن یکی «چه اتفاقی
            افتاده بود» را (گزارش‌ها). قاطی‌کردنشان یعنی برای دیدن
            وضعیت سرویس باید لای هزار خط لاگ گشت. */ ?>
+  <a href="/admin/system/drivers" class="sidebar-link <?= isActive('/admin/system/drivers') ?>">
+    <span class="icon"><i class="fas fa-microchip" style="color:#f59e0b;"></i></span>
+    درایورها
+  </a>
   <a href="/admin/system/diagnostics" class="sidebar-link <?= isActive('/admin/system/diagnostics') ?>">
     <span class="icon"><i class="fas fa-stethoscope" style="color:#22c55e;"></i></span>
     وضعیت سرور و شبکه
