@@ -22,10 +22,14 @@ DB_USER="${DB_USER:-hotel_media}"
 PHP_VER="${PHP_VER:-8.3}"
 WS_PORT="${WS_PORT:-8080}"
 
+# صنف نصب (TODO ۵.۱۸): hotel | signage | restaurant | iptv
+# خالی باشد می‌پرسد؛ برای نصب بی‌پرسش: HM_PROFILE=restaurant sudo -E bash …
+HM_PROFILE="${HM_PROFILE:-}"
+
 # TVHeadend — سر دریافت سیگنال (DVB-S/S2/T/T2/C).
 # با INSTALL_TVHEADEND=0 می‌توان از نصبش صرف‌نظر کرد، مثلا وقتی
-# TVHeadend روی سرور دیگری است.
-INSTALL_TVHEADEND="${INSTALL_TVHEADEND:-1}"
+# TVHeadend روی سرور دیگری است. خالی = از روی صنف (منوبورد لازمش ندارد).
+INSTALL_TVHEADEND="${INSTALL_TVHEADEND:-}"
 TVH_USER="${TVH_USER:-hotelmedia}"
 TVH_PORT="${TVH_PORT:-9981}"
 
@@ -69,6 +73,33 @@ echo "  ╔═══════════════════════
 echo "  ║   Hotel Media — نصب production (تا ۳۰۰ اتاق)       ║"
 echo "  ╚════════════════════════════════════════════════════╝"
 echo -e "${N}"
+
+# ── صنف ─────────────────────────────────────────────────────────────
+# اول پرسیده می‌شود تا بقیه‌ی نصب بدون حضور تکنسین جلو برود.
+if [[ -z "$HM_PROFILE" ]]; then
+    if [[ -t 0 ]]; then
+        echo -e "  ${B}این سرور برای کدام کار است؟${N}"
+        echo "    1) هتل با تلویزیون اتاق (کامل)"
+        echo "    2) هتل — فقط تابلوی لابی، بدون تلویزیون اتاق"
+        echo "    3) رستوران / کافه — منوبورد دیجیتال"
+        echo "    4) فقط IPTV — بیمارستان، خوابگاه، اقامتگاه"
+        read -r -p "  انتخاب [1]: " _p || true
+        case "${_p:-1}" in
+            2) HM_PROFILE=signage ;;
+            3) HM_PROFILE=restaurant ;;
+            4) HM_PROFILE=iptv ;;
+            *) HM_PROFILE=hotel ;;
+        esac
+    else
+        HM_PROFILE=hotel   # بدون ترمینال (مثلا از ISO خودکار) همان رفتار قبلی
+    fi
+fi
+case "$HM_PROFILE" in
+    hotel|iptv)          : "${INSTALL_TVHEADEND:=1}" ;;
+    signage|restaurant)  : "${INSTALL_TVHEADEND:=0}" ;;
+    *) die "صنف نامعتبر: $HM_PROFILE (hotel | signage | restaurant | iptv)" ;;
+esac
+ok "صنف: ${HM_PROFILE}$([[ "$INSTALL_TVHEADEND" == "1" ]] || echo ' — بدون TVHeadend')"
 
 # ── ۰) بررسی سیستم ───────────────────────────────────────────────────
 echo -e "${G}[1/9] بررسی سیستم${N}"
@@ -350,6 +381,12 @@ fi
 php artisan db:migrate
 [[ -f database/seeds/seed.sql ]] && mysql "${DB_NAME}" < database/seeds/seed.sql 2>/dev/null || true
 ok "اسکیما و داده‌ی اولیه اعمال شد"
+
+# فقط ماژول‌های همین صنف در پنل دیده می‌شوند؛ بعداً هم از «ماژول‌ها»
+# یا «php artisan modules:profile <صنف>» عوض‌شدنی است، داده پاک نمی‌شود.
+php artisan modules:profile "$HM_PROFILE" >/dev/null \
+    && ok "ماژول‌های صنف ${HM_PROFILE} روشن شد" \
+    || warn "اعمال صنف ناموفق بود — بعداً: php artisan modules:profile ${HM_PROFILE}"
 
 # ── ۵) دسترسی فایل‌ها ────────────────────────────────────────────────
 echo -e "\n${G}[6/9] دسترسی‌ها${N}"

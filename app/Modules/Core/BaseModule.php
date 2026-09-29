@@ -57,7 +57,10 @@ abstract class BaseModule
                 $this->db->query($sql);
             }
             $this->db->query(
-                "INSERT IGNORE INTO modules (id, name, version, is_active, tenant_id, installed_at) VALUES (?,?,?,1,?,NOW())",
+                /* IGNORE ردیف خاموش‌شده را خاموش نگه می‌داشت: «نصب» دوباره‌ی
+                   ماژولی که یک بار غیرفعال شده بود هیچ کاری نمی‌کرد */
+                "INSERT INTO modules (id, name, version, is_active, tenant_id, installed_at) VALUES (?,?,?,1,?,NOW())
+                 ON DUPLICATE KEY UPDATE is_active = 1",
                 [$this->id(), $this->name(), $this->version(), $this->tenantId]
             );
             return true;

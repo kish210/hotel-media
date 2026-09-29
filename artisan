@@ -292,6 +292,31 @@ match ($command) {
         flock($lock, LOCK_UN);
     })(),
 
+    'modules:profile' => (function() use ($argv) {
+        // صنف نصب (TODO ۵.۱۸): فقط ماژول‌های همان صنف روشن می‌ماند.
+        //   php artisan modules:profile                 ← فهرست صنف‌ها و وضعیت فعلی
+        //   php artisan modules:profile restaurant [tenantId]
+        $name = $argv[2] ?? '';
+        $tid  = isset($argv[3]) ? max(1, (int)$argv[3]) : 1;
+        if ($name === '') {
+            $cur = \App\Services\InstallProfile::current($tid);
+            foreach (\App\Services\InstallProfile::PROFILES as $k => $p) {
+                printf("  %s %-11s %s  [%s]\n", $k === $cur ? '●' : ' ', $k, $p['label'], implode(', ', $p['modules']));
+            }
+            \App\Modules\Core\ModuleRegistry::ensureTable();
+            \App\Modules\Core\ModuleRegistry::boot($tid);
+            echo "\n  ماژول‌های روشن: " . (implode(', ', \App\Modules\Core\ModuleRegistry::activeIds()) ?: '—') . "\n";
+            return;
+        }
+        $r = \App\Services\InstallProfile::apply($name, $tid);
+        echo ($r['ok'] ? "\033[32m✓ " : "\033[31m✘ ") . $r['message'] . "\033[0m\n";
+        if ($r['ok']) {
+            echo '  روشن: ' . (implode(', ', $r['enabled']) ?: '—') . "\n";
+            if ($r['disabled']) echo '  خاموش شد: ' . implode(', ', $r['disabled']) . "  (داده‌ها سر جایشان است)\n";
+        }
+        if (!$r['ok']) exit(1);
+    })(),
+
     'flights:sync' => (function() use ($argv) {
         // پروازهای فرودگاه کیش + دمای هوا. برای cron: هر ۵ دقیقه.
         //   php artisan flights:sync [tenantId] [locationId]
@@ -526,6 +551,7 @@ match ($command) {
             'pms:push'        => 'Push room charges to the hotel PMS [tenantId]',
             'news:sync'       => 'Pull news from the configured RSS feeds [tenantId]',
             'flights:sync'    => 'Pull Kish airport flights and weather [tenantId locationId]',
+            'modules:profile' => 'Enable only one business type\'s modules [hotel|signage|restaurant|iptv] [tenantId]',
             'tvheadend:setup' => 'Register TVHeadend and import its channels [url user pass]',
             'tvheadend:health'=> 'Check every configured TVHeadend source',
             'test'            => 'Run feature tests (needs a TEST database in .env)',
