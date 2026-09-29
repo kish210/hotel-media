@@ -9,6 +9,7 @@ import android.os.Looper;
 import android.view.*;
 import android.webkit.*;
 import android.widget.*;
+import com.signagecms.player.input.InputOverlay;
 import com.signagecms.player.service.UpdateService;
 
 public class MainActivity extends Activity {
@@ -17,6 +18,10 @@ public class MainActivity extends Activity {
     private ProgressBar progress;
     private TextView statusText;
     private Handler handler = new Handler(Looper.getMainLooper());
+    private InputOverlay inputOverlay;
+    /** ورودی با اپ Live TV سیستم باز شد (راه پشتیبان) */
+    private boolean externalInput = false;
+    private android.content.BroadcastReceiver screenReceiver;
 
     @SuppressLint({"SetJavaScriptEnabled","ClickableViewAccessibility"})
     @Override
@@ -43,6 +48,13 @@ public class MainActivity extends Activity {
         statusText = findViewById(R.id.statusText);
 
         setupWebView();
+
+        /* HDMI مهمان روی همین صفحه، بالای WebView */
+        inputOverlay = new InputOverlay(this, (FrameLayout) webView.getParent(), reason -> {
+            webView.requestFocus();
+            notifyInputClosed(reason);
+        });
+        registerScreenReceiver();
 
         String server = SignageApp.get().getServerUrl();
         String code   = SignageApp.get().getScreenCode();
@@ -103,8 +115,12 @@ public class MainActivity extends Activity {
             }
         });
 
-        // JavaScript Bridge
-        webView.addJavascriptInterface(new SignageBridge(this), "AndroidBridge");
+        // JavaScript Bridge — tv-base.js با نام SignageBridge دنبالش می‌گشت و
+        // این‌جا فقط AndroidBridge ثبت می‌شد؛ تعویض ورودی و قفل‌گاه هرگز
+        // از صفحه صدا زده نمی‌شدند. هر دو نام ثبت می‌شود.
+        SignageBridge bridge = new SignageBridge(this);
+        webView.addJavascriptInterface(bridge, "AndroidBridge");
+        webView.addJavascriptInterface(bridge, "SignageBridge");
     }
 
     public void loadPlayer(String server, String code) {
@@ -147,6 +163,77 @@ public class MainActivity extends Activity {
         startService(i);
     }
 
+    // ─── ورودی خارجی (HDMI مهمان) ──────────────────────────────────
+
+    /** روی نخ اصلی */
+    public boolean openInput(String inputId) {
+        return inputOverlay != null && inputOverlay.open(inputId);
+    }
+
+    /** روی نخ اصلی */
+    public void closeInput(String reason) {
+        if (inputOverlay != null && inputOverlay.isOpen()) inputOverlay.close(reason);
+        externalInput = false;
+    }
+
+    public void markExternalInput() { externalInput = true; }
+
+    /* اپ ما HOME است؛ زدن دکمه‌ی HOME روی ریموت همین را صدا می‌زند.
+       مهمان از HOME انتظار دارد به منوی هتل برگردد، نه روی HDMI بماند. */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (inputOverlay != null && inputOverlay.isOpen()) inputOverlay.close("back");
+    }
+
+    private void notifyInputClosed(String reason) {
+        if (webView == null) return;
+        String r = reason == null ? "" : reason.replaceAll("[^a-z]", "");
+        webView.evaluateJavascript("window.TVInputClosed&&window.TVInputClosed('" + r + "')", null);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (inputOverlay != null && inputOverlay.onKey(event)) return true;
+        return super.dispatchKeyEvent(event);
+    }
+
+    /**
+     * راه پشتیبان (اپ Live TV سیستم) خودش با آماده‌به‌کار بسته نمی‌شود.
+     * پس با خاموش شدن صفحه پورتال را جلو می‌آوریم تا روشن شدن بعدی روی
+     * پورتال باشد نه HDMI مهمان قبلی. اپ HOME و Device Owner است، پس
+     * اندروید ۱۰+ هم اجازه‌ی باز کردن Activity از پس‌زمینه را می‌دهد.
+     */
+    private void registerScreenReceiver() {
+        screenReceiver = new android.content.BroadcastReceiver() {
+            @Override
+            public void onReceive(android.content.Context c, Intent i) {
+                if (!externalInput) return;
+                externalInput = false;
+                try {
+                    Intent back = new Intent(MainActivity.this, MainActivity.class);
+                    back.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    startActivity(back);
+                } catch (Exception ignored) { }
+                notifyInputClosed("stop");
+            }
+        };
+        android.content.IntentFilter f = new android.content.IntentFilter();
+        f.addAction(Intent.ACTION_SCREEN_OFF);
+        f.addAction(Intent.ACTION_SCREEN_ON);
+        registerReceiver(screenReceiver, f);
+    }
+
+    @Override
+    protected void onStop() {
+        /* آماده‌به‌کار، خاموش شدن صفحه یا رفتن به اپ دیگر: HDMI مهمان
+           بسته می‌شود تا روشن شدن بعدی روی پورتال باشد. */
+        /* فقط لایه‌ی خود اپ؛ پرچم راه پشتیبان همین‌جا نباید پاک شود،
+           چون باز شدن اپ Live TV خودش onStop را صدا می‌زند. */
+        if (inputOverlay != null && inputOverlay.isOpen()) inputOverlay.close("stop");
+        super.onStop();
+    }
+
     @Override
     public void onBackPressed() {
         if (webView.canGoBack()) webView.goBack();
@@ -156,6 +243,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        /* مهمان از اپ Live TV سیستم برگشت (راه پشتیبان) */
+        if (externalInput) { externalInput = false; notifyInputClosed("back"); }
         // hide system UI دوباره
         getWindow().getDecorView().setSystemUiVisibility(
             View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
@@ -164,6 +253,9 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (screenReceiver != null) {
+            try { unregisterReceiver(screenReceiver); } catch (Exception ignored) { }
+        }
         super.onDestroy();
         if (webView != null) { webView.destroy(); }
     }

@@ -432,41 +432,66 @@
   };
 
   /* ── ورودی‌های خارجی ──────────────────────────────────────────────
-     مهمان می‌خواهد موبایل یا کنسول بازی‌اش را به تلویزیون وصل کند.
-     بدون این، تنها راهش رفتن به منوی خود تلویزیون است — همان چیزی که
-     در اتاق هتل قفل شده.
+     مهمان می‌خواهد گوشی (با دانگل Miracast/Cast روی یک پورت HDMI)،
+     لپ‌تاپ یا کنسول بازی‌اش را ببیند. منوی خود تلویزیون در اتاق قفل
+     است، پس تعویض ورودی از همین پورتال انجام می‌شود.
 
-     هر پلتفرم راه خودش را دارد و هیچ‌کدام مثل بقیه نیست:
+     ── قاعده‌ی اصلی: تعویض ورودی «موقت» است ─────────────────────────
+     بعد از خاموش و روشن شدن، تلویزیون باید روی پورتال باشد نه روی
+     HDMI مهمان قبلی. پس تا جای ممکن ورودی را داخلِ پنجره‌ی اپ نشان
+     می‌دهیم به‌جای عوض کردن منبع سراسری تلویزیون؛ با بسته شدن اپ
+     (خاموشی، ریبوت، reload) آن پنجره هم از بین می‌رود:
 
-       اندروید  اپ ما: TvInputManager با passthrough input
-                 (فقط روی تلویزیون واقعی؛ Mi Stick و Mi Box پورت
-                  ورودی HDMI ندارند و فهرست خالی می‌دهند)
+       Samsung (Tizen)  tizen.tvwindow — پنجره‌ی ویدیوی مال خود اپ
+       اندروید (اپ ما)  TvView داخل همان Activity؛ onStop آزادش می‌کند
+       LG Pro:Centric   ‏HCAP: ‏setCurrentExternalInput منبع سراسری را عوض
+                        می‌کند، پس لایه‌ی دوم لازم است ↓
+       webOS معمولی     اپ HDMI جای ما را می‌گیرد (آخرین چاره)
 
-       webOS     ورودی‌ها خودشان اپ‌اند: com.webos.app.hdmi1 تا hdmi4
-                 و externalinput.av1 — با applicationmanager/launch
-                 باز می‌شوند (ACG لازم: application.launcher)
+     لایه‌ی دوم برای همه: هر بار پورتال بالا می‌آید و هر بار تلویزیون
+     به حالت آماده‌به‌کار می‌رود یا بیدار می‌شود، TV.inputs.boot()
+     ورودی را به «ورودی پورتال» برمی‌گرداند. پس حتی اگر تنظیم
+     Power On تلویزیون اشتباه باشد، مهمان بعدی HDMI قبلی را نمی‌بیند.
 
-       Tizen     tizen.tvwindow.setSource با فهرستی که
-                 systeminfo.getPropertyValue('VIDEOSOURCE') می‌دهد
-                 (privilege لازم: http://tizen.org/privilege/tv.window)
+     لایه‌ی سوم تنظیمات خود تلویزیون است (docs/TV-LOCKDOWN-AND-INPUTS.md):
+     Samsung ‏Power On Source = URL Launcher، و LG ‏Power On Default
+     Input = Off.
 
-     روی webOS و Tizen این‌ها برای اپِ نصب‌شده تعریف شده‌اند. صفحه‌ی
-     وبِ از راه دور (Pro:Centric HTML و URL Launcher) ممکن است مجوز
-     نداشته باشد. پس همه‌چیز در try است و اگر نشد، `available:false`
-     برمی‌گردد تا رابط کاربر به مهمان راست بگوید به‌جای دکمه‌ی بی‌اثر. */
+     همه‌چیز در try است: اگر مجوز یا API نبود، available نیست و
+     رابط کاربر به مهمان راست می‌گوید، نه دکمه‌ی بی‌اثر. */
   TV.inputs = {};
+
+  /* اپ اندروید پل را با نام AndroidBridge ثبت می‌کرد و این فایل دنبال
+     SignageBridge می‌گشت؛ یعنی تعویض ورودی و قفل‌گاه روی اندروید هرگز
+     فعال نمی‌شد. هر دو نام پذیرفته است. */
+  function bridge() { return global.SignageBridge || global.AndroidBridge || null; }
+  TV.bridge = bridge;
+
+  function hcapIn() {
+    return global.hcap && global.hcap.externalinput && global.hcap.externalinput.setCurrentExternalInput
+      ? global.hcap.externalinput : null;
+  }
+  /* ثابت‌های HCAP از خود کتابخانه خوانده می‌شوند؛ عدد فقط پشتیبان است */
+  function hcapType(name, fallback) {
+    var h = hcapIn(), t = h && h.ExternalInputType;
+    return (t && t[name] !== undefined) ? t[name] : fallback;
+  }
+  function isHdmiLike(type) {
+    return type !== hcapType('TV', 1);
+  }
 
   /** آیا اصلا می‌توانیم ورودی عوض کنیم؟ */
   TV.inputs.supported = function () {
-    if (global.SignageBridge && global.SignageBridge.listInputs) return 'android';
-    if (global.webOS && global.webOS.service) return 'webos';
+    var b = bridge();
+    if (b && b.listInputs) return 'android';
+    if (hcapIn()) return 'hcap';
     if (global.tizen && global.tizen.tvwindow) return 'tizen';
+    if (global.webOS && global.webOS.service) return 'webos';
     return '';
   };
 
-  /* روی webOS ورودی‌ها اپ‌اند و فهرست ثابتی دارند. کدام‌شان واقعا
-     کابل دارد را از این مسیر نمی‌شود فهمید، پس connected را null
-     می‌گذاریم و رابط کاربر ادعای اتصال نمی‌کند. */
+  /* روی webOS معمولی ورودی‌ها اپ‌اند و فهرست ثابتی دارند. کدام کابل
+     دارد را از این مسیر نمی‌شود فهمید، پس connected را null می‌گذاریم. */
   var WEBOS_INPUTS = [
     { id: 'com.webos.app.hdmi1', label: 'HDMI 1', type: 'HDMI' },
     { id: 'com.webos.app.hdmi2', label: 'HDMI 2', type: 'HDMI' },
@@ -480,12 +505,16 @@
     var kind = TV.inputs.supported();
 
     if (kind === 'android') {
-      var raw;
-      try { raw = global.SignageBridge.listInputs(); }
+      var raw, arr = [];
+      try { raw = bridge().listInputs(); }
       catch (e) { cb(e, []); return; }
-      var arr = [];
       try { arr = JSON.parse(raw || '[]'); } catch (e2) { arr = []; }
       cb(null, arr);
+      return;
+    }
+
+    if (kind === 'hcap') {
+      hcapList(cb);
       return;
     }
 
@@ -512,7 +541,6 @@
     }
 
     if (kind === 'webos') {
-      /* فهرست ثابت. کدام کابل دارد معلوم نیست، پس null. */
       var list = [], j;
       for (j = 0; j < WEBOS_INPUTS.length; j++) {
         list.push({ id: WEBOS_INPUTS[j].id, label: WEBOS_INPUTS[j].label,
@@ -525,29 +553,143 @@
     cb(null, []);
   };
 
+  /* HCAP: اگر خود تلویزیون فهرست بدهد همان؛ وگرنه HDMI 1 تا 4 با
+     بررسی اتصال. شماره‌گذاری index در HCAP از صفر است. */
+  function hcapList(cb) {
+    var h = hcapIn(), HDMI = hcapType('HDMI', 6);
+    function item(type, index, name) {
+      var label = name || ((type === HDMI ? 'HDMI ' : 'AV ') + (index + 1));
+      return { id: 'hcap:' + type + ':' + index, label: label, type: type === HDMI ? 'HDMI' : 'AV',
+               connected: null, _hcap: { type: type, index: index } };
+    }
+    if (h.getExternalInputList) {
+      try {
+        h.getExternalInputList({
+          onSuccess: function (s) {
+            var out = [], i, x, l = (s && s.list) || [];
+            for (i = 0; i < l.length; i++) {
+              x = l[i];
+              if (!isHdmiLike(x.type)) continue;
+              out.push(item(x.type, x.index, x.name));
+            }
+            if (out.length) { markConnected(out, function () { cb(null, out); }); }
+            else fallback();
+          },
+          onFailure: function () { fallback(); }
+        });
+        return;
+      } catch (e) {}
+    }
+    fallback();
+
+    function fallback() {
+      var out = [], i;
+      for (i = 0; i < 4; i++) out.push(item(HDMI, i, ''));
+      markConnected(out, function () { cb(null, out); });
+    }
+  }
+
+  /* اتصال هر ورودی، اگر API باشد؛ پاسخ دیر یا خطا یعنی «نمی‌دانم» */
+  function markConnected(list, done) {
+    var h = hcapIn(), left = list.length, finished = false, i;
+    function one() { if (--left <= 0 && !finished) { finished = true; done(); } }
+    if (!h.isExternalInputConnected || !left) { done(); return; }
+    setTimeout(function () { if (!finished) { finished = true; done(); } }, 1500);
+    for (i = 0; i < list.length; i++) {
+      (function (it) {
+        try {
+          h.isExternalInputConnected({
+            type: it._hcap.type, index: it._hcap.index,
+            onSuccess: function (s) { it.connected = !!(s && (s.isConnected || s.result)); one(); },
+            onFailure: function () { one(); }
+          });
+        } catch (e) { one(); }
+      })(list[i]);
+    }
+  }
+
+  // ── جلسه‌ی ورودی ─────────────────────────────────────────────────
+  /* session: {kind, label, overlay, restore}
+       overlay=true یعنی پورتال باید شفاف شود تا لایه‌ی ویدیوی زیرش
+       (HDMI) دیده شود — HCAP و Tizen. */
+  var session = null;
+  var listeners = [];
+  var HOME_KEY = 'hm_home_input';
+
+  function emit() {
+    var i;
+    for (i = 0; i < listeners.length; i++) { try { listeners[i](session); } catch (e) {} }
+  }
+
+  /** fn(session|null) — با هر ورود و خروج */
+  TV.inputs.onChange = function (fn) { listeners.push(fn); };
+  /** چرا جلسه‌ی قبلی تمام شد: '' | 'back' | 'stop' | 'failed' (از اپ اندروید) */
+  TV.inputs.lastClose = '';
+  TV.inputs.active   = function () { return session; };
+
+  function saveHome(v) { try { global.localStorage.setItem(HOME_KEY, JSON.stringify(v)); } catch (e) {} }
+  function loadHome() {
+    try { var v = JSON.parse(global.localStorage.getItem(HOME_KEY) || 'null'); if (v && v.type !== undefined) return v; } catch (e) {}
+    return { type: hcapType('TV', 1), index: 0 };
+  }
+
   /** cb(err, ok) */
   TV.inputs.switchTo = function (item, cb) {
     cb = cb || function () {};
     var kind = TV.inputs.supported();
     var id = (typeof item === 'string') ? item : (item && item.id);
     if (!id) { cb(new Error('ورودی مشخص نشده'), false); return; }
+    var label = (item && item.label) || id;
 
     if (kind === 'android') {
       var ok = false;
-      try { ok = global.SignageBridge.switchInput(id); }
+      try { ok = !!bridge().switchInput(id); }
       catch (e) { cb(e, false); return; }
-      cb(ok ? null : new Error('تعویض ورودی رد شد'), ok);
+      if (!ok) { cb(new Error('تعویض ورودی رد شد'), false); return; }
+      /* اپ ما ورودی را روی خودش نشان می‌دهد و BACK را خودش می‌گیرد */
+      session = { kind: 'android', label: label, overlay: false };
+      emit(); cb(null, true);
+      return;
+    }
+
+    if (kind === 'hcap') {
+      var h = hcapIn(), target = item && item._hcap;
+      if (!target) { cb(new Error('اطلاعات ورودی ناقص است'), false); return; }
+      /* ورودی فعلی (پورتال) را نگه دار تا برگشت به همان باشد */
+      getCurrent(function (cur) {
+        var home = (cur && !isHdmiLike(cur.type)) ? cur : loadHome();
+        saveHome(home);
+        try {
+          h.setCurrentExternalInput({
+            type: target.type, index: target.index,
+            onSuccess: function () {
+              session = { kind: 'hcap', label: label, overlay: true, restore: home };
+              emit(); cb(null, true);
+            },
+            onFailure: function (f) { cb(new Error((f && f.errorMessage) || 'تعویض ورودی رد شد'), false); }
+          });
+        } catch (e2) { cb(e2, false); }
+      });
       return;
     }
 
     if (kind === 'tizen') {
+      var src = (item && item._raw) ? item._raw : null;
+      if (!src) { cb(new Error('اطلاعات ورودی ناقص است'), false); return; }
+      var tw = global.tizen.tvwindow, prev = null;
+      try { prev = tw.getSource('MAIN'); } catch (e3) { prev = null; }
       try {
-        var src = (item && item._raw) ? item._raw : null;
-        if (!src) { cb(new Error('اطلاعات ورودی ناقص است'), false); return; }
-        global.tizen.tvwindow.setSource(src,
-          function () { cb(null, true); },
-          function (err) { cb(err, false); });
-      } catch (e2) { cb(e2, false); }
+        tw.setSource(src, function () {
+          /* تمام‌صفحه‌ی همین اپ؛ اندازه به پیکسل واقعی صفحه */
+          var w = (global.screen && global.screen.width) || 1920, hh = (global.screen && global.screen.height) || 1080;
+          try {
+            tw.show(function () {
+              session = { kind: 'tizen', label: label, overlay: true, restore: prev };
+              emit(); cb(null, true);
+            }, function (err) { cb(err, false); }, ['0px', '0px', w + 'px', hh + 'px'], 'MAIN');
+          } catch (e4) { cb(e4, false); }
+        }, function (err) { cb(err, false); }, 'MAIN');
+      } catch (e5) { cb(e5, false); }
       return;
     }
 
@@ -556,14 +698,122 @@
         global.webOS.service.request('luna://com.webos.service.applicationmanager', {
           method: 'launch',
           parameters: { id: id },
-          onSuccess: function () { cb(null, true); },
+          onSuccess: function () {
+            /* اپ HDMI جلو می‌آید؛ برگشت از webOSRelaunch یا visibilitychange */
+            session = { kind: 'webos', label: label, overlay: false };
+            emit(); cb(null, true);
+          },
           onFailure: function (err) { cb(err, false); }
         });
-      } catch (e3) { cb(e3, false); }
+      } catch (e6) { cb(e6, false); }
       return;
     }
 
     cb(new Error('این دستگاه تعویض ورودی را پشتیبانی نمی‌کند'), false);
+  };
+
+  function getCurrent(cb) {
+    var h = hcapIn();
+    if (!h || !h.getCurrentExternalInput) { cb(null); return; }
+    var done = false;
+    setTimeout(function () { if (!done) { done = true; cb(null); } }, 1500);
+    try {
+      h.getCurrentExternalInput({
+        onSuccess: function (s) { if (!done) { done = true; cb(s ? { type: s.type, index: s.index } : null); } },
+        onFailure: function () { if (!done) { done = true; cb(null); } }
+      });
+    } catch (e) { if (!done) { done = true; cb(null); } }
+  }
+
+  /** برگشت به پورتال. cb() — همیشه صدا زده می‌شود، حتی اگر API خطا بدهد */
+  TV.inputs.back = function (cb) {
+    cb = cb || function () {};
+    var s = session;
+    TV.inputs.lastClose = '';
+    session = null;
+    if (!s) { cb(); return; }
+
+    if (s.kind === 'hcap') {
+      setHome(s.restore || loadHome());
+    } else if (s.kind === 'tizen') {
+      var tw = global.tizen && global.tizen.tvwindow;
+      if (tw) {
+        try { if (s.restore) tw.setSource(s.restore, function () {}, function () {}, 'MAIN'); } catch (e1) {}
+        try { tw.hide(function () {}, function () {}, 'MAIN'); } catch (e2) {}
+      }
+    } else if (s.kind === 'android') {
+      var b = bridge();
+      try { if (b && b.closeInput) b.closeInput(); } catch (e3) {}
+    }
+    emit();
+    cb();
+  };
+
+  function setHome(home) {
+    var h = hcapIn();
+    if (!h) return;
+    try {
+      h.setCurrentExternalInput({ type: home.type, index: home.index,
+                                  onSuccess: function () {}, onFailure: function () {} });
+    } catch (e) {}
+  }
+
+  /* اگر ورودی فعلی HDMI است و ما در جلسه نیستیم، یعنی مهمان قبلی یا
+     روشن شدن تلویزیون آن را جا گذاشته — برگرد به پورتال. */
+  function resetStray() {
+    var kind = TV.inputs.supported();
+    if (kind === 'hcap') {
+      getCurrent(function (cur) {
+        if (session) return;
+        if (!cur) return;
+        if (isHdmiLike(cur.type)) setHome(loadHome());
+        else saveHome(cur);
+      });
+    } else if (kind === 'tizen') {
+      try { global.tizen.tvwindow.hide(function () {}, function () {}, 'MAIN'); } catch (e) {}
+    } else if (kind === 'android') {
+      var b = bridge();
+      try { if (b && b.closeInput) b.closeInput(); } catch (e2) {}
+    }
+  }
+
+  var booted = false;
+  /**
+   * یک‌بار در شروع پورتال. ورودیِ جامانده را برمی‌گرداند و به
+   * رویدادهای خاموشی و بیدار شدن گوش می‌دهد.
+   */
+  TV.inputs.boot = function () {
+    if (booted) return;
+    booted = true;
+    resetStray();
+
+    /* رفتن به آماده‌به‌کار: همین حالا برگرد، تا روشن شدن بعدی روی
+       پورتال باشد. برگشتن به صفحه (بعد از اپ HDMI روی webOS یا اندروید):
+       جلسه تمام است. */
+    TV.on(document, 'visibilitychange', function () {
+      if (document.hidden) {
+        if (session && session.overlay) TV.inputs.back();
+      } else if (session && !session.overlay) {
+        session = null; emit();
+      } else {
+        resetStray();
+      }
+    });
+    TV.on(global, 'webOSRelaunch', function () { if (session) { session = null; emit(); } resetStray(); });
+
+    /* HCAP رویدادهایش را روی document می‌فرستد */
+    TV.on(document, 'power_mode_changed', function () {
+      if (session) TV.inputs.back();
+      resetStray();
+    });
+
+    /* اپ اندروید وقتی ورودی را خودش بست (BACK یا خاموشی صفحه) خبر می‌دهد */
+    global.TVInputClosed = function (reason) {
+      if (!session) return;
+      session = null;
+      TV.inputs.lastClose = reason || '';
+      emit();
+    };
   };
 
   /* ── زیرنویس و باند صوتی ──────────────────────────────────────────
@@ -715,11 +965,12 @@
   TV.kiosk = {};
 
   TV.kiosk.state = function () {
-    if (!global.SignageBridge || !global.SignageBridge.getKioskState) {
+    var b = bridge();
+    if (!b || !b.getKioskState) {
       return { available: false, deviceOwner: false, locked: false };
     }
     try {
-      var s = JSON.parse(global.SignageBridge.getKioskState());
+      var s = JSON.parse(b.getKioskState());
       s.available = true;
       return s;
     } catch (e) {
@@ -728,8 +979,9 @@
   };
 
   TV.kiosk.enter = function () {
-    if (!global.SignageBridge || !global.SignageBridge.enterKiosk) return false;
-    try { return !!global.SignageBridge.enterKiosk(); } catch (e) { return false; }
+    var b = bridge();
+    if (!b || !b.enterKiosk) return false;
+    try { return !!b.enterKiosk(); } catch (e) { return false; }
   };
 
   /* ── راه‌اندازی ───────────────────────────────────────────────── */

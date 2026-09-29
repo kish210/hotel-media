@@ -161,6 +161,7 @@ class IptvRoomController extends Controller
             'check_out_at' => null,
         ], ['id' => $room['id']]);
         $this->db->query('UPDATE iptv_room_messages SET is_active=0 WHERE room_id=?', [$room['id']]);
+        $this->resetRoomTv((int)$room['id']);
 
         $this->log('iptv_room.checkout', 'IptvRoom', $room['id']);
         Response::success(null, 'خروج مهمان ثبت شد');
@@ -282,6 +283,7 @@ class IptvRoomController extends Controller
         ], ['id' => $room['id']]);
         $this->db->query('UPDATE iptv_room_messages SET is_active=0 WHERE room_id=?', [$room['id']]);
 
+        $this->resetRoomTv((int)$room['id']);
         $this->updatePmsLastUsed($req);
         Response::success(['room' => $roomNum, 'status' => 'available'], 'خروج ثبت شد');
     }
@@ -378,6 +380,23 @@ class IptvRoomController extends Controller
     // ══════════════════════════════════════════════════════════════
     //  Helpers
     // ══════════════════════════════════════════════════════════════
+
+    /**
+     * بعد از خروج مهمان، پورتال تلویزیون اتاق دوباره بار می‌شود. اگر
+     * مهمان تلویزیون را روی HDMI لپ‌تاپ یا دانگل نمایش گوشی رها کرده
+     * باشد و خاموشش نکرده باشد، بار شدن دوباره ورودی را به پورتال
+     * برمی‌گرداند (TV.inputs.boot) و پیام خوش‌آمد قبلی هم پاک می‌شود.
+     * خطای صف فرمان نباید خروج را بشکند.
+     */
+    private function resetRoomTv(int $roomId): void
+    {
+        try {
+            $svc = new \App\Services\DeviceService($this->db);
+            foreach ($this->db->rows('SELECT * FROM screens WHERE iptv_room_id = ?', [$roomId]) as $scr) {
+                $svc->queue($scr, 'refresh', [], null);
+            }
+        } catch (\Throwable) {}
+    }
 
     /* همه‌ی کارهای روی یک اتاق (ورود، خروج، پیام، حذف) از اینجا
        می‌گذرند؛ اتاق شعبه‌ی دیگر برای کارمند یک شعبه «یافت نشد» است */

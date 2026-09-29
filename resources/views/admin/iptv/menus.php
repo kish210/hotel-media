@@ -28,6 +28,9 @@ $ITEM_TYPES = [
   'book'      => ['کتابخانه',         'fas fa-book-open',      '#d97706'],
   'directory' => ['دفترچه تلفن',      'fas fa-address-book',   '#64748b'],
   'offers'    => ['تخفیف‌های اطراف',  'fas fa-ticket',         '#e11d48'],
+  /* نمایش گوشی و لپ‌تاپ مهمان: دانگل Cast/Miracast روی یک پورت HDMI.
+     «ورودی ثابت» خالی = فهرست همه‌ی ورودی‌ها */
+  'input'     => ['نمایش گوشی / اتصال دستگاه', 'fas fa-mobile-screen', '#8b5cf6'],
 ];
 
 // گروه‌های IPTV و منوهاشون رو از PHP variable دریافت می‌کنیم
@@ -499,6 +502,16 @@ $allMenus   = $allMenus   ?? [];
         </div>
       </div>
 
+      <!-- اتصال دستگاه: ورودی ثابت و راهنما -->
+      <div id="input-row" style="display:none;">
+        <label class="form-label">ورودی ثابت (اختیاری)</label>
+        <input type="text" id="item-input" class="form-input" placeholder="HDMI 2" maxlength="20">
+        <p style="font-size:11px;color:#64748b;margin:4px 0 10px;">پورتی که دانگل نمایش گوشی (Chromecast / Miracast) به آن وصل است. خالی = مهمان از فهرست همه‌ی ورودی‌ها انتخاب می‌کند.</p>
+        <label class="form-label">راهنمای مهمان (اختیاری)</label>
+        <textarea id="item-note" class="form-input" rows="3" maxlength="400" placeholder="به وای‌فای Hotel-Guest وصل شوید و در گوشی «Cast» را بزنید، دستگاه «اتاق ۳۰۵» را انتخاب کنید"></textarea>
+        <p style="font-size:11px;color:#64748b;margin-top:4px;">مهمان با BACK به منوی هتل برمی‌گردد؛ با خاموش و روشن شدن هم تلویزیون روی منو روشن می‌شود.</p>
+      </div>
+
       <!-- آدرس URL (فقط برای نوع url) -->
       <div id="url-row" style="display:none;">
         <label class="form-label">آدرس URL</label>
@@ -738,6 +751,8 @@ function openAddItem() {
   document.getElementById('item-id').value    = '';
   document.getElementById('item-label').value = '';
   document.getElementById('item-url').value   = '';
+  document.getElementById('item-input').value = '';
+  document.getElementById('item-note').value  = '';
   document.getElementById('item-color').value = '#ef4444';
   document.getElementById('item-icon').value  = 'fas fa-satellite-dish';
   pickType('live');
@@ -752,9 +767,13 @@ function openEditItem(itemId) {
   document.getElementById('item-id').value    = item.id;
   document.getElementById('item-label').value = item.label;
   document.getElementById('item-url').value   = item.target_url || '';
+  let cfg = item.config;
+  if (typeof cfg === 'string') { try { cfg = JSON.parse(cfg); } catch (_) { cfg = null; } }
+  document.getElementById('item-input').value = (cfg && cfg.input) || '';
+  document.getElementById('item-note').value  = (cfg && cfg.note) || '';
+  pickType(item.type);
   document.getElementById('item-color').value = item.color;
   document.getElementById('item-icon').value  = item.icon;
-  pickType(item.type);
   document.getElementById('itemModal').classList.remove('hidden');
 }
 
@@ -776,6 +795,7 @@ function pickType(type) {
   document.getElementById('item-color').value = getDefaultColor(type);
   // نشان دادن URL فقط برای نوع url
   document.getElementById('url-row').style.display = type === 'url' ? '' : 'none';
+  document.getElementById('input-row').style.display = type === 'input' ? '' : 'none';
 }
 
 function quickAdd(type) {
@@ -798,6 +818,12 @@ async function saveItem() {
     color:      document.getElementById('item-color').value,
     target_url: document.getElementById('item-url').value.trim() || null,
   };
+  if (typeVal === 'input') {
+    const inp = document.getElementById('item-input').value.trim();
+    const note = document.getElementById('item-note').value.trim();
+    payload.config = (inp || note) ? { input: inp || null, note: note || null } : null;
+    payload.target_url = null;
+  }
 
   const btn = document.querySelector('#itemModal .btn-primary');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin text-xs ml-1"></i>'; }

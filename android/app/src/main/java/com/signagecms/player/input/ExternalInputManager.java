@@ -94,16 +94,16 @@ public final class ExternalInputManager {
     }
 
     /**
-     * رفتن به یک ورودی.
+     * پشتیبانِ InputOverlay: اپ Live TV سازنده را باز می‌کند.
      *
-     * از Intent استفاده می‌کنیم نه TvView، چون TvView نیاز دارد اپ
-     * سطح سیستمی باشد تا صدا و تصویرِ passthrough را بگیرد؛ با Intent
-     * اپ تلویزیونِ خود دستگاه کار را انجام می‌دهد و روی سازنده‌های
-     * بیشتری جواب می‌دهد.
+     * فقط وقتی TvView روی این دستگاه نشد. دو ضعف دارد که برای همین
+     * پشتیبان است نه راه اصلی: در Lock Task اندروید اجازه‌اش را نمی‌دهد،
+     * و بعد از آماده‌به‌کار ممکن است تلویزیون روی همان HDMI بیدار شود
+     * (MainActivity در این حالت با SCREEN_ON اپ را جلو می‌آورد).
      *
      * @return آیا درخواست فرستاده شد
      */
-    public boolean switchTo(String inputId) {
+    public boolean switchViaSystemApp(String inputId) {
         if (inputId == null || inputId.length() == 0) return false;
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return false;
 
@@ -117,6 +117,17 @@ public final class ExternalInputManager {
             Log.w(TAG, "تعویض ورودی نشد: " + e.getMessage());
             return false;
         }
+    }
+
+    /** آیا این شناسه واقعا یک ورودی passthrough همین دستگاه است؟ */
+    public boolean isKnownInput(String inputId) {
+        if (tim == null || inputId == null) return false;
+        try {
+            for (TvInputInfo in : tim.getTvInputList()) {
+                if (in.isPassthroughInput() && inputId.equals(in.getId())) return true;
+            }
+        } catch (Exception ignored) { }
+        return false;
     }
 
     /** آیا کابلی به این ورودی وصل است؟ */

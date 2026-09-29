@@ -33,6 +33,11 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css<?= v() ?>">
 <link rel="stylesheet" href="/assets/css/tv-base.css<?= v() ?>">
 <script src="/assets/vendor/hls/hls.min.js<?= v() ?>"></script>
+<?php /* ‏LG Pro:Centric: اگر نصاب hcap.js را از SDK خود LG در این مسیر گذاشته باشد.
+         روی بیشتر تلویزیون‌ها مرورگر Pro:Centric خودش hcap را دارد. */
+      if (is_file(PUBLIC_PATH . '/assets/vendor/lg/hcap.js')): ?>
+<script src="/assets/vendor/lg/hcap.js<?= v() ?>"></script>
+<?php endif; ?>
 <script src="/assets/js/tv-base.js<?= v() ?>"></script>
 <script src="/assets/js/tv-trickplay.js<?= v() ?>"></script>
 <style>
@@ -230,6 +235,18 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 #act-code:focus { border-color: #4098db; }
 #act-btn { width: 100%; margin-top: 1rem; -webkit-box-pack: center; -webkit-justify-content: center; -ms-flex-pack: center; justify-content: center; }
 #act-err { font-size: .9rem; margin-top: .9rem; min-height: 1.4rem; color: #ff5f57; }
+
+/* ورودی HDMI زیر صفحه (HCAP و Tizen): پورتال شفاف می‌شود تا لایه‌ی
+   ویدیوی تلویزیون دیده شود. فقط راهنمای برگشت و بیدارباش می‌مانند. */
+html.tv-input-live, html.tv-input-live body { background: transparent !important; background-image: none !important; }
+html.tv-input-live body > * { visibility: hidden !important; }
+html.tv-input-live body > #input-hint, html.tv-input-live body > #wake-alarm { visibility: visible !important; }
+#input-hint { position: fixed; bottom: 2.4rem; left: 50%; margin-left: -18rem; width: 36rem; text-align: center;
+              background: rgba(0,0,0,.72); color: #fff; font-size: 1.15rem; border-radius: 1rem; padding: 1rem 1.4rem;
+              display: none; z-index: 9000; }
+#input-hint b { color: #fbbf24; }
+html.tv-input-live #input-hint.is-on { display: block; }
+.tv-inputs-note { font-size: 1.05rem; color: #fbbf24; line-height: 2; margin: -.4rem 0 1.2rem; white-space: pre-wrap; }
 </style>
 </head>
 <body>
@@ -326,6 +343,9 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   </div>
 </div>
 
+<!-- راهنمای برگشت وقتی تصویر HDMI مهمان روی تلویزیون است -->
+<div id="input-hint"></div>
+
 <div id="wake-alarm">
   <div id="wa-icon">⏰</div>
   <div id="wa-title">صبح بخیر — وقت بیدار شدن است</div>
@@ -370,6 +390,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 <div class="tv-inputs" id="inputs-screen">
   <div class="tv-inputs-title">اتصال دستگاه</div>
   <div class="tv-inputs-sub" id="inputs-sub">در حال بررسی…</div>
+  <div class="tv-inputs-note" id="inputs-note"></div>
   <div class="tv-grid tv-inputs-grid" id="inputs-grid"></div>
   <button type="button" class="tv-btn tv-inputs-back" id="inputs-back">
     <i class="fas fa-chevron-right" style="margin-left:.5rem"></i>بازگشت
@@ -632,7 +653,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 
     /* «اتصال دستگاه» محتوا نیست — صفحه‌ی خودش را باز می‌کند.
        بدون این، کاشی به شاخه‌ی ماژول می‌افتاد و iframe خالی می‌ساخت. */
-    if (it.type === 'input' || it.type === 'hdmi') { openInputs(); return; }
+    if (it.type === 'input' || it.type === 'hdmi') { openInputs(it); return; }
 
     /* صفحه‌های تعاملی مهمان محتوا نیستند که پخش شوند؛ چند مرحله دارند
        و کلید ریموت لازم دارند. آدرسشان به کد همین صفحه بسته است، پس
@@ -878,6 +899,16 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
     /* بیدارباش روی همه‌چیز است؛ هر دکمه‌ای یعنی مهمان بیدار شده */
     if (wakeOn) { ackWake(); if (e.preventDefault) e.preventDefault(); return; }
 
+    /* تصویر HDMI مهمان روی تلویزیون است: BACK برمی‌گرداند، بقیه‌ی
+       کلیدها فقط راهنما را نشان می‌دهند (صدا را خود تلویزیون کم و زیاد می‌کند) */
+    var ins = TV.inputs.active();
+    if (ins && ins.overlay) {
+      if (k === 'BACK' || k === 'EXIT') TV.inputs.back();
+      else showInputHint();
+      if (e.preventDefault) e.preventDefault();
+      return;
+    }
+
     /* صفحه‌ی اتصال دستگاه روی بقیه است، پس اول او. */
     if (inputsOpen) {
       if (k === 'BACK' || k === 'EXIT') { closeInputs(); if (e.preventDefault) e.preventDefault(); return; }
@@ -1069,9 +1100,17 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   var inputFocus = 0;
   var inputsOpen = false;
 
-  function openInputs() {
+  /* کاشی می‌تواند یک ورودی ثابت داشته باشد (config.input، مثلا «HDMI 2»
+     که دانگل نمایش گوشی به آن وصل است) و یک راهنما (config.note، مثلا
+     نام وای‌فای و نام دستگاه). آن‌وقت فقط همان ورودی نشان داده می‌شود. */
+  var inputPreset = null;
+
+  function openInputs(tile) {
     inputsOpen = true;
     clearTimeout(autoTimer);
+    var cfg = (tile && tile.config) || {};
+    inputPreset = cfg.input ? String(cfg.input).toLowerCase().replace(/\s+/g, '') : null;
+    TV.text(TV.id('inputs-note'), cfg.note ? String(cfg.note) : '');
     TV.addClass(TV.id('inputs-screen'), 'is-on');
     TV.text(TV.id('inputs-sub'), 'در حال بررسی…');
     TV.id('inputs-grid').innerHTML = '';
@@ -1091,10 +1130,19 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
           'کرده‌اید چند لحظه صبر کنید و دوباره امتحان کنید.');
         return;
       }
+      if (inputPreset) {
+        var only = [], p;
+        for (p = 0; p < list.length; p++) {
+          if (String(list[p].label).toLowerCase().replace(/\s+/g, '') === inputPreset) only.push(list[p]);
+        }
+        /* اگر نام تنظیم‌شده با این تلویزیون جور نبود، همه را نشان بده */
+        if (only.length) list = only;
+      }
       inputList = list;
-      TV.text(TV.id('inputs-sub'),
-        'دستگاه خود را به یکی از پورت‌های پشت تلویزیون وصل کنید، ' +
-        'سپس همان پورت را از اینجا انتخاب کنید.');
+      TV.text(TV.id('inputs-sub'), inputPreset && list.length === 1
+        ? 'OK را بزنید تا تصویر دستگاه شما نمایش داده شود. برای برگشت به منو BACK را بزنید.'
+        : 'دستگاه خود را به یکی از پورت‌های پشت تلویزیون وصل کنید، ' +
+          'سپس همان پورت را از اینجا انتخاب کنید.');
       buildInputs();
     });
   }
@@ -1152,19 +1200,52 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
           'ریموت استفاده کنید یا با پذیرش تماس بگیرید.');
         return;
       }
-      /* اگر موفق شد، تلویزیون از این صفحه بیرون می‌رود و چیزی برای
-         نشان‌دادن نمی‌ماند؛ ولی اگر برگشت، صفحه نباید روی «در حال
-         تغییر…» گیر کند. */
-      closeInputs();
+      /* بستن بدون پخش خودکار: وگرنه ۸ ثانیه بعد کانال روی HDMI مهمان
+         شروع به پخش می‌کرد. پخش خودکار با برگشت از ورودی برمی‌گردد. */
+      closeInputs(true);
     });
   }
 
-  function closeInputs() {
+  function closeInputs(noAuto) {
     inputsOpen = false;
     TV.removeClass(TV.id('inputs-screen'), 'is-on');
     focus(focusIdx);
-    scheduleAutoPlay();
+    if (!noAuto) scheduleAutoPlay();
   }
+
+  /* ── وقتی تصویر HDMI روی تلویزیون است ──────────────────────────── */
+  var hintTimer = null;
+  function showInputHint() {
+    var s = TV.inputs.active();
+    if (!s) return;
+    TV.id('input-hint').innerHTML = TV.esc(s.label) + ' — برای برگشت به منوی هتل <b>BACK</b> را بزنید';
+    TV.addClass(TV.id('input-hint'), 'is-on');
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(function () { TV.removeClass(TV.id('input-hint'), 'is-on'); }, 6000);
+  }
+
+  TV.inputs.onChange(function (s) {
+    if (s && s.overlay) {
+      /* پخش پورتال (صدا و تصویر) نباید زیر HDMI ادامه پیدا کند */
+      clearTimeout(autoTimer);
+      if (playing) back();
+      clearTimeout(autoTimer);
+      TV.addClass(document.documentElement, 'tv-input-live');
+      showInputHint();
+      return;
+    }
+    if (!s) {
+      TV.removeClass(document.documentElement, 'tv-input-live');
+      TV.removeClass(TV.id('input-hint'), 'is-on');
+      /* اپ اندروید نتوانست تصویر ورودی را بگیرد */
+      if (TV.inputs.lastClose === 'failed') {
+        TV.notice('اتصال دستگاه', 'تصویر این ورودی باز نشد. کابل را بررسی کنید یا از دکمه‌ی ورودی ریموت استفاده کنید.', 10);
+      }
+      focus(focusIdx);
+      scheduleAutoPlay();
+    }
+  });
+  TV.inputs.boot();
 
   TV.on(TV.id('inputs-back'), 'click', closeInputs);
 
@@ -1289,6 +1370,8 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   }
 
   function showWake(w) {
+    /* بیدارباش روی HDMI هم باید دیده شود؛ برگشت به پورتال مطمئن‌تر است */
+    if (TV.inputs.active()) TV.inputs.back();
     wakeOn = w;
     TV.text(TV.id('wa-time'), String(w.scheduled_at || '').substr(11, 5).replace(/[0-9]/g, function (c) {
       return '۰۱۲۳۴۵۶۷۸۹'.charAt(+c);

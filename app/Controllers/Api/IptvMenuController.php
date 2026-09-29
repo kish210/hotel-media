@@ -295,6 +295,14 @@ class IptvMenuController extends Controller
             "SELECT * FROM iptv_menu_items WHERE menu_id=? AND is_active=1 ORDER BY sort_order",
             [$id]
         ) ?: [];
+        /* config در دیتابیس رشته‌ی JSON است؛ تلویزیون شیء می‌خواهد
+           (مثلا ورودی ثابت و راهنمای کاشی «نمایش گوشی») */
+        foreach ($menu['items'] as &$it) {
+            if (is_string($it['config'] ?? null) && $it['config'] !== '') {
+                $it['config'] = json_decode($it['config'], true) ?: null;
+            }
+        }
+        unset($it);
 
         Response::success($menu);
     }
@@ -359,6 +367,7 @@ class IptvMenuController extends Controller
             'epg'       => 'fas fa-table-list',
             'cameras'   => 'fas fa-video',
             'offers'    => 'fas fa-ticket',
+            'input'     => 'fas fa-mobile-screen',
             default     => 'fas fa-grip-dots',
         };
     }
@@ -380,6 +389,7 @@ class IptvMenuController extends Controller
             'epg'       => '#a855f7',
             'cameras'   => '#0ea5e9',
             'offers'    => '#e11d48',
+            'input'     => '#8b5cf6',
             default     => '#f97316',
         };
     }

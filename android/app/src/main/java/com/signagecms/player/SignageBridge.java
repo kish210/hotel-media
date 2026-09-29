@@ -112,8 +112,34 @@ public class SignageBridge {
         return inputs.listJson();
     }
 
+    /**
+     * نمایش یک ورودی. اول داخل خود اپ (InputOverlay با TvView) — تا BACK
+     * و خاموشی آن را ببندند و تلویزیون همیشه روی پورتال روشن شود. اگر
+     * این دستگاه اجازه نداد و قفل‌گاه روشن نیست، اپ Live TV سیستم.
+     */
     @JavascriptInterface
     public boolean switchInput(String inputId) {
-        return inputs.switchTo(inputId);
+        if (!inputs.isKnownInput(inputId)) return false;
+        final boolean[] ok = { false };
+        final java.util.concurrent.CountDownLatch done =
+            new java.util.concurrent.CountDownLatch(1);
+        activity.runOnUiThread(() -> {
+            try { ok[0] = activity.openInput(inputId); } finally { done.countDown(); }
+        });
+        try { done.await(3, java.util.concurrent.TimeUnit.SECONDS); }
+        catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        if (ok[0]) return true;
+
+        /* در Lock Task اندروید اپ دیگری را باز نمی‌کند؛ تلاش بی‌فایده است */
+        if (kiosk.isLocked()) return false;
+        boolean sent = inputs.switchViaSystemApp(inputId);
+        if (sent) activity.markExternalInput();
+        return sent;
+    }
+
+    /** پورتال می‌خواهد برگردد (یا در بوت، ورودی جامانده را ببندد) */
+    @JavascriptInterface
+    public void closeInput() {
+        activity.runOnUiThread(() -> activity.closeInput("js"));
     }
 }
