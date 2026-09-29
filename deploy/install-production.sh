@@ -435,6 +435,23 @@ systemctl is-active --quiet hotel-media-ws \
     && ok "سرویس WebSocket اجرا شد" \
     || warn "سرویس WebSocket بالا نیامد — journalctl -u hotel-media-ws"
 
+# ── راه‌اندازی خودکار پس از ریستارت سرور ─────────────────────────────
+# cron جزو enable هایِ بالا نبود چون معمولا از قبل روشن است — ولی «معمولا»
+# روی سروری که برق هتل قطع و وصل می‌شود کافی نیست: بدون cron، پایش
+# تلویزیون‌ها و دریافت پرواز و EPG هیچ‌کدام اجرا نمی‌شوند و هیچ خطایی
+# هم جایی ثبت نمی‌شود.
+info "بررسی راه‌اندازی خودکار همه‌ی سرویس‌ها…"
+for _svc in cron mariadb "php${PHP_VER}-fpm" nginx hotel-media-ws tvheadend; do
+    systemctl list-unit-files "${_svc}.service" >/dev/null 2>&1 || continue
+    if systemctl is-enabled --quiet "$_svc" 2>/dev/null; then
+        ok "  $_svc — پس از ریستارت بالا می‌آید"
+    else
+        systemctl enable "$_svc" >/dev/null 2>&1 \
+            && ok "  $_svc — راه‌اندازی خودکار فعال شد" \
+            || warn "  $_svc — فعال نشد؛ بعد از ریستارت دستی لازم دارد"
+    fi
+done
+
 # ── اتصال خودکار TVHeadend ───────────────────────────────────────────
 # بدون این، اپراتور کانال‌ها را دستی وارد می‌کند و EPG خالی می‌ماند.
 if [[ "$INSTALL_TVHEADEND" == "1" ]]; then

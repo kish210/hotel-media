@@ -196,7 +196,7 @@ class DeviceService
             return [
                 'ok'      => false,
                 'id'      => null,
-                'message' => "فرمان «$command» روی پلتفرم " . $this->platformLabel($platform) . " پشتیبانی نمی‌شود",
+                'message' => "فرمان «{$command}» روی پلتفرم " . $this->platformLabel($platform) . " پشتیبانی نمی‌شود",
             ];
         }
 

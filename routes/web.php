@@ -237,6 +237,10 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
     $r->post('/system/update/apply',  [\App\Controllers\Web\SystemUpdateController::class, 'apply']);
     $r->post('/system/update/backup', [\App\Controllers\Web\SystemUpdateController::class, 'backup']);
 
+    // عیب‌یابی سرور و شبکه — فقط خواندنی، فقط مدیر ارشد
+    $r->get('/system/diagnostics',      [\App\Controllers\Web\DiagnosticsController::class, 'index']);
+    $r->get('/system/diagnostics/json', [\App\Controllers\Web\DiagnosticsController::class, 'json']);
+
     // Reports
     $r->get('/reports', [\App\Controllers\Web\ReportController::class, 'index']);
 

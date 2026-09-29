@@ -137,7 +137,7 @@ class TranscoderController extends Controller
                 'log'        => $logFile,
             ];
             $this->saveSessions($sessions);
-            $this->flash('success', "استریم «$streamName» شروع شد — PID: $pid");
+            $this->flash('success', "استریم «{$streamName}» شروع شد — PID: $pid");
         } else {
             $this->flash('error', 'FFmpeg اجرا نشد — لاگ را بررسی کنید');
         }
@@ -159,7 +159,7 @@ class TranscoderController extends Controller
             if (is_dir($dir)) shell_exec("rm -rf " . escapeshellarg($dir));
             unset($sessions[$name]);
             $this->saveSessions($sessions);
-            $this->flash('success', "استریم «$name» متوقف شد");
+            $this->flash('success', "استریم «{$name}» متوقف شد");
         }
         $this->redirect('/admin/transcoder');
     }

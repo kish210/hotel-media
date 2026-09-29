@@ -102,7 +102,7 @@ class EpgWebController extends Controller
         )->rowCount();
 
         $this->log('epg.map', 'epg_channel_map', $cid, [], ['key' => $key, 'programs' => $n]);
-        $this->flash('success', "«$key» به کانال وصل شد — $n برنامه به‌روز شد");
+        $this->flash('success', "«{$key}» به کانال وصل شد — $n برنامه به‌روز شد");
         $this->redirect('/admin/epg');
     }
 }

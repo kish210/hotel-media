@@ -53,7 +53,7 @@ class MediaController extends Controller
             $mime    = mime_content_type($file['tmp_name']);
 
             if (!in_array($mime, $allowed, true)) {
-                \App\Core\Response::error("فرمت «$mime» مجاز نیست", 415);
+                \App\Core\Response::error("فرمت «{$mime}» مجاز نیست", 415);
                 return;
             }
 

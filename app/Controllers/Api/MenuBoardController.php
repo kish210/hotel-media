@@ -185,7 +185,7 @@ class MenuBoardController extends Controller
 
             $mime = mime_content_type($file['tmp_name']) ?: '';
             if (!isset(self::ALLOWED_MIME[$mime])) {
-                $errors[] = ($file['name'] ?? 'فایل') . " — فرمت «$mime» پشتیبانی نمی‌شود (JPG، PNG یا WebP)";
+                $errors[] = ($file['name'] ?? 'فایل') . " — فرمت «{$mime}» پشتیبانی نمی‌شود (JPG، PNG یا WebP)";
                 continue;
             }
 
