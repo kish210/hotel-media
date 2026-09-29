@@ -89,6 +89,13 @@ $router->get('/uploads/{path}', function(\App\Core\Request $req, array $p) {
         http_response_code(304); exit;
     }
 
+    /* ویدیوی بزرگ از این مسیر (نصب ویندوز و سرور داخلی PHP) بیش از
+       max_execution_time طول می‌کشد؛ بدون این، ارسال بعد از ۳۰۰ ثانیه
+       قطع می‌شد و تلویزیون وسط فیلم می‌ایستاد. nginx در production این
+       مسیر را مستقیم از دیسک سرو می‌کند و به اینجا نمی‌رسد. */
+    @set_time_limit(0);
+    ignore_user_abort(false);
+
     // Range support برای ویدیو
     if (isset($_SERVER['HTTP_RANGE'])) {
         preg_match('/bytes=(\d+)-(\d*)/', $_SERVER['HTTP_RANGE'], $m);

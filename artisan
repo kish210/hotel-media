@@ -99,6 +99,25 @@ match ($command) {
         echo "media #$id finalized (ffmpeg exit $code)\n";
     })(),
 
+    'media:reconvert' => (function() use ($argv) {
+        // ویدیوهای «آماده»ای که روی تلویزیون هتلی گیر می‌کنند (۴K، ۶۰ فریم،
+        // نرخ فریم متغیر، HDR، فهرست در انتهای فایل) دوباره تبدیل می‌شوند.
+        //   php artisan media:reconvert            همه
+        //   php artisan media:reconvert 42         فقط رسانه‌ی ۴۲
+        //   php artisan media:reconvert --dry-run  فقط فهرست، بدون تبدیل
+        $dry  = in_array('--dry-run', $argv, true);
+        $only = null;
+        foreach (array_slice($argv, 2) as $a) if (ctype_digit($a)) $only = (int)$a;
+
+        $rows = (new \App\Services\MediaConvertService())->reconvertUnsafe($only, $dry);
+        if (!$rows) { echo "  همه‌ی ویدیوها برای تلویزیون مناسب‌اند\n"; return; }
+        foreach ($rows as $r) {
+            echo sprintf("  #%d %s — %s: %s%s\n", $r['id'], $r['name'],
+                $r['action'] === 'remux' ? 'بازچینی' : 'تبدیل', implode('، ', $r['reasons']),
+                $dry ? '' : ($r['started'] ? ' ✓ شروع شد' : ' ✗ شروع نشد'));
+        }
+    })(),
+
     'db:migrate' => (function() {
         $db = \App\Core\Database::getInstance();
 
@@ -499,6 +518,7 @@ match ($command) {
             'monitor:screens' => 'Check screen online status & send alerts',
             'transcoder:supervise' => 'Keep live transcoder channels running (cron, every minute)',
             'media:converted' => 'Close out a background video conversion [mediaId exitCode]',
+            'media:reconvert' => 'Re-convert ready videos a hotel TV cannot play smoothly [id] [--dry-run]',
             'ws:start'        => 'Start WebSocket server',
             'storage:clean'   => 'Remove soft-deleted media files',
             'cache:clear'     => 'Clear application cache',

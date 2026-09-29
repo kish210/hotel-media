@@ -4,6 +4,10 @@
  * nginx passes UPLOAD_PATH = /uploads/media/1/filename.jpg
  */
 
+/* ارسال یک فیلم بلند از max_execution_time بیشتر طول می‌کشد؛ بدون این
+   پخش روی تلویزیون وسط فیلم قطع می‌شد */
+@set_time_limit(0);
+
 // مسیر از nginx
 $uri = $_SERVER['UPLOAD_PATH'] ?? $_SERVER['REQUEST_URI'] ?? '';
 
