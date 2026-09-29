@@ -17,7 +17,7 @@ use App\Models\Screen;
  */
 class TvGuestController extends Controller
 {
-    private const VIEWS = ['reserve', 'services', 'folio', 'live'];
+    private const VIEWS = ['reserve', 'services', 'folio', 'live', 'content'];
 
     /** GET /tv/guest/{code}/{view} */
     public function show(Request $req, array $params): void
@@ -53,7 +53,34 @@ class TvGuestController extends Controller
         /* همان صفحه‌ی زنده، فقط کانال‌های رادیویی */
         $radio = $req->get('radio') === '1';
 
+        /* صفحه‌ی محتوا: خبر، قرآن، کتاب، دفترچه تلفن */
+        $kind = in_array($req->get('kind'), ['news', 'quran', 'book', 'directory'], true) ? (string)$req->get('kind') : 'news';
+
         header('Cache-Control: no-store');
         include VIEWS_PATH . '/player/guest/' . $view . '.php';
+    }
+
+    /**
+     * GET /tv/guest/{code}/book/{id}/{page} — یک صفحه‌ی PDF به‌صورت PNG.
+     * مرورگر تلویزیون PDF باز نمی‌کند؛ BookService صفحه را تصویر می‌کند.
+     */
+    public function bookPage(Request $req, array $params): void
+    {
+        $code   = strtoupper(trim((string)($params['code'] ?? '')));
+        $screen = $code !== '' ? (new Screen())->findByCode($code) : null;
+        $item   = $screen ? $this->db->row(
+            'SELECT id, file_url FROM content_items WHERE id = ? AND tenant_id = ? AND is_active = 1',
+            [(int)($params['id'] ?? 0), (int)$screen['tenant_id']]
+        ) : null;
+
+        $books = new \App\Services\BookService();
+        $pdf   = $item ? $books->localPdf($item['file_url']) : null;
+        $png   = $pdf ? $books->page((int)$item['id'], $pdf, (int)($params['page'] ?? 0)) : null;
+        if (!$png) { http_response_code(404); echo 'صفحه یافت نشد'; return; }
+
+        header('Content-Type: image/png');
+        header('Content-Length: ' . (string)filesize($png));
+        header('Cache-Control: public, max-age=86400');
+        readfile($png);
     }
 }

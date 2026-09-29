@@ -392,6 +392,7 @@ $router->post('/api/v1/guest/{code}/wakeups/{id}/ack',     [\App\Controllers\Api
 // ── محتوای جانبی — پنل (protected) ──────────────────────────────
 $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
     $r->get('/content',            [\App\Controllers\Api\ContentController::class, 'index']);
+    $r->post('/content/upload',    [\App\Controllers\Api\ContentController::class, 'upload']);
     $r->post('/content',           [\App\Controllers\Api\ContentController::class, 'store']);
     $r->put('/content/{id}',       [\App\Controllers\Api\ContentController::class, 'update']);
     $r->delete('/content/{id}',    [\App\Controllers\Api\ContentController::class, 'destroy']);

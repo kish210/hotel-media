@@ -67,7 +67,57 @@ class ContentController extends Controller
         );
         if (!$row) { Response::notFound('محتوا یافت نشد'); return; }
 
+        /* PDF روی تلویزیون باز نمی‌شود؛ صفحه‌ها تصویر می‌شوند و تلویزیون
+           فقط تعدادشان را لازم دارد (/tv/guest/{code}/book/{id}/{n}) */
+        $books = new \App\Services\BookService();
+        $pdf   = $books->localPdf($row['file_url'] ?? null);
+        $row['pages'] = $pdf && $books->available() ? $books->pages($pdf) : 0;
+
         Response::success($row);
+    }
+
+    /**
+     * POST /api/v1/content/upload — فایل کتاب، تلاوت یا تصویر (multipart: file, type)
+     *
+     * نوع واقعی با finfo خوانده می‌شود، نه از پسوند یا مرورگر: فایل در
+     * public/uploads سرو می‌شود و HTML با پسوند .pdf همان‌جا اجرا می‌شد.
+     */
+    public function upload(Request $req): void
+    {
+        $type = (string)$req->post('type', '');
+        $file = $_FILES['file'] ?? null;
+        $rules = [
+            'pdf'   => [['application/pdf' => 'pdf'], 300],
+            'audio' => [['audio/mpeg' => 'mp3', 'audio/mp4' => 'm4a', 'audio/x-m4a' => 'm4a', 'audio/aac' => 'aac',
+                         'audio/ogg' => 'ogg', 'audio/wav' => 'wav', 'audio/x-wav' => 'wav'], 300],
+            'image' => [['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'], 10],
+        ];
+        if (!isset($rules[$type])) { Response::error('نوع فایل نامعتبر است', 422); return; }
+        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) { Response::error('فایل کامل بارگذاری نشد', 422); return; }
+
+        [$mimes, $maxMb] = $rules[$type];
+        if ((int)$file['size'] > $maxMb * 1024 * 1024) { Response::error("حجم فایل بیشتر از {$maxMb} مگابایت است", 422); return; }
+
+        $mime = (string)(new \finfo(FILEINFO_MIME_TYPE))->file((string)$file['tmp_name']);
+        if (!isset($mimes[$mime])) { Response::error('محتوای فایل با نوع انتخاب‌شده جور نیست (' . $mime . ')', 422); return; }
+
+        $tid = Auth::tenantId();
+        $dir = PUBLIC_PATH . '/uploads/content/' . $tid;
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true)) { Response::error('پوشه‌ی بارگذاری ساخته نشد', 500); return; }
+
+        $name = $type . '_' . bin2hex(random_bytes(8)) . '.' . $mimes[$mime];
+        if (!move_uploaded_file((string)$file['tmp_name'], $dir . '/' . $name)) {
+            Response::error('ذخیره‌ی فایل ناموفق بود', 500); return;
+        }
+        @chmod($dir . '/' . $name, 0644);
+
+        $url = '/uploads/content/' . $tid . '/' . $name;
+        $out = ['url' => $url, 'name' => (string)($file['name'] ?? '')];
+        if ($type === 'pdf') {
+            $books = new \App\Services\BookService();
+            $out['pages'] = $books->available() ? $books->pages($dir . '/' . $name) : null;
+        }
+        Response::success($out, 'فایل بارگذاری شد', 201);
     }
 
     /** GET /api/v1/guest/{code}/channels — با اعمال سطح دسترسی و قفل */

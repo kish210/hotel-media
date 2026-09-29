@@ -47,6 +47,7 @@ var TV_FILES = [
   'resources/views/player/guest/services.php',
   'resources/views/player/guest/folio.php',
   'resources/views/player/guest/live.php',
+  'resources/views/player/guest/content.php',
   'public/assets/js/tv-guest.js',
   'public/assets/css/tv-guest.css',
   'public/assets/css/tv-base.css',

@@ -265,6 +265,7 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
 $router->get('/tv',              [\App\Controllers\Web\TvBootstrapController::class, 'index']);
 // صفحه‌های تعاملی مهمان — پورتال IPTV در iframe بازشان می‌کند
 $router->get('/tv/guest/{code}/{view}', [\App\Controllers\Web\TvGuestController::class, 'show']);
+$router->get('/tv/guest/{code}/book/{id}/{page}', [\App\Controllers\Web\TvGuestController::class, 'bookPage']);
 
 $router->get('/player',          [\App\Controllers\Web\PlayerController::class, 'index']);
 $router->get('/player/{code}',   [\App\Controllers\Web\PlayerController::class, 'show']);
@@ -326,6 +327,7 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     $r->get('/guest-services',      [\App\Controllers\Web\GuestServiceWebController::class, 'index']);
     $r->get('/guest-services/feed', [\App\Controllers\Web\GuestServiceWebController::class, 'feed']);
     $r->get('/reservations',        [\App\Controllers\Web\ReservationWebController::class, 'index']);
+    $r->get('/content',             [\App\Controllers\Web\ContentWebController::class, 'index']);
     // ── Devices — مدیریت تلویزیون‌ها ───────────────────────────
     $r->get('/devices',       [\App\Controllers\Web\DeviceWebController::class, 'index']);
     $r->get('/devices/feed',  [\App\Controllers\Web\DeviceWebController::class, 'feed']);

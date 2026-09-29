@@ -639,7 +639,9 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
        یک کاشی در منوی مشترک برای همه‌ی اتاق‌ها کار می‌کند. */
     /* کاشی «زنده» یا «رادیو» بدون آدرس یعنی فهرست کانال‌ها؛ با آدرس،
        همان رفتار قدیم (یک کانال مشخص). */
-    if (GUEST_VIEWS[it.type] && !((it.type === 'live' || it.type === 'radio') && it.target_url)) { openGuest(it); return; }
+    if (GUEST_VIEWS[it.type] && !((it.type === 'live' || it.type === 'radio' || CONTENT_KINDS[it.type]) && it.target_url)) {
+      openGuest(it); return;
+    }
 
     play(it);
   }
@@ -693,7 +695,9 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
     autoTimer = setTimeout(back, 300000);
   }
 
-  var GUEST_VIEWS = { reserve: 1, services: 1, folio: 1, live: 1, radio: 1 };
+  var GUEST_VIEWS = { reserve: 1, services: 1, folio: 1, live: 1, radio: 1,
+                      news: 1, quran: 1, book: 1, directory: 1 };
+  var CONTENT_KINDS = { news: 1, quran: 1, book: 1, directory: 1 };
 
   function openGuest(it) {
     playing  = true;
@@ -708,7 +712,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 
     var f = document.createElement('iframe');
     f.src = ORIGIN + '/tv/guest/' + encodeURIComponent(SCREEN_CODE) + '/' +
-            (it.type === 'radio' ? 'live?radio=1' : it.type);
+            (it.type === 'radio' ? 'live?radio=1' : CONTENT_KINDS[it.type] ? 'content?kind=' + it.type : it.type);
     f.setAttribute('allow', 'autoplay; fullscreen');
     host.appendChild(f);
     guestFrame = f;

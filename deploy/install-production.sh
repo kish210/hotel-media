@@ -108,7 +108,7 @@ if ! apt-cache show "php${PHP_VER}-fpm" >/dev/null 2>&1; then
 fi
 
 apt-get install -y -qq \
-    nginx mariadb-server ffmpeg \
+    nginx mariadb-server ffmpeg poppler-utils \
     "php${PHP_VER}-fpm" "php${PHP_VER}-cli" "php${PHP_VER}-mysql" \
     "php${PHP_VER}-mbstring" "php${PHP_VER}-xml" "php${PHP_VER}-curl" \
     "php${PHP_VER}-gd" "php${PHP_VER}-zip" "php${PHP_VER}-intl" \

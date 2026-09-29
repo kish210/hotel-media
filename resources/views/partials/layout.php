@@ -179,6 +179,9 @@ if (!function_exists('modOn')) {
     <i class="fas fa-hotel" style="margin-left:5px;opacity:.6"></i> محتوای هتل
   </div>
   <?php if (modOn('hotel')): ?>
+  <a href="/admin/content" class="sidebar-link <?= isActive('/admin/content') ?>">
+    <span class="icon"><i class="fas fa-book-open"></i></span> خبر، قرآن، کتاب، دفترچه
+  </a>
   <a href="/admin/modules/hotel" class="sidebar-link <?= isActive('/admin/modules/hotel') ?>">
     <span class="icon"><i class="fas fa-circle-info"></i></span> اطلاعات و رویدادها
   </a>
