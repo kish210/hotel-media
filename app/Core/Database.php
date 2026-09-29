@@ -58,12 +58,29 @@ class Database
     public function pdo(): PDO { return $this->pdo; }
 
     /** Clean data — remove forbidden keys and non-string keys */
+    private static function isIdent(string $k): bool
+    {
+        return (bool)preg_match('/^[A-Za-z_][A-Za-z0-9_]{0,63}$/', $k);
+    }
+
+    /** شرط WHERE از کد می‌آید نه از کاربر؛ نام نامعتبر یعنی باگ، پس خطا */
+    private function whereSql(array $where): string
+    {
+        foreach (array_keys($where) as $c) {
+            if (!is_string($c) || !self::isIdent($c)) throw new \InvalidArgumentException('نام ستون نامعتبر در شرط');
+        }
+        return implode(' AND ', array_map(fn($c) => "`$c` = ?", array_keys($where)));
+    }
+
     private function clean(array $data): array
     {
         $clean = [];
         foreach ($data as $k => $v) {
             if (!is_string($k)) continue;
             if (in_array($k, self::FORBIDDEN_KEYS, true)) continue;
+            /* چند کنترلر کل ورودی فرم را مستقیم به insert/update می‌دهند؛
+               کلیدی مثل «name`) VALUES (…» داخل بک‌تیک نام ستون تزریق SQL بود. */
+            if (!self::isIdent($k)) continue;
             $clean[$k] = $v;
         }
         return $clean;
@@ -118,7 +135,7 @@ class Database
         if (empty($data)) return 0;
 
         $set   = implode(', ', array_map(fn($c) => "`$c` = ?", array_keys($data)));
-        $conds = implode(' AND ', array_map(fn($c) => "`$c` = ?", array_keys($where)));
+        $conds = $this->whereSql($where);
         $params = array_merge(array_values($data), array_values($where));
 
         return $this->query("UPDATE `$table` SET $set WHERE $conds", $params)->rowCount();
@@ -126,20 +143,20 @@ class Database
 
     public function delete(string $table, array $where): int
     {
-        $conds  = implode(' AND ', array_map(fn($c) => "`$c` = ?", array_keys($where)));
+        $conds  = $this->whereSql($where);
         return $this->query("DELETE FROM `$table` WHERE $conds", array_values($where))->rowCount();
     }
 
     public function exists(string $table, array $where): bool
     {
-        $conds = implode(' AND ', array_map(fn($c) => "`$c` = ?", array_keys($where)));
+        $conds = $this->whereSql($where);
         return (bool)$this->value("SELECT 1 FROM `$table` WHERE $conds LIMIT 1", array_values($where));
     }
 
     public function count(string $table, array $where = []): int
     {
         if (empty($where)) return (int)$this->value("SELECT COUNT(*) FROM `$table`");
-        $conds = implode(' AND ', array_map(fn($c) => "`$c` = ?", array_keys($where)));
+        $conds = $this->whereSql($where);
         return (int)$this->value("SELECT COUNT(*) FROM `$table` WHERE $conds", array_values($where));
     }
 
