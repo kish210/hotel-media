@@ -63,6 +63,16 @@ function connectWS() {
 connectWS();
 
 function showToast(type, msg) {
+  /* شش صفحه‌ی پنل (خدمات مهمان، اتاق‌ها، منوها، EPG، تی‌وی‌هدند،
+     دستگاه‌ها) تابع خودشان را با ترتیب (msg, type) تعریف کرده بودند.
+     این تعریف بعد از آن‌ها بار می‌شود و جایشان را می‌گیرد، پس هر
+     پیامشان «undefined» نشان داده می‌شد. هر دو ترتیب پذیرفته می‌شود. */
+  const TYPES = ['success', 'error', 'info', 'warning'];
+  if (!TYPES.includes(type)) {
+    const text = type;
+    type = TYPES.includes(msg) ? msg : 'success';
+    msg  = text;
+  }
   const t = document.createElement('div');
   t.className = `toast toast-${type}`;
   t.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'circle-xmark'}"></i> ${msg}`;
