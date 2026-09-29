@@ -246,8 +246,10 @@ class EpgController extends Controller
         }
 
         $channels = $this->db->rows(
-            "SELECT id, name, logo_url, sort_order FROM iptv_channels
-              WHERE $where ORDER BY sort_order, name",
+            /* نام مستعار c لازم است: $where با c. ساخته می‌شود. بدونش این
+               کوئری همیشه خطا می‌داد و «الان/بعدی» پنل و تلویزیون ۵۰۰ بود. */
+            "SELECT c.id, c.name, c.logo_url, c.sort_order FROM iptv_channels c
+              WHERE $where ORDER BY c.sort_order, c.name",
             $params
         );
         if (!$channels) return [];
