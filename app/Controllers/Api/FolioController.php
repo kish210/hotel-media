@@ -42,6 +42,10 @@ class FolioController extends Controller
             'amount'     => (float)$i['amount'],
             'source'     => $i['source'],
             'created_at' => $i['created_at'],
+            /* تلویزیون داده‌ی تقویم فارسی ندارد؛ تاریخ شمسی را سرور می‌سازد */
+            'created_fa' => ($ts = strtotime((string)$i['created_at']))
+                ? jalaliDate($ts, false) . ' — ' . strtr(date('H:i', $ts), ['0'=>'۰','1'=>'۱','2'=>'۲','3'=>'۳','4'=>'۴','5'=>'۵','6'=>'۶','7'=>'۷','8'=>'۸','9'=>'۹'])
+                : '',
         ], $folio['items']);
 
         Response::success([

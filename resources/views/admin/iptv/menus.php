@@ -14,6 +14,8 @@ $ITEM_TYPES = [
   'retail'    => ['فروشگاه',      'fas fa-store',          '#10b981'],
   'url'       => ['لینک سفارشی',  'fas fa-link',           '#64748b'],
   'custom'    => ['سفارشی',       'fas fa-grip-dots',      '#1a7ac4'],
+  'services'  => ['خدمات اتاق و سفارش', 'fas fa-bell-concierge', '#f59e0b'],
+  'folio'     => ['صورتحساب و خروج',   'fas fa-file-invoice',   '#22c55e'],
   'reserve'   => ['رزرو رستوران و امکانات', 'fas fa-calendar-check', '#14b8a6'],
 ];
 

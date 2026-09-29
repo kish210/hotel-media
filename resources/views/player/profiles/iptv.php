@@ -118,6 +118,22 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 #mb-title { font-size: 1rem; font-weight: 800; display: none; }
 #mb-body  { font-size: .92rem; font-weight: 400; color: #c2cbd8; }
 
+/* ── بیدارباش — روی همه‌چیز، حتی پخش ── */
+#wake-alarm {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 80;
+  background: rgba(5,10,20,.95);
+  text-align: center;
+  padding-top: 7rem;
+  display: none;
+}
+#wake-alarm.is-on { display: block; }
+#wa-icon  { font-size: 6rem; line-height: 1; }
+#wa-title { font-size: 2.6rem; font-weight: 800; color: #fff; margin: 1.2rem 0 .4rem; }
+#wa-time  { font-size: 4.2rem; font-weight: 800; color: #fbbf24; margin-bottom: 1.6rem; }
+#wa-hint  { font-size: 1.1rem; color: #94a3b8; margin-top: 1.2rem; }
+
 /* ── پیام وسط صفحه ── */
 #msg-popup {
   position: fixed;
@@ -308,6 +324,14 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
       <i class="fas fa-times"></i>
     </button>
   </div>
+</div>
+
+<div id="wake-alarm">
+  <div id="wa-icon">⏰</div>
+  <div id="wa-title">صبح بخیر — وقت بیدار شدن است</div>
+  <div id="wa-time"></div>
+  <button type="button" class="tv-btn is-focused" id="wa-ok">بیدار شدم</button>
+  <div id="wa-hint">هر دکمه‌ای روی ریموت بیدارباش را خاموش می‌کند</div>
 </div>
 
 <div id="msg-popup">
@@ -667,7 +691,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
     autoTimer = setTimeout(back, 300000);
   }
 
-  var GUEST_VIEWS = { reserve: 1 };
+  var GUEST_VIEWS = { reserve: 1, services: 1, folio: 1 };
 
   function openGuest(it) {
     playing  = true;
@@ -841,6 +865,9 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   TV.on(document, 'keydown', function (e) {
     var k = TV.keyName(e);
     if (!k) return;
+
+    /* بیدارباش روی همه‌چیز است؛ هر دکمه‌ای یعنی مهمان بیدار شده */
+    if (wakeOn) { ackWake(); if (e.preventDefault) e.preventDefault(); return; }
 
     /* صفحه‌ی اتصال دستگاه روی بقیه است، پس اول او. */
     if (inputsOpen) {
@@ -1219,6 +1246,64 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
     TV.removeClass(TV.id('msg-popup'), 'is-on');
   }
 
+  /* ── بیدارباش ──────────────────────────────────────────────────
+     مهمان از صفحه‌ی خدمات ساعت می‌گذارد و پذیرش هم از پنل. تا امروز
+     هیچ‌کدام زنگ نمی‌زد: API بیدارباش‌های سررسیده (/wakeups) از فاز ۱
+     آماده بود ولی این صفحه هیچ‌وقت صدایش نمی‌زد.
+
+     پنجره‌ی سرور ۵ دقیقه است، پس پرسیدن هر ۶۰ ثانیه چیزی را جا
+     نمی‌اندازد و بار ۳۰۰ تلویزیون روی سرور نصف پرسش ۳۰ ثانیه‌ای است.
+     صدا با WebAudio ساخته می‌شود چون فایل صوتی باید اول بار شود و
+     تلویزیون‌های قدیمی audio را گاهی بی‌صدا پخش می‌کنند. اگر WebAudio
+     نبود، پیام تمام‌صفحه به‌تنهایی باقی می‌ماند. */
+  var wakeOn = null, beepTimer = null, beepStop = null, audioCtx = null;
+
+  function checkWakeups() {
+    if (wakeOn) return;
+    TV.get(ORIGIN + '/api/v1/guest/' + encodeURIComponent(SCREEN_CODE) + '/wakeups', function (err, d) {
+      if (err || !d || !d.success || !d.data || !d.data.length || wakeOn) return;
+      showWake(d.data[0]);
+    });
+  }
+
+  function beep() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!audioCtx) audioCtx = new AC();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime;
+      o.frequency.value = 880;
+      g.gain.value = 0.35;
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t + 0.45);
+    } catch (e) {}
+  }
+
+  function showWake(w) {
+    wakeOn = w;
+    TV.text(TV.id('wa-time'), String(w.scheduled_at || '').substr(11, 5).replace(/[0-9]/g, function (c) {
+      return '۰۱۲۳۴۵۶۷۸۹'.charAt(+c);
+    }));
+    TV.addClass(TV.id('wake-alarm'), 'is-on');
+    beep();
+    clearInterval(beepTimer);
+    beepTimer = setInterval(beep, 1500);
+    /* صدا بعد از ۵ دقیقه قطع می‌شود ولی پیام تا تایید می‌ماند */
+    clearTimeout(beepStop);
+    beepStop = setTimeout(function () { clearInterval(beepTimer); }, 300000);
+  }
+
+  function ackWake() {
+    if (!wakeOn) return;
+    var id = wakeOn.id;
+    wakeOn = null;
+    clearInterval(beepTimer);
+    clearTimeout(beepStop);
+    TV.removeClass(TV.id('wake-alarm'), 'is-on');
+    TV.post(ORIGIN + '/api/v1/guest/' + encodeURIComponent(SCREEN_CODE) + '/wakeups/' + id + '/ack', {}, function () {});
+  }
+
+  TV.on(TV.id('wa-ok'), 'click', ackWake);
   TV.on(TV.id('mb-close'), 'click', dismissBanner);
   TV.on(TV.id('mp-close'), 'click', dismissPopup);
 
@@ -1324,6 +1409,8 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   var jitter = Math.floor(Math.random() * 10000);
   setTimeout(heartbeat, jitter);
   setInterval(loadRoom, 30000 + jitter);
+  setTimeout(checkWakeups, 3000 + jitter);
+  setInterval(checkWakeups, 60000 + jitter);
 
 <?php endif; ?>
 })();
