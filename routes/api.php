@@ -283,6 +283,9 @@ $router->get('/api/v1/portal/{code}/live', [\App\Controllers\Api\PortalControlle
 $router->post('/api/v1/dvr/room/{code}/record',              [\App\Controllers\Api\DvrController::class, 'guestRecord']);
 $router->get('/api/v1/dvr/room/{code}/recordings',           [\App\Controllers\Api\DvrController::class, 'guestList']);
 $router->delete('/api/v1/dvr/room/{code}/recordings/{id}',   [\App\Controllers\Api\DvrController::class, 'guestDelete']);
+// تلویزیون با XHR ساده‌ی ES5 فقط GET و POST می‌فرستد
+$router->post('/api/v1/dvr/room/{code}/recordings/{id}/delete', [\App\Controllers\Api\DvrController::class, 'guestDelete']);
+$router->get('/api/v1/guest/{code}/epg/{channel}',            [\App\Controllers\Api\EpgController::class, 'guestDay']);
 $router->get('/api/v1/dvr/room/{code}/catchup',              [\App\Controllers\Api\DvrController::class, 'guestCatchup']);
 
 // ── Device — سمت تلویزیون (بدون JWT) ─────────────────────────────

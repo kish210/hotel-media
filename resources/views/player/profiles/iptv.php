@@ -696,7 +696,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
   }
 
   var GUEST_VIEWS = { reserve: 1, services: 1, folio: 1, live: 1, radio: 1,
-                      news: 1, quran: 1, book: 1, directory: 1 };
+                      news: 1, quran: 1, book: 1, directory: 1, epg: 1, cameras: 1 };
   var CONTENT_KINDS = { news: 1, quran: 1, book: 1, directory: 1 };
 
   function openGuest(it) {
@@ -712,7 +712,8 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 
     var f = document.createElement('iframe');
     f.src = ORIGIN + '/tv/guest/' + encodeURIComponent(SCREEN_CODE) + '/' +
-            (it.type === 'radio' ? 'live?radio=1' : CONTENT_KINDS[it.type] ? 'content?kind=' + it.type : it.type);
+            (it.type === 'radio' ? 'live?radio=1' : CONTENT_KINDS[it.type] ? 'content?kind=' + it.type :
+             it.type === 'epg' ? 'guide' : it.type);
     f.setAttribute('allow', 'autoplay; fullscreen');
     host.appendChild(f);
     guestFrame = f;

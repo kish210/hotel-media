@@ -20,6 +20,13 @@ $ITEM_TYPES = [
   'services'  => ['خدمات اتاق و سفارش', 'fas fa-bell-concierge', '#f59e0b'],
   'folio'     => ['صورتحساب و خروج',   'fas fa-file-invoice',   '#22c55e'],
   'reserve'   => ['رزرو رستوران و امکانات', 'fas fa-calendar-check', '#14b8a6'],
+  /* این‌ها صفحه‌ی تلویزیونی داشتند ولی در این فهرست نبودند، پس اپراتور
+     راهی برای گذاشتن کاشی‌شان روی منو نداشت */
+  'epg'       => ['راهنمای برنامه و ضبط', 'fas fa-table-list',     '#a855f7'],
+  'cameras'   => ['دوربین‌های هتل',   'fas fa-video',          '#0ea5e9'],
+  'quran'     => ['قرآن کریم',        'fas fa-book-quran',     '#16a34a'],
+  'book'      => ['کتابخانه',         'fas fa-book-open',      '#d97706'],
+  'directory' => ['دفترچه تلفن',      'fas fa-address-book',   '#64748b'],
 ];
 
 // گروه‌های IPTV و منوهاشون رو از PHP variable دریافت می‌کنیم

@@ -225,6 +225,72 @@ class EpgController extends Controller
         Response::success($this->nowNext((int)$screen['tenant_id'], $only));
     }
 
+    /**
+     * GET /api/v1/guest/{code}/epg/{channel}?date=Y-m-d[&t=token]
+     * برنامه‌های یک روز یک کانال برای راهنمای تلویزیون اتاق، با اینکه
+     * هر برنامه قابل پخش دوباره (catch-up) یا ضبط (NPVR) هست یا نه.
+     *
+     * همان قاعده‌ی فهرست کانال: کانال بالاتر از سطح اتاق دیده نمی‌شود و
+     * کانال قفل‌شده بدون توکن قفل والدین جوابی نمی‌دهد — وگرنه راهنما
+     * راه دور زدن قفل بود.
+     */
+    public function guestDay(Request $req, array $params): void
+    {
+        $ctx = $this->db->row(
+            'SELECT s.tenant_id, r.id AS room_id, r.access_level, r.parental_enabled, r.parental_pin
+               FROM screens s LEFT JOIN iptv_rooms r ON r.id = s.iptv_room_id
+              WHERE s.code = ?',
+            [(string)($params['code'] ?? '')]
+        );
+        if (!$ctx) { Response::notFound('صفحه‌نمایش یافت نشد'); return; }
+        $tid = (int)$ctx['tenant_id'];
+
+        $ch = $this->db->row(
+            'SELECT id, name, access_level, is_adult, tvh_uuid, catchup_enabled, catchup_window_hours
+               FROM iptv_channels WHERE id = ? AND tenant_id = ? AND is_active = 1',
+            [(int)($params['channel'] ?? 0), $tid]
+        );
+        if (!$ch || (int)$ch['access_level'] > (int)($ctx['access_level'] ?? 0)) {
+            Response::notFound('کانال یافت نشد'); return;
+        }
+
+        $locked = (int)$ch['is_adult'] === 1 && (int)($ctx['parental_enabled'] ?? 0) === 1 && !empty($ctx['parental_pin']);
+        if ($locked) {
+            $t = (string)$req->get('t', '');
+            $acc = new \App\Services\ChannelAccessService($this->db);
+            if ($t === '' || !$ctx['room_id'] || !$acc->verifyToken($tid, (int)$ctx['room_id'], $t)) {
+                Response::error('این کانال قفل است', 403); return;
+            }
+        }
+
+        $date = (string)$req->get('date', date('Y-m-d'));
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) { Response::error('تاریخ نامعتبر است', 422); return; }
+
+        $rows = $this->db->rows(
+            'SELECT id, external_id, title, subtitle, description, category, starts_at, ends_at
+               FROM epg_programs
+              WHERE tenant_id = ? AND channel_id = ? AND ends_at > ? AND starts_at < DATE_ADD(?, INTERVAL 1 DAY)
+              ORDER BY starts_at',
+            [$tid, (int)$ch['id'], $date . ' 00:00:00', $date . ' 00:00:00']
+        );
+
+        $now      = time();
+        $window   = max(0, (int)$ch['catchup_window_hours']) * 3600;
+        $hasTvh   = trim((string)$ch['tvh_uuid']) !== '';
+        foreach ($rows as &$p) {
+            $s = strtotime((string)$p['starts_at']); $e = strtotime((string)$p['ends_at']);
+            $p['state'] = $e <= $now ? 'past' : ($s <= $now ? 'now' : 'future');
+            /* پخش دوباره فقط برنامه‌ی تمام‌شده، در پنجره‌ی نگهداری، و
+               فقط وقتی شناسه‌ی رویداد TVHeadend داریم */
+            $p['can_catchup'] = $p['state'] === 'past' && (int)$ch['catchup_enabled'] === 1 && $hasTvh
+                             && ctype_digit((string)$p['external_id']) && $e >= $now - $window;
+            $p['can_record']  = $p['state'] === 'future' && $hasTvh && !empty($ctx['room_id']);
+        }
+        unset($p);
+
+        Response::success(['channel' => ['id' => (int)$ch['id'], 'name' => $ch['name']], 'programs' => $rows]);
+    }
+
     // ══════════════════════════════════════════════════════════════
     //  Helpers
     // ══════════════════════════════════════════════════════════════
