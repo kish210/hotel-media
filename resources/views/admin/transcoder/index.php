@@ -1,324 +1,574 @@
 <?php include VIEWS_PATH . '/partials/layout.php'; ?>
+<?php
+/**
+ * ترنسکدر — معادل «رامند» کاماسیستم.
+ * کارها از /api/v1/transcoder/* خوانده می‌شوند و هر ۵ ثانیه تازه می‌شوند.
+ */
+$caps     = $caps     ?? [];
+$channels = $channels ?? [];
+$files    = $files    ?? [];
+$images   = $images   ?? [];
+$enc      = $caps['encoders'] ?? [];
+$has      = fn(string $e) => in_array($e, $enc, true);
+?>
+<style>
+  .tc-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;}
+  .tc-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:3px 10px;border-radius:999px;margin:0 0 6px 6px;}
+  .tc-on{background:rgba(34,197,94,.12);color:#4ade80;} .tc-off{background:rgba(100,116,139,.12);color:#64748b;}
+  .tc-warn{background:rgba(245,158,11,.12);color:#fbbf24;}
+  .tc-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .tc-table th{color:#64748b;font-weight:600;text-align:right;padding:8px;border-bottom:1px solid rgba(255,255,255,.07);white-space:nowrap;}
+  .tc-table td{color:#cbd5e1;padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top;}
+  .tc-badge{font-size:10px;padding:2px 8px;border-radius:8px;white-space:nowrap;}
+  .tc-sec{font-size:12px;font-weight:700;color:#94a3b8;margin:18px 0 8px;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:6px;}
+  .tc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;}
+  .tc-grid label{font-size:11px;color:#94a3b8;display:block;}
+  .tc-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;}
+  .tc-mono{font-family:ui-monospace,monospace;direction:ltr;text-align:left;}
+  .tc-bar{height:6px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-top:4px;}
+  .tc-bar>div{height:100%;background:#22c55e;}
+</style>
 
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
   <div>
     <h1 style="font-size:20px;font-weight:800;color:#fff;">
-      <i class="fas fa-microchip" style="color:#ef4444;margin-left:10px;"></i>Transcoder — RTSP / RTMP → HLS
+      <i class="fas fa-microchip" style="color:#ef4444;margin-left:10px;"></i>ترنسکدر
     </h1>
-    <p style="font-size:12px;color:#475569;margin-top:4px;">
-      تبدیل استریم‌های زنده به HLS برای نمایش در مرورگر و TV
+    <p style="font-size:12px;color:#64748b;margin-top:4px;">
+      تبدیل زنده و آفلاین — ورودی ماهواره، دوربین، کارت کپچر یا فایل؛ خروجی HLS چندکیفیتی، UDP multicast، RTMP و SRT
     </p>
   </div>
-  <?php if ($ffmpegOk): ?>
-  <button onclick="document.getElementById('newStreamModal').classList.remove('hidden')"
-    class="btn-primary text-sm flex items-center gap-2">
-    <i class="fas fa-play text-xs"></i> استریم جدید
-  </button>
+  <?php if (!empty($caps['ffmpeg'])): ?>
+  <button onclick="openEditor()" class="btn-primary text-sm"><i class="fas fa-plus text-xs ml-1"></i>کار جدید</button>
   <?php endif; ?>
 </div>
 
-<!-- FFmpeg Status -->
-<div style="border-radius:14px;padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;
-  <?= $ffmpegOk
-    ? 'background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.25);'
-    : 'background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.25);' ?>">
-  <div style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
-    <?= $ffmpegOk ? 'background:rgba(34,197,94,.12);' : 'background:rgba(239,68,68,.12);' ?>">
-    <i class="fas fa-microchip" style="font-size:22px;color:<?= $ffmpegOk ? '#4ade80' : '#f87171' ?>;"></i>
-  </div>
-  <div style="flex:1;">
-    <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;">
-      <?= $ffmpegOk ? '✅ FFmpeg نصب است' : '❌ FFmpeg نصب نیست' ?>
-    </div>
-    <?php if ($ffmpegOk): ?>
-    <div style="font-size:12px;color:#64748b;">
-      نسخه: <code style="color:#4ade80;"><?= e($ffmpegVersion) ?></code> ·
-      مسیر: <code style="color:#64748b;"><?= e($ffmpegBin) ?></code>
-    </div>
-    <?php else: ?>
-    <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">
-      برای فعال کردن Transcoder باید FFmpeg را روی سرور نصب کنید:
-    </div>
-    <pre style="background:#0a0a14;border-radius:8px;padding:10px;font-size:12px;color:#1a7ac4;margin:0;direction:ltr;text-align:left;">winget install Gyan.FFmpeg</pre>
-    <?php endif; ?>
-  </div>
-</div>
-
-<?php if ($ffmpegOk): ?>
-
-<!-- آمار سریع -->
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
-  <?php
-  $active = count($sessions);
-  $total  = count($channels);
-  foreach ([
-    ['استریم فعال', $active, 'fa-signal', '#ef4444'],
-    ['کانال RTSP', $total, 'fa-satellite-dish', '#1a7ac4'],
-    ['HLS segments', count(glob($hlsDir . '/*/*.ts') ?: []), 'fa-film', '#a855f7'],
-    ['CPU FFmpeg', function_exists('sys_getloadavg') ? round(sys_getloadavg()[0]*100/4) . '%' : '—', 'fa-microchip', '#22c55e'],
-  ] as [$l,$v,$ic,$c]):
-  ?>
-  <div style="background:#16161f;border:1px solid rgba(255,255,255,.07);border-top:3px solid <?=$c?>;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;">
-    <i class="fas <?=$ic?>" style="color:<?=$c?>;font-size:20px;"></i>
-    <div><div style="font-size:22px;font-weight:900;color:#fff;"><?=$v?></div><div style="font-size:11px;color:#64748b;"><?=$l?></div></div>
-  </div>
-  <?php endforeach; ?>
-</div>
-
-<!-- استریم‌های فعال -->
-<div class="card mb-5">
-  <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:14px;">
-    <i class="fas fa-signal text-red-400 ml-2"></i>استریم‌های در حال اجرا
-    <span id="refresh-badge" style="font-size:10px;font-weight:400;color:#64748b;margin-right:8px;">بروزرسانی خودکار ۵ ثانیه</span>
-  </h2>
-  <div id="sessions-list">
-    <?php if (empty($sessions)): ?>
-    <div style="text-align:center;padding:32px;color:#475569;">
-      <i class="fas fa-satellite-dish" style="font-size:40px;display:block;margin-bottom:12px;opacity:.2;"></i>
-      هیچ استریمی در حال اجرا نیست
-    </div>
-    <?php else: ?>
-    <?php foreach ($sessions as $name => $s): ?>
-    <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.05);">
-      <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;animation:livePulse 1.5s infinite;flex-shrink:0;"></div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:700;color:#fff;font-size:14px;"><?= e($name) ?></div>
-        <div style="font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= e($s['input']) ?></div>
-        <div style="font-size:10px;color:#475569;margin-top:2px;">شروع: <?= e($s['started_at']) ?> · PID: <?= $s['pid'] ?> · کیفیت: <?= e($s['quality']) ?></div>
-      </div>
-      <div style="display:flex;gap:6px;flex-shrink:0;">
-        <button onclick="previewStream('<?= e($s['m3u8']) ?>','<?= e($name) ?>')"
-          class="btn-ghost text-xs px-3 py-1.5">
-          <i class="fas fa-play text-green-400 text-xs"></i> پیش‌نمایش
-        </button>
-        <button onclick="copyHls('<?= e(($_SERVER['HTTP_HOST']??'localhost') . $s['m3u8']) ?>')"
-          class="btn-ghost text-xs px-3 py-1.5">
-          <i class="fas fa-copy text-blue-400 text-xs"></i> لینک HLS
-        </button>
-        <button onclick="viewLog('<?= e($name) ?>')"
-          class="btn-ghost text-xs px-3 py-1.5">
-          <i class="fas fa-file-lines text-yellow-400 text-xs"></i> لاگ
-        </button>
-        <form method="POST" action="/admin/transcoder/stop/<?= e($name) ?>" class="inline">
-          <?= csrf_field() ?>
-          <button type="submit" class="btn-ghost text-xs px-3 py-1.5" onclick="return confirm('توقف «<?= e($name) ?>»؟')">
-            <i class="fas fa-stop text-red-400 text-xs"></i> توقف
-          </button>
-        </form>
-      </div>
-    </div>
-    <?php endforeach; ?>
-    <?php endif; ?>
-  </div>
-</div>
-
-<!-- کانال‌های RTSP/RTMP -->
-<?php if (!empty($channels)): ?>
-<div class="card mb-5">
-  <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:14px;">
-    <i class="fas fa-list text-orange-400 ml-2"></i>کانال‌های RTSP/RTMP قابل Transcode
-  </h2>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;">
-    <?php foreach ($channels as $ch): ?>
-    <div style="background:#0d0d14;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div style="font-weight:600;color:#fff;font-size:13px;"><?= e($ch['name']) ?></div>
-        <span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.3);"><?= strtoupper(e($ch['protocol'])) ?></span>
-      </div>
-      <div style="font-size:11px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:10px;"><?= e($ch['stream_url']) ?></div>
-      <button onclick="quickTranscode('<?= e(addslashes($ch['stream_url'])) ?>','<?= e(addslashes($ch['name'])) ?>')"
-        style="width:100%;padding:7px;background:rgba(26,122,196,.1);border:1px solid rgba(26,122,196,.3);border-radius:8px;color:#1a7ac4;cursor:pointer;font-size:12px;font-weight:600;font-family:'Vazirmatn',sans-serif;">
-        <i class="fas fa-play text-xs ml-1"></i> Transcode این کانال
-      </button>
-    </div>
-    <?php endforeach; ?>
-  </div>
-</div>
-<?php endif; ?>
-
-<?php endif; /* ffmpegOk */ ?>
-
-<!-- راهنمای نصب FFmpeg -->
-<?php if (!$ffmpegOk): ?>
-<div class="card">
-  <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:14px;">
-    <i class="fas fa-wrench text-yellow-400 ml-2"></i>نحوه نصب FFmpeg
-  </h2>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-    <div style="background:#0d0d14;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;">
-      <h3 style="font-size:12px;font-weight:700;color:#1a7ac4;margin-bottom:10px;">روش ۱: ویندوز (پیشنهادی)</h3>
-      <pre style="font-size:11px;color:#e2e8f0;direction:ltr;text-align:left;margin:0;background:transparent;">winget install Gyan.FFmpeg</pre>
-      <p style="font-size:11px;color:#64748b;margin-top:8px;">بعد از نصب، سرویس Hotel Media را restart کنید ✅</p>
-    </div>
-    <div style="background:#0d0d14;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;">
-      <h3 style="font-size:12px;font-weight:700;color:#60a5fa;margin-bottom:10px;">روش ۲: لینوکس</h3>
-      <pre style="font-size:11px;color:#e2e8f0;direction:ltr;text-align:left;margin:0;background:transparent;">sudo apt install ffmpeg
-# یا: sudo dnf install ffmpeg</pre>
-      <p style="font-size:11px;color:#64748b;margin-top:8px;">مسیر ffmpeg باید در PATH باشد</p>
-    </div>
-  </div>
-</div>
-<?php endif; ?>
-
-<!-- Modal استریم جدید -->
-<div id="newStreamModal" class="modal-overlay hidden">
-  <div class="modal max-w-lg">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="font-weight:700;color:#fff;"><i class="fas fa-play text-red-400 ml-2"></i>استریم جدید</h3>
-      <button onclick="document.getElementById('newStreamModal').classList.add('hidden')" style="background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;">&times;</button>
-    </div>
-    <form method="POST" action="/admin/transcoder/start" class="space-y-3">
-      <?= csrf_field() ?>
-      <div>
-        <label class="form-label">آدرس استریم *</label>
-        <input type="text" id="inp-url" name="input_url" class="form-input" required
-          placeholder="rtsp://192.168.1.100:554/stream" style="font-family:monospace;font-size:13px;">
+<!-- قابلیت‌های سرور -->
+<div class="tc-card" style="margin-bottom:16px;">
+  <?php if (empty($caps['ffmpeg'])): ?>
+    <div style="color:#f87171;font-weight:700;">ffmpeg روی سرور نصب نیست</div>
+    <div style="font-size:12px;color:#94a3b8;margin-top:6px;">روی سرور اجرا کنید: <code class="tc-mono">sudo apt install ffmpeg</code></div>
+  <?php else: ?>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+    <div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">
+        ffmpeg <code class="tc-mono" style="color:#4ade80;"><?= e($caps['version'] ?? '') ?></code> — قابلیت‌های همین سرور:
       </div>
       <div>
-        <label class="form-label">نام استریم (انگلیسی، بدون فاصله)</label>
-        <input type="text" name="stream_name" class="form-input"
-          placeholder="lobby-cam1" pattern="[a-z0-9_\-]+">
-        <p style="font-size:11px;color:#64748b;margin-top:4px;">آدرس HLS: /hls/<strong>stream-name</strong>/index.m3u8</p>
+        <?php
+        $chips = [
+          ['H.264',  $has('libx264')], ['H.265 / HEVC', $has('libx265')], ['MPEG-2', $has('mpeg2video')],
+          ['AAC', $has('aac')], ['MP3', $has('libmp3lame')], ['MP2', $has('mp2')],
+        ];
+        foreach ($chips as [$l, $ok]): ?>
+          <span class="tc-chip <?= $ok ? 'tc-on' : 'tc-off' ?>"><i class="fas fa-<?= $ok ? 'check' : 'xmark' ?>"></i><?= $l ?></span>
+        <?php endforeach; ?>
       </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="form-label">کیفیت خروجی</label>
-          <select name="quality" class="form-input">
-            <option value="low">پایین (480p · 800kbps)</option>
-            <option value="medium" selected>متوسط (720p · 2.5Mbps)</option>
-            <option value="high">بالا (1080p · 5Mbps)</option>
-            <option value="copy">کپی بدون تبدیل</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">صدا</label>
-          <select name="audio" class="form-input">
-            <option value="include">پخش صدا</option>
-            <option value="mute">بدون صدا</option>
-          </select>
-        </div>
+      <div>
+        <?php
+        $hw = [
+          ['NVIDIA NVENC', $has('h264_nvenc'), !empty($caps['nvidia']), 'کارت NVIDIA پیدا نشد'],
+          ['Intel QSV',    $has('h264_qsv'),   !empty($caps['dri']),    '/dev/dri نیست'],
+          ['VAAPI',        $has('h264_vaapi'), !empty($caps['dri']),    '/dev/dri نیست'],
+        ];
+        foreach ($hw as [$l, $built, $hwOk, $why]):
+          $cls = $built && $hwOk ? 'tc-on' : ($built ? 'tc-warn' : 'tc-off'); ?>
+          <span class="tc-chip <?= $cls ?>" title="<?= $built && !$hwOk ? e($why) : '' ?>">
+            <i class="fas fa-bolt"></i><?= $l ?><?= $built && !$hwOk ? ' — سخت‌افزار نیست' : '' ?>
+          </span>
+        <?php endforeach; ?>
+        <span class="tc-chip <?= in_array('v4l2', $caps['devices'] ?? [], true) ? 'tc-on' : 'tc-off' ?>">
+          <i class="fas fa-video"></i>کپچر HDMI/کامپوزیت (v4l2)<?= !empty($caps['video_devices']) ? ': ' . e(implode('، ', $caps['video_devices'])) : '' ?>
+        </span>
+        <span class="tc-chip <?= in_array('decklink', $caps['devices'] ?? [], true) ? 'tc-on' : 'tc-off' ?>">
+          <i class="fas fa-video"></i>SDI (DeckLink)
+        </span>
       </div>
-      <div style="display:flex;gap:10px;padding-top:8px;">
-        <button type="submit" class="btn-primary flex-1 py-2.5">
-          <i class="fas fa-play text-xs ml-1"></i> شروع Transcode
-        </button>
-        <button type="button" onclick="document.getElementById('newStreamModal').classList.add('hidden')" class="btn-ghost px-5">لغو</button>
-      </div>
-    </form>
+    </div>
+    <button class="btn-ghost text-xs px-3" onclick="refreshCaps()"><i class="fas fa-rotate"></i> بررسی دوباره</button>
+  </div>
+  <?php endif; ?>
+</div>
+
+<!-- کارها -->
+<div class="tc-card" style="overflow-x:auto;">
+  <table class="tc-table">
+    <thead><tr>
+      <th>کار</th><th>ورودی</th><th>خروجی</th><th>وضعیت</th><th>کارکرد</th><th></th>
+    </tr></thead>
+    <tbody id="jobs"><tr><td colspan="6" style="text-align:center;color:#475569;padding:30px;">در حال بارگذاری…</td></tr></tbody>
+  </table>
+  <p style="font-size:11px;color:#64748b;margin-top:10px;line-height:1.9;">
+    کانال زنده تا وقتی متوقفش نکنید روشن می‌ماند: اگر ffmpeg بیفتد یا ورودی ۳۰ ثانیه تصویر ندهد، ناظر (هر ۵ ثانیه) آن را
+    دوباره راه می‌اندازد — بعد از قطع برق سرور هم. هر کار فرایند جدای خودش را دارد و خرابی یکی روی بقیه اثر ندارد.
+  </p>
+</div>
+
+<!-- ویرایشگر -->
+<div id="editor" class="hidden" style="position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.72);z-index:90;overflow-y:auto;padding:24px;">
+  <div class="tc-card" style="background:#0f172a;max-width:980px;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 id="edTitle" style="color:#fff;font-weight:800;font-size:16px;">کار جدید</h3>
+      <button class="btn-ghost text-xs px-2" onclick="closeEl('editor')"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="tc-sec">عمومی</div>
+    <div class="tc-grid">
+      <label>نام<input id="f_name" class="form-input" maxlength="120" placeholder="شبکه ۳ — HD"></label>
+      <label>نام مسیر (انگلیسی)<input id="f_slug" class="form-input tc-mono" maxlength="50" placeholder="irinn"></label>
+      <label>حالت
+        <select id="f_mode" class="form-input" onchange="modeChanged()">
+          <option value="live">زنده (Live Transcoding)</option>
+          <option value="vod">تبدیل فایل (VOD / Offline)</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="tc-sec">ورودی</div>
+    <div class="tc-grid">
+      <label>نوع ورودی
+        <select id="f_kind" class="form-input" onchange="kindChanged()">
+          <option value="url">استریم شبکه (UDP، RTP، RTSP، RTMP، HTTP/HLS/DASH، SRT)</option>
+          <option value="file">فایل از کتابخانه</option>
+          <option value="v4l2">کارت کپچر HDMI / کامپوزیت / DVI</option>
+          <option value="decklink">کارت کپچر SDI (DeckLink)</option>
+        </select>
+      </label>
+      <label id="w_url" style="grid-column:span 2;">آدرس ورودی
+        <input id="f_url" class="form-input tc-mono" placeholder="udp://@239.1.1.1:1234">
+      </label>
+      <label id="w_file" style="grid-column:span 2;" class="hidden">فایل
+        <select id="f_file" class="form-input">
+          <?php foreach ($files as $f): ?>
+            <option value="<?= e($f['file_path']) ?>"><?= e($f['name']) ?></option>
+          <?php endforeach; ?>
+          <?php if (!$files): ?><option value="">ویدیویی در کتابخانه نیست</option><?php endif; ?>
+        </select>
+      </label>
+      <label id="w_dev" style="grid-column:span 2;" class="hidden">دستگاه
+        <input id="f_dev" class="form-input tc-mono" list="devlist" placeholder="/dev/video0">
+        <datalist id="devlist"><?php foreach ($caps['video_devices'] ?? [] as $d): ?><option value="<?= e($d) ?>"><?php endforeach; ?></datalist>
+      </label>
+      <label id="w_ch">پر کردن از کانال
+        <select id="f_fromch" class="form-input" onchange="fromChannel()">
+          <option value="">—</option>
+          <?php foreach ($channels as $c): ?>
+            <option value="<?= e((string)$c['stream_url']) ?>"><?= e($c['name']) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label id="w_rtsp">RTSP از طریق
+        <select id="f_rtsp" class="form-input"><option value="tcp">TCP (پایدارتر)</option><option value="udp">UDP</option></select>
+      </label>
+      <label id="w_loop" class="hidden" style="padding-top:18px;"><input type="checkbox" id="f_loop"> پخش تکراری فایل به‌عنوان کانال</label>
+      <label id="w_alsa" class="hidden">صدای کارت (ALSA)<input id="f_alsa" class="form-input tc-mono" placeholder="hw:1,0"></label>
+    </div>
+    <div style="margin-top:8px;">
+      <button class="btn-ghost text-xs px-3" onclick="probe()"><i class="fas fa-magnifying-glass"></i> بررسی ورودی</button>
+      <span id="probeMsg" style="font-size:11px;color:#94a3b8;margin-right:8px;"></span>
+    </div>
+    <div id="probeOut" style="margin-top:8px;"></div>
+
+    <div class="tc-sec">تصویر</div>
+    <div class="tc-grid">
+      <label>کدک
+        <select id="f_vcodec" class="form-input" onchange="codecChanged()">
+          <option value="h264">H.264 / MPEG-4 AVC</option>
+          <option value="hevc">H.265 / HEVC</option>
+          <option value="mpeg2">MPEG-2</option>
+          <option value="copy">بدون تغییر (copy)</option>
+        </select>
+      </label>
+      <label>پردازشگر
+        <select id="f_hw" class="form-input">
+          <option value="cpu">پردازنده (CPU)</option>
+          <option value="nvenc" <?= $has('h264_nvenc') ? '' : 'disabled' ?>>NVIDIA NVENC</option>
+          <option value="qsv" <?= $has('h264_qsv') ? '' : 'disabled' ?>>Intel Quick Sync</option>
+          <option value="vaapi" <?= $has('h264_vaapi') ? '' : 'disabled' ?>>VAAPI</option>
+        </select>
+      </label>
+      <label>Preset (سرعت/کیفیت)
+        <select id="f_preset" class="form-input">
+          <option value="ultrafast">ultrafast — کمترین CPU</option><option value="superfast">superfast</option>
+          <option value="veryfast" selected>veryfast — پیشنهادی</option><option value="faster">faster</option>
+          <option value="fast">fast</option><option value="medium">medium — بهترین کیفیت</option>
+        </select>
+      </label>
+      <label>نرخ فریم
+        <select id="f_fps" class="form-input">
+          <option value="0">مثل ورودی</option><option>24</option><option>25</option><option>30</option><option>50</option><option>60</option>
+        </select>
+      </label>
+      <label>فاصله‌ی فریم کلیدی (ثانیه)<input id="f_gop" type="number" min="1" max="10" value="2" class="form-input"></label>
+      <label style="padding-top:18px;"><input type="checkbox" id="f_deint"> حذف درهم‌رفتگی (ماهواره SD/1080i)</label>
+      <label style="padding-top:18px;"><input type="checkbox" id="f_lowlat"> تأخیر کم</label>
+    </div>
+
+    <div id="w_rend">
+      <div class="tc-sec">کیفیت‌ها (اندازه و بیت‌ریت) — چند کیفیت یعنی HLS تطبیقی (ABR)</div>
+      <div id="rends"></div>
+      <button class="btn-ghost text-xs px-3" onclick="addRend(720,2500)"><i class="fas fa-plus"></i> کیفیت</button>
+      <button class="btn-ghost text-xs px-3" onclick="setLadder()">نردبان پیشنهادی ۱۰۸۰/۷۲۰/۴۸۰</button>
+    </div>
+
+    <div class="tc-sec">صدا</div>
+    <div class="tc-grid">
+      <label>کدک
+        <select id="f_acodec" class="form-input">
+          <option value="aac">AAC</option><option value="mp3">MP3</option><option value="mp2">MPEG Audio Layer 2 (MP2)</option>
+          <option value="copy">بدون تغییر (copy)</option><option value="none">بدون صدا</option>
+        </select>
+      </label>
+      <label>بیت‌ریت (kbps)
+        <select id="f_abr" class="form-input"><option>64</option><option>96</option><option selected>128</option><option>160</option><option>192</option><option>256</option><option>320</option></select>
+      </label>
+      <label>کانال<select id="f_ach" class="form-input"><option value="2">استریو</option><option value="1">مونو</option></select></label>
+      <label>نرخ نمونه<select id="f_asr" class="form-input"><option value="48000">48000</option><option value="44100">44100</option></select></label>
+      <label style="grid-column:span 2;">زبان‌ها (دوبله) — به ترتیب، اولی پیش‌فرض
+        <input id="f_alang" class="form-input tc-mono" placeholder="fas,eng — خالی: اولین صدا">
+      </label>
+    </div>
+
+    <div class="tc-sec">زیرنویس</div>
+    <div class="tc-grid">
+      <label>زیرنویس ورودی
+        <select id="f_smode" class="form-input"><option value="none">حذف</option><option value="copy">عبور (روی خروجی UDP/SRT)</option></select>
+      </label>
+      <label style="grid-column:span 2;">فقط این زبان‌ها<input id="f_slang" class="form-input tc-mono" placeholder="fas,eng — خالی: همه"></label>
+    </div>
+
+    <div class="tc-sec">لوگو روی تصویر</div>
+    <div class="tc-grid">
+      <label style="grid-column:span 2;">تصویر (PNG شفاف)
+        <select id="f_logo" class="form-input">
+          <option value="">بدون لوگو</option>
+          <?php foreach ($images as $im): ?><option value="<?= e($im['file_path']) ?>"><?= e($im['name']) ?></option><?php endforeach; ?>
+        </select>
+      </label>
+      <label>جای لوگو
+        <select id="f_lpos" class="form-input"><option value="tr">بالا راست</option><option value="tl">بالا چپ</option><option value="br">پایین راست</option><option value="bl">پایین چپ</option></select>
+      </label>
+      <label>اندازه (٪ ارتفاع)<input id="f_lsize" type="number" min="3" max="25" value="8" class="form-input"></label>
+    </div>
+
+    <div class="tc-sec">خروجی‌ها — هم‌زمان</div>
+    <div id="outs"></div>
+    <button class="btn-ghost text-xs px-3" id="addOutBtn" onclick="addOut('udp')"><i class="fas fa-plus"></i> خروجی</button>
+    <p style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.8;">
+      UDP multicast همان چیزی است که تلویزیون‌های webOS و Tizen مستقیم از شبکه می‌خوانند و بار سرور را صفر می‌کند.
+      خروجی‌های UDP/SRT/RTMP بالاترین کیفیت را می‌گیرند. مقصدی که قطع شود بقیه را نمی‌اندازد.
+    </p>
+
+    <div id="edErr" style="color:#f87171;font-size:12px;margin-top:10px;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+      <button class="btn-ghost text-sm px-3" onclick="closeEl('editor')">انصراف</button>
+      <button class="btn-primary text-sm px-4" onclick="save()"><i class="fas fa-floppy-disk"></i> ذخیره</button>
+    </div>
   </div>
 </div>
 
-<!-- Modal پیش‌نمایش -->
-<div id="previewModal" class="modal-overlay hidden">
-  <div class="modal" style="max-width:900px;background:#000;padding:0;overflow:hidden;">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#111;">
-      <span id="preview-title" style="color:#fff;font-size:13px;font-weight:600;"></span>
-      <button onclick="closePreview()" style="background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;">&times;</button>
+<!-- لاگ -->
+<div id="logBox" class="hidden" style="position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.72);z-index:91;padding:30px;">
+  <div class="tc-card" style="background:#0b1220;max-width:980px;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+      <b id="logTitle" style="color:#fff;"></b>
+      <button class="btn-ghost text-xs px-2" onclick="closeEl('logBox')"><i class="fas fa-xmark"></i></button>
     </div>
-    <div style="aspect-ratio:16/9;background:#000;">
-      <video id="preview-vid" autoplay muted controls style="width:100%;height:100%;background:#000;"></video>
-    </div>
-    <div style="padding:10px 16px;background:#111;display:flex;align-items:center;gap:10px;">
-      <code id="preview-url" style="font-size:11px;color:#64748b;flex:1;direction:ltr;"></code>
-      <button onclick="copyPreviewUrl()" style="padding:6px 12px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;color:#60a5fa;cursor:pointer;font-size:11px;">
-        <i class="fas fa-copy text-xs ml-1"></i>کپی
-      </button>
-    </div>
+    <pre id="logText" class="tc-mono" style="font-size:11px;color:#cbd5e1;max-height:70vh;overflow:auto;white-space:pre-wrap;"></pre>
   </div>
 </div>
 
-<!-- Modal لاگ -->
-<div id="logModal" class="modal-overlay hidden">
-  <div class="modal" style="max-width:800px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h3 style="font-weight:700;color:#fff;">لاگ FFmpeg</h3>
-      <button onclick="document.getElementById('logModal').classList.add('hidden')" style="background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;">&times;</button>
+<!-- پیش‌نمایش -->
+<div id="preview" class="hidden" style="position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.8);z-index:91;padding:30px;">
+  <div class="tc-card" style="background:#000;max-width:900px;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+      <b id="pvTitle" style="color:#fff;"></b>
+      <button class="btn-ghost text-xs px-2" onclick="closePreview()"><i class="fas fa-xmark"></i></button>
     </div>
-    <pre id="log-content" style="background:#0a0a14;border-radius:8px;padding:14px;font-size:11px;color:#e2e8f0;max-height:400px;overflow-y:auto;direction:ltr;text-align:left;white-space:pre-wrap;word-break:break-all;"></pre>
-    <button onclick="refreshLog()" class="btn-ghost text-xs mt-3"><i class="fas fa-rotate text-xs ml-1"></i> بروزرسانی</button>
+    <video id="pvVideo" controls autoplay muted style="width:100%;background:#000;border-radius:8px;"></video>
+    <div id="pvUrl" class="tc-mono" style="font-size:11px;color:#64748b;margin-top:6px;"></div>
   </div>
 </div>
 
-<style>
-@keyframes livePulse { 0%,100%{opacity:1}50%{opacity:.3} }
-</style>
+<!-- انتشار -->
+<div id="pubBox" class="hidden" style="position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.72);z-index:91;display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div class="tc-card" style="background:#0f172a;width:100%;max-width:440px;">
+    <h3 style="color:#fff;font-weight:800;margin-bottom:10px;">پخش روی کانال IPTV</h3>
+    <p style="font-size:12px;color:#94a3b8;line-height:1.9;margin-bottom:10px;">
+      آدرس پخش کانال به خروجی HLS این کار (و اگر UDP دارد، آدرس multicast) تغییر می‌کند و تلویزیون‌های اتاق از این به بعد
+      نسخه‌ی ترنسکدشده را پخش می‌کنند.
+    </p>
+    <select id="pubCh" class="form-input">
+      <?php foreach ($channels as $c): ?><option value="<?= (int)$c['id'] ?>"><?= e($c['name']) ?></option><?php endforeach; ?>
+    </select>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+      <button class="btn-ghost text-sm px-3" onclick="closeEl('pubBox')">انصراف</button>
+      <button class="btn-primary text-sm px-3" onclick="doPublish()">وصل کن</button>
+    </div>
+  </div>
+</div>
 
 <script src="/assets/vendor/hls/hls.min.js"></script>
 <script>
-var _hlsInstance = null;
-var _currentLogName = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let JOBS = [], editing = null, pubJob = null, hlsInst = null;
 
-// ─── پیش‌نمایش HLS ────────────────────────────────────────────
-function previewStream(url, name) {
-  var base = window.location.protocol + '//' + window.location.host;
-  var fullUrl = url.startsWith('http') ? url : base + url;
-  document.getElementById('previewModal').classList.remove('hidden');
-  document.getElementById('preview-title').textContent = '📡 ' + name;
-  document.getElementById('preview-url').textContent = fullUrl;
-  var vid = document.getElementById('preview-vid');
-  if (_hlsInstance) { _hlsInstance.destroy(); _hlsInstance = null; }
-  if (Hls.isSupported()) {
-    _hlsInstance = new Hls({ lowLatencyMode: true });
-    _hlsInstance.loadSource(fullUrl);
-    _hlsInstance.attachMedia(vid);
-  } else {
-    vid.src = fullUrl;
-    vid.play().catch(function(){});
+const STATUS = {
+  running:  ['در حال اجرا', '#22c55e'], starting: ['در حال شروع', '#3b82f6'],
+  error:    ['خطا — در حال تلاش دوباره', '#ef4444'], stopped: ['متوقف', '#64748b'],
+  finished: ['تمام شد', '#14b8a6'],
+};
+const KIND = { url: 'شبکه', file: 'فایل', v4l2: 'کپچر HDMI', decklink: 'کپچر SDI' };
+
+// ── فهرست ──────────────────────────────────────────────────────
+async function load() {
+  try { const d = await api('/api/v1/transcoder/jobs'); JOBS = d.data || []; render(); }
+  catch (e) { $('jobs').innerHTML = `<tr><td colspan="6" style="color:#f87171;padding:20px;">${esc(e.message)}</td></tr>`; }
+}
+
+function render() {
+  if (!JOBS.length) {
+    $('jobs').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#475569;padding:30px;">هنوز کاری ساخته نشده — «کار جدید»</td></tr>';
+    return;
   }
+  $('jobs').innerHTML = JOBS.map(j => {
+    const s = j.settings || {};
+    let [sl, sc] = STATUS[j.status] || [j.status, '#64748b'];
+    if (j.status === 'error' && j.desired !== 'running') sl = 'خطا';
+    const outs = (s.outputs || []).map(o => o.type === 'hls'
+        ? `<div>HLS ${(s.renditions || []).map(r => r.height + 'p').join('/') || 'copy'}</div>`
+        : `<div class="tc-mono">${esc(o.type.toUpperCase())} ${esc(o.url)}</div>`).join('');
+    const v = s.video || {}, a = s.audio || {};
+    const codec = `${(v.codec || '').toUpperCase()}${v.hw && v.hw !== 'cpu' ? ' · ' + v.hw.toUpperCase() : ''} / ${(a.codec || '').toUpperCase()}`;
+    let run = '—';
+    if (j.stats) {
+      const st = j.stats;
+      run = `<div>${st.fps ? st.fps.toFixed(0) + ' fps' : ''} ${st.speed ? '· ' + esc(st.speed) : ''}</div>
+             <div style="color:#64748b">${esc(st.bitrate || '')} ${st.out_time ? '· ' + esc(st.out_time) : ''}</div>
+             ${st.drop ? `<div style="color:#fbbf24">فریم افتاده: ${st.drop}</div>` : ''}`;
+    }
+    if (j.mode === 'vod' && j.progress !== null) {
+      run += `<div class="tc-bar"><div style="width:${j.progress}%"></div></div><div style="color:#64748b">${j.progress}%</div>`;
+    }
+    const on = j.desired === 'running';
+    return `<tr>
+      <td><div style="font-weight:700;color:#fff;">${esc(j.name)}</div>
+          <div class="tc-mono" style="color:#64748b;font-size:11px;">${esc(j.slug)} · ${j.mode === 'vod' ? 'فایل' : 'زنده'}</div>
+          <div style="color:#94a3b8;font-size:11px;">${esc(codec)}</div></td>
+      <td><div style="color:#94a3b8;font-size:11px;">${KIND[j.input_kind] || ''}</div>
+          <div class="tc-mono" style="font-size:11px;max-width:260px;word-break:break-all;">${esc(j.input_url)}</div></td>
+      <td style="font-size:11px;">${outs}</td>
+      <td><span class="tc-badge" style="background:${sc}22;color:${sc};">${sl}</span>
+          ${j.restarts ? `<div style="color:#fbbf24;font-size:11px;margin-top:4px;">${j.restarts} بار راه‌اندازی دوباره</div>` : ''}
+          ${j.last_error ? `<div style="color:#f87171;font-size:11px;margin-top:4px;max-width:220px;">${esc(j.last_error)}</div>` : ''}</td>
+      <td style="font-size:11px;">${run}</td>
+      <td style="white-space:nowrap;">
+        ${on ? `<button class="btn-ghost text-xs px-2" onclick="act(${j.id},'stop')" title="توقف"><i class="fas fa-stop"></i></button>`
+             : `<button class="btn-ghost text-xs px-2" onclick="act(${j.id},'start')" title="شروع"><i class="fas fa-play" style="color:#4ade80"></i></button>`}
+        ${(s.outputs || []).some(o => o.type === 'hls') ? `<button class="btn-ghost text-xs px-2" onclick="preview(${j.id})" title="پیش‌نمایش"><i class="fas fa-eye"></i></button>` : ''}
+        <button class="btn-ghost text-xs px-2" onclick="showLog(${j.id})" title="لاگ"><i class="fas fa-file-lines"></i></button>
+        ${j.mode === 'live' ? `<button class="btn-ghost text-xs px-2" onclick="openPublish(${j.id})" title="پخش روی کانال"><i class="fas fa-tv"></i></button>` : ''}
+        <button class="btn-ghost text-xs px-2" onclick="openEditor(${j.id})" title="ویرایش"><i class="fas fa-pen"></i></button>
+        <button class="btn-ghost text-xs px-2" onclick="del(${j.id})" title="حذف"><i class="fas fa-trash" style="color:#f87171"></i></button>
+      </td></tr>`;
+  }).join('');
 }
 
+async function act(id, what) {
+  try { const d = await api(`/api/v1/transcoder/jobs/${id}/${what}`, 'POST', {}); showToast('success', d.message); }
+  catch (e) { showToast('error', e.message); }
+  load();
+}
+async function del(id) {
+  if (!confirm('این کار و خروجی‌هایش حذف شود؟')) return;
+  try { await api(`/api/v1/transcoder/jobs/${id}`, 'DELETE'); showToast('success', 'حذف شد'); } catch (e) { showToast('error', e.message); }
+  load();
+}
+async function showLog(id) {
+  const j = JOBS.find(x => x.id === id);
+  $('logTitle').textContent = 'لاگ ffmpeg — ' + (j ? j.name : '');
+  $('logText').textContent = '…';
+  $('logBox').classList.remove('hidden');
+  try { const d = await api(`/api/v1/transcoder/jobs/${id}/log`); $('logText').textContent = d.data.log || 'لاگ خالی است — یعنی ffmpeg هشداری نداده.'; }
+  catch (e) { $('logText').textContent = e.message; }
+}
+function preview(id) {
+  const j = JOBS.find(x => x.id === id); if (!j) return;
+  $('pvTitle').textContent = j.name; $('pvUrl').textContent = location.origin + j.hls_url;
+  const v = $('pvVideo');
+  if (window.Hls && Hls.isSupported()) { hlsInst = new Hls(); hlsInst.loadSource(j.hls_url); hlsInst.attachMedia(v); }
+  else v.src = j.hls_url;
+  $('preview').classList.remove('hidden');
+}
 function closePreview() {
-  document.getElementById('previewModal').classList.add('hidden');
-  var vid = document.getElementById('preview-vid');
-  vid.pause(); vid.src = '';
-  if (_hlsInstance) { _hlsInstance.destroy(); _hlsInstance = null; }
+  if (hlsInst) { hlsInst.destroy(); hlsInst = null; }
+  $('pvVideo').removeAttribute('src'); $('pvVideo').load(); closeEl('preview');
+}
+function openPublish(id) { pubJob = id; $('pubBox').classList.remove('hidden'); }
+async function doPublish() {
+  try { const d = await api(`/api/v1/transcoder/jobs/${pubJob}/publish`, 'POST', { channel_id: Number($('pubCh').value) });
+        showToast('success', d.message); closeEl('pubBox'); }
+  catch (e) { showToast('error', e.message); }
+}
+async function refreshCaps() {
+  try { await api('/api/v1/transcoder/capabilities/refresh', 'POST', {}); location.reload(); } catch (e) { showToast('error', e.message); }
 }
 
-function copyPreviewUrl() {
-  navigator.clipboard.writeText(document.getElementById('preview-url').textContent)
-    .then(function(){ showToast('success','لینک HLS کپی شد'); });
+// ── ویرایشگر ───────────────────────────────────────────────────
+function openEditor(id) {
+  editing = id ? JOBS.find(x => x.id === id) : null;
+  const j = editing || { mode: 'live', input_kind: 'url', input_url: '', settings: {
+      video: { codec: 'h264', hw: 'cpu', preset: 'veryfast', fps: 0, gop_seconds: 2 },
+      renditions: [{ height: 720, bitrate: 2500 }], audio: { codec: 'aac', bitrate: 128, channels: 2, sample_rate: 48000, languages: [] },
+      subtitles: { mode: 'none', languages: [] }, overlay: { image: '', position: 'tr', scale_pct: 8 }, input: { rtsp_transport: 'tcp' },
+      outputs: [{ type: 'hls', segment: 4, window: 6 }] } };
+  const s = j.settings, v = s.video || {}, a = s.audio || {}, o = s.overlay || {}, inp = s.input || {};
+  $('edTitle').textContent = editing ? 'ویرایش: ' + j.name : 'کار جدید';
+  $('f_name').value = j.name || ''; $('f_slug').value = j.slug || '';
+  $('f_mode').value = j.mode; $('f_kind').value = j.input_kind;
+  $('f_url').value = j.input_kind === 'url' ? j.input_url : '';
+  $('f_dev').value = ['v4l2', 'decklink'].includes(j.input_kind) ? j.input_url : '';
+  if (j.input_kind === 'file') $('f_file').value = j.input_url;
+  $('f_rtsp').value = inp.rtsp_transport || 'tcp'; $('f_loop').checked = !!inp.loop; $('f_alsa').value = inp.alsa || '';
+  $('f_vcodec').value = v.codec || 'h264'; $('f_hw').value = v.hw || 'cpu'; $('f_preset').value = v.preset || 'veryfast';
+  $('f_fps').value = String(v.fps || 0); $('f_gop').value = v.gop_seconds || 2;
+  $('f_deint').checked = !!v.deinterlace; $('f_lowlat').checked = !!v.low_latency;
+  $('rends').innerHTML = ''; (s.renditions || []).forEach(r => addRend(r.height, r.bitrate));
+  $('f_acodec').value = a.codec || 'aac'; $('f_abr').value = String(a.bitrate || 128);
+  $('f_ach').value = String(a.channels || 2); $('f_asr').value = String(a.sample_rate || 48000);
+  $('f_alang').value = (a.languages || []).join(',');
+  $('f_smode').value = (s.subtitles || {}).mode || 'none'; $('f_slang').value = ((s.subtitles || {}).languages || []).join(',');
+  $('f_logo').value = o.image || ''; $('f_lpos').value = o.position || 'tr'; $('f_lsize').value = o.scale_pct || 8;
+  $('outs').innerHTML = ''; (s.outputs || []).forEach(x => addOut(x.type, x));
+  $('probeOut').innerHTML = ''; $('probeMsg').textContent = ''; $('edErr').textContent = '';
+  kindChanged(); modeChanged(); codecChanged();
+  $('editor').classList.remove('hidden');
 }
 
-function copyHls(url) {
-  var base = window.location.protocol + '//' + window.location.host;
-  var fullUrl = url.startsWith('http') ? url : base + '/hls/' + url + '/index.m3u8';
-  navigator.clipboard.writeText(fullUrl).then(function(){ showToast('success','لینک HLS کپی شد'); });
+function kindChanged() {
+  const k = $('f_kind').value, url = $('f_url').value;
+  $('w_url').classList.toggle('hidden', k !== 'url'); $('w_ch').classList.toggle('hidden', k !== 'url');
+  $('w_file').classList.toggle('hidden', k !== 'file');
+  $('w_dev').classList.toggle('hidden', !['v4l2', 'decklink'].includes(k));
+  $('f_dev').placeholder = k === 'decklink' ? 'DeckLink Mini Recorder' : '/dev/video0';
+  $('w_rtsp').classList.toggle('hidden', !(k === 'url' && /^rtsps?:/i.test(url)));
+  $('w_alsa').classList.toggle('hidden', k !== 'v4l2');
+  $('w_loop').classList.toggle('hidden', !(k === 'file' && $('f_mode').value === 'live'));
+}
+$('f_url') && $('f_url').addEventListener('input', kindChanged);
+function modeChanged() {
+  const vod = $('f_mode').value === 'vod';
+  if (vod) $('f_kind').value = 'file';
+  [...$('f_kind').options].forEach(o => o.disabled = vod && o.value !== 'file');
+  $('addOutBtn').classList.toggle('hidden', vod);
+  if (vod) { $('outs').innerHTML = ''; addOut('hls'); }
+  kindChanged();
+}
+function codecChanged() { $('w_rend').classList.toggle('hidden', $('f_vcodec').value === 'copy'); }
+function fromChannel() { if ($('f_fromch').value) { $('f_url').value = $('f_fromch').value; kindChanged(); } }
+
+const HEIGHTS = [2160, 1440, 1080, 720, 576, 480, 360, 240];
+function addRend(h, br) {
+  const d = document.createElement('div'); d.className = 'tc-row rend';
+  d.innerHTML = `<select class="form-input r-h" style="width:120px">${HEIGHTS.map(x => `<option value="${x}" ${x === h ? 'selected' : ''}>${x}p</option>`).join('')}</select>
+    <input type="number" class="form-input r-b" style="width:120px" min="200" max="50000" step="100" value="${br}"> <span style="font-size:11px;color:#64748b">kbps</span>
+    <button class="btn-ghost text-xs px-2" onclick="this.parentNode.remove()"><i class="fas fa-xmark"></i></button>`;
+  $('rends').appendChild(d);
+}
+function setLadder() { $('rends').innerHTML = ''; addRend(1080, 5000); addRend(720, 2800); addRend(480, 1200); }
+
+function addOut(type, o = {}) {
+  const d = document.createElement('div'); d.className = 'tc-row out';
+  const ph = { udp: 'udp://239.10.0.1:1234', rtmp: 'rtmp://server/live/key', srt: 'srt://server:9000?mode=caller' };
+  d.innerHTML = `<select class="form-input o-t" style="width:150px">
+      ${['hls', 'udp', 'rtmp', 'srt'].map(t => `<option value="${t}" ${t === type ? 'selected' : ''}>${t === 'udp' ? 'UDP multicast' : t.toUpperCase()}</option>`).join('')}
+    </select>
+    <span class="o-hls" style="font-size:11px;color:#94a3b8">قطعه <input type="number" class="form-input o-seg" style="width:64px;display:inline-block" min="1" max="10" value="${o.segment || 4}"> ثانیه،
+      پنجره <input type="number" class="form-input o-win" style="width:64px;display:inline-block" min="3" max="30" value="${o.window || 6}"> قطعه</span>
+    <input class="form-input tc-mono o-url" style="flex:1;min-width:240px" value="${esc(o.url || '')}" placeholder="${ph[type] || ''}">
+    <span class="o-ttlw" style="font-size:11px;color:#94a3b8">TTL <input type="number" class="form-input o-ttl" style="width:60px;display:inline-block" min="1" max="32" value="${o.ttl || 4}"></span>
+    <button class="btn-ghost text-xs px-2" onclick="this.parentNode.remove()"><i class="fas fa-xmark"></i></button>`;
+  const sync = () => {
+    const t = d.querySelector('.o-t').value;
+    d.querySelector('.o-hls').style.display = t === 'hls' ? '' : 'none';
+    d.querySelector('.o-url').style.display = t === 'hls' ? 'none' : '';
+    d.querySelector('.o-ttlw').style.display = t === 'udp' ? '' : 'none';
+    d.querySelector('.o-url').placeholder = ph[t] || '';
+  };
+  d.querySelector('.o-t').addEventListener('change', sync); sync();
+  $('outs').appendChild(d);
 }
 
-// ─── لاگ ─────────────────────────────────────────────────────
-function viewLog(name) {
-  _currentLogName = name;
-  document.getElementById('logModal').classList.remove('hidden');
-  refreshLog();
+const langs = s => s.split(/[,،\s]+/).map(x => x.trim().toLowerCase()).filter(Boolean);
+function collect() {
+  const kind = $('f_kind').value;
+  const url = kind === 'url' ? $('f_url').value.trim() : kind === 'file' ? $('f_file').value : $('f_dev').value.trim();
+  return {
+    name: $('f_name').value.trim(), slug: $('f_slug').value.trim(), mode: $('f_mode').value,
+    input_kind: kind, input_url: url,
+    settings: {
+      input: { rtsp_transport: $('f_rtsp').value, loop: $('f_loop').checked ? 1 : 0, alsa: $('f_alsa').value.trim() },
+      video: { codec: $('f_vcodec').value, hw: $('f_hw').value, preset: $('f_preset').value, fps: Number($('f_fps').value),
+               gop_seconds: Number($('f_gop').value), deinterlace: $('f_deint').checked ? 1 : 0, low_latency: $('f_lowlat').checked ? 1 : 0 },
+      renditions: [...document.querySelectorAll('#rends .rend')].map(r => ({ height: Number(r.querySelector('.r-h').value), bitrate: Number(r.querySelector('.r-b').value) })),
+      audio: { codec: $('f_acodec').value, bitrate: Number($('f_abr').value), channels: Number($('f_ach').value),
+               sample_rate: Number($('f_asr').value), languages: langs($('f_alang').value) },
+      subtitles: { mode: $('f_smode').value, languages: langs($('f_slang').value) },
+      overlay: { image: $('f_logo').value, position: $('f_lpos').value, scale_pct: Number($('f_lsize').value) },
+      outputs: [...document.querySelectorAll('#outs .out')].map(o => ({
+        type: o.querySelector('.o-t').value, url: o.querySelector('.o-url').value.trim(),
+        segment: Number(o.querySelector('.o-seg').value), window: Number(o.querySelector('.o-win').value),
+        ttl: Number(o.querySelector('.o-ttl').value) })),
+    },
+  };
 }
 
-function refreshLog() {
-  if (!_currentLogName) return;
-  fetch('/admin/transcoder/log/' + _currentLogName)
-    .then(function(r){ return r.text(); })
-    .then(function(t){
-      var el = document.getElementById('log-content');
-      el.textContent = t || 'لاگ خالی است';
-      el.scrollTop = el.scrollHeight;
-    });
+async function save() {
+  $('edErr').textContent = '';
+  const body = collect();
+  try {
+    const d = editing ? await api(`/api/v1/transcoder/jobs/${editing.id}`, 'PUT', body)
+                      : await api('/api/v1/transcoder/jobs', 'POST', body);
+    showToast('success', d.message); closeEl('editor'); load();
+  } catch (e) { $('edErr').textContent = e.message; }
 }
 
-// ─── شروع سریع از کانال ──────────────────────────────────────
-function quickTranscode(url, name) {
-  document.getElementById('inp-url').value = url;
-  document.querySelector('[name="stream_name"]').value = name
-    .toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-').slice(0,20);
-  document.getElementById('newStreamModal').classList.remove('hidden');
+async function probe() {
+  const b = collect();
+  $('probeMsg').textContent = 'در حال خواندن ورودی (تا ۱۵ ثانیه)…'; $('probeOut').innerHTML = '';
+  try {
+    const d = await api('/api/v1/transcoder/probe', 'POST', { input_kind: b.input_kind, input_url: b.input_url, mode: b.mode });
+    const r = d.data; $('probeMsg').textContent = r.format || '';
+    const TYPE = { video: 'تصویر', audio: 'صدا', subtitle: 'زیرنویس', data: 'داده' };
+    $('probeOut').innerHTML = `<table class="tc-table"><thead><tr><th>نوع</th><th>کدک</th><th>اندازه</th><th>فریم</th><th>کانال صدا</th><th>زبان</th></tr></thead><tbody>` +
+      r.streams.map(s => `<tr><td>${TYPE[s.type] || esc(s.type)}</td><td class="tc-mono">${esc(s.codec)}</td>
+        <td>${s.width ? s.width + '×' + s.height : ''}${s.field && !['progressive', 'unknown', ''].includes(s.field) ? ' <span style="color:#fbbf24">درهم (interlaced)</span>' : ''}</td>
+        <td>${s.fps || ''}</td><td>${s.channels || ''}</td><td class="tc-mono">${esc(s.language)}</td></tr>`).join('') + '</tbody></table>';
+    /* کیفیت بالاتر از ورودی بزرگ‌نمایی نمی‌شود و فقط یک نسخه‌ی تکراری
+       است که CPU می‌سوزاند — اپراتور باید بداند */
+    const srcH = Math.max(0, ...r.streams.filter(s => s.type === 'video').map(s => s.height || 0));
+    const over = collect().settings.renditions.filter(x => srcH && x.height > srcH).map(x => x.height + 'p');
+    if (over.length) $('probeMsg').innerHTML = esc(r.format || '') +
+      ` <span style="color:#fbbf24">— ورودی ${srcH}p است؛ ${esc(over.join('، '))} بزرگ‌تر از ورودی است و فقط یک نسخه‌ی تکراری می‌سازد. حذفش کنید.</span>`;
+    /* ورودی درهم؟ حذف درهم‌رفتگی را خودکار روشن کن */
+    if (r.streams.some(s => s.type === 'video' && s.field && !['progressive', 'unknown', ''].includes(s.field))) $('f_deint').checked = true;
+  } catch (e) { $('probeMsg').textContent = e.message; }
 }
 
-// ─── بروزرسانی خودکار ────────────────────────────────────────
-setInterval(function() {
-  var badge = document.getElementById('refresh-badge');
-  if (badge) badge.style.color = '#1a7ac4';
-  setTimeout(function(){
-    location.reload();
-  }, 500);
-}, 30000);
+// ── کمکی ───────────────────────────────────────────────────────
+function closeEl(id) { $(id).classList.add('hidden'); }
+async function api(url, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, credentials: 'same-origin' };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  let d = {}; try { d = await r.json(); } catch (_) {}
+  if (!r.ok || d.success === false) throw new Error(d.message || `خطا (${r.status})`);
+  return d;
+}
+
+load();
+setInterval(() => { if (!document.hidden && $('editor').classList.contains('hidden')) load(); }, 5000);
 </script>
 
 <?php include VIEWS_PATH . '/partials/layout_footer.php'; ?>

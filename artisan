@@ -251,6 +251,28 @@ match ($command) {
         if ($res['failed'] > 0) exit(1);
     })(),
 
+    'transcoder:supervise' => (function() use ($argv) {
+        // ناظر ترنسکدر. cron هر دقیقه اجرایش می‌کند و خودش تا ۵۵ ثانیه
+        // هر ۵ ثانیه بررسی می‌کند — پس کانالی که افتاد در چند ثانیه
+        // برمی‌گردد، نه در یک دقیقه.
+        //   php artisan transcoder:supervise [seconds=55]
+        $seconds = isset($argv[2]) ? max(1, (int)$argv[2]) : 55;
+
+        @mkdir(\App\Services\TranscoderService::LIVE_ROOT, 0775, true);
+        /* دو ناظر هم‌زمان هر کانال را دو بار راه می‌اندازند */
+        $lock = fopen(\App\Services\TranscoderService::LIVE_ROOT . '/tc-supervisor.lock', 'c');
+        if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) { echo "  supervisor already running\n"; return; }
+
+        $svc = new \App\Services\TranscoderService();
+        $end = time() + $seconds;
+        do {
+            foreach ($svc->superviseOnce() as $line) echo '  [' . date('H:i:s') . "] $line\n";
+            if (time() + 5 > $end) break;
+            sleep(5);
+        } while (true);
+        flock($lock, LOCK_UN);
+    })(),
+
     'flights:sync' => (function() use ($argv) {
         // پروازهای فرودگاه کیش + دمای هوا. برای cron: هر ۵ دقیقه.
         //   php artisan flights:sync [tenantId] [locationId]
@@ -475,6 +497,7 @@ match ($command) {
             'user:create'     => 'Create a new user [name email password role]',
             'key:generate'    => 'Generate APP_KEY for .env',
             'monitor:screens' => 'Check screen online status & send alerts',
+            'transcoder:supervise' => 'Keep live transcoder channels running (cron, every minute)',
             'media:converted' => 'Close out a background video conversion [mediaId exitCode]',
             'ws:start'        => 'Start WebSocket server',
             'storage:clean'   => 'Remove soft-deleted media files',

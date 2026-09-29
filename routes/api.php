@@ -230,6 +230,20 @@ $router->get('/api/v1/guest/{code}/requests',                 [\App\Controllers\
 $router->post('/api/v1/guest/{code}/requests',                [\App\Controllers\Api\GuestPortalController::class, 'store']);
 $router->post('/api/v1/guest/{code}/requests/{id}/cancel',    [\App\Controllers\Api\GuestPortalController::class, 'cancel']);
 
+// ── ترنسکدر (پنل، فقط مدیر) ─────────────────────────────────────
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+    $r->get('/transcoder/jobs',                 [\App\Controllers\Api\TranscoderController::class, 'index']);
+    $r->post('/transcoder/jobs',                [\App\Controllers\Api\TranscoderController::class, 'store']);
+    $r->put('/transcoder/jobs/{id}',            [\App\Controllers\Api\TranscoderController::class, 'update']);
+    $r->delete('/transcoder/jobs/{id}',         [\App\Controllers\Api\TranscoderController::class, 'destroy']);
+    $r->post('/transcoder/jobs/{id}/start',     [\App\Controllers\Api\TranscoderController::class, 'start']);
+    $r->post('/transcoder/jobs/{id}/stop',      [\App\Controllers\Api\TranscoderController::class, 'stop']);
+    $r->get('/transcoder/jobs/{id}/log',        [\App\Controllers\Api\TranscoderController::class, 'jobLog']);
+    $r->post('/transcoder/jobs/{id}/publish',   [\App\Controllers\Api\TranscoderController::class, 'publish']);
+    $r->post('/transcoder/probe',               [\App\Controllers\Api\TranscoderController::class, 'probe']);
+    $r->post('/transcoder/capabilities/refresh',[\App\Controllers\Api\TranscoderController::class, 'refreshCaps']);
+});
+
 // ── رزرو رستوران و امکانات (پنل کارکنان، protected) ──────────────
 $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
     $r->get('/reservations/slots',        [\App\Controllers\Api\ReservationController::class, 'slots']);

@@ -481,6 +481,8 @@ PATH=/usr/local/bin:/usr/bin:/bin
 
 # پایش آنلاین بودن تلویزیون‌ها
 * * * * * www-data cd ${APP_DIR} && php artisan monitor:screens >/dev/null 2>&1
+# ناظر ترنسکدر — کانال افتاده یا گیرکرده را برمی‌گرداند، بعد از قطع برق هم
+* * * * * www-data cd ${APP_DIR} && php artisan transcoder:supervise >/dev/null 2>&1
 # دریافت راهنمای برنامه‌ها، هر شب ساعت ۳
 0 3 * * * www-data cd ${APP_DIR} && php artisan epg:sync >/dev/null 2>&1
 # دریافت خبر از منابع RSS

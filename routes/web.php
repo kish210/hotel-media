@@ -306,9 +306,6 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
 
     // ── Transcoder ────────────────────────────────────────────
     $r->get('/transcoder',              [\App\Controllers\Web\TranscoderController::class, 'index']);
-    $r->post('/transcoder/start',       [\App\Controllers\Web\TranscoderController::class, 'start']);
-    $r->post('/transcoder/stop/{name}', [\App\Controllers\Web\TranscoderController::class, 'stop']);
-    $r->get('/transcoder/log/{name}',   [\App\Controllers\Web\TranscoderController::class, 'streamLog']);
 
     // ── IPTV & Transcoder ──────────────────────────────────────
     $r->get('/iptv',                [\App\Controllers\Web\IPTVController::class, 'index']);
