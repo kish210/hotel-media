@@ -17,7 +17,7 @@ use App\Models\Screen;
  */
 class TvGuestController extends Controller
 {
-    private const VIEWS = ['reserve', 'services', 'folio'];
+    private const VIEWS = ['reserve', 'services', 'folio', 'live'];
 
     /** GET /tv/guest/{code}/{view} */
     public function show(Request $req, array $params): void
@@ -49,6 +49,9 @@ class TvGuestController extends Controller
         /* ساعت سرور برای بیدارباش و تاکسی — ساعت تلویزیون قابل اعتماد نیست */
         $serverTs = time();
         $serverTz = (int)date('Z');
+
+        /* همان صفحه‌ی زنده، فقط کانال‌های رادیویی */
+        $radio = $req->get('radio') === '1';
 
         header('Cache-Control: no-store');
         include VIEWS_PATH . '/player/guest/' . $view . '.php';

@@ -79,8 +79,9 @@ class ContentController extends Controller
         $room     = $ctx['room_id'] ? $ctx : null;
         $channels = $this->access->visibleChannels((int)$ctx['tenant_id'], $room);
 
-        // توکن باز شدن قفل از هدر می‌آید — پلیر آن را نگه می‌دارد
-        $token    = $req->header('X-Parental-Token');
+        // توکن باز شدن قفل از هدر می‌آید — پلیر آن را نگه می‌دارد. صفحه‌ی
+        // تلویزیون با XHR ساده‌ی ES5 هدر دلخواه نمی‌فرستد، پس از query هم.
+        $token    = (string)($req->header('X-Parental-Token') ?: $req->get('t', ''));
         $unlocked = $token !== '' && $ctx['room_id']
             && $this->access->verifyToken((int)$ctx['tenant_id'], (int)$ctx['room_id'], $token);
 
@@ -92,6 +93,7 @@ class ContentController extends Controller
             if (!empty($c['locked'])) {
                 $c['stream_url'] = null;
                 $c['multicast_url'] = null;
+                $c['backup_stream_url'] = null;
             }
         }
         unset($c);

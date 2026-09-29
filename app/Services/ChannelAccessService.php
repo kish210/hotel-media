@@ -51,7 +51,7 @@ class ChannelAccessService
 
         $rows = $this->db->rows(
             'SELECT id, name, name_en, logo_url, category, channel_no, sort_order,
-                    stream_url, multicast_url, delivery, protocol,
+                    stream_url, multicast_url, backup_stream_url, delivery, protocol,
                     access_level, is_adult, is_radio
                FROM iptv_channels
               WHERE tenant_id = ? AND is_active = 1 AND access_level <= ?
