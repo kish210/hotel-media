@@ -75,6 +75,7 @@ function tvPlay(el) {
 
 var SERVER = window.location.origin;
 var CODE   = '<?= e($screen['code']??'') ?>';
+var __plSig = null;   /* امضای پلی‌لیستِ در حال پخش */
 var pl = [], ci = 0, tm = null, curSlide = null;
 var _serverOffset = 0;
 
@@ -252,6 +253,13 @@ function heartbeat() {
     try {
       var d = JSON.parse(x.responseText);
       var cmds = (d.data && d.data.commands) ? d.data.commands : [];
+
+      /* تغییر پلی‌لیست بدون فرمان دستی — توضیح کامل در orsay_tv.php */
+      if (d.data && d.data.playlist_id != null) {
+        var sig = String(d.data.playlist_id) + ':' + String(d.data.playlist_rev || '');
+        if (__plSig === null)   { __plSig = sig; }
+        else if (sig !== __plSig) { __plSig = sig; loadPlaylist(); }
+      }
       for (var i=0; i<cmds.length; i++) {
         if (cmds[i].command === 'reload') loadPlaylist();
         if (cmds[i].command === 'reboot') window.location.reload();

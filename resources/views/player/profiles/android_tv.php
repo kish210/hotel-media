@@ -162,6 +162,7 @@ var SCREEN_TYPE  = '<?= e($screen['screen_type'] ?? 'signage') ?>';
 var IPTV_MENU_ID = <?= (int)($screen['iptv_menu_id'] ?? 0) ?>;
 var SERVER = window.location.origin;
 var playlist = [], idx = 0, slideTimer = null;
+var __plSig = null;   /* امضای پلی‌لیستِ در حال پخش */
 var currentSlide = null, nextSlide = null;
 
 // ─── Clock ──────────────────────────────────────────────────────
@@ -342,6 +343,13 @@ function heartbeat() {
     try {
       var d = JSON.parse(xhr.responseText);
       var cmds = (d.data && d.data.commands) ? d.data.commands : [];
+
+      /* تغییر پلی‌لیست بدون فرمان دستی — توضیح کامل در orsay_tv.php */
+      if (d.data && d.data.playlist_id != null) {
+        var sig = String(d.data.playlist_id) + ':' + String(d.data.playlist_rev || '');
+        if (__plSig === null)   { __plSig = sig; }
+        else if (sig !== __plSig) { __plSig = sig; loadPlaylist(); }
+      }
       for (var ci = 0; ci < cmds.length; ci++) {
         var cmd = cmds[ci];
         if (cmd.command === 'reload') loadPlaylist();

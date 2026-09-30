@@ -229,6 +229,7 @@ var PAGE_BUILD = 'orsay-2026-09-30-e';
 
 var SERVER = window.location.origin;
 var CODE   = '<?= e($screen['code']??'') ?>';
+var __plSig = null;   /* امضای پلی‌لیستِ در حال پخش */
 var pl = [], ci = 0, tm = null, curSlide = null;
 var _serverOffset = 0;
 
@@ -575,6 +576,18 @@ function heartbeat() {
     try {
       var d = JSON.parse(x.responseText);
       var cmds = (d.data && d.data.commands) ? d.data.commands : [];
+
+      /* تغییر پلی‌لیست را خودِ تلویزیون تشخیص می‌دهد.
+         سرور از قبل playlist_id را می‌فرستاد و هیچ پلیری نگاهش
+         نمی‌کرد: اپراتور پلی‌لیست صفحه را عوض می‌کرد و تا وقتی دستی
+         فرمان refresh نمی‌داد یا تلویزیون ریبوت نمی‌شد هیچ اتفاقی
+         نمی‌افتاد. rev هم لازم است تا ویرایشِ آیتم‌های همان پلی‌لیست
+         دیده شود، نه فقط عوض‌شدن خودش. */
+      if (d.data && d.data.playlist_id != null) {
+        var sig = String(d.data.playlist_id) + ':' + String(d.data.playlist_rev || '');
+        if (__plSig === null)   { __plSig = sig; }
+        else if (sig !== __plSig) { __plSig = sig; loadPlaylist(); }
+      }
       for (var i=0; i<cmds.length; i++) {
         /* سرور کلید cmd می‌فرستد (ScreenController)، ولی صف قدیمی
            command داشت. هر دو را می‌پذیریم — تا امروز فقط command

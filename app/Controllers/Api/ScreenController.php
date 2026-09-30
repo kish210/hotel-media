@@ -169,9 +169,34 @@ class ScreenController extends Controller
             error_log('[HEARTBEAT COMMANDS] ' . $e->getMessage());
         }
 
+        /* شناسه‌ی نسخه‌ی پلی‌لیست.
+           ‏playlist_id تنها کافی نیست: وقتی اپراتور آیتمی به همان
+           پلی‌لیست اضافه می‌کند یا مدت را عوض می‌کند، شناسه ثابت می‌ماند
+           و تلویزیون هرگز نمی‌فهمد چیزی عوض شده. پس بزرگ‌ترین زمان
+           تغییر بین خود پلی‌لیست، آیتم‌هایش، و رسانه‌های آن‌ها را
+           می‌دهیم — رسانه هم لازم است چون پایان تبدیل یک ویدیو آن را
+           از حالت processing به قابل‌پخش می‌برد. */
+        $playlistRev = null;
+        if (!empty($playlist['id'])) {
+            try {
+                $playlistRev = (int)$this->db->value(
+                    "SELECT UNIX_TIMESTAMP(GREATEST(
+                        p.updated_at,
+                        COALESCE((SELECT MAX(pi.updated_at) FROM playlist_items pi
+                                   WHERE pi.playlist_id = p.id), p.updated_at),
+                        COALESCE((SELECT MAX(m.updated_at) FROM playlist_items pi2
+                                   JOIN media m ON m.id = pi2.media_id
+                                  WHERE pi2.playlist_id = p.id), p.updated_at)
+                     )) FROM playlists p WHERE p.id = ?",
+                    [(int)$playlist['id']]
+                );
+            } catch (\Throwable $e) {}
+        }
+
         Response::success([
             'commands'         => $cmds,
             'playlist_id'      => $playlist['id'] ?? null,
+            'playlist_rev'     => $playlistRev,
             'screen_type'      => $screen['screen_type'] ?? 'signage',
             'iptv_menu_id'     => $iptvMenuId,
             'cfg_3d'           => $cfg3d,

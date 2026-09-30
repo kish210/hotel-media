@@ -203,7 +203,10 @@ class Screen
             'memory_usage'   => $data['memory'] ?? null,
             'disk_usage'     => $data['disk'] ?? null,
             'uptime'         => $data['uptime'] ?? null,
-            'current_item'   => $data['current_item'] ?? null,
+            /* پلیرها کلید item می‌فرستند (هر ده پروفایل)، ولی اینجا فقط
+               current_item خوانده می‌شد — پس ستون همیشه NULL می‌ماند و
+               پنل هیچ‌وقت نمی‌دانست چه آیتمی روی تلویزیون پخش می‌شود. */
+            'current_item'   => $data['current_item'] ?? $data['item'] ?? null,
             'player_version' => $data['version'] ?? null,
         ]);
     }
