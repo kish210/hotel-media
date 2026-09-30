@@ -225,7 +225,7 @@ function applyBackdrop(div) {
 /* هر بار که این صفحه عوض می‌شود این عدد هم باید عوض شود — در ضربان
    گزارش می‌شود و تنها راه فهمیدن اینکه تلویزیون کد تازه را گرفته یا
    نسخه‌ی کش‌شده‌ی خودش را اجرا می‌کند. */
-var PAGE_BUILD = 'orsay-2026-09-28-d';
+var PAGE_BUILD = 'orsay-2026-09-30-e';
 
 var SERVER = window.location.origin;
 var CODE   = '<?= e($screen['code']??'') ?>';
@@ -268,9 +268,16 @@ function startTicker() {
   if (!t || !w) return;
 
   /* متن خالی یعنی نواری برای نشان دادن نیست */
-  if (!t.innerHTML || t.offsetWidth === 0) { w.style.display = 'none'; return; }
+  if (!t.innerHTML) { w.style.display = 'none'; return; }
 
+  /* نمایان کردن باید قبل از اندازه‌گیری باشد: نوار با display:none
+     رندر می‌شود و فرزندِ عنصر پنهان همیشه offsetWidth صفر دارد. با
+     ترتیب برعکس، شرطِ محافظ خودش نوار را برای همیشه پنهان نگه
+     می‌داشت — بدون هیچ خطایی. */
   w.style.display = 'block';
+
+  /* حالا که در جریان چیدمان است، اندازه معنا دارد */
+  if (t.offsetWidth === 0) { w.style.display = 'none'; return; }
 
   /* فاصله‌ی پیش از تکرار = یک عرض صفحه، هرچقدر که هست. با عدد ثابت
      ۱۹۲۰ روی تلویزیون ۱۲۸۰ یک شکاف خالیِ طولانی وسط تیکر می‌افتاد. */
