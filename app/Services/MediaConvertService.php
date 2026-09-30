@@ -93,7 +93,8 @@ class MediaConvertService
     public function probe(string $path): array
     {
         $out = ['video' => '', 'audio' => '', 'duration' => 0.0, 'width' => 0, 'height' => 0, 'fps' => 0.0, 'fps_nominal' => 0.0,
-                'vfr' => false, 'pix_fmt' => '', 'level' => 0, 'profile' => '', 'hdr' => false, 'faststart' => true];
+                'vfr' => false, 'pix_fmt' => '', 'level' => 0, 'profile' => '', 'hdr' => false, 'faststart' => true,
+                'bitrate' => 0];
         if ($this->ffprobe === '' || !is_file($path)) return $out;
 
         $cmd = escapeshellarg($this->ffprobe)
@@ -114,6 +115,7 @@ class MediaConvertService
                 $out['level']   = (int)($s['level'] ?? 0);
                 $out['profile'] = (string)($s['profile'] ?? '');
                 $out['hdr']     = in_array($s['color_transfer'] ?? '', ['smpte2084', 'arib-std-b67'], true);
+                $out['bitrate'] = (int)($s['bit_rate'] ?? 0);
 
                 $avg = self::rate((string)($s['avg_frame_rate'] ?? ''));
                 $r   = self::rate((string)($s['r_frame_rate'] ?? ''));
@@ -137,6 +139,14 @@ class MediaConvertService
         }
         $out['duration']  = (float)($d['format']['duration'] ?? 0);
         $out['faststart'] = self::moovFirst($path);
+
+        /* بعضی فایل‌ها نرخ بیت را روی خود جریان ندارند (MKV و خروجی
+           بعضی دوربین‌ها). نرخ کل فایل تقریب خوبی است: صدا معمولا
+           کمتر از ۱۰ درصد آن است و برای سنجیدن «خیلی سنگین است یا نه»
+           همین کافی است. */
+        if ($out['bitrate'] === 0) {
+            $out['bitrate'] = (int)($d['format']['bit_rate'] ?? 0);
+        }
 
         return $out;
     }
@@ -191,6 +201,22 @@ class MediaConvertService
      *
      * @return array{action:string,reasons:list<string>}
      */
+    /**
+     * سقف نرخ بیت (کیلوبیت بر ثانیه) برای یک ارتفاع تصویر.
+     *
+     * بدون سقف، CRF در صحنه‌ی شلوغ تا چند ده مگابیت بالا می‌رود و
+     * رمزگشای تلویزیون یا شبکه‌ی هتل کم می‌آورد.
+     *
+     * همین اعداد هم برای تولید خروجی و هم برای قضاوت درباره‌ی فایل
+     * ورودی به کار می‌روند. جدا بودنشان همان اشکالی بود که یک فایل
+     * ۱۰۸۰p با ۱۴٫۵ مگابیت را «سالم» تشخیص می‌داد — فایلی که خودِ
+     * همین مبدل هرگز حاضر نبود تولیدش کند.
+     */
+    public static function maxBitrateK(int $height): int
+    {
+        return $height >= 1000 ? 8000 : ($height >= 700 ? 5000 : ($height >= 460 ? 2500 : 1500));
+    }
+
     public function plan(string $path, string $mime): array
     {
         $p = $this->probe($path);
@@ -206,6 +232,19 @@ class MediaConvertService
         if ($p['vfr'])                                   $why[] = 'نرخ فریم متغیر';
         if ($p['pix_fmt'] !== '' && $p['pix_fmt'] !== 'yuv420p' && $p['pix_fmt'] !== 'yuvj420p') $why[] = 'قالب رنگ ' . $p['pix_fmt'];
         if ($p['level'] > 41)                            $why[] = 'سطح ' . ($p['level'] / 10);
+
+        /* نرخ بیت — تنها ویژگی‌ای که بررسی نمی‌شد و در عمل شایع‌ترین
+           علت گیر کردن تصویر روی تلویزیون هتل است. فایل ۱۰۸۰p با
+           ۱۴٫۵ مگابیت از تک‌تک شرط‌های بالا رد می‌شد (ابعاد دقیقا
+           ۱۹۲۰×۱۰۸۰، سطح ۴٫۱، پروفایل Main، ۲۵ فریم) و دست‌نخورده
+           روی تلویزیون ۲۰۱۳ می‌رفت.
+
+           ۲۰ درصد ارفاق: فایلی که همین حالا نزدیک هدف است، تبدیل
+           دوباره‌اش فقط کیفیت را کم می‌کند بدون اینکه چیزی حل شود. */
+        $cap = self::maxBitrateK(max(1, (int)$p['height']));
+        if ($p['bitrate'] > $cap * 1000 * 1.2) {
+            $why[] = 'نرخ بیت ' . round($p['bitrate'] / 1000000, 1) . ' مگابیت (سقف ' . round($cap / 1000, 1) . ')';
+        }
         if ($p['hdr'])                                   $why[] = 'HDR';
         if (stripos($p['profile'], 'high 10') !== false || stripos($p['profile'], '4:2:2') !== false) $why[] = 'پروفایل ' . $p['profile'];
 
@@ -267,9 +306,7 @@ class MediaConvertService
         $vf[] = "scale=$tw:$th:flags=lanczos";
         $vf[] = 'format=yuv420p';
 
-        /* سقف بیت‌ریت بر اساس ارتفاع: بدون سقف، CRF در صحنه‌ی شلوغ تا
-           چند ده مگابیت بالا می‌رود و رمزگشای تلویزیون یا شبکه‌ی هتل کم می‌آورد */
-        $max = $th >= 1000 ? 8000 : ($th >= 700 ? 5000 : ($th >= 460 ? 2500 : 1500));
+        $max = self::maxBitrateK($th);
 
         return [
             $ffmpeg, '-y', '-hide_banner', '-nostdin', '-loglevel', 'error',

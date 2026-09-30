@@ -71,12 +71,30 @@ if (!$svc->available()) {
     /* آیفون: HEVC ده‌بیتی، ۶۰ فریم، نرخ متغیر، MOV */
     shell_exec($ff . sprintf($src, '2560x1440', 60, 8) . " -vf \"select='not(between(mod(n\\,120)\\,20\\,50))'\" -fps_mode vfr"
         . " -c:v libx265 -preset ultrafast -pix_fmt yuv420p10le -tag:v hvc1 -c:a aac -f mov $dir/iphone.mov 2>&1");
-    /* MOV سالم: H.264 720p30 + AAC — فقط ظرف عوض شود */
-    shell_exec($ff . sprintf($src, '1280x720', 30, 6) . " -c:v libx264 -preset ultrafast -pix_fmt yuv420p -c:a aac -f mov $dir/clean.mov 2>&1");
+    /* MOV سالم: H.264 720p30 + AAC — فقط ظرف عوض شود.
+       نرخ بیت عمدا مهار شده: testsrc2 الگوی مصنوعیِ پرجزئیات است و با
+       preset ultrafast بدون کنترل نرخ به ده‌ها مگابیت می‌رسد — یعنی
+       فایلی که قرار بود «سالم» باشد، خودش از سقف رد می‌شد و تست چیزی
+       جز فیکسچرِ غیرواقعی را نشان نمی‌داد. */
+    shell_exec($ff . sprintf($src, '1280x720', 30, 6) . " -c:v libx264 -preset ultrafast -pix_fmt yuv420p"
+        . " -b:v 3000k -maxrate 3000k -bufsize 6000k -c:a aac -f mov $dir/clean.mov 2>&1");
     /* MP4 با فهرست در انتها */
-    shell_exec($ff . sprintf($src, '1280x720', 25, 6) . " -c:v libx264 -preset ultrafast -pix_fmt yuv420p -c:a aac $dir/tail.mp4 2>&1");
+    shell_exec($ff . sprintf($src, '1280x720', 25, 6) . " -c:v libx264 -preset ultrafast -pix_fmt yuv420p"
+        . " -b:v 3000k -maxrate 3000k -bufsize 6000k -c:a aac $dir/tail.mp4 2>&1");
     /* MP4 با HEVC — ورودی و خروجی هم‌نام */
     shell_exec($ff . sprintf($src, '1280x720', 25, 6) . " -c:v libx265 -preset ultrafast -tag:v hvc1 -c:a aac -movflags +faststart $dir/hevc.mp4 2>&1");
+    /* ۱۰۸۰p سنگین: دقیقا همان چیزی که روی تلویزیون هتل گیر می‌کرد —
+       H.264 Main، سطح ۴٫۱، ۲۵ فریم، yuv420p، ابعاد دقیقا ۱۹۲۰×۱۰۸۰.
+       از تک‌تک شرط‌های دیگر رد می‌شود و فقط نرخ بیتش مشکل دارد. */
+    shell_exec($ff . sprintf($src, '1920x1080', 25, 5)
+        . " -c:v libx264 -preset ultrafast -profile:v main -level:v 4.1 -pix_fmt yuv420p"
+        . " -b:v 15000k -minrate 15000k -maxrate 15000k -bufsize 30000k"
+        . " -c:a aac -movflags +faststart $dir/heavy.mp4 2>&1");
+    /* همان ابعاد ولی با نرخ بیت معقول — نباید تبدیل شود */
+    shell_exec($ff . sprintf($src, '1920x1080', 25, 5)
+        . " -c:v libx264 -preset ultrafast -profile:v main -level:v 4.1 -pix_fmt yuv420p"
+        . " -b:v 4000k -maxrate 4000k -bufsize 8000k"
+        . " -c:a aac -movflags +faststart $dir/light.mp4 2>&1");
     /* HDR (HLG) */
     shell_exec($ff . sprintf($src, '1920x1080', 30, 5) . " -c:v libx265 -preset ultrafast -pix_fmt yuv420p10le -color_trc arib-std-b67"
         . " -color_primaries bt2020 -colorspace bt2020nc -c:a aac -f mov $dir/hdr.mov 2>&1");
@@ -88,9 +106,30 @@ if (!$svc->available()) {
     check('دلیل‌ها: کدک، ابعاد، فریم، نرخ متغیر، ۱۰ بیت',
           count(array_filter($x['reasons'], fn($r) => preg_match('/hevc|ابعاد|فریم در ثانیه|متغیر|yuv420p10/u', $r))) >= 5,
           implode('، ', $x['reasons']));
-    check('MOV سالم: فقط بازچینی', $pl('clean.mov', 'video/quicktime')['action'] === 'remux');
-    check('MP4 با فهرست در انتها: بازچینی', $pl('tail.mp4', 'video/mp4')['action'] === 'remux');
+    $cl = $pl('clean.mov', 'video/quicktime');
+    check('MOV سالم: فقط بازچینی', $cl['action'] === 'remux', json_encode($cl, JSON_UNESCAPED_UNICODE));
+    $tl = $pl('tail.mp4', 'video/mp4');
+    check('MP4 با فهرست در انتها: بازچینی', $tl['action'] === 'remux', json_encode($tl, JSON_UNESCAPED_UNICODE));
     check('HDR: تبدیل', in_array('HDR', $pl('hdr.mov', 'video/quicktime')['reasons'], true));
+
+    /* رگرسیون: این فایل تا پیش از این «سالم» تشخیص داده می‌شد و
+       دست‌نخورده روی تلویزیون ۲۰۱۳ می‌رفت و تصویر گیر می‌کرد. */
+    $hv = $pl('heavy.mp4', 'video/mp4');
+    check('۱۰۸۰p با ۱۵ مگابیت: تبدیل', $hv['action'] === 'transcode',
+          json_encode($hv, JSON_UNESCAPED_UNICODE));
+    check('دلیلش نرخ بیت است',
+          (bool)array_filter($hv['reasons'], fn($r) => str_contains($r, 'نرخ بیت')),
+          implode('، ', $hv['reasons']));
+
+    /* و همان ابعاد با نرخ معقول نباید بی‌دلیل دوباره فشرده شود */
+    $lt = $pl('light.mp4', 'video/mp4');
+    check('۱۰۸۰p با ۴ مگابیت: دست نمی‌خورد', $lt['action'] === 'ok',
+          json_encode($lt, JSON_UNESCAPED_UNICODE));
+
+    /* سقف تولید و سقف قضاوت باید یکی باشند، وگرنه دوباره از هم جدا می‌افتند */
+    check('سقف ۱۰۸۰p هشت مگابیت', MC::maxBitrateK(1080) === 8000);
+    check('سقف ۷۲۰p پنج مگابیت',  MC::maxBitrateK(720)  === 5000);
+    check('سقف ۴۸۰p دو و نیم',    MC::maxBitrateK(480)  === 2500);
 
     echo "\n── ۳) تبدیل واقعی در پس‌زمینه ──\n";
     $db->query("INSERT IGNORE INTO tenants (id, name, slug) VALUES (1,'Test Hotel','test')");
