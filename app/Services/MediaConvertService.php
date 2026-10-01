@@ -63,16 +63,9 @@ class MediaConvertService
      */
     public static function locate(string $bin): string
     {
-        $out = trim((string)@shell_exec('command -v ' . escapeshellarg($bin) . ' 2>/dev/null'));
-        if ($out !== '' && $out[0] === '/') return $out;
-
-        foreach (['/usr/bin/', '/usr/local/bin/'] as $dir) {
-            $probe = trim((string)@shell_exec(
-                'test -x ' . escapeshellarg($dir . $bin) . ' && echo ok 2>/dev/null'
-            ));
-            if ($probe === 'ok') return $dir . $bin;
-        }
-        return '';
+        /* یک پیاده‌سازی در helpers نگه داشته شده تا این تشخیص در چند
+           سرویس از هم جدا نشود. این متد برای سازگاری صداکننده‌ها ماند. */
+        return binPath($bin);
     }
 
     public function available(): bool
@@ -375,7 +368,7 @@ class MediaConvertService
         /* عمدا PHP_BINARY نیست: در بستر FPM مقدارش /usr/sbin/php-fpm8.3
            است، و صدا زدنش با آرگومان‌های artisan فقط راهنمای php-fpm را
            چاپ می‌کند و رکورد برای همیشه روی processing می‌ماند. */
-        $phpCli = self::locate('php') ?: self::locate('php8.3');
+        $phpCli = phpCliPath();
         if ($phpCli === '') {
             return ['ok' => false, 'message' => 'باینری خط‌فرمان php پیدا نشد'];
         }

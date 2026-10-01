@@ -620,7 +620,19 @@ final class SystemUpdateService
         $artisan = $this->root . '/artisan';
         if (!is_file($artisan)) return ['ok' => true, 'message' => ''];
 
-        $php = PHP_BINARY ?: 'php';
+        /* عمدا PHP_BINARY نیست: به‌روزرسانی از پنل وب اجرا می‌شود، یعنی
+           زیر PHP-FPM که مقدارش /usr/sbin/php-fpm8.3 است. صدا زدنش با
+           آرگومان‌های artisan راهنمای php-fpm را چاپ می‌کند و کد خروج
+           غیرصفر می‌دهد — پس این مرحله همیشه شکست می‌خورد، آن هم بعد از
+           اینکه فایل‌ها جایگزین شده‌اند: کد جدید، دیتابیس قدیمی، و پیام
+           «از نسخه پشتیبان برگردانید». */
+        $php = phpCliPath();
+        if ($php === '') {
+            return ['ok' => false, 'message' =>
+                'باینری خط‌فرمان php پیدا نشد؛ مهاجرت دیتابیس اجرا نشد. '
+                . 'روی سرور دستی اجرا کنید: php artisan db:migrate'];
+        }
+
         exec(sprintf('%s %s db:migrate 2>&1',
             escapeshellarg($php), escapeshellarg($artisan)), $out, $code);
 

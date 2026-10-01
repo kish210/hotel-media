@@ -12,6 +12,14 @@ spl_autoload_register(function(string $class): void {
     if (file_exists($path)) require $path;
 });
 
+/* توابع کمکی — تا امروز فقط public/index.php آن‌ها را بار می‌کرد، پس
+   هر دستوری که سرویسی با وابستگی به این توابع صدا می‌زد از خط فرمان
+   با «undefined function» می‌مرد. ‏media:converted دقیقا همین حالت است:
+   از دل ffmpeg پس‌زمینه اجرا می‌شود و خطایش هیچ‌جا دیده نمی‌شد.
+   خودِ فایل هر تابع را با function_exists محافظت کرده، پس بار دوباره
+   بی‌خطر است. */
+require ROOT_PATH . '/app/Helpers/helpers.php';
+
 // Load env
 $envFile = ROOT_PATH . '/.env';
 if (file_exists($envFile)) {

@@ -33,6 +33,44 @@ if (!function_exists('formatPrice')) {
     }
 }
 
+if (!function_exists('binPath')) {
+    /**
+     * مسیر یک باینری سیستم را پیدا می‌کند.
+     *
+     * دو تله‌ای که این تابع برای آن‌هاست، هر دو فقط زیر PHP-FPM دیده
+     * می‌شوند و در خط فرمان سالم به نظر می‌رسند:
+     *
+     *  ۱. ‏PHP_BINARY زیر FPM برابر /usr/sbin/php-fpm8.3 است، نه php.
+     *     صدا زدنش با آرگومان‌های artisan فقط راهنمای php-fpm را چاپ
+     *     می‌کند و کد خروج غیرصفر می‌دهد.
+     *  ۲. ‏open_basedir روی pool تنظیم است، پس is_executable() برای
+     *     مسیرهای بیرون از آن — مثل /usr/bin/php — false می‌دهد، هرچند
+     *     همان باینری با shell کامل اجرا می‌شود.
+     *
+     * برای همین تشخیص با `command -v` انجام می‌شود، نه بررسی فایل.
+     */
+    function binPath(string $bin): string {
+        static $cache = [];
+        if (isset($cache[$bin])) return $cache[$bin];
+
+        $out = trim((string)@shell_exec('command -v ' . escapeshellarg($bin) . ' 2>/dev/null'));
+        if ($out !== '' && $out[0] === '/') return $cache[$bin] = $out;
+
+        foreach (['/usr/bin/', '/usr/local/bin/'] as $dir) {
+            $ok = trim((string)@shell_exec('test -x ' . escapeshellarg($dir . $bin) . ' && echo ok 2>/dev/null'));
+            if ($ok === 'ok') return $cache[$bin] = $dir . $bin;
+        }
+        return $cache[$bin] = '';
+    }
+}
+
+if (!function_exists('phpCliPath')) {
+    /** باینری خط‌فرمان php — هرگز PHP_BINARY، به دلیل بالا */
+    function phpCliPath(): string {
+        return binPath('php') ?: binPath('php8.3') ?: binPath('php8');
+    }
+}
+
 if (!function_exists('slugify')) {
     function slugify(string $text): string {
         $text = preg_replace('/[^\p{L}\p{N}\s-]/u', '', $text);
