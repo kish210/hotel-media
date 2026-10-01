@@ -52,19 +52,19 @@ include VIEWS_PATH . '/partials/layout.php';
 </div>
 
 <!-- ─── Tabs ─── -->
-<div style="display:flex;gap:2px;background:rgba(0,0,0,0.4);border-radius:12px;padding:4px;margin-bottom:20px;width:fit-content;">
-<button type="button" id="stab-info"       onclick="showTab('info')"       style="padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px;background:rgba(26,122,196,.2);color:#1a7ac4;"><i class="fas fa-sliders"></i>اطلاعات</button>
-<button type="button" id="stab-activation" onclick="showTab('activation')" style="padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px;background:transparent;color:#64748b;"><i class="fas fa-qrcode"></i>فعال‌سازی</button>
-<button type="button" id="stab-player"     onclick="showTab('player')"     style="padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px;background:transparent;color:#64748b;"><i class="fas fa-tv"></i>پلیر</button>
-<button type="button" id="stab-broadcast"  onclick="showTab('broadcast')"  style="padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px;background:transparent;color:#64748b;"><i class="fas fa-bolt"></i>پخش فوری</button>
-<button type="button" id="stab-status"     onclick="showTab('status')"     style="padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px;background:transparent;color:#64748b;"><i class="fas fa-signal"></i>وضعیت</button>
+<div class="tab-bar">
+<button type="button" id="stab-info"       onclick="showTab('info')"       class="tab-btn is-on"><i class="fas fa-sliders"></i>اطلاعات</button>
+<button type="button" id="stab-activation" onclick="showTab('activation')" class="tab-btn"><i class="fas fa-qrcode"></i>فعال‌سازی</button>
+<button type="button" id="stab-player"     onclick="showTab('player')"     class="tab-btn"><i class="fas fa-tv"></i>پلیر</button>
+<button type="button" id="stab-broadcast"  onclick="showTab('broadcast')"  class="tab-btn"><i class="fas fa-bolt"></i>پخش فوری</button>
+<button type="button" id="stab-status"     onclick="showTab('status')"     class="tab-btn"><i class="fas fa-signal"></i>وضعیت</button>
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start;">
 <div>
 <div id="sec-info">
   <div class="card">
-    <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:16px;">
+    <h2 class="card-h2">
       <i class="fas fa-sliders text-blue-400 ml-2"></i>تنظیمات صفحه
     </h2>
     <form method="POST" action="/admin/screens/<?= $screen['id'] ?>">
@@ -382,7 +382,7 @@ include VIEWS_PATH . '/partials/layout.php';
 
 <div id="sec-activation" style="display:none;">
   <div class="card" style="border:1px solid rgba(<?=$isActive?'34,197,94':'245,158,11'?>,0.25);">
-    <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:16px;">
+    <h2 class="card-h2">
       <i class="fas fa-qrcode text-yellow-400 ml-2"></i>فعال‌سازی صفحه نمایش
     </h2>
 
@@ -473,7 +473,7 @@ include VIEWS_PATH . '/partials/layout.php';
 
     <!-- انتخاب پروفایل -->
     <div class="card mb-4">
-      <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:16px;">
+      <h2 class="card-h2">
         <i class="fas fa-tv text-purple-400 ml-2"></i>پروفایل پلیر
       </h2>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px;">
@@ -494,7 +494,7 @@ include VIEWS_PATH . '/partials/layout.php';
 
     <!-- Overlay Settings -->
     <div class="card mb-4">
-      <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:16px;">
+      <h2 class="card-h2">
         <i class="fas fa-layer-group text-indigo-400 ml-2"></i>تنظیمات نمایش
       </h2>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -599,7 +599,7 @@ include VIEWS_PATH . '/partials/layout.php';
     <div id="iptv-appearance-card" class="card mb-4"
          style="<?= ($screen['screen_type']??'signage')==='iptv' ? '' : 'display:none;' ?>
                 border:1px solid rgba(239,68,68,.2);">
-      <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:16px;">
+      <h2 class="card-h2">
         <i class="fas fa-satellite-dish text-red-400 ml-2"></i>ظاهر پلیر IPTV
         <span style="font-size:10px;font-weight:400;color:#475569;margin-right:8px;">ویژه صفحات IPTV</span>
       </h2>
@@ -732,7 +732,7 @@ include VIEWS_PATH . '/partials/layout.php';
 
 <div id="sec-broadcast" style="display:none;">
   <div class="card" style="border:1px solid rgba(26,122,196,.2);">
-    <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:16px;">
+    <h2 class="card-h2">
       <i class="fas fa-bolt text-orange-400 ml-2"></i>پخش فوری روی صفحه
     </h2>
     <!-- نوع محتوا -->
@@ -910,10 +910,9 @@ function showTab(t) {
     var s=document.getElementById('sec-'+id);
     var b=document.getElementById('stab-'+id);
     if(s) s.style.display=(id===t)?'block':'none';
-    if(b){
-      b.style.background=(id===t)?'rgba(26,122,196,.2)':'transparent';
-      b.style.color=(id===t)?'#1a7ac4':'#64748b';
-    }
+    /* حالت فعال با کلاس، نه دست‌کاری رنگ درون‌خطی — تعریفش در
+       design-system.css است تا همه‌جای پنل یک شکل باشد. */
+    if(b) b.classList.toggle('is-on', id===t);
   });
   if(t==='broadcast'){try{bcType('image');loadBcMedia('image');}catch(e){}}
 }

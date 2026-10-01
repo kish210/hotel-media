@@ -516,6 +516,34 @@ tbody tr:last-child td { border-bottom: none; }
   animation: sheet-in var(--t-slow);
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   تب‌های داخل صفحه و سرعنوان کارت
+   ═══════════════════════════════════════════════════════════════════
+   صفحه‌ی مدیریت یک صفحه‌نمایش همین دو الگو را ده‌ها بار به‌صورت
+   استایل درون‌خطی تکرار می‌کرد و فایل را بی‌دلیل سنگین کرده بود. */
+.tab-bar {
+  display: flex; gap: 2px; width: fit-content;
+  background: rgba(0,0,0,.4);
+  border-radius: var(--r-lg);
+  padding: 4px;
+  margin-bottom: var(--s5);
+  flex-wrap: wrap;
+}
+.tab-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 9px 16px;
+  border: none; border-radius: 9px;
+  background: transparent; color: #64748b;
+  font: 600 12px inherit; font-family: inherit;
+  cursor: pointer;
+  transition: background var(--t-base), color var(--t-base);
+}
+.tab-btn:hover { color: #94a3b8; }
+.tab-btn.is-on  { background: rgba(26,122,196,.2); color: #1a7ac4; }
+
+/* سرعنوان بخش داخل کارت */
+.card-h2 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: var(--s5); }
+
 /* سرِ مودال — عنوان در یک طرف و دکمه‌ی بستن در طرف دیگر.
    این چیدمان در همه‌ی مودال‌ها تکرار می‌شد؛ یک‌بار اینجا تعریف شد. */
 .modal-head {
