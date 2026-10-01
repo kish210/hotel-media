@@ -258,6 +258,57 @@ function renderScreenCard(array $s, string $tab): void {
     $name    = htmlspecialchars($s['name'] ?? '', ENT_QUOTES);
     $code    = htmlspecialchars($s['code'] ?? '', ENT_QUOTES);
     $loc     = htmlspecialchars($s['location_name'] ?? '', ENT_QUOTES);
+
+    /* ── آنچه اپراتور واقعا لازم دارد ──────────────────────────────
+       تا پیش از این کارت فقط نام و کد و محل را می‌گفت. «آنلاین» به
+       تنهایی گمراه‌کننده است: تابلویی که پلی‌لیست ندارد یا روی یک
+       آیتم گیر کرده هم آنلاین است. پس پلی‌لیست، آیتم جاری و آخرین
+       ضربان هم نشان داده می‌شود. */
+    $plName  = trim((string)($s['playlist_name'] ?? ''));
+    $plCount = (int)($s['playlist_items'] ?? 0);
+    $curItem = $s['current_item'];
+    $secs    = $s['seconds_ago'];
+    $plat    = (string)($s['platform'] ?? '');
+
+    // نوار پلی‌لیست: نداشتنش یک هشدار است، نه یک خط خالی
+    if ($plName === '') {
+        $plRow = "<div style='font-size:10px;color:#fbbf24;background:rgba(245,158,11,.1);"
+               . "border-radius:5px;padding:3px 7px;margin-bottom:6px;'>"
+               . "<i class='fas fa-triangle-exclamation' style='font-size:9px;'></i> پلی‌لیست ندارد</div>";
+    } else {
+        $pn   = htmlspecialchars($plName, ENT_QUOTES);
+        $pn2  = static fn($n) => function_exists('persianNumber')
+              ? persianNumber((int)$n) : (string)(int)$n;
+        $pos  = ($curItem !== null && $plCount > 0)
+              ? ' · آیتم ' . $pn2((int)$curItem + 1) . ' از ' . $pn2($plCount)
+              : ($plCount > 0 ? ' · ' . $pn2($plCount) . ' آیتم' : '');
+        $plRow = "<div style='font-size:10px;color:#94a3b8;margin-bottom:6px;overflow:hidden;"
+               . "text-overflow:ellipsis;white-space:nowrap;' title='{$pn}'>"
+               . "<i class='fas fa-list' style='font-size:9px;color:#1a7ac4;'></i> {$pn}{$pos}</div>";
+    }
+
+    /* آخرین ضربان — برای تابلوی آفلاین مهم‌ترین عدد است.
+       ارقام فارسی، تا با بقیه‌ی پنل یکدست بماند. */
+    $num  = static fn($n) => function_exists('persianNumber')
+        ? persianNumber((int)$n) : (string)(int)$n;
+    if ($secs === null) {
+        $seen = 'هیچ‌وقت وصل نشده';
+    } elseif ((int)$secs < 120) {
+        $seen = 'همین الان';
+    } elseif ((int)$secs < 3600) {
+        $seen = $num(floor((int)$secs / 60))    . ' دقیقه پیش';
+    } elseif ((int)$secs < 86400) {
+        $seen = $num(floor((int)$secs / 3600))  . ' ساعت پیش';
+    } else {
+        $seen = $num(floor((int)$secs / 86400)) . ' روز پیش';
+    }
+
+    $platLbl = ['orsay' => 'Orsay', 'tizen' => 'Tizen', 'webos' => 'webOS',
+                'android' => 'Android', 'windows' => 'Windows', 'browser' => 'مرورگر'][$plat] ?? '';
+    $platTag = $platLbl !== ''
+        ? "<span style='font-size:9px;color:#64748b;background:rgba(255,255,255,.05);"
+          . "padding:1px 6px;border-radius:5px;'>{$platLbl}</span>"
+        : '';
     echo <<<HTML
 <div style="background:#16161f;border:1px solid rgba(255,255,255,.07);border-radius:12px;
             overflow:hidden;transition:all .2s;"
@@ -287,9 +338,16 @@ HTML;
   <div style="padding:11px 12px;">
     <div style="font-weight:700;color:#fff;font-size:13px;margin-bottom:3px;
                 overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{$name}</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:6px;">
       <code style="font-size:10px;color:#475569;">{$code}</code>
-      <span style="font-size:10px;color:#64748b;">{$loc}</span>
+      <span style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{$loc}</span>
+    </div>
+    {$plRow}
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px;">
+      <span style="font-size:10px;color:#64748b;">
+        <i class="fas fa-clock" style="font-size:9px;"></i> {$seen}
+      </span>
+      {$platTag}
     </div>
     <div style="display:flex;gap:4px;">
       <a href="/admin/screens/{$id}" style="flex:1;text-align:center;padding:6px;

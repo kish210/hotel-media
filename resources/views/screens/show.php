@@ -152,6 +152,25 @@ include VIEWS_PATH . '/partials/layout.php';
             یک <b>برنامه‌ی زمان‌بندی‌شده‌ی مخصوص همین صفحه</b> بر این انتخاب مقدم است.
             در عوض این انتخاب بر برنامه‌های «همه‌ی صفحات» مقدم می‌شود.
           </p>
+
+          <?php /* لوگو، دما و نوار متحرک روی خودِ پلی‌لیست‌اند، نه روی صفحه.
+                   منطقش این است که هتلی با چند تابلو هرکدام را جدا برند کند —
+                   ولی چون اپراتور آن‌ها را در این صفحه می‌جوید، مسیرش اینجا
+                   صریح گفته و لینک می‌شود. */ ?>
+          <?php $curPl = (int)($screen['current_playlist_id'] ?? 0); ?>
+          <div style="margin-top:9px;background:rgba(26,122,196,.07);border:1px solid rgba(26,122,196,.18);
+                      border-radius:9px;padding:10px 12px;font-size:11px;color:#94a3b8;line-height:1.9;">
+            <i class="fas fa-circle-info" style="color:#60a5fa;font-size:10px;"></i>
+            <b style="color:#cbd5e1;">لوگو، دمای هوا، نوار متحرک و پس‌زمینه</b>
+            روی خودِ پلی‌لیست تنظیم می‌شوند، نه اینجا — تا هر تابلو برند خودش را داشته باشد.
+            <?php if ($curPl > 0): ?>
+              <a href="/admin/playlists/<?= $curPl ?>/edit" style="color:#60a5fa;">
+                تنظیم برندینگ همین پلی‌لیست ←
+              </a>
+            <?php else: ?>
+              ابتدا یک پلی‌لیست انتخاب و ذخیره کنید.
+            <?php endif; ?>
+          </div>
         </div>
       </div>
 

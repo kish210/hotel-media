@@ -41,9 +41,26 @@ class Screen
 
         $sql = "SELECT s.id, s.code, s.name, s.status, s.orientation,
                        s.resolution, s.location_id, s.current_playlist_id,
-                       s.settings, s.last_seen_at,
+                       s.settings, s.last_seen_at, s.platform,
                        l.name AS location_name,
                        p.name AS playlist_name,
+                       /* شماره‌ی آیتمی که پلیر گزارش کرده — تا اپراتور از
+                          همین فهرست بفهمد تابلو واقعا در حال پخش است یا
+                          فقط آنلاین است و روی چیزی گیر کرده */
+                       (SELECT hb.current_item FROM heartbeats hb
+                         WHERE hb.screen_id = s.id
+                         ORDER BY hb.id DESC LIMIT 1) AS current_item,
+                       /* همان فیلتری که Playlist::getForPlayer دارد:
+                          آیتمِ رسانه‌دارِ در حال تبدیل به تلویزیون نمی‌رود،
+                          پس اگر اینجا شمرده شود عددِ کارت با آنچه تابلو
+                          واقعا پخش می‌کند نمی‌خواند. */
+                       (SELECT COUNT(*) FROM playlist_items pi
+                         LEFT JOIN media pm ON pm.id = pi.media_id
+                         WHERE pi.playlist_id = s.current_playlist_id
+                           AND pi.is_active = 1
+                           AND (pi.media_id IS NULL
+                                OR pm.status IS NULL
+                                OR pm.status = 'ready')) AS playlist_items,
                        TIMESTAMPDIFF(SECOND, s.last_seen_at, NOW()) AS seconds_ago,
                        CASE WHEN s.last_seen_at IS NOT NULL
                             AND TIMESTAMPDIFF(SECOND, s.last_seen_at, NOW()) < 120

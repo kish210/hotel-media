@@ -24,7 +24,11 @@ $logoSize      = (int)($settings['logo_size'] ?? 120);
 $tickerText    = (string)($settings['ticker_text'] ?? '');
 $tickerEnabled = $tickerText !== '';
 $tickerSpeed   = max(5, (int)($settings['ticker_speed'] ?? 40));
-$tickerBg      = (string)($settings['ticker_bg'] ?? 'rgba(0,0,0,0.72)');
+/* پنل این رنگ را با کلید ticker_bg_color ذخیره می‌کند و اینجا فقط
+   ticker_bg خوانده می‌شد — پس انتخاب رنگِ اپراتور هیچ اثری نداشت و
+   همیشه پیش‌فرض می‌نشست. هر دو کلید پذیرفته می‌شود تا مقادیری که از
+   قبل ذخیره شده‌اند هم بی‌اثر نمانند. */
+$tickerBg      = (string)($settings['ticker_bg_color'] ?? $settings['ticker_bg'] ?? 'rgba(0,0,0,0.72)');
 $tickerColor   = (string)($settings['ticker_color'] ?? '#ffffff');
 
 $clockEnabled  = !empty($settings['show_clock']);
