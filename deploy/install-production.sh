@@ -521,25 +521,36 @@ install -d -o www-data -g www-data "$APP_DIR/storage/drivers"
 ok "ابزار نصب درایور آماده شد"
 
 # کارهای زمان‌بندی‌شده
+chmod 755 "$APP_DIR/scripts/cron-run.sh" 2>/dev/null || true
+
 cat > /etc/cron.d/hotel-media <<CRON
 # Hotel Media — کارهای زمان‌بندی‌شده
+#
+# همه از scripts/cron-run.sh رد می‌شوند، نه php مستقیم. پیش از این هر خط
+# با \`>/dev/null 2>&1\` تمام می‌شد و شکستِ یک کار هیچ نشانی نمی‌گذاشت:
+# ‏epg:sync می‌توانست هر شب شکست بخورد و تنها نشانه‌اش کهنه‌شدن راهنمای
+# برنامه‌ها بود. ‏wrapper فقط شکست‌ها را در storage/logs/cron.log می‌نویسد
+# و همان‌جا در پنل، صفحه‌ی «لاگ و عیب‌یابی»، دیده می‌شود.
+#
+# مسیر کامل نوشته شده و از متغیر استفاده نمی‌شود: بسط متغیر در فایل‌های
+# cron.d به پوسته و نسخه وابسته است و اگر بسط نشود کار بی‌صدا اجرا نمی‌شود.
 SHELL=/bin/bash
 PATH=/usr/local/bin:/usr/bin:/bin
 
 # پایش آنلاین بودن تلویزیون‌ها
-* * * * * www-data cd ${APP_DIR} && php artisan monitor:screens >/dev/null 2>&1
+* * * * * www-data ${APP_DIR}/scripts/cron-run.sh monitor:screens
 # ناظر ترنسکدر — کانال افتاده یا گیرکرده را برمی‌گرداند، بعد از قطع برق هم
-* * * * * www-data cd ${APP_DIR} && php artisan transcoder:supervise >/dev/null 2>&1
+* * * * * www-data ${APP_DIR}/scripts/cron-run.sh transcoder:supervise
 # دریافت راهنمای برنامه‌ها، هر شب ساعت ۳
-0 3 * * * www-data cd ${APP_DIR} && php artisan epg:sync >/dev/null 2>&1
+0 3 * * * www-data ${APP_DIR}/scripts/cron-run.sh epg:sync
 # دریافت خبر از منابع RSS
-0 * * * * www-data cd ${APP_DIR} && php artisan news:sync >/dev/null 2>&1
+0 * * * * www-data ${APP_DIR}/scripts/cron-run.sh news:sync
 # پروازهای فرودگاه کیش و دمای هوا — تابلو از دیتابیس می‌خواند نه اینترنت
-*/5 * * * * www-data cd ${APP_DIR} && php artisan flights:sync >/dev/null 2>&1
+*/5 * * * * www-data ${APP_DIR}/scripts/cron-run.sh flights:sync
 # ارسال اقلام صورتحساب به PMS — اقلامی که PMS قطع بوده در صف مانده‌اند
-*/5 * * * * www-data cd ${APP_DIR} && php artisan pms:push >/dev/null 2>&1
+*/5 * * * * www-data ${APP_DIR}/scripts/cron-run.sh pms:push
 # پاک‌سازی فایل‌های حذف‌شده، یکشنبه‌ها
-0 4 * * 0 www-data cd ${APP_DIR} && php artisan storage:clean >/dev/null 2>&1
+0 4 * * 0 www-data ${APP_DIR}/scripts/cron-run.sh storage:clean
 CRON
 ok "کارهای زمان‌بندی‌شده ثبت شدند"
 

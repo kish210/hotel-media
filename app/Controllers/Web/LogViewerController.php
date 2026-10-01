@@ -73,6 +73,18 @@ class LogViewerController extends Controller
         $logPath = STORAGE_PATH . '/logs/php-errors.log';
         $logSize = is_file($logPath) ? (int)filesize($logPath) : 0;
 
+        /* کارهای زمان‌بندی‌شده — تا پیش از این همه‌ی خطوط cron با
+           `>/dev/null 2>&1` اجرا می‌شدند، پس شکستِ flights:sync یا
+           epg:sync هیچ نشانی نمی‌گذاشت و فقط از کهنه‌شدن داده‌ی تابلو
+           فهمیده می‌شد. ‏scripts/cron-run.sh اکنون فقط شکست‌ها را
+           می‌نویسد و اینجا دیده می‌شوند. */
+        $cronPath  = STORAGE_PATH . '/logs/cron.log';
+        $cronLines = $this->tail($cronPath);
+        if ($search !== '') {
+            $cronLines = array_values(array_filter($cronLines, static fn($l) =>
+                mb_stripos($l, $search) !== false));
+        }
+
         $this->view('admin.system.logs', [
             'title'      => 'لاگ و عیب‌یابی',
             'errorLines' => $errorLines,
@@ -81,6 +93,9 @@ class LogViewerController extends Controller
             'search'     => $search,
             'logSize'    => $logSize,
             'logExists'  => is_file($logPath),
+            'cronLines'  => $cronLines,
+            'cronExists' => is_file($cronPath),
+            'cronSize'   => is_file($cronPath) ? (int)filesize($cronPath) : 0,
         ]);
     }
 
@@ -89,11 +104,18 @@ class LogViewerController extends Controller
     {
         if (!$this->gate()) return;
 
-        $path = STORAGE_PATH . '/logs/php-errors.log';
+        /* کدام لاگ: پیش‌فرض خطاهای PHP، و با ?what=cron لاگ کارهای
+           زمان‌بندی‌شده. هر دو را یک دکمه خالی نکند تا اپراتور بتواند
+           یکی را نگه دارد. */
+        $what = $req->get('what') === 'cron' ? 'cron' : 'php-errors';
+        $path = STORAGE_PATH . '/logs/' . $what . '.log';
+
         if (is_file($path) && is_writable($path)) {
             file_put_contents($path, '');
-            $this->log('logs.clear');
-            $this->flash('success', 'فایل لاگ خطا خالی شد');
+            $this->log('logs.clear', 'Log', null, [], ['file' => $what]);
+            $this->flash('success', 'لاگ خالی شد');
+        } elseif (!is_file($path)) {
+            $this->flash('success', 'این لاگ از قبل خالی است');
         } else {
             $this->flash('error', 'فایل لاگ قابل نوشتن نیست');
         }
