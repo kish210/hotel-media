@@ -146,6 +146,9 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
     $r->delete('/vod/videos/{id}',           [\App\Controllers\Api\VodController::class, 'deleteVideo']);
     $r->post('/vod/videos/bulk-delete',      [\App\Controllers\Api\VodController::class, 'bulkDelete']);
     $r->post('/vod/videos/{id}/thumbnail',   [\App\Controllers\Api\VodController::class, 'uploadThumbnail']);
+    $r->get('/vod/videos/{id}/status',       [\App\Controllers\Api\VodController::class, 'processStatus']);
+    $r->post('/vod/videos/{id}/reprocess',   [\App\Controllers\Api\VodController::class, 'reprocess']);
+    $r->post('/vod/videos/{id}/cancel',      [\App\Controllers\Api\VodController::class, 'cancelProcess']);
 });
 // VOD public (for screens)
 $router->get('/api/v1/vod/videos',      [\App\Controllers\Api\VodController::class, 'videos']);

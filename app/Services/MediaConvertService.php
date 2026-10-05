@@ -385,7 +385,7 @@ class MediaConvertService
         return ['ok' => true, 'message' => $plan['action'] === 'remux' ? 'آماده‌سازی فایل شروع شد' : 'تبدیل شروع شد'];
     }
 
-    private function hasFilter(string $name): bool
+    public function hasFilter(string $name): bool
     {
         static $cache = [];
         if (!isset($cache[$name])) {

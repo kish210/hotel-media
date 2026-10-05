@@ -107,6 +107,27 @@ match ($command) {
         echo "media #$id finalized (ffmpeg exit $code)\n";
     })(),
 
+    /* خط لولهٔ فیلم (VOD). عمدا یک دستور CLI است و نه کار داخل درخواست:
+       آپلود قبلا ffmpeg را داخل همان درخواست HTTP اجرا می‌کرد و فیلم
+       بزرگ از request_terminate_timeout رد می‌شد — اتصال می‌مرد، ردیفی
+       ثبت نمی‌شد، و ffmpeg یتیم ادامه می‌داد. */
+    'vod:process' => (function() use ($argv) {
+        $id = (int)($argv[2] ?? 0);
+        if ($id <= 0) { echo "vod:process <videoId>\n"; return; }
+
+        $code = (new \App\Services\VodPipelineService())->process($id);
+        echo "vod #$id " . ($code === 0 ? "پردازش شد" : "شکست خورد") . "\n";
+        if ($code !== 0) exit($code);
+    })(),
+
+    /* تورِ صف برای cron: کارِ جامانده از ریستارت سرور و ردیف ماسیده روی
+       processing. بی این، یک ریستارت وسط پردازش یعنی فیلمی که تا ابد
+       «در حال پردازش» می‌ماند و کسی نمی‌فهمد چرا. */
+    'vod:queue' => (function() {
+        $done = (new \App\Services\VodPipelineService())->runQueue();
+        echo $done ? implode("\n", $done) . "\n" : "صف خالی است\n";
+    })(),
+
     'media:reconvert' => (function() use ($argv) {
         // ویدیوهای «آماده»ای که روی تلویزیون هتلی گیر می‌کنند (۴K، ۶۰ فریم،
         // نرخ فریم متغیر، HDR، فهرست در انتهای فایل) دوباره تبدیل می‌شوند.
@@ -552,6 +573,8 @@ match ($command) {
             'transcoder:supervise' => 'Keep live transcoder channels running (cron, every minute)',
             'media:converted' => 'Close out a background video conversion [mediaId exitCode]',
             'media:reconvert' => 'Re-convert ready videos a hotel TV cannot play smoothly [id] [--dry-run]',
+            'vod:process'     => 'Probe, convert if needed, build HLS + poster for one VOD film <id>',
+            'vod:queue'       => 'Pick up queued VOD films and reset abandoned processing rows (cron)',
             'ws:start'        => 'Start WebSocket server',
             'storage:clean'   => 'Remove soft-deleted media files',
             'cache:clear'     => 'Clear application cache',

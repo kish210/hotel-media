@@ -488,6 +488,8 @@ function renderVideos(videos, meta) {
   const empty = document.getElementById('emptyState');
   const pag   = document.getElementById('pagination');
 
+  syncProcessingPoll(videos);
+
   if (!videos.length) {
     c.innerHTML = '';
     empty.style.display = 'block';
@@ -528,7 +530,7 @@ function cardHtml(v) {
     <div class="vcard-sel" onclick="event.stopPropagation();toggleSelect(${v.id})">
       ${selectedIds.has(v.id)?'<i class="fas fa-check" style="font-size:9px;color:#fff;"></i>':''}
     </div>
-    <div class="vcard-thumb">${thumb}${dur}</div>
+    <div class="vcard-thumb">${thumb}${dur}${procOverlay(v)}</div>
     <div class="vcard-body">
       <div class="vcard-title">${esc(v.title)}</div>
       <div class="vcard-meta">
@@ -537,8 +539,99 @@ function cardHtml(v) {
         ${v.views ? `<span><i class="fas fa-eye" style="font-size:9px;"></i> ${v.views}</span>` : ''}
         ${catBadge}
       </div>
+      ${procNote(v)}
     </div>
   </div>`;
+}
+
+/* ── وضعیت پردازش ───────────────────────────────────────────────────
+   قبلا هر فیلمی بی‌درنگ «آماده» ثبت می‌شد، پس فهرست هیچ وضعیتی نشان
+   نمی‌داد. حالا پردازش واقعی در پس‌زمینه است و اپراتور باید ببیند
+   کدام فیلم در صف است، چند درصد پیش رفته، و اگر شکست خورده **چرا**. */
+const VOD_STATE = {
+  queued:     { t:'در صف',        c:'#fbbf24', i:'fa-clock' },
+  processing: { t:'در پردازش',    c:'#38bdf8', i:'fa-gears' },
+  failed:     { t:'ناموفق',       c:'#f87171', i:'fa-triangle-exclamation' },
+  cancelled:  { t:'لغو شد',       c:'#94a3b8', i:'fa-ban' },
+};
+
+function procOverlay(v) {
+  const s = VOD_STATE[v.status];
+  if (!s) return '';
+  const pct = Math.max(0, Math.min(100, parseInt(v.conv_progress || 0, 10)));
+  const bar = v.status === 'processing'
+    ? `<div style="width:70%;height:4px;background:rgba(255,255,255,.15);border-radius:3px;overflow:hidden;margin-top:7px;">
+         <div style="width:${pct}%;height:100%;background:${s.c};transition:width .4s;"></div>
+       </div>
+       <div style="font-size:10px;color:#cbd5e1;margin-top:4px;">${pct}%</div>`
+    : '';
+  return `<div style="position:absolute;inset:0;background:rgba(8,8,14,.82);display:flex;flex-direction:column;
+                      align-items:center;justify-content:center;text-align:center;padding:8px;">
+    <i class="fas ${s.i}" style="font-size:18px;color:${s.c};"></i>
+    <div style="font-size:11px;font-weight:700;color:${s.c};margin-top:5px;">${s.t}</div>
+    ${bar}
+    ${(v.status === 'processing' || v.status === 'queued')
+      ? `<button onclick="event.stopPropagation();cancelVideo(${v.id})"
+                 style="margin-top:7px;padding:2px 8px;background:rgba(248,113,113,.12);
+                        border:1px solid rgba(248,113,113,.25);border-radius:6px;
+                        color:#fca5a5;font-size:10px;cursor:pointer;">لغو</button>`
+      : ''}
+  </div>`;
+}
+
+/* همان وضعیت، برای نمای فهرستی — جایی که عکس بزرگی نیست که روکش بگیرد */
+function procChip(v) {
+  const s = VOD_STATE[v.status];
+  if (!s) return '';
+  const pct = v.status === 'processing' ? ' ' + Math.max(0, Math.min(100, parseInt(v.conv_progress || 0, 10))) + '٪' : '';
+  return `<span title="${v.conv_note ? esc(v.conv_note) : s.t}"
+    style="background:${s.c}1f;color:${s.c};padding:1px 7px;border-radius:20px;font-size:10px;font-weight:600;">
+    <i class="fas ${s.i}" style="font-size:9px;"></i> ${s.t}${pct}</span>`;
+}
+
+function procNote(v) {
+  /* دلیل شکست عمدا روی خود کارت است و نه زیر یک دکمه‌ی «جزئیات»:
+     پیام ffmpeg تنها چیزی است که می‌گوید کدک پشتیبانی نمی‌شود یا
+     دیسک پر است، و قبلا با 2>/dev/null کامل دور ریخته می‌شد. */
+  if (v.status !== 'failed' || !v.conv_note) return '';
+  return `<div style="margin-top:6px;font-size:10px;color:#fca5a5;background:rgba(248,113,113,.08);
+                      border:1px solid rgba(248,113,113,.2);border-radius:6px;padding:4px 6px;line-height:1.5;">
+      ${esc(v.conv_note)}
+    </div>
+    <div style="margin-top:5px;" onclick="event.stopPropagation()">
+      <button onclick="reprocessVideo(${v.id})" style="padding:3px 8px;background:rgba(56,189,248,.12);
+              border:1px solid rgba(56,189,248,.25);border-radius:6px;color:#7dd3fc;font-size:10px;cursor:pointer;">
+        <i class="fas fa-rotate-right"></i> تلاش دوباره
+      </button>
+    </div>`;
+}
+
+function reprocessVideo(id) {
+  apiFetch('/api/v1/vod/videos/' + id + '/reprocess', 'POST').then(r => {
+    if (!r.success) alert(r.message || 'پردازش دوباره ممکن نشد');
+    loadVideos(currentPage);
+  });
+}
+
+function cancelVideo(id) {
+  apiFetch('/api/v1/vod/videos/' + id + '/cancel', 'POST').then(r => {
+    if (!r.success) alert(r.message || 'لغو ممکن نشد');
+    loadVideos(currentPage);
+  });
+}
+
+/* ── نوسازی خودکار ───────────────────────────────────────────────────
+   فقط وقتی چیزی در جریان است. نظرسنجی دائمی روی سرور هتل که همزمان
+   چند کانال زنده را سرو می‌کند، هزینه‌ی بی‌دلیل است. */
+let vodPollTimer = null;
+function syncProcessingPoll(videos) {
+  const busy = (videos || []).some(v => v.status === 'queued' || v.status === 'processing');
+  if (busy && !vodPollTimer) {
+    vodPollTimer = setInterval(() => loadVideos(currentPage), 4000);
+  } else if (!busy && vodPollTimer) {
+    clearInterval(vodPollTimer);
+    vodPollTimer = null;
+  }
 }
 
 function rowHtml(v) {
@@ -552,6 +645,7 @@ function rowHtml(v) {
     ${thumb}
     <div class="vrow-title">${esc(v.title)}</div>
     <div class="vrow-meta" style="font-size:11px;color:#475569;">
+      ${procChip(v)}
       ${v.duration_fmt ? `<span style="font-family:monospace;">${v.duration_fmt}</span>` : ''}
       ${v.category_name ? `<span class="vrow-badge">${esc(v.category_name)}</span>` : ''}
       <span>${formatDate(v.created_at)}${sizeFmt}</span>

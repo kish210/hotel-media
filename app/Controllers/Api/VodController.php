@@ -222,17 +222,24 @@ class VodController extends Controller
             Response::error('خطا در ذخیره فایل', 500);
         }
 
-        // ── تبدیل به فرمت TS ──────────────────────────────
-        $tsResult = $this->convertToTs($destPath, $uploadDir, $safeName . '_' . $uid);
-        if ($tsResult) {
-            $fileName = $tsResult['file'];
-            $destPath = $tsResult['path'];
-            $mime     = 'video/mp2t';
-        }
+        /* ── پردازش دیگر اینجا انجام نمی‌شود ─────────────────────────
+           قبلا همین‌جا ffmpeg اجرا می‌شد: یک‌بار با `-c copy -f mpegts`
+           و در صورت شکست با libx264. سه ایراد داشت:
 
-        // متادیتا با FFprobe
-        $meta     = $this->probeVideo($destPath);
-        $thumbUrl = $this->extractThumbnail($destPath, $fileName, $meta);
+             • داخل درخواست HTTP بود. فیلم چندگیگابایتی از
+               request_terminate_timeout رد می‌شد؛ کاربر «ناموفق»
+               می‌دید، ردیفی ثبت نمی‌شد و ffmpeg یتیم ادامه می‌داد.
+             • `-c copy` کدک را نگاه نمی‌کرد. H.265 بی‌اعتراض داخل TS
+               کپی می‌شد، «موفق» شمرده می‌شد، فایل اصلی حذف می‌شد و
+               وضعیت `ready` ثبت می‌شد — فیلمی که هیچ تلویزیونی پخشش
+               نمی‌کند و اصلش هم رفته.
+             • خروجی MPEG-TS بود، در حالی که پلیر این ردیف‌ها یک تگ
+               <video> است و .ts را پخش نمی‌کند.
+
+           حالا ردیف با وضعیت `queued` ثبت می‌شود و
+           ‏VodPipelineService در پس‌زمینه probe/تبدیل/HLS/پوستر را
+           انجام می‌دهد. متادیتا را هم همان مرحله می‌نویسد، چون تا
+           تبدیل تمام نشود ابعاد و کدک نهایی معلوم نیست. */
 
         $catId = $req->post('category_id') ? (int)$req->post('category_id') : null;
         $title = trim($req->post('title', '')) ?: pathinfo($file['name'], PATHINFO_FILENAME);
@@ -244,24 +251,19 @@ class VodController extends Controller
             'title'          => $title,
             'type'           => 'upload',
             'file_path'      => '/uploads/vod/' . $fileName,
+            'source_path'    => '/uploads/vod/' . $fileName,
             'file_name'      => $file['name'],
             'file_size'      => filesize($destPath) ?: $file['size'],
             'mime_type'      => $mime,
-            'thumbnail'      => $thumbUrl,
-            'thumbnail_auto' => $thumbUrl ? 1 : 0,
-            'duration'       => $meta['duration'] ?? null,
-            'duration_fmt'   => isset($meta['duration']) ? $this->formatDuration((int)$meta['duration']) : null,
-            'width'          => $meta['width'] ?? null,
-            'height'         => $meta['height'] ?? null,
-            'codec'          => $meta['codec'] ?? null,
-            'bitrate'        => $meta['bitrate'] ?? null,
-            'status'         => 'ready',
+            'status'         => 'queued',
             'uploaded_by'    => Auth::id() ?? null,
         ]);
 
+        $queued = (new \App\Services\VodPipelineService($this->db))->enqueue((int)$id);
+
         $video = $this->db->row("SELECT * FROM vod_videos WHERE id=?", [$id]);
         $this->log('vod.upload', 'VodVideo', (int)$id);
-        Response::success($video, 'ویدیو آپلود و تبدیل به TS شد', 201);
+        Response::success($video, $queued['message'], 201);
     }
 
     /** POST /api/v1/vod/videos — اضافه کردن URL */
@@ -320,10 +322,73 @@ class VodController extends Controller
         if ($v['thumbnail'] && $v['thumbnail_auto'] && file_exists(PUBLIC_PATH . $v['thumbnail'])) {
             @unlink(PUBLIC_PATH . $v['thumbnail']);
         }
+        /* فایل اصلی و قطعه‌های HLS هم باید بروند، وگرنه هر آپلود
+           دوبرابرِ حجم فیلم روی دیسک جا می‌گذارد و دیسک سرور هتل
+           بی‌صدا پر می‌شود. */
+        if (!empty($v['source_path']) && $v['source_path'] !== $v['file_path']
+            && file_exists(PUBLIC_PATH . $v['source_path'])) {
+            @unlink(PUBLIC_PATH . $v['source_path']);
+        }
+        $this->purgeHls((int)$p['id']);
 
         $this->db->delete('vod_videos', ['id' => (int)$p['id'], 'tenant_id' => $this->tid]);
         $this->log('vod.delete', 'VodVideo', (int)$p['id']);
         Response::success(null, 'ویدیو حذف شد');
+    }
+
+    private function purgeHls(int $id): void
+    {
+        $dir = PUBLIC_PATH . '/uploads/vod/hls/' . $id;
+        if (!is_dir($dir)) return;
+        foreach ((array)glob($dir . '/*') as $f) @unlink($f);
+        @rmdir($dir);
+    }
+
+    // ══════════════════════════════════════════════════════
+    // وضعیت پردازش
+    // ══════════════════════════════════════════════════════
+
+    /**
+     * GET /api/v1/vod/videos/{id}/status
+     * فهرست هر چند ثانیه این را می‌پرسد؛ عمدا سبک است و تمام ردیف را
+     * برنمی‌گرداند.
+     */
+    public function processStatus(Request $req, array $p): void
+    {
+        $v = $this->db->row(
+            'SELECT status, conv_progress, conv_action, conv_note, hls_path, file_path,
+                    duration_fmt, width, height, codec, audio_codec, thumbnail
+               FROM vod_videos WHERE id = ? AND tenant_id = ?',
+            [(int)$p['id'], $this->tid]
+        );
+        if (!$v) Response::notFound('ویدیو پیدا نشد');
+        Response::success($v);
+    }
+
+    /** POST /api/v1/vod/videos/{id}/reprocess */
+    public function reprocess(Request $req, array $p): void
+    {
+        $id = (int)$p['id'];
+        if (!$this->db->value('SELECT id FROM vod_videos WHERE id=? AND tenant_id=?', [$id, $this->tid])) {
+            Response::notFound('ویدیو پیدا نشد');
+        }
+        $r = (new \App\Services\VodPipelineService($this->db))->reprocess($id);
+        if (!$r['ok']) Response::error($r['message'], 422);
+        $this->log('vod.reprocess', 'VodVideo', $id);
+        Response::success(null, $r['message']);
+    }
+
+    /** POST /api/v1/vod/videos/{id}/cancel */
+    public function cancelProcess(Request $req, array $p): void
+    {
+        $id = (int)$p['id'];
+        if (!$this->db->value('SELECT id FROM vod_videos WHERE id=? AND tenant_id=?', [$id, $this->tid])) {
+            Response::notFound('ویدیو پیدا نشد');
+        }
+        $r = (new \App\Services\VodPipelineService($this->db))->cancel($id);
+        if (!$r['ok']) Response::error($r['message'], 422);
+        $this->log('vod.cancel', 'VodVideo', $id);
+        Response::success(null, $r['message']);
     }
 
     /** DELETE /api/v1/vod/videos/bulk — حذف گروهی */
@@ -396,97 +461,6 @@ class VodController extends Controller
     // HELPERS
     // ══════════════════════════════════════════════════════
 
-    /**
-     * تبدیل ویدیو به فرمت MPEG-TS
-     * ابتدا با stream copy (سریع)، در صورت شکست با re-encode (سازگارتر)
-     */
-    private function convertToTs(string $srcPath, string $uploadDir, string $baseName): ?array
-    {
-        if (!function_exists('shell_exec')) return null;
-
-        $tsFile = $baseName . '.ts';
-        $tsPath = $uploadDir . $tsFile;
-
-        // روش اول: copy بدون re-encode (خیلی سریع)
-        $cmd = sprintf(
-            'ffmpeg -y -i %s -c copy -f mpegts %s 2>/dev/null',
-            escapeshellarg($srcPath),
-            escapeshellarg($tsPath)
-        );
-        @shell_exec($cmd);
-
-        if (file_exists($tsPath) && filesize($tsPath) > 1024) {
-            @unlink($srcPath);  // حذف فایل اصلی
-            return ['file' => $tsFile, 'path' => $tsPath];
-        }
-
-        // روش دوم: re-encode با H.264/AAC (سازگار با همه codec ها)
-        $cmd = sprintf(
-            'ffmpeg -y -i %s -c:v libx264 -preset fast -crf 22 -c:a aac -b:a 128k -f mpegts %s 2>/dev/null',
-            escapeshellarg($srcPath),
-            escapeshellarg($tsPath)
-        );
-        @shell_exec($cmd);
-
-        if (file_exists($tsPath) && filesize($tsPath) > 1024) {
-            @unlink($srcPath);
-            return ['file' => $tsFile, 'path' => $tsPath];
-        }
-
-        // تبدیل ناموفق — فایل اصلی حفظ می‌شه
-        if (file_exists($tsPath)) @unlink($tsPath);
-        return null;
-    }
-
-    private function probeVideo(string $path): array
-    {
-        if (!function_exists('shell_exec')) return [];
-        $cmd = 'ffprobe -v quiet -print_format json -show_streams -show_format ' . escapeshellarg($path) . ' 2>/dev/null';
-        $out = @shell_exec($cmd);
-        if (!$out) return [];
-        $j = json_decode($out, true);
-        if (!$j) return [];
-
-        $meta = [];
-        $meta['duration'] = (int)round((float)($j['format']['duration'] ?? 0));
-        $meta['bitrate']  = (int)round((float)($j['format']['bit_rate'] ?? 0) / 1000);
-
-        foreach ($j['streams'] ?? [] as $s) {
-            if (($s['codec_type'] ?? '') === 'video') {
-                $meta['width']  = (int)($s['width'] ?? 0) ?: null;
-                $meta['height'] = (int)($s['height'] ?? 0) ?: null;
-                $meta['codec']  = $s['codec_name'] ?? null;
-                break;
-            }
-        }
-        return $meta;
-    }
-
-    private function extractThumbnail(string $videoPath, string $videoFile, array $meta): ?string
-    {
-        if (!function_exists('shell_exec')) return null;
-        $dir = PUBLIC_PATH . '/uploads/vod/thumbs/';
-        if (!is_dir($dir)) @mkdir($dir, 0755, true);
-
-        $duration = $meta['duration'] ?? 10;
-        $seekTo   = min(max(2, (int)($duration * 0.15)), 30);
-        $thumbFile = 'auto_' . pathinfo($videoFile, PATHINFO_FILENAME) . '.jpg';
-        $thumbPath = $dir . $thumbFile;
-
-        $cmd = sprintf(
-            'ffmpeg -ss %d -i %s -vframes 1 -q:v 3 -vf "scale=480:-1" %s 2>/dev/null',
-            $seekTo,
-            escapeshellarg($videoPath),
-            escapeshellarg($thumbPath)
-        );
-        @shell_exec($cmd);
-        return file_exists($thumbPath) ? '/uploads/vod/thumbs/' . $thumbFile : null;
-    }
-
-    private function formatDuration(int $s): string
-    {
-        return sprintf('%02d:%02d:%02d', intdiv($s, 3600), intdiv($s % 3600, 60), $s % 60);
-    }
 
     private function formatSize(int $bytes): string
     {
