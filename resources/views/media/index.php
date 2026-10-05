@@ -13,8 +13,16 @@
     <label for="uploadInput" class="btn-primary text-sm flex items-center gap-1.5 cursor-pointer">
       <i class="fas fa-upload text-xs"></i> آپلود فایل
     </label>
+    <?php /* فهرست از خودِ سرویس می‌آید، نه دست‌نویس. سرور از migration
+             039 به بعد ‎.mov و ‎.mkv و ‎.avi را می‌پذیرد و خودش به
+             H.264/AAC تبدیل می‌کند، ولی این انتخاب‌گر همان دو قالب قدیمی
+             را می‌پذیرفت — یعنی کاربر فایلش را در پنجره‌ی انتخاب فایل
+             حتی نمی‌دید و فکر می‌کرد برنامه پشتیبانی نمی‌کند. */ ?>
     <input id="uploadInput" type="file" class="sr-only" multiple
-      accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm"
+      accept="<?= e(implode(',', array_merge(
+          \App\Services\MediaConvertService::ACCEPTED_IMAGE_MIME,
+          \App\Services\MediaConvertService::ACCEPTED_VIDEO_MIME
+      ))) ?>"
       onchange="uploadFiles(this.files)">
   </div>
 </div>
@@ -40,16 +48,52 @@
     <?= $label ?>
   </a>
   <?php endforeach; ?>
+
+  <?php /* جستجو: کنترلر از قبل `q` را می‌خواند، ولی هیچ جعبه‌ای نبود —
+           یعنی روی کتابخانه‌ای با ۲۰۰ فایل (سقف همین کوئری) تنها راهِ
+           یافتن یک فایل، دست‌کاری نوار آدرس بود. نوع انتخاب‌شده حفظ
+           می‌شود تا جستجو فیلتر جاری را دور نریزد. */ ?>
+  <form method="GET" action="/admin/media" style="margin-right:auto;display:flex;gap:6px;">
+    <?php if (!empty($_GET['type'])): ?>
+    <input type="hidden" name="type" value="<?= e($_GET['type']) ?>">
+    <?php endif; ?>
+    <input type="search" name="q" value="<?= e($_GET['q'] ?? '') ?>"
+           placeholder="جستجوی نام فایل…" class="form-input"
+           style="width:210px;font-size:12px;padding:7px 10px;">
+    <button type="submit" class="btn-ghost text-xs px-3">
+      <i class="fas fa-magnifying-glass"></i>
+    </button>
+    <?php if (!empty($_GET['q'])): ?>
+    <a href="/admin/media<?= !empty($_GET['type']) ? '?type=' . e($_GET['type']) : '' ?>"
+       class="btn-ghost text-xs px-3" title="پاک‌کردن جستجو">
+      <i class="fas fa-xmark"></i>
+    </a>
+    <?php endif; ?>
+  </form>
 </div>
+
+<?php if (!empty($_GET['q'])): ?>
+<div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">
+  <?= count($media) ?> نتیجه برای «<?= e($_GET['q']) ?>»
+</div>
+<?php endif; ?>
 
 <!-- گرید رسانه‌ها -->
 <?php if (empty($media)): ?>
 <div class="card text-center py-16">
-  <i class="fas fa-photo-film text-5xl text-slate-700 mb-4 block"></i>
+  <?php /* کتابخانه‌ی خالی و جستجوی بی‌نتیجه دو چیز متفاوت‌اند؛ پیام
+           «هیچ فایلی آپلود نشده» روی یک جستجو، دروغ است. */
+    $_hasFilter = !empty($_GET['q']) || !empty($_GET['type']); ?>
+  <i class="fas fa-<?= $_hasFilter ? 'magnifying-glass' : 'photo-film' ?> text-5xl text-slate-700 mb-4 block"></i>
+  <?php if ($_hasFilter): ?>
+  <p class="text-slate-500 mb-4">با این فیلتر چیزی پیدا نشد</p>
+  <a href="/admin/media" class="btn-ghost text-sm">نمایش همه‌ی فایل‌ها</a>
+  <?php else: ?>
   <p class="text-slate-500 mb-4">هیچ فایلی آپلود نشده</p>
   <label for="uploadInput" class="btn-primary text-sm cursor-pointer">
     <i class="fas fa-upload text-xs ml-1"></i> آپلود اولین فایل
   </label>
+  <?php endif; ?>
 </div>
 <?php else: ?>
 

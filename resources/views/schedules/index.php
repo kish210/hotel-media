@@ -21,7 +21,25 @@
       <tr class="table-row border-b border-white/3">
         <td class="p-3 text-white font-medium"><?=e($sc['name'])?></td>
         <td class="p-3 text-slate-400"><?=e($sc['playlist_name'])?></td>
-        <td class="p-3 text-slate-400"><?=e($sc['screen_name'] ?? 'همه صفحات')?></td>
+        <?php
+        /* هدف واقعی برنامه. پیش از افزودن انتشار روی محل، این ستون هر
+           ردیفِ بی‌صفحه را «همه صفحات» می‌خواند — پس یک برنامهٔ مخصوص
+           لابی هم همگانی به‌نظر می‌رسید. */
+        if (!empty($sc['screen_name'])) {
+            $tgt = '<i class="fas fa-tv text-xs opacity-60"></i> ' . e($sc['screen_name']);
+        } elseif (!empty($sc['venue_name'])) {
+            $tgt = '<i class="fas fa-location-dot text-xs" style="color:#7dd3fc;"></i> '
+                 . e($sc['venue_name'])
+                 . ' <span class="text-slate-600 text-xs">(' . (int)$sc['venue_screens'] . ' صفحه)</span>';
+        } elseif (!empty($sc['group_name'])) {
+            $tgt = '<i class="fas fa-object-group text-xs" style="color:#fbbf24;"></i> '
+                 . e($sc['group_name'])
+                 . ' <span class="text-slate-600 text-xs">(' . (int)$sc['group_screens'] . ' صفحه)</span>';
+        } else {
+            $tgt = '<i class="fas fa-globe text-xs opacity-60"></i> همه‌ی صفحه‌ها';
+        }
+        ?>
+        <td class="p-3 text-slate-400"><?= $tgt ?></td>
         <td class="p-3"><span class="badge-pending px-2 py-0.5 rounded-full text-xs border"><?=e($sc['type'])?></span></td>
         <td class="p-3 text-slate-400 font-mono"><?=e($sc['priority'])?></td>
         <td class="p-3">
@@ -52,11 +70,35 @@
             <?php foreach ($playlists as $p): ?><option value="<?=$p['id']?>"><?=e($p['name'])?></option><?php endforeach; ?>
           </select>
         </div>
-        <div><label class="form-label">صفحه</label>
-          <select name="screen_id" class="form-input">
-            <option value="">همه صفحات</option>
-            <?php foreach ($screens as $s): ?><option value="<?=$s['id']?>"><?=e($s['name'])?></option><?php endforeach; ?>
+        <div><label class="form-label">هدف</label>
+          <?php /* یک select برای هر سه نوع هدف — سه فیلد موازی یعنی
+                   اپراتور می‌تواند هم صفحه و هم محل را پر کند و بعد
+                   نداند کدام برنده است. */ ?>
+          <select name="target" class="form-input">
+            <option value="">همه‌ی صفحه‌ها (همگانی)</option>
+            <?php if (!empty($venues)): ?>
+            <optgroup label="محل در هتل (Zone)">
+              <?php foreach ($venues as $v): ?>
+              <option value="venue:<?= (int)$v['id'] ?>"><?= e($v['name']) ?></option>
+              <?php endforeach; ?>
+            </optgroup>
+            <?php endif; ?>
+            <?php if (!empty($groups)): ?>
+            <optgroup label="گروه صفحه‌ها">
+              <?php foreach ($groups as $g): ?>
+              <option value="group:<?= (int)$g['id'] ?>"><?= e($g['name']) ?></option>
+              <?php endforeach; ?>
+            </optgroup>
+            <?php endif; ?>
+            <optgroup label="یک صفحه">
+              <?php foreach ($screens as $s): ?>
+              <option value="screen:<?= (int)$s['id'] ?>"><?= e($s['name']) ?></option>
+              <?php endforeach; ?>
+            </optgroup>
           </select>
+          <div class="text-xs text-slate-500 mt-1">
+            هدف خاص‌تر مقدم است: صفحه ← محل یا گروه ← همگانی.
+          </div>
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
