@@ -50,12 +50,24 @@ class ChannelAccessService
         $level = (int)($room['access_level'] ?? 0);
 
         $rows = $this->db->rows(
-            'SELECT id, name, name_en, logo_url, category, channel_no, sort_order,
-                    stream_url, multicast_url, backup_stream_url, delivery, protocol,
-                    access_level, is_adult, is_radio
-               FROM iptv_channels
-              WHERE tenant_id = ? AND is_active = 1 AND access_level <= ?
-              ORDER BY is_radio, channel_no IS NULL, channel_no, sort_order, id',
+            /* گروه از جدول می‌آید، نه از ستون متنی `category`.
+               با متن آزاد، «News» و «news» دو گروه جدا می‌شدند و
+               فهرست تلویزیون هیچ‌وقت درست دسته‌بندی نمی‌شد. */
+            'SELECT c.id, c.name, c.name_en, c.logo_url, c.category, c.channel_no, c.sort_order,
+                    c.stream_url, c.multicast_url, c.backup_stream_url, c.delivery, c.protocol,
+                    c.access_level, c.is_adult, c.is_radio,
+                    c.group_id,
+                    g.name       AS group_name,
+                    g.sort_order AS group_sort,
+                    g.is_adult   AS group_adult
+               FROM iptv_channels c
+          LEFT JOIN iptv_channel_groups g
+                 ON g.id = c.group_id AND g.is_active = 1
+              WHERE c.tenant_id = ? AND c.is_active = 1 AND c.access_level <= ?
+              /* کانال بی‌گروه آخر می‌آید (زیر «سایر») تا حذف یک گروه،
+                 کانال‌هایش را وسط فهرست پراکنده نکند */
+              ORDER BY c.is_radio, c.group_id IS NULL, g.sort_order, g.name,
+                       c.channel_no IS NULL, c.channel_no, c.sort_order, c.id',
             [$tenantId, $level]
         );
 
@@ -63,6 +75,11 @@ class ChannelAccessService
                    && !empty($room['parental_pin']);
 
         foreach ($rows as &$r) {
+            /* گروهِ بزرگسال، تک‌تک کانال‌هایش را بزرگسال می‌کند. تا پیش
+               از این، اپراتور باید هر کانال را جدا علامت می‌زد و یکی
+               جا افتادن یعنی کانال بی‌قفل روی تلویزیون اتاق. */
+            if (!empty($r['group_adult'])) $r['is_adult'] = 1;
+
             // قفل فقط وقتی معنا دارد که مهمان رمز گذاشته باشد
             $r['locked'] = $parentalOn && (int)$r['is_adult'] === 1;
             $r['is_adult'] = (int)$r['is_adult'] === 1;

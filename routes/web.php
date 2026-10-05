@@ -334,6 +334,10 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     $r->post('/iptv',               [\App\Controllers\Web\IPTVController::class, 'store']);
     $r->post('/iptv/{id}/delete',   [\App\Controllers\Web\IPTVController::class, 'delete']);
     $r->post('/iptv/import',        [\App\Controllers\Web\IPTVController::class, 'import']);
+    // ── گروه کانال (فاز ۴): تنها حلقهٔ گم‌شدهٔ زنجیرهٔ Live TV ──────
+    $r->post('/iptv/groups',             [\App\Controllers\Web\IPTVController::class, 'storeGroup']);
+    $r->post('/iptv/groups/{id}/delete', [\App\Controllers\Web\IPTVController::class, 'deleteGroup']);
+    $r->post('/iptv/assign-group',       [\App\Controllers\Web\IPTVController::class, 'assignGroup']);
     // ── IPTV Menus ─────────────────────────────────────────────
     $r->get('/iptv/menus',          [\App\Controllers\Web\IptvMenuWebController::class, 'index']);
     // ── IPTV Rooms ─────────────────────────────────────────────

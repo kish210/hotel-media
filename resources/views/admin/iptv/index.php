@@ -19,7 +19,9 @@
 <!-- آمار -->
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
   <?php
-  $cats = count(array_unique(array_column($channels ?? [],'category')));
+  /* شمارش از جدول گروه می‌آید، نه از مقادیر یکتای ستون متنی:
+     با متن آزاد، «News» و «news» دو دسته شمرده می‌شدند. */
+  $cats = count($groups ?? []);
   foreach([
     ['کل کانال‌ها', count($channels??[]), 'fa-tv','#1a7ac4'],
     ['RTSP/RTMP', count(array_filter($channels??[],fn($c)=>in_array($c['protocol']??'',['rtsp','rtmp']))), 'fa-signal','#ef4444'],
@@ -53,12 +55,16 @@
   <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:8px;">
     <input type="text" id="search-ch" class="form-input" style="max-width:200px;font-size:12px;" placeholder="🔍 جستجو..." oninput="searchChannels(this.value)">
     <div style="display:flex;gap:4px;margin-right:auto;">
-      <?php foreach(array_unique(array_column($channels??[],'category')) as $cat): ?>
-      <button onclick="filterCat('<?= e($cat) ?>')" data-cat="<?= e($cat) ?>"
-        style="padding:4px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#64748b;cursor:pointer;font-size:11px;font-family:'Vazirmatn',sans-serif;">
-        <?= e($cat) ?>
+      <?php foreach(($groups ?? []) as $g): ?>
+      <button onclick="filterCat('<?= e($g['name']) ?>')" data-cat="<?= e($g['name']) ?>"
+        style="padding:4px 10px;border-radius:12px;border:1px solid <?= $g['color'] ? e($g['color']).'55' : 'rgba(255,255,255,.1)' ?>;background:transparent;color:<?= $g['color'] ? e($g['color']) : '#64748b' ?>;cursor:pointer;font-size:11px;font-family:'Vazirmatn',sans-serif;">
+        <?= e($g['name']) ?> <span style="opacity:.6;"><?= (int)$g['channel_count'] ?></span>
       </button>
       <?php endforeach; ?>
+      <button onclick="document.getElementById('groupModal').classList.remove('hidden')"
+        style="padding:4px 10px;border-radius:12px;border:1px dashed rgba(255,255,255,.18);background:transparent;color:#94a3b8;cursor:pointer;font-size:11px;font-family:'Vazirmatn',sans-serif;">
+        <i class="fas fa-folder-plus" style="font-size:10px;"></i> گروه‌ها
+      </button>
     </div>
   </div>
   <table class="w-full text-sm" id="ch-table">
@@ -72,7 +78,7 @@
     </tr></thead>
     <tbody>
       <?php foreach ($channels ?? [] as $i => $ch): ?>
-      <tr class="ch-row" data-name="<?= strtolower(e($ch['name'])) ?>" data-cat="<?= e($ch['category']??'') ?>"
+      <tr class="ch-row" data-name="<?= strtolower(e($ch['name'])) ?>" data-cat="<?= e($ch['group_name'] ?? '') ?>"
           style="border-bottom:1px solid rgba(255,255,255,.04);"
           onmouseenter="this.style.background='rgba(255,255,255,.02)'"
           onmouseleave="this.style.background=''">
@@ -91,7 +97,18 @@
           <?php $p=$ch['protocol']??'hls'; $pc=match($p){'rtsp','rtmp'=>'#ef4444','hls'=>'#22c55e',default=>'#64748b'}; ?>
           <span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:<?=$pc?>18;color:<?=$pc?>;border:1px solid <?=$pc?>44;"><?=strtoupper($p)?></span>
         </td>
-        <td style="padding:10px;color:#64748b;font-size:12px;"><?=e($ch['category']??'—')?></td>
+        <td style="padding:10px;font-size:12px;">
+          <?php if (!empty($ch['group_name'])): ?>
+          <span style="padding:2px 8px;border-radius:10px;font-size:10px;
+                       background:<?= $ch['group_color'] ? e($ch['group_color']).'1f' : 'rgba(255,255,255,.06)' ?>;
+                       color:<?= $ch['group_color'] ? e($ch['group_color']) : '#94a3b8' ?>;">
+            <?= e($ch['group_name']) ?>
+          </span>
+          <?php else: ?>
+          <?php /* بی‌گروه یک هشدار است: روی تلویزیون زیر «سایر» می‌افتد */ ?>
+          <span title="روی تلویزیون زیر «سایر» دیده می‌شود" style="color:#fbbf24;font-size:11px;">بی‌گروه</span>
+          <?php endif; ?>
+        </td>
         <td style="padding:10px;color:#475569;font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?=e($ch['stream_url'])?></td>
         <td style="padding:10px;">
           <div style="display:flex;gap:3px;">
@@ -136,7 +153,24 @@
             <option value="http">HTTP</option>
           </select>
         </div>
-        <div><label class="form-label">دسته</label><input type="text" name="category" class="form-input" placeholder="news"></div>
+        <div>
+          <label class="form-label">گروه</label>
+          <?php /* انتخاب از گروه‌های موجود جای متن آزاد. متن آزاد همان
+                   چیزی بود که «News» و «news» را دو گروه می‌کرد. اگر
+                   هنوز گروهی نیست، متن می‌گیریم و سرور خودش گروه را
+                   می‌سازد — وگرنه اولین کانال هیچ راهی برای گروه‌خوردن
+                   نداشت. */ ?>
+          <?php if (!empty($groups)): ?>
+          <select name="group_id" class="form-input">
+            <option value="">— بی‌گروه —</option>
+            <?php foreach ($groups as $g): ?>
+            <option value="<?= (int)$g['id'] ?>"><?= e($g['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+          <?php else: ?>
+          <input type="text" name="category" class="form-input" placeholder="مثلا اخبار">
+          <?php endif; ?>
+        </div>
       </div>
       <div><label class="form-label">لوگو URL</label><input type="url" name="logo_url" class="form-input"></div>
       <div style="display:flex;gap:10px;padding-top:8px;">
@@ -244,5 +278,68 @@ fetch('/api/v1/iptv/status').then(r => r.json()).then(d => {
   }
 }).catch(function() {});
 </script>
+
+<!-- ── گروه‌های کانال ──────────────────────────────────────────────── -->
+<div id="groupModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-head">
+      <h3>گروه‌های کانال</h3>
+      <button onclick="document.getElementById('groupModal').classList.add('hidden')"
+              class="btn-ghost text-xs px-2"><i class="fas fa-times"></i></button>
+    </div>
+
+    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px;">
+      گروه، همان دسته‌ای است که مهمان روی تلویزیون در فهرست کانال‌ها می‌بیند.
+      ترتیب گروه‌ها همان ترتیب نمایش است. گروهی که «بزرگسال» علامت بخورد،
+      همهٔ کانال‌هایش پشت قفل والدین می‌رود.
+    </p>
+
+    <?php if (!empty($groups)): ?>
+    <div style="display:grid;gap:7px;margin-bottom:16px;">
+      <?php foreach ($groups as $g): ?>
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.03);
+                  border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:8px 11px;">
+        <span style="width:9px;height:9px;border-radius:50%;flex-shrink:0;
+                     background:<?= $g['color'] ? e($g['color']) : '#475569' ?>;"></span>
+        <span style="font-size:13px;color:#e2e8f0;font-weight:600;"><?= e($g['name']) ?></span>
+        <?php if ($g['is_adult']): ?>
+        <span style="font-size:10px;color:#fca5a5;background:rgba(248,113,113,.1);padding:1px 6px;border-radius:9px;">بزرگسال</span>
+        <?php endif; ?>
+        <span style="font-size:11px;color:#64748b;"><?= (int)$g['channel_count'] ?> کانال</span>
+        <span style="font-size:11px;color:#475569;margin-right:auto;">ترتیب <?= (int)$g['sort_order'] ?></span>
+        <form method="POST" action="/admin/iptv/groups/<?= (int)$g['id'] ?>/delete" style="display:inline;">
+          <?= csrf_field() ?>
+          <button type="submit" class="btn-ghost text-xs px-2"
+                  onclick="return confirm('گروه حذف شود؟ کانال‌هایش حذف نمی‌شوند، بی‌گروه می‌شوند.')">
+            <i class="fas fa-trash" style="color:#f87171;"></i>
+          </button>
+        </form>
+      </div>
+      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
+    <form method="POST" action="/admin/iptv/groups" style="display:grid;gap:10px;">
+      <?= csrf_field() ?>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">
+        <div><label class="form-label">نام گروه *</label>
+          <input type="text" name="name" class="form-input" placeholder="اخبار" required></div>
+        <div><label class="form-label">ترتیب</label>
+          <input type="number" name="sort_order" class="form-input" value="0"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div><label class="form-label">نام انگلیسی</label>
+          <input type="text" name="name_en" class="form-input" placeholder="News"></div>
+        <div><label class="form-label">رنگ</label>
+          <input type="color" name="color" class="form-input" value="#1a7ac4" style="height:38px;padding:3px;"></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#cbd5e1;cursor:pointer;">
+        <input type="checkbox" name="is_adult" value="1">
+        گروه بزرگسال — همهٔ کانال‌هایش پشت قفل والدین
+      </label>
+      <button type="submit" class="btn-primary py-2.5">افزودن گروه</button>
+    </form>
+  </div>
+</div>
 
 <?php include VIEWS_PATH . '/partials/layout_footer.php'; ?>

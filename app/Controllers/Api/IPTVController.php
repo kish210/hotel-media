@@ -102,12 +102,23 @@ class IPTVController extends Controller
     {
         $tid  = \App\Core\Auth::tenantId();
         $data = $req->json() ?: $req->post();
+
+        /* گروه: فرم تازه `group_id` می‌فرستد. ولی مسیر قدیمیِ متن آزاد
+           (`category`) هم پذیرفته می‌شود و به یک ردیف گروه حل می‌شود،
+           چون همین API از اسکریپت‌ها و import هم صدا زده می‌شود و
+           شکستنش یعنی کانالِ بی‌گروه. */
+        $grp = new \App\Services\ChannelGroupService($this->db);
+        $gid = !empty($data['group_id'])
+            ? (int)$data['group_id']
+            : $grp->resolve($tid, $data['category'] ?? null);
+
         $id = $this->db->insert('iptv_channels', [
             'tenant_id'    => $tid,
             'name'         => $data['name'] ?? 'کانال جدید',
             'stream_url'   => $data['stream_url'] ?? '',
             'logo_url'     => $data['logo_url'] ?? null,
             'category'     => $data['category'] ?? 'general',
+            'group_id'     => $gid,
             'protocol'     => strtolower(parse_url($data['stream_url'] ?? '', PHP_URL_SCHEME) ?? 'hls'),
             'epg_id'       => $data['epg_id'] ?? null,
             'sort_order'   => (int)($data['sort_order'] ?? 0),
@@ -137,13 +148,23 @@ class IPTVController extends Controller
         $channels = $this->parseM3U($content);
         $imported = 0;
 
+        /* گروه‌های فایل M3U یک‌بار حل می‌شوند، نه به‌ازای هر کانال:
+           یک فایل ۵۰۰ کانالی معمولا ۱۰ گروه دارد و حل‌کردن داخل حلقه
+           یعنی ۵۰۰ کوئری اضافه. */
+        $grp   = new \App\Services\ChannelGroupService($this->db);
+        $gMemo = [];
+
         foreach ($channels as $ch) {
+            $gName = $ch['group'] ?? 'imported';
+            if (!array_key_exists($gName, $gMemo)) $gMemo[$gName] = $grp->resolve($tid, $gName);
+
             $this->db->insert('iptv_channels', [
                 'tenant_id'  => $tid,
                 'name'       => $ch['name'],
                 'stream_url' => $ch['url'],
                 'logo_url'   => $ch['logo'] ?? null,
-                'category'   => $ch['group'] ?? 'imported',
+                'category'   => $gName,
+                'group_id'   => $gMemo[$gName],
                 'protocol'   => strtolower(parse_url($ch['url'], PHP_URL_SCHEME) ?? 'hls'),
                 'is_active'  => 1,
                 'sort_order' => $imported,

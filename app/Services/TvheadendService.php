@@ -213,6 +213,10 @@ class TvheadendService
                     'stream_url'  => $streamUrl,
                     'logo_url'    => $logo,
                     'category'    => 'livetv',
+                    /* گروه را همان‌جایی حل می‌کنیم که همهٔ مسیرهای دیگر —
+                       این سرویس از cron هم اجرا می‌شود و کانالِ بی‌گروه
+                       در فهرست مهمان زیر «سایر» می‌افتاد. */
+                    'group_id'    => (new ChannelGroupService($this->db))->resolve($tenantId, 'livetv'),
                     'protocol'    => 'http',
                     'channel_no'  => $number ?: null,
                     'sort_order'  => $number,

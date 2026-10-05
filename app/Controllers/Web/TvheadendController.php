@@ -159,6 +159,7 @@ class TvheadendController extends Controller
                     'stream_url'  => $streamUrl,
                     'logo_url'    => $logoUrl,
                     'category'    => 'livetv',
+                    'group_id'    => (new \App\Services\ChannelGroupService($this->db))->resolve($tid, 'livetv'),
                     'protocol'    => 'http',
                     'sort_order'  => $number,
                     'is_active'   => 1,
@@ -222,6 +223,8 @@ class TvheadendController extends Controller
                     'stream_url'  => $ch['url'],
                     'logo_url'    => $ch['logo'] ?: null,
                     'category'    => $ch['group'] ?: 'livetv',
+                    'group_id'    => (new \App\Services\ChannelGroupService($this->db))
+                                         ->resolve($tid, $ch['group'] ?: 'livetv'),
                     'protocol'    => 'http',
                     'is_active'   => 1,
                     'source_type' => 'tvheadend',

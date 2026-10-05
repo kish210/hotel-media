@@ -65,6 +65,10 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
 .lv-row { padding: .7rem 1.6rem; border-right: .3rem solid transparent; white-space: nowrap; overflow: hidden; }
 .lv-row.is-focused { background: rgba(26,122,196,.35); border-right-color: #4098db; }
 .lv-row.is-cur .lv-row-name { color: #14b8a6; }
+/* سرتیتر گروه — عمدا کم‌نور و کوچک‌تر از ردیف کانال، تا با ردیفِ
+   قابل‌انتخاب اشتباه نشود. روی Orsay هم رنگ ساده است و gradient نه. */
+.lv-group { padding: .5rem 1.6rem .25rem; font-size: .8rem; font-weight: 700;
+            color: #7dd3fc; letter-spacing: .02em; }
 .lv-row-no { display: inline-block; width: 3rem; color: #94a3b8; font-weight: 700; }
 .lv-row-name { font-size: 1.1rem; color: #fff; font-weight: 700; }
 .lv-row-now { font-size: .85rem; color: #94a3b8; margin-right: 3rem; overflow: hidden; text-overflow: ellipsis; }
@@ -311,8 +315,24 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
     var h = '', i, c, e;
     /* فقط پنجره‌ی اطراف فوکوس — صد ردیف DOM روی تلویزیون قدیمی کند است */
     var from = Math.max(0, listFocus - 6), to = Math.min(channels.length, from + 13);
+
+    /* سرتیتر گروه. عمدا ردیفِ قابل‌فوکوس نیست: شمارهٔ فوکوس همان
+       شمارهٔ کانال می‌ماند، پس رفتار جهت‌نماهای ریموت و پرش با شمارهٔ
+       کانال هیچ تغییری نمی‌کند. سرور کانال‌ها را از قبل گروه‌به‌گروه
+       مرتب فرستاده، پس فقط باید لحظهٔ عوض‌شدن گروه را دید. */
+    var prevG = null;
+
     for (i = from; i < to; i++) {
       c = channels[i]; e = epg[c.id] || {};
+
+      var gName = c.group_name || 'سایر';
+      /* بالای پنجره هم سرتیتر می‌خواهد، وگرنه کاربری که وسط فهرست
+         اسکرول کرده نمی‌داند داخل کدام گروه است */
+      if (gName !== prevG) {
+        h += '<div class="lv-group">' + TV.esc(gName) + '</div>';
+        prevG = gName;
+      }
+
       h += '<div class="lv-row' + (i === listFocus ? ' is-focused' : '') + (i === cur ? ' is-cur' : '') + '">' +
            '<span class="lv-row-no">' + (c.channel_no ? fa(c.channel_no) : '') + '</span>' +
            '<span class="lv-row-name">' + TV.esc(c.name) + (c.locked ? ' 🔒' : '') + '</span>' +
