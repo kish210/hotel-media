@@ -17,6 +17,27 @@ $filtered = array_values(array_filter(
     fn($s) => ($s['screen_type'] ?? 'signage') === $tab
 ));
 
+/* فیلتر محل (Zone) — در خودِ همین صفحه و بی رفت‌وبرگشت به سرور، چون
+   فهرست از قبل کامل آمده است. هدف معیار پذیرش است: «مدیر صفحه را
+   سریع پیدا کند». */
+$venueList = [];
+foreach ($filtered as $s) {
+    $vn = trim((string)($s['venue_name'] ?? ''));
+    if ($vn !== '' && !in_array($vn, $venueList, true)) $venueList[] = $vn;
+}
+sort($venueList);
+
+$venueSel = trim((string)($_GET['venue'] ?? ''));
+if ($venueSel !== '') {
+    $filtered = array_values(array_filter($filtered, function ($s) use ($venueSel) {
+        /* «بی‌محل» یک انتخاب واقعی است: دقیقا همان صفحه‌هایی که از
+           انتشار روی Zone جا می‌مانند و اپراتور دنبالشان است. */
+        return $venueSel === '__none__'
+            ? trim((string)($s['venue_name'] ?? '')) === ''
+            : trim((string)($s['venue_name'] ?? '')) === $venueSel;
+    }));
+}
+
 // گروه‌های این تب
 $tabGroups = array_values(array_filter(
     $groups,
@@ -36,7 +57,19 @@ include VIEWS_PATH . '/partials/layout.php';
   <h1 style="font-size:20px;font-weight:800;color:#fff;">
     <i class="fas fa-tv" style="color:#1a7ac4;margin-left:10px;"></i>صفحات نمایش
   </h1>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <?php if (!empty($venueList) || $venueSel !== ''): ?>
+    <?php /* فیلتر محل: فقط وقتی دیده می‌شود که محلی تعریف شده باشد —
+             کنترلِ همیشه‌خالی خودش یک آشفتگی است. */ ?>
+    <select onchange="location.href='/admin/screens?tab=<?= e($tab) ?>' + (this.value ? '&venue=' + encodeURIComponent(this.value) : '')"
+            class="form-input" style="width:auto;font-size:12px;padding:7px 10px;">
+      <option value="">همه‌ی محل‌ها</option>
+      <?php foreach ($venueList as $vn): ?>
+      <option value="<?= e($vn) ?>" <?= $venueSel === $vn ? 'selected' : '' ?>><?= e($vn) ?></option>
+      <?php endforeach; ?>
+      <option value="__none__" <?= $venueSel === '__none__' ? 'selected' : '' ?>>— بی‌محل —</option>
+    </select>
+    <?php endif; ?>
     <a href="/admin/screens/monitor" class="btn-ghost text-sm flex items-center gap-1.5">
       <i class="fas fa-display text-green-400 text-xs"></i> مانیتورینگ
     </a>
@@ -259,6 +292,18 @@ function renderScreenCard(array $s, string $tab): void {
     $code    = htmlspecialchars($s['code'] ?? '', ENT_QUOTES);
     $loc     = htmlspecialchars($s['location_name'] ?? '', ENT_QUOTES);
 
+    /* محل در هتل (Zone) — جایی که انتشار گروهی پلی‌لیست به آن می‌رسد.
+       صفحه‌ی بی‌محل از هر انتشار روی Zone جا می‌ماند و هیچ‌جا نمی‌گفت
+       چرا، پس مثل نبودنِ پلی‌لیست یک هشدار است نه یک خط خالی. */
+    $venue   = trim((string)($s['venue_name'] ?? ''));
+    $vRow    = $venue !== ''
+        ? "<span style='font-size:10px;color:#7dd3fc;background:rgba(56,189,248,.1);"
+          . "border-radius:5px;padding:2px 7px;'><i class='fas fa-location-dot' "
+          . "style='font-size:9px;'></i> " . htmlspecialchars($venue, ENT_QUOTES) . "</span>"
+        : "<span style='font-size:10px;color:#64748b;' title='بدون محل — انتشار روی Zone "
+          . "به این صفحه نمی‌رسد'><i class='fas fa-location-dot' style='font-size:9px;"
+          . "opacity:.45;'></i> بی‌محل</span>";
+
     /* ── آنچه اپراتور واقعا لازم دارد ──────────────────────────────
        تا پیش از این کارت فقط نام و کد و محل را می‌گفت. «آنلاین» به
        تنهایی گمراه‌کننده است: تابلویی که پلی‌لیست ندارد یا روی یک
@@ -342,6 +387,7 @@ HTML;
       <code style="font-size:10px;color:#475569;">{$code}</code>
       <span style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{$loc}</span>
     </div>
+    <div style="margin-bottom:6px;">{$vRow}</div>
     {$plRow}
     <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px;">
       <span style="font-size:10px;color:#64748b;">

@@ -43,6 +43,11 @@ class Screen
                        s.resolution, s.location_id, s.current_playlist_id,
                        s.settings, s.last_seen_at, s.platform,
                        l.name AS location_name,
+                       /* محل در هتل (Zone) — فهرست باید بگوید هر صفحه کجاست،
+                          وگرنه اپراتور برای یافتن «تلویزیون لابی» باید
+                          تک‌تک صفحه‌ها را باز کند. */
+                       s.venue_id,
+                       v.name AS venue_name,
                        p.name AS playlist_name,
                        /* شماره‌ی آیتمی که پلیر گزارش کرده — تا اپراتور از
                           همین فهرست بفهمد تابلو واقعا در حال پخش است یا
@@ -68,6 +73,7 @@ class Screen
                        {$typeField} {$groupFields}
                 FROM screens s
                 LEFT JOIN locations l ON l.id = s.location_id
+                LEFT JOIN venues v    ON v.id = s.venue_id
                 LEFT JOIN playlists p ON p.id = s.current_playlist_id
                 {$groupJoin}
                 WHERE s.tenant_id = ? AND s.status != 'inactive'";
