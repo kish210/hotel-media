@@ -73,7 +73,7 @@ class ScreenController extends Controller
         $data['screen_type'] = in_array($req->post('screen_type'), ['signage','iptv','inflight','monitor_3d'])
             ? $req->post('screen_type') : 'signage';
         // empty string → null برای فیلدهای integer
-        foreach (['location_id', 'layout_id', 'current_playlist_id', 'group_id', 'iptv_menu_id', 'iptv_room_id', 'inflight_flight_id'] as $field) {
+        foreach (['location_id', 'layout_id', 'current_playlist_id', 'group_id', 'venue_id', 'iptv_menu_id', 'iptv_room_id', 'inflight_flight_id'] as $field) {
             if (isset($data[$field]) && $data[$field] === '') $data[$field] = null;
         }
         // فیلد JSON — رشته خالی → null
@@ -120,7 +120,15 @@ class ScreenController extends Controller
             ) ?: [];
         } catch (\Throwable $e) {}
 
-        $this->view('screens.show', compact('screen','heartbeats','playlists','locations','allGroups','iptvMenus','iptvRooms','inflightFlights') + ['title' => $screen['name']]);
+        /* محل‌های هتل = همان Zone. ستون screens.venue_id از قبل بود ولی
+           هیچ فرمی آن را پر نمی‌کرد، پس Zone در دیتابیس وجود داشت و در
+           محصول نه. */
+        $venues = $this->db->rows(
+            "SELECT id, name, kind, floor FROM venues WHERE tenant_id=? AND is_active=1 ORDER BY sort_order, name",
+            [$tid]
+        ) ?: [];
+
+        $this->view('screens.show', compact('screen','heartbeats','playlists','locations','allGroups','venues','iptvMenus','iptvRooms','inflightFlights') + ['title' => $screen['name']]);
     }
 
     public function update(Request $req, array $params): void
@@ -146,7 +154,7 @@ class ScreenController extends Controller
 
         // Normal update — only allow safe fields
         $section = $req->post('section', 'update');
-        $allowed = ['name', 'description', 'orientation', 'resolution', 'location_id', 'brightness', 'volume', 'tags', 'screen_type', 'group_id', 'iptv_menu_id', 'iptv_room_id', 'inflight_flight_id'];
+        $allowed = ['name', 'description', 'orientation', 'resolution', 'location_id', 'brightness', 'volume', 'tags', 'screen_type', 'group_id', 'venue_id', 'iptv_menu_id', 'iptv_room_id', 'inflight_flight_id'];
         if (isset($data['screen_type'])) {
             $data['screen_type'] = in_array($data['screen_type'], ['signage','iptv','inflight','monitor_3d'])
                 ? $data['screen_type'] : 'signage';
@@ -154,7 +162,7 @@ class ScreenController extends Controller
         $data    = array_intersect_key($req->post(), array_flip($allowed));
 
         // empty string → null برای فیلدهای integer
-        foreach (['location_id', 'layout_id', 'current_playlist_id', 'group_id', 'iptv_menu_id', 'iptv_room_id', 'inflight_flight_id'] as $field) {
+        foreach (['location_id', 'layout_id', 'current_playlist_id', 'group_id', 'venue_id', 'iptv_menu_id', 'iptv_room_id', 'inflight_flight_id'] as $field) {
             if (array_key_exists($field, $data) && $data[$field] === '') $data[$field] = null;
         }
 

@@ -143,6 +143,9 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
     $r->get('/',          [DashboardController::class, 'index']);
 
     // Screens
+    /* محل‌ها (Zone): روی جدول venues و همان Api\VenueController که از
+       قبل CRUD کاملش را داشت — فقط رویهٔ کاربریش نبود. */
+    $r->get('/zones',                          [\App\Controllers\Web\ZoneController::class, 'index']);
     $r->get('/screens',                        [ScreenController::class, 'index']);
     $r->get('/screens/monitor',                [ScreenController::class, 'monitor']);
     $r->get('/screens/create',                 [ScreenController::class, 'create']);

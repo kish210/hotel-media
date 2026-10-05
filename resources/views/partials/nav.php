@@ -51,6 +51,11 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
 <a href="/admin/screens?tab=signage" class="sidebar-link">
   <span class="icon"><i class="fas fa-panorama"></i></span> صفحه‌های عمومی
 </a>
+<?php /* محل‌ها: Zone واقعی محصول. برای همه‌ی نقش‌ها باز است چون انتشار
+         پلی‌لیست روی یک محل، کارِ روزمره‌ی اپراتور است نه کار فنی. */ ?>
+<a href="/admin/zones" class="sidebar-link <?= isActive('/admin/zones') ?>">
+  <span class="icon"><i class="fas fa-location-dot"></i></span> محل‌ها (Zone)
+</a>
 <?php if ($isSuper): ?>
 <a href="/admin/property/groups" class="sidebar-link <?= isActive('/admin/property/groups') ?>">
   <span class="icon"><i class="fas fa-object-group"></i></span> گروه‌های صفحه

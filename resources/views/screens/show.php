@@ -126,6 +126,25 @@ include VIEWS_PATH . '/partials/layout.php';
           </select>
         </div>
         <div>
+          <?php /* محل (Zone): پلی‌لیست می‌تواند روی کل یک محل منتشر شود،
+                   پس این فیلد تنها راه رسیدن برنامهٔ «همهٔ صفحه‌های لابی»
+                   به این صفحه است. */ ?>
+          <label class="form-label">محل در هتل (Zone)</label>
+          <select name="venue_id" class="form-input">
+            <option value="">— تعیین نشده —</option>
+            <?php foreach ($venues ?? [] as $v): ?>
+            <option value="<?= (int)$v['id'] ?>" <?= ((int)($screen['venue_id'] ?? 0) === (int)$v['id']) ? 'selected' : '' ?>>
+              <?= e($v['name']) ?><?= $v['floor'] ? ' — طبقهٔ ' . e($v['floor']) : '' ?>
+            </option>
+            <?php endforeach; ?>
+          </select>
+          <?php if (empty($venues)): ?>
+          <div style="font-size:11px;color:#64748b;margin-top:4px;">
+            هنوز محلی ثبت نشده — <a href="/admin/zones" style="color:#38bdf8;">ساخت محل</a>
+          </div>
+          <?php endif; ?>
+        </div>
+        <div>
           <label class="form-label">برچسب‌ها</label>
           <input type="text" name="tags" class="form-input" value="<?= e($screen['tags'] ?? '') ?>" placeholder="tv-lobby, floor-1, ...">
         </div>

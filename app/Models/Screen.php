@@ -295,13 +295,16 @@ class Screen
      *      (`current_playlist_id`). تا پیش از این، این ستون خوانده
      *      **نمی‌شد**: اپراتور پلی‌لیست را روی صفحه ست می‌کرد و هیچ اتفاقی
      *      نمی‌افتاد، چون فقط جدول schedules ملاک بود.
-     *   ۳. برنامه‌ی همگانی (`screen_id IS NULL`). عمدا آخر است تا یک
-     *      برنامه‌ی «همه‌ی صفحات» انتخاب صریح اپراتور روی یک صفحه را
-     *      باطل نکند.
+     *   ۳. برنامه‌ی زمان‌بندی‌شده‌ی Zone (محل این صفحه در هتل) و بعد
+     *      گروه صفحه‌ها. این‌ها از صفحه عمومی‌ترند و از همگانی خاص‌تر،
+     *      پس درست همین‌جا می‌نشینند: «همهٔ صفحه‌های لابی» باید
+     *      برنامه‌ی «همهٔ هتل» را کنار بزند، ولی نباید پلی‌لیستی را که
+     *      اپراتور صریحا روی یک صفحه گذاشته باطل کند.
+     *   ۴. برنامه‌ی همگانی (هر سه هدف NULL). عمدا آخر است.
      */
     public function getCurrentPlaylist(int $screenId): ?array
     {
-        $row = $this->scheduledPlaylist($screenId, false);
+        $row = $this->scheduleFor('s.screen_id = ?', [$screenId]);
         if ($row) return $row;
 
         $pinned = $this->db->row(
@@ -313,26 +316,37 @@ class Screen
         );
         if ($pinned) return $pinned;
 
-        return $this->scheduledPlaylist($screenId, true);
+        /* یک کوئری برای Zone و گروه با هم: ترتیب بین این دو را priority
+           تعیین می‌کند، نه ترتیب اجرای ما — دو کوئری پشت‌سرهم یعنی
+           برنامهٔ Zone با priority پایین بر گروهِ با priority بالا مقدم
+           می‌شد، که برای اپراتور بی‌معناست. */
+        $row = $this->scheduleFor(
+            '(s.venue_id = (SELECT venue_id FROM screens WHERE id = ?)
+              OR s.group_id = (SELECT group_id FROM screens WHERE id = ?))',
+            [$screenId, $screenId]
+        );
+        if ($row) return $row;
+
+        return $this->scheduleFor('s.screen_id IS NULL AND s.venue_id IS NULL AND s.group_id IS NULL', []);
     }
 
     /**
-     * @param bool $global true = برنامه‌های همه‌ی صفحات، false = مخصوص همین صفحه
+     * برنامهٔ فعالِ همین لحظه برای یک هدف مشخص.
+     *
+     * @param string $match شرط هدف (صفحه، Zone، گروه، یا همگانی)
+     * @param array  $params پارامترهای همان شرط
      */
-    private function scheduledPlaylist(int $screenId, bool $global): ?array
+    private function scheduleFor(string $match, array $params): ?array
     {
         $now = date('Y-m-d H:i:s');
-        $day = (int)date('w');
 
-        $match  = $global ? "s.screen_id IS NULL" : "s.screen_id = ?";
-        $params = $global ? [] : [$screenId];
-        array_push($params, date('Y-m-d'), date('Y-m-d'), $now, $now, json_encode($day));
+        array_push($params, date('Y-m-d'), date('Y-m-d'), $now, $now, json_encode((int)date('w')));
 
         return $this->db->row(
             "SELECT " . self::PL_COLS . "
              FROM schedules s
              JOIN playlists p ON p.id=s.playlist_id
-             WHERE $match
+             WHERE ($match)
              AND (s.start_date IS NULL OR s.start_date <= ?)
              AND (s.end_date IS NULL OR s.end_date >= ?)
              AND (s.start_time IS NULL OR s.start_time <= TIME(?))
