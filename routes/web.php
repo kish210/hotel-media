@@ -210,9 +210,13 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
     $r->post('/users/{id}',   [\App\Controllers\Web\UserController::class, 'update'], [CsrfMiddleware::class]);
 
     // Campaigns / Emergency
-    $r->get('/campaigns',         [\App\Controllers\Web\CampaignController::class, 'index']);
-    $r->post('/campaigns',        [\App\Controllers\Web\CampaignController::class, 'store']);
-    $r->post('/campaigns/{id}/broadcast', [\App\Controllers\Web\CampaignController::class, 'broadcast']);
+    /* ── کمپین‌ها بازنشسته شدند (فاز ۷) ───────────────────────────
+       جدول `campaigns` را هیچ صفحه‌ای نمی‌خواند و
+       ‏`CampaignController::broadcast()` فقط «دستور پخش ارسال شد» را
+       فلش می‌کرد و هیچ کاری نمی‌کرد. همان کار از `/admin/messages`
+       واقعا انجام می‌شود، پس مسیر قدیمی به آن هدایت می‌شود تا لینک و
+       بوکمارک کسی نشکند. */
+    $r->get('/campaigns', function () { \App\Core\Response::redirect('/admin/messages'); });
 
     /* تعریف ساختار هتل — شعبه، گروه، اتاق. فقط مدیر ارشد (بررسی نقش
        داخل کنترلر). این‌ها یک‌بار موقع راه‌اندازی تعریف می‌شوند؛

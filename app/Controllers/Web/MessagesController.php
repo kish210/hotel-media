@@ -39,11 +39,26 @@ class MessagesController extends Controller
             ) ?: [];
         } catch (\Throwable $e) {}
 
+        /* رسانه‌ی آماده برای تبلیغ تصویری. فیلتر `status` همان فیلتر
+           پلی‌لیست است: ویدیویی که در حال تبدیل است نباید انتخاب شود،
+           چون تا پایان تبدیل روی تلویزیون پخش نمی‌شود. */
+        $media = [];
+        try {
+            $media = $this->db->rows(
+                "SELECT id, name, type FROM media
+                  WHERE tenant_id = ? AND deleted_at IS NULL
+                    AND (status IS NULL OR status = 'ready')
+                  ORDER BY created_at DESC LIMIT 200",
+                [$tid]
+            ) ?: [];
+        } catch (\Throwable $e) {}
+
         $this->view('admin.messages.index', [
             'title'    => __('messages.title'),
             'messages' => $messages,
             'screens'  => $screens,
             'groups'   => $groups,
+            'media'    => $media,
         ]);
     }
 
@@ -78,6 +93,12 @@ class MessagesController extends Controller
             'type'         => in_array($req->post('type'), $types) ? $req->post('type') : 'announcement',
             'style'        => in_array($req->post('style'), $styles) ? $req->post('style') : 'overlay',
             'icon'         => trim($req->post('icon', '')) ?: null,
+            /* تبلیغ تصویری: جدول مردهٔ `campaigns` ستون media_id را
+               داشت ولی هیچ صفحه‌ای آن جدول را نمی‌خواند، و این جدول
+               که واقعا تحویل می‌شود ستونش را نداشت. نتیجه: تبلیغ
+               تصویری با هیچ‌کدام ممکن نبود. */
+            'media_id'     => $req->post('media_id') ? (int)$req->post('media_id') : null,
+            'is_ad'        => $req->post('is_ad') ? 1 : 0,
             'bg_color'     => preg_match('/^#[0-9a-fA-F]{6}$/', $req->post('bg_color','')) ? $req->post('bg_color') : '#1a1a2e',
             'text_color'   => preg_match('/^#[0-9a-fA-F]{6}$/', $req->post('text_color','')) ? $req->post('text_color') : '#ffffff',
             'accent_color' => preg_match('/^#[0-9a-fA-F]{6}$/', $req->post('accent_color','')) ? $req->post('accent_color') : '#f97316',
@@ -93,8 +114,11 @@ class MessagesController extends Controller
             'created_by'   => Auth::id(),
         ];
 
-        if (!$data['title'] || !$data['body']) {
-            $this->flash('error', 'عنوان و متن پیام الزامی است');
+        /* تبلیغ تصویری متن لازم ندارد — تصویر خودش محتواست. ولی چیزی
+           باید باشد: پیامِ بی‌متن و بی‌تصویر یک قاب خالی روی تلویزیون
+           میهمان است. */
+        if ($data['media_id'] === null && (!$data['title'] || !$data['body'])) {
+            $this->flash('error', 'عنوان و متن الزامی است — مگر اینکه رسانه‌ای انتخاب کنید');
             $this->redirect('/admin/messages');
             return;
         }
@@ -153,14 +177,23 @@ class MessagesController extends Controller
             // - برای این تنانت هستند
             // - target شامل این صفحه می‌شه
             $now     = date('Y-m-d H:i:s');
+            /* آدرس و نوع فایل رسانه همراه پیام می‌رود. شناسهٔ خالی به
+               پلیر تلویزیون هیچ کمکی نمی‌کند و یک رفت‌وبرگشت اضافه روی
+               شبکهٔ هتل می‌خواست. فیلترِ آمادگی همان فیلتر پلی‌لیست
+               است: ویدیوی در حال تبدیل نباید روی تلویزیون برود. */
             $msgs    = $db->rows(
-                "SELECT * FROM screen_messages
-                 WHERE tenant_id = ?
-                   AND is_active = 1
-                   AND start_at <= ?
-                   AND (end_at IS NULL OR end_at >= ?)
-                 ORDER BY start_at DESC
-                 LIMIT 5",
+                "SELECT m.*,
+                        CASE WHEN md.status IS NULL OR md.status = 'ready'
+                             THEN md.file_path END AS media_url,
+                        md.type AS media_type
+                   FROM screen_messages m
+              LEFT JOIN media md ON md.id = m.media_id AND md.deleted_at IS NULL
+                  WHERE m.tenant_id = ?
+                    AND m.is_active = 1
+                    AND m.start_at <= ?
+                    AND (m.end_at IS NULL OR m.end_at >= ?)
+                  ORDER BY m.start_at DESC
+                  LIMIT 5",
                 [$tenantId, $now, $now]
             ) ?: [];
 
@@ -201,6 +234,13 @@ class MessagesController extends Controller
                     `type`         ENUM('welcome','congratulation','announcement','warning','info') NOT NULL DEFAULT 'announcement',
                     `style`        ENUM('overlay','fullscreen','popup','banner') NOT NULL DEFAULT 'overlay',
                     `icon`         VARCHAR(10)     DEFAULT NULL,
+                    /* همان دو ستونی که migration 050 اضافه می‌کند —
+                       اینجا هم باید باشد، وگرنه نصب تازه‌ای که جدول را
+                       از همین CREATE می‌سازد بعدا با migration ناهمگون
+                       می‌شد و تبلیغ تصویری فقط روی نصب‌های قدیمی کار
+                       می‌کرد. */
+                    `media_id`     INT UNSIGNED    DEFAULT NULL,
+                    `is_ad`        TINYINT(1)      NOT NULL DEFAULT 0,
                     `bg_color`     VARCHAR(20)     NOT NULL DEFAULT '#1a1a2e',
                     `text_color`   VARCHAR(20)     NOT NULL DEFAULT '#ffffff',
                     `accent_color` VARCHAR(20)     NOT NULL DEFAULT '#f97316',

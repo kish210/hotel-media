@@ -296,6 +296,36 @@ $ended     = count(array_filter($messages ?? [], fn($m) => $m['state'] === 'ende
         </div>
       </div>
 
+      <!-- ── تبلیغ تصویری ─────────────────────────────────────────
+           تا پیش از این تبلیغ تصویری با هیچ مسیری ممکن نبود: جدول
+           مرده‌ی `campaigns` ستون رسانه را داشت ولی هیچ صفحه‌ای
+           نمی‌خواندش، و این جدول که واقعا تحویل می‌شود ستونش را
+           نداشت. -->
+      <div style="background:rgba(249,115,22,.05);border:1px solid rgba(249,115,22,.18);
+                  border-radius:11px;padding:12px 14px;margin-bottom:16px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#fdba74;
+                      font-weight:600;cursor:pointer;margin-bottom:10px;">
+          <input type="checkbox" name="is_ad" value="1">
+          این یک کمپین تبلیغاتی است (در فهرست جدا نشان داده می‌شود)
+        </label>
+        <label class="form-label">تصویر یا ویدیوی تبلیغ</label>
+        <select name="media_id" class="form-input">
+          <option value="">— بدون رسانه (فقط متن) —</option>
+          <?php foreach (($media ?? []) as $md): ?>
+          <option value="<?= (int)$md['id'] ?>">
+            <?= $md['type'] === 'video' ? '🎬' : '🖼' ?> <?= e($md['name']) ?>
+          </option>
+          <?php endforeach; ?>
+        </select>
+        <div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.8;">
+          با انتخاب رسانه، عنوان و متن اختیاری می‌شوند — تصویر خودش محتواست.
+          ویدیو بی‌صدا پخش می‌شود تا صدای ناگهانی میهمان را نپراند.
+          <?php if (empty($media)): ?>
+          <br>هنوز رسانه‌ای آماده نیست — <a href="/admin/media" style="color:#60a5fa;">آپلود رسانه</a>.
+          <?php endif; ?>
+        </div>
+      </div>
+
       <!-- ── رنگ‌ها ── -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
         <?php foreach([

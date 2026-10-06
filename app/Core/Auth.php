@@ -9,8 +9,8 @@ class Auth
 
     private static array $permissions = [
         'super_admin' => ['*'],
-        'admin'       => ['dashboard', 'screens.*', 'playlists.*', 'media.*', 'layouts.*', 'schedules.*', 'users.*', 'settings.*', 'campaigns.*', 'reports.*', 'modules.*'],
-        'manager'     => ['dashboard', 'screens.*', 'playlists.*', 'media.*', 'layouts.*', 'schedules.*', 'campaigns.*', 'reports.view', 'modules.view'],
+        'admin'       => ['dashboard', 'screens.*', 'playlists.*', 'media.*', 'layouts.*', 'schedules.*', 'users.*', 'settings.*', 'messages.*', 'reports.*', 'modules.*'],
+        'manager'     => ['dashboard', 'screens.*', 'playlists.*', 'media.*', 'layouts.*', 'schedules.*', 'messages.*', 'reports.view', 'modules.view'],
         'editor'      => ['dashboard', 'media.*', 'playlists.*', 'layouts.*'],
         'viewer'      => ['dashboard', 'reports.view'],
     ];

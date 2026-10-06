@@ -254,6 +254,9 @@ function heartbeat() {
       var d = JSON.parse(x.responseText);
       var cmds = (d.data && d.data.commands) ? d.data.commands : [];
 
+      /* پیام و تبلیغ: سرور همیشه می‌فرستاد و این پروفایل دورش می‌ریخت */
+      if (window.TVMSG) TVMSG.enqueue(d.data && d.data.messages);
+
       /* تغییر پلی‌لیست بدون فرمان دستی — توضیح کامل در orsay_tv.php */
       if (d.data && d.data.playlist_id != null) {
         var sig = String(d.data.playlist_id) + ':' + String(d.data.playlist_rev || '');
@@ -348,5 +351,6 @@ heartbeat();
 </script>
 <!-- صفحه‌کلید عددی فعال‌سازی با ریموت (همه‌ی مدل‌ها) -->
 <script src="/assets/js/tv-activate.js"></script>
+<script src="/assets/js/tv-messages.js"></script>
 </body>
 </html>

@@ -39,16 +39,33 @@ class ScreenMonitorService
         }
     }
 
+    /**
+     * کمپین و اعلانِ به‌پایان‌رسیده را غیرفعال می‌کند و خبر می‌دهد.
+     *
+     * تا فاز ۷ این تابع جدول `campaigns` را می‌خواند — جدولی که هیچ
+     * صفحه‌ای مصرفش نمی‌کرد، پس در عمل انقضای چیزی را اعلام می‌کرد که
+     * هرگز پخش نشده بود. حالا روی `screen_messages` کار می‌کند، همان
+     * جدولی که واقعا در هر heartbeat به تلویزیون می‌رسد.
+     *
+     * غیرفعال‌کردن پس از پایان، آرایشی نیست: کوئری تحویل بر اساس
+     * `end_at` فیلتر می‌کند، ولی ردیفِ همیشه‌فعال در فهرست اپراتور
+     * می‌ماند و معلوم نیست تمام شده یا نه.
+     */
     private function checkExpiredCampaigns(): void
     {
-        $expired = $this->db->rows(
-            "SELECT c.*, t.id AS tid FROM campaigns c JOIN tenants t ON t.id=c.tenant_id
-             WHERE c.is_active=1 AND c.end_at IS NOT NULL AND c.end_at < NOW()"
-        );
+        try {
+            $expired = $this->db->rows(
+                "SELECT id, tenant_id, title, is_ad FROM screen_messages
+                  WHERE is_active = 1 AND end_at IS NOT NULL AND end_at < NOW()"
+            ) ?: [];
+        } catch (\Throwable $e) {
+            return;  // پیش از migration 050
+        }
+
         foreach ($expired as $c) {
-            $this->db->update('campaigns', ['is_active' => 0], ['id' => $c['id']]);
-            $this->notif->campaignExpired((int)$c['tenant_id'], $c['name']);
-            echo "  [EXPIRED] Campaign: {$c['name']}\n";
+            $this->db->update('screen_messages', ['is_active' => 0], ['id' => $c['id']]);
+            $this->notif->campaignExpired((int)$c['tenant_id'], (string)$c['title']);
+            echo "  [EXPIRED] " . (!empty($c['is_ad']) ? 'Campaign' : 'Message') . ": {$c['title']}\n";
         }
     }
 

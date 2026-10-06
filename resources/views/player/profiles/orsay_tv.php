@@ -577,6 +577,9 @@ function heartbeat() {
       var d = JSON.parse(x.responseText);
       var cmds = (d.data && d.data.commands) ? d.data.commands : [];
 
+      /* پیام و تبلیغ: سرور همیشه می‌فرستاد و این پروفایل دورش می‌ریخت */
+      if (window.TVMSG) TVMSG.enqueue(d.data && d.data.messages);
+
       /* تغییر پلی‌لیست را خودِ تلویزیون تشخیص می‌دهد.
          سرور از قبل playlist_id را می‌فرستاد و هیچ پلیری نگاهش
          نمی‌کرد: اپراتور پلی‌لیست صفحه را عوض می‌کرد و تا وقتی دستی
@@ -735,5 +738,6 @@ syncTime();
 </script>
 <!-- صفحه‌کلید عددی فعال‌سازی با ریموت (همه‌ی مدل‌ها) -->
 <script src="/assets/js/tv-activate.js"></script>
+<script src="/assets/js/tv-messages.js"></script>
 </body>
 </html>

@@ -86,10 +86,12 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
 <a href="/admin/schedules" class="sidebar-link <?= isActive('/admin/schedules') ?>">
   <span class="icon"><i class="fas fa-calendar"></i></span> زمان‌بندی
 </a>
-<?php /* این صفحه هم تبلیغات و هم اعلان اضطراری را انجام می‌دهد. تا فاز
-         تبلیغات، یک آیتم با نام صریح بهتر از دو لینک به یک صفحه است. */ ?>
-<a href="/admin/campaigns" class="sidebar-link <?= isActive('/admin/campaigns') ?>">
-  <span class="icon"><i class="fas fa-bullhorn"></i></span> تبلیغات و اعلان اضطراری
+<?php /* به `/admin/messages` اشاره می‌کند، نه `/admin/campaigns`.
+         آن صفحه روی جدول `campaigns` بود که هیچ صفحه‌ای نمی‌خواندش و
+         دکمهٔ «پخش»اش فقط پیام موفقیت فلش می‌کرد. این یکی واقعا در هر
+         heartbeat به تلویزیون می‌رسد. */ ?>
+<a href="/admin/messages" class="sidebar-link <?= isActive('/admin/messages') ?>">
+  <span class="icon"><i class="fas fa-bullhorn"></i></span> تبلیغات و اعلان‌ها
 </a>
 
 <!-- ══ تلویزیون زنده ══ -->
