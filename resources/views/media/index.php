@@ -140,6 +140,16 @@
           style="opacity:0;transition:opacity 0.2s;background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:7px 10px;color:#fff;cursor:pointer;">
           <i class="fas fa-eye text-sm"></i>
         </button>
+        <?php if ($m['type'] === 'video'): ?>
+        <?php /* زیرنویس فقط برای ویدیو. تا این تغییر جدول
+                 `media_subtitles` هیچ راهی برای پر شدن نداشت و نقطهٔ
+                 API تازه هم بی رویهٔ کاربری عملا دست‌نیافتنی بود. */ ?>
+        <button onclick="event.stopPropagation();openSubs(<?= $m['id'] ?>,'<?= e(addslashes($m['name'])) ?>')"
+          title="زیرنویس"
+          style="opacity:0;transition:opacity 0.2s;background:rgba(56,189,248,0.2);border:1px solid rgba(56,189,248,0.4);border-radius:8px;padding:7px 10px;color:#7dd3fc;cursor:pointer;">
+          <i class="fas fa-closed-captioning text-sm"></i>
+        </button>
+        <?php endif; ?>
         <button onclick="event.stopPropagation();deleteMedia(<?= $m['id'] ?>,this)"
           style="opacity:0;transition:opacity 0.2s;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:7px 10px;color:#f87171;cursor:pointer;">
           <i class="fas fa-trash text-xs"></i>
@@ -222,8 +232,137 @@
   </div>
 </div>
 
+<!-- ─── زیرنویس ویدیو ─────────────────────────────────────────────── -->
+<div id="subModal" class="modal-overlay hidden">
+  <div class="modal max-w-md">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-white">
+        <i class="fas fa-closed-captioning text-sky-400 ml-2"></i>
+        زیرنویس — <span id="sub-media-name" class="text-slate-400 font-normal text-sm"></span>
+      </h3>
+      <button onclick="document.getElementById('subModal').classList.add('hidden')"
+              class="text-slate-500 hover:text-white">&times;</button>
+    </div>
+
+    <input type="hidden" id="sub-media-id">
+
+    <?php /* فهرست موجود: اپراتور باید ببیند چه زبانی از قبل هست، وگرنه
+             دوباره همان را آپلود می‌کند و نمی‌فهمد چرا چیزی عوض نشد. */ ?>
+    <div id="sub-list" style="margin-bottom:14px;"></div>
+
+    <div style="display:grid;gap:10px;">
+      <div>
+        <label class="form-label">فایل زیرنویس *</label>
+        <input type="file" id="sub-file" class="form-input" accept=".srt,.vtt,.ass,.sub">
+        <div style="font-size:11px;color:#64748b;margin-top:4px;">
+          SRT، VTT، ASS یا SUB. سرور خودش به VTT تبدیل می‌کند.
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label class="form-label">زبان *</label>
+          <select id="sub-lang" class="form-input">
+            <option value="fa">فارسی</option>
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+            <option value="tr">Türkçe</option>
+            <option value="ru">Русский</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">نامی که دیده می‌شود</label>
+          <input type="text" id="sub-label" class="form-input" placeholder="اختیاری">
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;cursor:pointer;">
+        <input type="checkbox" id="sub-default" checked>
+        بدون انتخاب میهمان، همین زیرنویس روشن باشد
+      </label>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button onclick="uploadSub()" id="sub-save" class="btn-primary flex-1">آپلود زیرنویس</button>
+      <button onclick="document.getElementById('subModal').classList.add('hidden')"
+              class="btn-ghost px-5">بستن</button>
+    </div>
+  </div>
+</div>
+
 <?php
 $extraScript = <<<'JS'
+// ─── زیرنویس ویدیو ───────────────────────────────────────────────────
+function subHdr() {
+  return { 'X-CSRF-Token': document.querySelector('meta[name=csrf-token]')?.content || '' };
+}
+
+function openSubs(id, name) {
+  document.getElementById('sub-media-id').value = id;
+  document.getElementById('sub-media-name').textContent = name;
+  document.getElementById('sub-file').value = '';
+  document.getElementById('sub-label').value = '';
+  document.getElementById('subModal').classList.remove('hidden');
+  loadSubs(id);
+}
+
+function loadSubs(id) {
+  const box = document.getElementById('sub-list');
+  box.innerHTML = '<div style="font-size:12px;color:#64748b;">...</div>';
+
+  fetch('/api/v1/media/' + id + '/subtitles', { headers: subHdr() })
+    .then(r => r.json())
+    .then(r => {
+      const rows = r.data || [];
+      if (!rows.length) {
+        box.innerHTML = '<div style="font-size:12px;color:#64748b;">هنوز زیرنویسی ندارد</div>';
+        return;
+      }
+      box.innerHTML = rows.map(s =>
+        '<div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);' +
+        'border-radius:8px;padding:7px 10px;margin-bottom:6px;font-size:12px;color:#cbd5e1;">' +
+          '<i class="fas fa-closed-captioning" style="color:#7dd3fc;font-size:11px;"></i>' +
+          '<span>' + (s.label || s.lang) + '</span>' +
+          '<code style="font-size:10px;color:#64748b;">' + s.lang + '</code>' +
+          (Number(s.is_default) ? '<span style="font-size:10px;color:#4ade80;">پیش‌فرض</span>' : '') +
+          '<button onclick="delSub(' + s.id + ',' + id + ')" style="margin-right:auto;background:none;' +
+          'border:none;color:#f87171;cursor:pointer;font-size:11px;">حذف</button>' +
+        '</div>'
+      ).join('');
+    })
+    .catch(() => { box.innerHTML = '<div style="font-size:12px;color:#f87171;">فهرست خوانده نشد</div>'; });
+}
+
+function uploadSub() {
+  const id   = document.getElementById('sub-media-id').value;
+  const file = document.getElementById('sub-file').files[0];
+  if (!file) { alert('فایل زیرنویس را انتخاب کنید'); return; }
+
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('lang', document.getElementById('sub-lang').value);
+  fd.append('label', document.getElementById('sub-label').value);
+  if (document.getElementById('sub-default').checked) fd.append('is_default', '1');
+
+  const btn = document.getElementById('sub-save');
+  btn.disabled = true;
+  fetch('/api/v1/media/' + id + '/subtitles', { method: 'POST', headers: subHdr(), body: fd })
+    .then(r => r.json())
+    .then(r => {
+      btn.disabled = false;
+      if (!r.success) { alert(r.message || 'آپلود نشد'); return; }
+      document.getElementById('sub-file').value = '';
+      loadSubs(id);
+    })
+    .catch(() => { btn.disabled = false; alert('ارتباط با سرور برقرار نشد'); });
+}
+
+function delSub(subId, mediaId) {
+  if (!confirm('این زیرنویس حذف شود؟')) return;
+  fetch('/api/v1/media/subtitles/' + subId, { method: 'DELETE', headers: subHdr() })
+    .then(r => r.json())
+    .then(() => loadSubs(mediaId))
+    .catch(() => alert('حذف نشد'));
+}
+
 // ─── آپلود فایل ───────────────────────────────────────────────────────
 async function uploadFiles(files) {
   if (!files.length) return;
