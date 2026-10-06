@@ -388,6 +388,83 @@
       TV.notice(p.title || '', p.body || p.text || '', p.duration);
       return;
     }
+
+    /* ── اعلان اضطراری ──────────────────────────────────────────────
+       تا پیش از این، از ده پروفایل پلیر تنها Orsay فرمان `emergency`
+       را می‌شناخت. سرور آن را در هر heartbeat می‌فرستاد و بعد ستون را
+       پاک می‌کرد، پس روی هر صفحهٔ دیگر — تابلوی پیش‌فرض و تلویزیون
+       اتاق‌ها هم — اعلان تخلیه بی‌صدا دور ریخته می‌شد و دیگر هم
+       برنمی‌گشت. این یک نقص ایمنی بود، نه آرایشی. */
+    if (name === 'emergency') {
+      TV.emergency(p);
+      return;
+    }
+
+    /* توقف از پنل. ستون `emergency_broadcast` که null شود فقط تحویلِ
+       بعدی را قطع می‌کند؛ صفحه‌ای که همین حالا دارد نشانش می‌دهد با
+       تایمر خودش جلو می‌رود. پس توقف هم باید یک فرمان باشد. */
+    if (name === 'clear_instant' || name === 'clear') {
+      TV.emergencyClear();
+      return;
+    }
+  };
+
+  /**
+   * اعلان اضطراری: تمام‌صفحه و پرکنتراست.
+   *
+   * عمدا `TV.notice` نیست — آن یک اعلان گوشه‌ای است و برای «ساختمان را
+   * تخلیه کنید» کافی نیست. و عمدا با کلید میهمان بسته نمی‌شود: این
+   * دستور است نه اطلاع‌رسانی. فقط با پایان مدت یا فرمان توقف از پنل
+   * می‌رود.
+   */
+  TV.emergency = function (p) {
+    p = p || {};
+    var box = TV.id('tv-emg');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'tv-emg';
+      /* استایل درون‌خطی، نه کلاس: این فایل روی پروفایل‌هایی اجرا
+         می‌شود که CSS مشترکی ندارند، و اعلان اضطراری نباید به‌خاطر
+         نبودن یک کلاس دیده نشود. */
+      box.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483600;' +
+        'background:#7f1d1d;color:#fff;text-align:center;padding:6% 5%;' +
+        'font-family:inherit;box-sizing:border-box;';
+      document.body.appendChild(box);
+    }
+
+    var type    = p.type || 'text';
+    var content = p.content || p.text || p.body || '';
+    var inner   = '';
+
+    if (type === 'image' && content) {
+      /* بدون object-fit — پروفایل‌های قدیمی WebKit 534 دارند */
+      inner = '<img src="' + TV.esc(content) + '" alt="" ' +
+              'style="max-width:100%;max-height:70vh;display:block;margin:0 auto;">';
+    } else if (type === 'video' && content) {
+      inner = '<video src="' + TV.esc(content) + '" autoplay muted ' +
+              'style="max-width:100%;max-height:70vh;display:block;margin:0 auto;"></video>';
+    } else {
+      inner = '<div style="font-size:34px;line-height:1.6;font-weight:700;">' +
+              TV.esc(content) + '</div>';
+    }
+
+    box.innerHTML = '<div style="font-size:22px;font-weight:700;margin-bottom:18px;' +
+                    'letter-spacing:.04em;">⚠ اعلان اضطراری</div>' + inner;
+    box.style.display = 'block';
+
+    /* مدت صفر یا نامعتبر یعنی «تا توقف دستی». یک اعلان تخلیه که بعد از
+       ۱۵ ثانیهٔ پیش‌فرض ناپدید شود بدتر از نبودنش است. */
+    var s = Number(p.duration);
+    clearTimeout(TV._emgTimer);
+    if (s && !isNaN(s) && s > 0) {
+      TV._emgTimer = setTimeout(function () { TV.emergencyClear(); }, s * 1000);
+    }
+  };
+
+  TV.emergencyClear = function () {
+    clearTimeout(TV._emgTimer);
+    var box = TV.id('tv-emg');
+    if (box) { box.style.display = 'none'; box.innerHTML = ''; }
   };
 
   /* صدا — روی همه‌ی المان‌های ویدیوی صفحه.

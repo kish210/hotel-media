@@ -88,6 +88,34 @@ class ScreenController extends Controller
         ], static fn($v) => $v !== null);
 
         $cmds = [];
+
+        /* ── صف فرمان پنل ────────────────────────────────────────────
+           ‏`Screen::sendCommand()` فرمان را در ستون `pending_commands`
+           می‌نوشت و **هیچ‌کس آن ستون را نمی‌خواند**. یعنی دکمهٔ «ارسال
+           فرمان» در صفحهٔ هر تلویزیون، و نقطهٔ API معادلش، پیام «دستور
+           ارسال شد» می‌دادند و فرمان هرگز به دستگاه نمی‌رسید.
+
+           ‏heartbeat سه ستون اختصاصی (`reboot_requested`,
+           `refresh_requested`, `emergency_broadcast`) را می‌خواند، پس
+           تنها فرمان‌هایی کار می‌کردند که یکی از آن سه را ست می‌کردند.
+           بقیه — screenshot، restart، و توقف پخش فوری — بی‌صدا گم
+           می‌شدند.
+
+           صف اول تخلیه می‌شود تا ترتیب ارسالِ اپراتور حفظ شود. */
+        if (!empty($screen['pending_commands'])) {
+            $pending = json_decode((string)$screen['pending_commands'], true);
+            if (is_array($pending)) {
+                foreach ($pending as $pc) {
+                    $name = is_array($pc) ? ($pc['command'] ?? '') : (string)$pc;
+                    if ($name === '') continue;
+                    $cmds[] = $cmd($name, is_array($pc) ? ($pc['data'] ?? null) : null);
+                }
+            }
+            /* یک‌بار تحویل، مثل همان سه ستون. فرمانِ ماندگار یعنی
+               تلویزیونی که هر نیم‌دقیقه ریبوت می‌شود. */
+            $this->screen->update($screen['id'], ['pending_commands' => null]);
+        }
+
         if ($screen['reboot_requested']) {
             $cmds[] = $cmd('reboot');
             $this->screen->update($screen['id'], ['reboot_requested' => 0]);
@@ -98,8 +126,23 @@ class ScreenController extends Controller
             $this->screen->update($screen['id'], ['refresh_requested' => 0]);
         }
         if ($screen['emergency_broadcast']) {
-            $cmds[] = $cmd('emergency', $screen['emergency_broadcast']);
-            $this->screen->update($screen['id'], ['emergency_broadcast' => null]);
+            /* ── اعلانِ منقضی تحویل نمی‌شود ──────────────────────────
+               ‏`expires_at` از ابتدا در payload نوشته می‌شد و هیچ‌کس
+               بررسی‌اش نمی‌کرد. پیامدش این بود: تلویزیونی که در لحظهٔ
+               حادثه خاموش یا قطع بود، در اولین ضربانش — شاید چند ساعت
+               یا چند روز بعد — «ساختمان را تخلیه کنید» را تمام‌صفحه
+               نشان می‌داد. یک اعلان ایمنیِ بی‌موقع، خودش یک حادثه است.
+
+               ‏null بودن expires_at یعنی «تا توقف دستی» و منقضی نمی‌شود. */
+            $em  = json_decode((string)$screen['emergency_broadcast'], true);
+            $exp = is_array($em) ? ($em['expires_at'] ?? null) : null;
+
+            if ($exp !== null && (int)$exp < time()) {
+                $this->screen->update($screen['id'], ['emergency_broadcast' => null]);
+            } else {
+                $cmds[] = $cmd('emergency', $screen['emergency_broadcast']);
+                $this->screen->update($screen['id'], ['emergency_broadcast' => null]);
+            }
         }
 
         $playlist = $this->screen->getCurrentPlaylist($screen['id']);

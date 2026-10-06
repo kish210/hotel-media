@@ -278,7 +278,10 @@ function heartbeat() {
       for (var i=0; i<cmds.length; i++) {
         if (cmds[i].command==='reload') loadPlaylist();
         if (cmds[i].command==='reboot') window.location.reload();
-        if (cmds[i].command==='instant_media') showInstant(cmds[i].data);
+        /* اضطراری از همان مسیرِ آزموده پخش فوری می‌رود. تا پیش از این
+           فقط پروفایل Orsay این فرمان را می‌شناخت، پس اعلان تخلیه روی
+           این تلویزیون‌ها هرگز دیده نمی‌شد. */
+        if (cmds[i].command==='instant_media' || cmds[i].command==='emergency') showInstant(cmds[i].data);
         if (cmds[i].command==='clear_instant') clearInstant();
       }
     } catch(e) {}

@@ -24,9 +24,60 @@
         <i class="fas fa-table text-xs ml-1"></i>جدول
       </button>
     </div>
+    <?php /* اعلان سراسری: ‏API آن (`/api/v1/broadcast/all`) از قبل بود
+             و هیچ صفحه‌ای صدایش نمی‌زد. پخش فوری فقط per-screen در
+             صفحهٔ هر صفحه‌نمایش بود — یعنی برای هشدار کل هتل باید
+             تک‌تک صفحه‌ها را باز می‌کردید. دکمه اینجاست چون در یک
+             حادثه، اپراتور روی همین صفحهٔ مانیتورینگ است. */ ?>
+    <button onclick="openEmg()" class="btn-ghost text-sm flex items-center gap-1.5"
+            style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#fca5a5;">
+      <i class="fas fa-triangle-exclamation text-xs"></i> اعلان اضطراری همه‌ی صفحه‌ها
+    </button>
     <a href="/admin/screens" class="btn-ghost text-sm flex items-center gap-1.5">
       <i class="fas fa-tv text-xs"></i> مدیریت صفحات
     </a>
+  </div>
+</div>
+
+<!-- ─── اعلان اضطراری سراسری ───────────────────────────────────────── -->
+<div id="emgModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-head">
+      <h3 style="color:#fca5a5;">
+        <i class="fas fa-triangle-exclamation"></i> اعلان اضطراری — همه‌ی صفحه‌ها
+      </h3>
+      <button onclick="closeEmg()" class="btn-ghost text-xs px-2"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="display:grid;gap:10px;">
+      <div>
+        <label class="form-label">متن اعلان *</label>
+        <textarea id="emg-text" class="form-input" rows="3"
+                  placeholder="لطفا از نزدیک‌ترین راه خروج ساختمان را ترک کنید."></textarea>
+      </div>
+      <div>
+        <label class="form-label">مدت نمایش</label>
+        <select id="emg-dur" class="form-input">
+          <?php /* صفر یعنی تا توقف دستی. برای اعلان تخلیه، ناپدیدشدن
+                   خودکار بعد از نیم دقیقه از نبودنش بدتر است. */ ?>
+          <option value="0">تا زمانی که خودم متوقف کنم</option>
+          <option value="60">۱ دقیقه</option>
+          <option value="300" selected>۵ دقیقه</option>
+          <option value="900">۱۵ دقیقه</option>
+        </select>
+      </div>
+      <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);
+                  border-radius:9px;padding:10px 12px;font-size:11px;color:#94a3b8;line-height:1.9;">
+        این اعلان روی <b style="color:#fca5a5;">همه‌ی صفحه‌ها و تلویزیون‌های اتاق</b>
+        تمام‌صفحه نمایش داده می‌شود و میهمان نمی‌تواند آن را ببندد.
+        هر صفحه در ضربان بعدی‌اش (حداکثر ۳۰ ثانیه) آن را می‌گیرد.
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px;">
+      <button onclick="closeEmg()" class="btn-ghost text-sm">انصراف</button>
+      <button onclick="stopEmg()" class="btn-ghost text-sm">توقف اعلان فعلی</button>
+      <button onclick="sendEmg()" id="emg-send" class="btn-primary text-sm"
+              style="background:#b91c1c;border-color:#b91c1c;">ارسال به همه</button>
+    </div>
   </div>
 </div>
 
@@ -352,6 +403,49 @@ setInterval(refreshStatus, 15000);
 
 // بروزرسانی اولیه بعد از ۲ ثانیه
 setTimeout(refreshStatus, 2000);
+
+// ─── اعلان اضطراری سراسری ───────────────────────────────────────────
+function emgHdr() {
+  return { 'Content-Type': 'application/json',
+           'X-CSRF-Token': document.querySelector('meta[name=csrf-token]')?.content || '' };
+}
+function openEmg()  { document.getElementById('emgModal').classList.remove('hidden'); }
+function closeEmg() { document.getElementById('emgModal').classList.add('hidden'); }
+
+function sendEmg() {
+  const text = document.getElementById('emg-text').value.trim();
+  if (!text) { alert('متن اعلان الزامی است'); return; }
+
+  /* تایید صریح: این دکمه روی تلویزیون هر اتاق هتل تمام‌صفحه می‌رود و
+     میهمان نمی‌تواند ببنددش — زدن تصادفی‌اش گران است. */
+  if (!confirm('این اعلان روی همه‌ی صفحه‌ها و تلویزیون اتاق‌ها نمایش داده می‌شود. ادامه؟')) return;
+
+  const btn = document.getElementById('emg-send');
+  btn.disabled = true;
+  fetch('/api/v1/broadcast/all', {
+    method: 'POST', headers: emgHdr(),
+    body: JSON.stringify({
+      type: 'text',
+      content: text,
+      duration: parseInt(document.getElementById('emg-dur').value, 10)
+    })
+  }).then(r => r.json()).then(r => {
+    btn.disabled = false;
+    alert(r.message || (r.success ? 'ارسال شد' : 'ارسال نشد'));
+    if (r.success) closeEmg();
+  }).catch(() => { btn.disabled = false; alert('ارتباط با سرور برقرار نشد'); });
+}
+
+function stopEmg() {
+  if (!confirm('اعلان اضطراری روی همه‌ی صفحه‌ها متوقف شود؟')) return;
+  fetch('/api/v1/broadcast/all', {
+    method: 'POST', headers: emgHdr(),
+    body: JSON.stringify({ clear: 1 })
+  }).then(r => r.json()).then(r => {
+    alert(r.message || 'توقف ارسال شد');
+    closeEmg();
+  }).catch(() => alert('ارتباط با سرور برقرار نشد'));
+}
 </script>
 
 <?php include VIEWS_PATH . '/partials/layout_footer.php'; ?>

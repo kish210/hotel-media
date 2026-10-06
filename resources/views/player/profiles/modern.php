@@ -1108,7 +1108,11 @@ html, body { background: #000; }
      تابلوها هیچ‌وقت ack نمی‌فرستادند و در پنل همه‌ی فرمان‌ها
      «در انتظار» می‌ماند. */
   function signageCommand(name, p) {
-    if (name === 'instant_media') { instantShow(p); return true; }
+    /* اضطراری از همان مسیر پخش فوری می‌رود. تا پیش از این تنها
+       پروفایلی که فرمان `emergency` را می‌شناخت Orsay بود — یعنی
+       اعلان تخلیه روی پروفایل پیش‌فرض تابلو هم دیده نمی‌شد، در حالی
+       که سرور آن را در هر heartbeat می‌فرستاد و بعد پاک می‌کرد. */
+    if (name === 'instant_media' || name === 'emergency') { instantShow(p); return true; }
     if (name === 'clear_instant') { instantClear(); return true; }
     if (name === 'subtitle')      { showCaption(p.text || '', (p.duration || 5) * 1000); return true; }
     if (name === 'ticker')        { setTicker(p.text || ''); return true; }

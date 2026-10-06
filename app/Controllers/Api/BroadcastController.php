@@ -45,7 +45,10 @@ class BroadcastController extends Controller
             'content'    => $content,
             'duration'   => $duration,
             'sent_at'    => time(),
-            'expires_at' => time() + $duration + 10,
+            /* مدت صفر یعنی «تا توقف دستی»، پس انقضا ندارد. با فرمول
+               قبلی همان گزینه بعد از ۱۰ ثانیه منقضی می‌شد و اعلانی که
+               باید تا دستور بعدی می‌ماند، به صفحه‌های بعدی نمی‌رسید. */
+            'expires_at' => $duration > 0 ? time() + $duration + 10 : null,
         ]);
 
         $this->db->update('screens',
@@ -82,6 +85,15 @@ class BroadcastController extends Controller
         $screen = $this->db->row("SELECT code FROM screens WHERE id=?", [(int)$params['id']]);
         if ($screen) $this->sendViaWebSocket($screen['code'], 'clear', '', 0);
 
+        /* توقف باید از صف فرمان هم برود، نه فقط WebSocket.
+           ‏null کردن `emergency_broadcast` تنها تحویلِ بعدی را قطع
+           می‌کند؛ صفحه‌ای که همین حالا اعلان را روی خودش دارد با تایمر
+           خودش جلو می‌رود. و روی شبکهٔ هتل (NAT و فایروال) دقیقا
+           WebSocket همان چیزی است که وصل نمی‌شود — پس تکیه بر آن یعنی
+           دکمهٔ «توقف» روی همان صفحه‌هایی کار نکند که بیشترین احتمال
+           را دارند. */
+        (new \App\Models\Screen())->sendCommand((int)$params['id'], 'clear');
+
         Response::success(null, 'پخش فوری متوقف شد');
     }
 
@@ -97,6 +109,21 @@ class BroadcastController extends Controller
         $duration = (int)$req->input('duration', 30);
         $mediaId  = (int)$req->input('media_id', 0);
 
+        /* توقف سراسری. تا پیش از این فقط توقف per-screen وجود داشت،
+           پس پایان‌دادن به یک اعلان هتل‌گستر یعنی باز کردن صفحهٔ هر
+           تلویزیون یکی‌یکی — دقیقا در لحظه‌ای که وقت ندارید. */
+        if ($req->input('clear')) {
+            $all = $this->db->rows("SELECT id, code FROM screens WHERE tenant_id=?", [$tid]) ?: [];
+            $sm  = new \App\Models\Screen();
+            foreach ($all as $s) {
+                $this->db->update('screens', ['emergency_broadcast' => null], ['id' => $s['id']]);
+                $this->sendViaWebSocket($s['code'], 'clear', '', 0);
+                $sm->sendCommand((int)$s['id'], 'clear');
+            }
+            Response::success(['screens_count' => count($all)], 'توقف روی ' . count($all) . ' صفحه');
+            return;
+        }
+
         if ($mediaId) {
             $media = $this->db->row("SELECT * FROM media WHERE id=? AND tenant_id=?", [$mediaId, $tid]);
             if ($media) { $content = $media['file_path'] ?? ''; $type = $media['type']; }
@@ -109,7 +136,10 @@ class BroadcastController extends Controller
         $payload = json_encode([
             'type' => $type, 'content' => $content,
             'duration' => $duration, 'sent_at' => time(),
-            'expires_at' => time() + $duration + 10,
+            /* مدت صفر یعنی «تا توقف دستی»، پس انقضا ندارد. با فرمول
+               قبلی همان گزینه بعد از ۱۰ ثانیه منقضی می‌شد و اعلانی که
+               باید تا دستور بعدی می‌ماند، به صفحه‌های بعدی نمی‌رسید. */
+            'expires_at' => $duration > 0 ? time() + $duration + 10 : null,
         ]);
 
         foreach ($screens as $s) {

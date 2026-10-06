@@ -357,7 +357,8 @@ function heartbeat() {
         var cmd = cmds[ci];
         if (cmd.command === 'reload') loadPlaylist();
         if (cmd.command === 'reboot') window.location.reload();
-        if (cmd.command === 'instant_media' && cmd.data) showInstant(cmd.data);
+        /* اضطراری هم از همین مسیر — نگاه کنید به توضیح در samsung_tv */
+        if ((cmd.command === 'instant_media' || cmd.command === 'emergency') && cmd.data) showInstant(cmd.data);
         if (cmd.command === 'clear_instant') clearInstant();
       }
     } catch(e) {}

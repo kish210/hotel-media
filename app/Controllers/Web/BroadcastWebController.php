@@ -86,6 +86,11 @@ class BroadcastWebController extends Controller
             ['emergency_broadcast' => null],
             ['id' => (int)$params['id'], 'tenant_id' => Auth::tenantId()]
         );
+        /* همان دلیلِ نسخهٔ API: پاک‌کردن ستون فقط تحویل بعدی را قطع
+           می‌کند، و صفحه‌ای که همین حالا اعلان را نشان می‌دهد با تایمر
+           خودش جلو می‌رود. پس توقف باید یک فرمان در صف باشد. */
+        (new \App\Models\Screen())->sendCommand((int)$params['id'], 'clear');
+
         Response::json(['success' => true, 'message' => 'پخش فوری متوقف شد']);
     }
 }
