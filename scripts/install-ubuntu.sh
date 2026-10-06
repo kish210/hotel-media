@@ -374,14 +374,58 @@ CRON
 chmod 644 /etc/cron.d/hotel-media
 c_ok "کارهای زمان‌بندی‌شده ثبت شدند"
 
-# ── ۹) دیوار آتش ────────────────────────────────────────────────
+# ── ۹) کنسول مدیریت ────────────────────────────────────────────
+c_info "نصب کنسول مدیریت"
+if [ -f "$APP_DIR/scripts/hotel-media-console.sh" ]; then
+    install -m755 -o root -g root "$APP_DIR/scripts/hotel-media-console.sh" /usr/local/bin/hotel-media
+    ln -sf /usr/local/bin/hotel-media /usr/local/bin/hm
+
+    # ‏whiptail در نصب پایهٔ اوبونتو هست، ولی نصب minimal ممکن است
+    # نداشته باشد و منوی گرافیکی بی آن اجرا نمی‌شود (متنی کار می‌کند).
+    command -v whiptail >/dev/null 2>&1 || \
+      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq whiptail >/dev/null 2>&1 || true
+
+    # روی کنسول فیزیکی (tty1) خودش بالا می‌آید: کسی که جلوی سرور
+    # می‌نشیند دنبال نام فرمان نمی‌گردد. روی SSH دست نمی‌زنیم تا
+    # نشست‌های خودکار و scp گیر نکنند.
+    for home in /home/*; do
+        [ -d "$home" ] || continue
+        prof="$home/.bash_profile"
+        grep -q "hotel-media" "$prof" 2>/dev/null && continue
+        cat >> "$prof" <<'PROF'
+
+# کنسول مدیریت Hotel Media روی نمایشگر فیزیکی. برای رد شدن Ctrl+C.
+if [ "$(tty)" = "/dev/tty1" ] && command -v hotel-media >/dev/null 2>&1; then
+    sudo hotel-media
+fi
+PROF
+        chown "$(basename "$home")":"$(basename "$home")" "$prof" 2>/dev/null || true
+    done
+
+    cat > /etc/motd <<MOTD
+
+  Hotel Media — سماع رایانه کیش
+  ─────────────────────────────────────────────────────
+  کنسول مدیریت:   sudo hotel-media
+  وضعیت سریع:     sudo hotel-media status
+  بررسی کامل:     sudo hotel-media diag
+  نشانی پنل:      http://$(hostname -I | awk '{print $1}')/login
+  ─────────────────────────────────────────────────────
+
+MOTD
+    c_ok "کنسول نصب شد — با «sudo hotel-media» اجرا می‌شود"
+else
+    c_warn "فایل کنسول پیدا نشد؛ بی آن ادامه داد"
+fi
+
+# ── ۱۰) دیوار آتش ───────────────────────────────────────────────
 if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "Status: active"; then
     ufw allow 80/tcp  >/dev/null 2>&1
     ufw allow 443/tcp >/dev/null 2>&1
     c_ok "پورت ۸۰ و ۴۴۳ در ufw باز شد"
 fi
 
-# ── ۱۰) بررسی سلامت ────────────────────────────────────────────
+# ── ۱۱) بررسی سلامت ───────────────────────────────────────────────────────────────────────────────────────
 c_info "بررسی سلامت"
 sleep 2
 CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1/login || echo 000)
