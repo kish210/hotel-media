@@ -385,6 +385,34 @@ class MediaConvertService
         return ['ok' => true, 'message' => $plan['action'] === 'remux' ? 'آماده‌سازی فایل شروع شد' : 'تبدیل شروع شد'];
     }
 
+    /**
+     * نام گزینهٔ timeout سوکت برای demuxer rtsp در همین نسخهٔ ffmpeg.
+     *
+     * ‏ffmpeg ۴ آن را `-stimeout` می‌نامید؛ از ۵ به بعد `-timeout` است
+     * و `-stimeout` حذف شده. اگر گزینه را حدس بزنیم، ffmpeg با
+     * «Unrecognized option» فوری می‌میرد و دوربین هیچ‌وقت بالا نمی‌آید
+     * — پس از خودِ باینری پرسیده می‌شود.
+     *
+     * چرا اینجا و static: این تابع عینا در `CameraService` و
+     * ‏`TranscoderService` دو بار نوشته شده بود. دو نسخه از یک دانشِ
+     * نسخه‌ای یعنی روزی یکی به‌روز شود و دیگری نه، و آن‌وقت دوربین کار
+     * کند و رلهٔ ترنسکدر نه — یا برعکس.
+     */
+    public static function rtspTimeoutOption(string $ffmpeg = ''): string
+    {
+        static $cache = [];
+        if ($ffmpeg === '') $ffmpeg = self::locate('ffmpeg');
+        if ($ffmpeg === '') return '';
+        if (isset($cache[$ffmpeg])) return $cache[$ffmpeg];
+
+        $help = (string)shell_exec(escapeshellarg($ffmpeg) . ' -hide_banner -h demuxer=rtsp 2>&1');
+        if (preg_match('/^\s*-stimeout\s/m', $help))     $cache[$ffmpeg] = '-stimeout';
+        elseif (preg_match('/^\s*-timeout\s/m', $help))  $cache[$ffmpeg] = '-timeout';
+        else                                             $cache[$ffmpeg] = '';
+
+        return $cache[$ffmpeg];
+    }
+
     public function hasFilter(string $name): bool
     {
         static $cache = [];

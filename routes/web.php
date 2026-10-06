@@ -137,7 +137,10 @@ $router->group(['prefix' => '', 'middleware' => [GuestMiddleware::class]], funct
 $router->get('/logout', [AuthController::class, 'logout']);
 
 // ── Admin Panel (auth required)
-$router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], function($r) {
+/* PermissionMiddleware کنار AuthMiddleware: ورود را Auth بررسی می‌کند و
+   اینکه این نقش حق این بخش را دارد یا نه، Permission. نقشهٔ مسیر→مجوز
+   در خودِ آن کلاس است، نه پراکنده در ۷۷ کنترلر. */
+$router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     // Dashboard
     $r->get('/dashboard', [DashboardController::class, 'index']);
     $r->get('/',          [DashboardController::class, 'index']);
@@ -298,7 +301,7 @@ $router->get('/', function() { \App\Core\Response::redirect('/admin/dashboard');
 $router->get('/admin', function() { \App\Core\Response::redirect('/admin/dashboard'); });
 
 // ── Module management routes
-$router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/modules', [\App\Controllers\Web\ModuleWebController::class, 'index']);
     $r->get('/modules/{id}/manage', [\App\Controllers\Web\ModuleWebController::class, 'manage']);
     $r->post('/modules/{id}/settings', [\App\Controllers\Web\ModuleWebController::class, 'saveSettings']);

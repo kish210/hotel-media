@@ -27,7 +27,7 @@ $router->group(['prefix' => '/api/v1'], function($r) {
     });
 
     // ── Protected (JWT)
-    $r->group(['middleware' => [ApiAuthMiddleware::class]], function($r) {
+    $r->group(['middleware' => [ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
         $r->get('/auth/me',      [AuthController::class, 'me']);
         $r->post('/auth/logout', [AuthController::class, 'logout']);
 
@@ -74,7 +74,7 @@ $router->group(['prefix' => '/api/v1'], function($r) {
     });
 });
 // Layouts (added)
-$router->group(['prefix'=>'/api/v1','middleware'=>[\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix'=>'/api/v1','middleware'=>[\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/layouts',          [\App\Controllers\Api\LayoutController::class,'index']);
     $r->post('/layouts',         [\App\Controllers\Api\LayoutController::class,'store']);
     $r->put('/layouts/{id}',     [\App\Controllers\Api\LayoutController::class,'update']);
@@ -82,7 +82,7 @@ $router->group(['prefix'=>'/api/v1','middleware'=>[\App\Middleware\ApiAuthMiddle
 });
 
 // ── Modules (protected)
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
 
     // Module management
     $r->get('/modules',                    [\App\Controllers\Api\ModuleController::class, 'index']);
@@ -132,7 +132,7 @@ $router->get('/api/v1/hotel/attractions',  [\App\Controllers\Api\HotelController
 $router->get('/api/v1/hotel/weather',      [\App\Controllers\Api\HotelController::class, 'weather']);
 
 // ── VOD ──────────────────────────────────────────────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/vod/stats',                    [\App\Controllers\Api\VodController::class, 'stats']);
     $r->get('/vod/categories',               [\App\Controllers\Api\VodController::class, 'categories']);
     $r->post('/vod/categories',              [\App\Controllers\Api\VodController::class, 'storeCategory']);
@@ -163,7 +163,7 @@ $router->get('/api/v1/vod/videos',      [\App\Controllers\Api\VodController::cla
 $router->get('/api/v1/vod/categories',  [\App\Controllers\Api\VodController::class, 'categories']);
 
 // ── IPTV Menus ───────────────────────────────────────────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/iptv/menus',                          [\App\Controllers\Api\IptvMenuController::class, 'index']);
     $r->post('/iptv/menus',                         [\App\Controllers\Api\IptvMenuController::class, 'store']);
     $r->get('/iptv/menus/{id}',                     [\App\Controllers\Api\IptvMenuController::class, 'show']);
@@ -181,7 +181,7 @@ $router->get('/api/v1/player/iptv-menu/{id}',       [\App\Controllers\Api\IptvMe
 $router->get('/api/v1/player/room-info/{code}',     [\App\Controllers\Api\IptvRoomController::class,  'playerRoomInfo']);
 
 // ── IPTV Rooms (protected) ───────────────────────────────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/iptv/rooms',                              [\App\Controllers\Api\IptvRoomController::class, 'index']);
     $r->post('/iptv/rooms',                             [\App\Controllers\Api\IptvRoomController::class, 'store']);
     $r->get('/iptv/rooms/{id}',                         [\App\Controllers\Api\IptvRoomController::class, 'show']);
@@ -206,13 +206,13 @@ $router->post('/api/v1/pms/checkout',  [\App\Controllers\Api\IptvRoomController:
 $router->post('/api/v1/pms/message',   [\App\Controllers\Api\IptvRoomController::class, 'pmsSendMessage']);
 
 // ── Inflight Display (protected) ─────────────────────────────────────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     // RPi bridge endpoints
 });
 // Inflight public — player endpoint (no auth)
 
 // ── Broadcast — پخش فوری
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->post('/screens/{id}/broadcast',       [\App\Controllers\Api\BroadcastController::class, 'send']);
     $r->post('/screens/{id}/broadcast/clear', [\App\Controllers\Api\BroadcastController::class, 'clear']);
     $r->post('/broadcast/all',                [\App\Controllers\Api\BroadcastController::class, 'sendAll']);
@@ -222,7 +222,7 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
 $router->post('/api/v1/screens/{code}/heartbeat', [\App\Controllers\Api\ScreenController::class, 'heartbeat']);
 
 // ── Guest Services — خدمات مهمان (پنل کارکنان، protected) ────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     // کاتالوگ خدمات
     $r->get('/guest/services',              [\App\Controllers\Api\GuestServiceController::class, 'services']);
     $r->post('/guest/services',             [\App\Controllers\Api\GuestServiceController::class, 'storeService']);
@@ -242,7 +242,7 @@ $router->post('/api/v1/guest/{code}/requests',                [\App\Controllers\
 $router->post('/api/v1/guest/{code}/requests/{id}/cancel',    [\App\Controllers\Api\GuestPortalController::class, 'cancel']);
 
 // ── ترنسکدر (پنل، فقط مدیر) ─────────────────────────────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/transcoder/jobs',                 [\App\Controllers\Api\TranscoderController::class, 'index']);
     $r->post('/transcoder/jobs',                [\App\Controllers\Api\TranscoderController::class, 'store']);
     $r->put('/transcoder/jobs/{id}',            [\App\Controllers\Api\TranscoderController::class, 'update']);
@@ -256,7 +256,7 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
 });
 
 // ── رزرو رستوران و امکانات (پنل کارکنان، protected) ──────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/reservations/slots',        [\App\Controllers\Api\ReservationController::class, 'slots']);
     $r->get('/reservations',              [\App\Controllers\Api\ReservationController::class, 'index']);
     $r->post('/reservations',             [\App\Controllers\Api\ReservationController::class, 'store']);
@@ -264,7 +264,7 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
 });
 
 // ── تخفیف کسب‌وکارهای محلی (پنل، protected) — TODO ۴.۳ ─────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/offers',                    [\App\Controllers\Api\OfferController::class, 'index']);
     $r->post('/offers',                   [\App\Controllers\Api\OfferController::class, 'store']);
     $r->get('/offers/claims',             [\App\Controllers\Api\OfferController::class, 'claims']);
@@ -284,7 +284,7 @@ $router->post('/api/v1/guest/{code}/reservations',             [\App\Controllers
 $router->post('/api/v1/guest/{code}/reservations/{id}/cancel', [\App\Controllers\Api\ReservationController::class, 'guestCancel']);
 
 // ── EPG — راهنمای الکترونیکی برنامه‌ها (پنل، protected) ──────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     // منابع
     $r->get('/epg/sources',                 [\App\Controllers\Api\EpgController::class, 'sources']);
     $r->post('/epg/sources',                [\App\Controllers\Api\EpgController::class, 'storeSource']);
@@ -318,7 +318,7 @@ $router->get('/api/v1/device/{code}/commands',    [\App\Controllers\Api\DeviceCo
 $router->post('/api/v1/device/{code}/ack',        [\App\Controllers\Api\DeviceController::class, 'ack']);
 
 // ── Device — پنل مدیریت (protected) ──────────────────────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/devices/stats',                 [\App\Controllers\Api\DeviceController::class, 'stats']);
     $r->get('/devices/tokens',                [\App\Controllers\Api\DeviceController::class, 'tokens']);
     $r->post('/devices/tokens',               [\App\Controllers\Api\DeviceController::class, 'storeToken']);
@@ -335,7 +335,7 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
 });
 
 // ── دوربین مداربسته — پنل مدیریت (protected) ──────────────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/cameras',              [\App\Controllers\Api\CameraController::class, 'index']);
     $r->post('/cameras',             [\App\Controllers\Api\CameraController::class, 'store']);
     $r->post('/cameras/{id}/start',  [\App\Controllers\Api\CameraController::class, 'start']);
@@ -349,7 +349,7 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
 $router->get('/api/v1/guest/{code}/cameras', [\App\Controllers\Api\CameraController::class, 'guestList']);
 
 // ── DVR — پنل مدیریت (protected): PVR، سهمیه، Catch-up ────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/dvr',                 [\App\Controllers\Api\DvrController::class, 'index']);
     $r->post('/dvr',                [\App\Controllers\Api\DvrController::class, 'store']);
     $r->post('/dvr/sync',           [\App\Controllers\Api\DvrController::class, 'sync']);
@@ -367,7 +367,7 @@ $router->get('/api/v1/guest/{code}/vod/{id}/access',      [\App\Controllers\Api\
 $router->post('/api/v1/guest/{code}/vod/{id}/purchase',   [\App\Controllers\Api\FolioController::class, 'guestPurchase']);
 
 // ── Folio — کارکنان (protected) ─────────────────────────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     // صورتحساب
     $r->get('/rooms/{id}/folio',        [\App\Controllers\Api\FolioController::class, 'roomFolio']);
     $r->post('/rooms/{id}/charges',     [\App\Controllers\Api\FolioController::class, 'addCharge']);
@@ -388,7 +388,7 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
 });
 
 // ── منوهای تصویری (protected) ───────────────────────────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/menu-boards',                       [\App\Controllers\Api\MenuBoardController::class, 'index']);
     $r->post('/menu-boards',                      [\App\Controllers\Api\MenuBoardController::class, 'store']);
     $r->put('/menu-boards/{id}',                  [\App\Controllers\Api\MenuBoardController::class, 'update']);
@@ -399,7 +399,7 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
 });
 
 // ── Multicast — پخش زنده یک‌باره روی شبکه ────────────────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/multicast/config',       [\App\Controllers\Api\MulticastController::class, 'config']);
     $r->post('/multicast/config',      [\App\Controllers\Api\MulticastController::class, 'saveConfig']);
     $r->post('/multicast/assign',      [\App\Controllers\Api\MulticastController::class, 'assign']);
@@ -417,7 +417,7 @@ $router->get('/api/v1/guest/{code}/wakeups',               [\App\Controllers\Api
 $router->post('/api/v1/guest/{code}/wakeups/{id}/ack',     [\App\Controllers\Api\ContentController::class, 'ackWakeup']);
 
 // ── محتوای جانبی — پنل (protected) ──────────────────────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/content',            [\App\Controllers\Api\ContentController::class, 'index']);
     $r->post('/content/upload',    [\App\Controllers\Api\ContentController::class, 'upload']);
     $r->post('/content',           [\App\Controllers\Api\ContentController::class, 'store']);
@@ -426,7 +426,7 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
 });
 
 // ── محل‌های هتل و رویدادها — محیط عمومی (protected) ──────────────
-$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class]], function($r) {
+$router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     $r->get('/venues',                    [\App\Controllers\Api\VenueController::class, 'index']);
     $r->post('/venues',                   [\App\Controllers\Api\VenueController::class, 'store']);
     $r->put('/venues/{id}',               [\App\Controllers\Api\VenueController::class, 'update']);

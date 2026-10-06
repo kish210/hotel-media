@@ -11,7 +11,7 @@ echo     سماع رایانه کیش ^| kishwifi.com
 echo   ============================================================
 echo.
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0setup-native.ps1" %*
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0installer\setup-native.ps1" %*
 
 if %ERRORLEVEL% NEQ 0 (
     echo.

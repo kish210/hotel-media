@@ -575,16 +575,9 @@ final class TranscoderService
         ));
     }
 
-    /** نام گزینه‌ی timeout سوکت rtsp در همین نسخه‌ی ffmpeg (۴: stimeout، ۵ به بعد: timeout) */
+    /** نام گزینهٔ timeout سوکت rtsp — یک منبع حقیقت در MediaConvertService */
     private function rtspTimeoutOption(): string
     {
-        static $opt = null;
-        if ($opt !== null) return $opt;
-        $opt = '';
-        if ($this->ffmpeg === '') return $opt;
-        $help = (string)shell_exec(escapeshellarg($this->ffmpeg) . ' -hide_banner -h demuxer=rtsp 2>&1');
-        if (preg_match('/^\s*-stimeout\s/m', $help))    $opt = '-stimeout';
-        elseif (preg_match('/^\s*-timeout\s/m', $help)) $opt = '-timeout';
-        return $opt;
+        return MediaConvertService::rtspTimeoutOption($this->ffmpeg);
     }
 }

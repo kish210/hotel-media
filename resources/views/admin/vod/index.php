@@ -348,6 +348,54 @@ select.inp { cursor:pointer; }
   </div>
 </div>
 
+<!-- زیرنویس فیلم ─────────────────────────────────────────────────
+     ‏SubtitleService::store() از ابتدا کامل بود و هیچ مسیری نداشت؛
+     مسیر در نسخهٔ قبل اضافه شد ولی این صفحه راهی به آن نداشت. -->
+<div id="vodSubModal" style="display:none;" class="modal-overlay" onclick="if(event.target===this)closeVodSubs()">
+  <div class="modal-box" style="width:min(460px,95vw);">
+    <div class="modal-head">
+      <i class="fas fa-closed-captioning" style="color:#38bdf8;font-size:18px;"></i>
+      <span style="font-size:15px;font-weight:700;color:#fff;">زیرنویس — <span id="vsubTitle" style="color:#94a3b8;font-weight:400;font-size:13px;"></span></span>
+      <button onclick="closeVodSubs()" style="margin-right:auto;background:none;border:none;color:#64748b;cursor:pointer;font-size:18px;">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px;display:flex;flex-direction:column;gap:12px;">
+      <input type="hidden" id="vsubVid">
+      <div id="vsubList" style="font-size:12px;color:#64748b;"></div>
+      <div>
+        <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">فایل زیرنویس *</label>
+        <input type="file" id="vsubFile" class="inp" style="width:100%;" accept=".srt,.vtt,.ass,.sub">
+        <div style="font-size:10px;color:#475569;margin-top:4px;">SRT، VTT، ASS یا SUB — سرور خودش به VTT تبدیل می‌کند.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div>
+          <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">زبان *</label>
+          <select id="vsubLang" class="inp" style="width:100%;">
+            <option value="fa">فارسی</option><option value="en">English</option>
+            <option value="ar">العربية</option><option value="tr">Türkçe</option>
+            <option value="ru">Русский</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">نام نمایشی</label>
+          <input type="text" id="vsubLabel" class="inp" style="width:100%;" placeholder="اختیاری">
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:7px;font-size:11px;color:#cbd5e1;cursor:pointer;">
+        <input type="checkbox" id="vsubDefault" checked> پیش‌فرض باشد
+      </label>
+      <?php /* SDH: زیرنویس برای ناشنوایان، شامل توضیح صدا. سرویس از
+               قبل پشتیبانی می‌کرد و هیچ فرمی آن را نمی‌فرستاد. */ ?>
+      <label style="display:flex;align-items:center;gap:7px;font-size:11px;color:#cbd5e1;cursor:pointer;">
+        <input type="checkbox" id="vsubSdh"> زیرنویس ناشنوایان (SDH)
+      </label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+        <button onclick="closeVodSubs()" style="padding:9px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#94a3b8;font-size:13px;cursor:pointer;">بستن</button>
+        <button onclick="uploadVodSub()" id="vsubSave" style="padding:9px;background:#38bdf8;border:none;border-radius:8px;color:#000;font-size:13px;font-weight:700;cursor:pointer;">آپلود</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ویرایش ویدیو -->
 <div id="editModal" style="display:none;" class="modal-overlay" onclick="if(event.target===this)closeEditModal()">
   <div class="modal-box" style="width:min(500px,95vw);">
@@ -652,6 +700,7 @@ function rowHtml(v) {
     </div>
     <div style="display:flex;gap:6px;" onclick="event.stopPropagation()">
       <button onclick="openEdit(${v.id})" title="ویرایش" style="padding:4px 8px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);border-radius:6px;color:#86efac;font-size:10px;cursor:pointer;"><i class="fas fa-edit"></i></button>
+      ${v.type === 'upload' ? `<button onclick="openVodSubs(${v.id},'${esc(v.title).replace(/'/g,"\\'")}')" title="زیرنویس" style="padding:4px 8px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);border-radius:6px;color:#7dd3fc;font-size:10px;cursor:pointer;"><i class="fas fa-closed-captioning"></i></button>` : ''}
       <button onclick="deleteVideo(${v.id})" title="حذف" style="padding:4px 8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:6px;color:#f87171;font-size:10px;cursor:pointer;"><i class="fas fa-trash"></i></button>
     </div>
   </div>`;
@@ -999,5 +1048,67 @@ function esc(s) { const d=document.createElement('div'); d.textContent=String(s|
 function extractYoutubeId(url) {
   const m = url.match(/(?:v=|youtu\.be\/)([^&\s]+)/);
   return m ? m[1] : '';
+}
+
+// ── زیرنویس فیلم ────────────────────────────────────────────────────
+function openVodSubs(id, title) {
+  document.getElementById('vsubVid').value = id;
+  document.getElementById('vsubTitle').textContent = title || '';
+  document.getElementById('vsubFile').value  = '';
+  document.getElementById('vsubLabel').value = '';
+  document.getElementById('vodSubModal').style.display = 'flex';
+  loadVodSubs(id);
+}
+function closeVodSubs() { document.getElementById('vodSubModal').style.display = 'none'; }
+
+/* فهرست از همان نقطه‌ای خوانده می‌شود که پلیر تلویزیون می‌خواند
+   (`showVideo`)، پس اگر اینجا دیده شود یعنی روی تلویزیون هم می‌رسد —
+   دو منبع جدا، دو حقیقت جدا می‌ساخت. */
+function loadVodSubs(id) {
+  const box = document.getElementById('vsubList');
+  box.innerHTML = '…';
+  apiFetch('/api/v1/vod/videos/' + id).then(r => {
+    const subs = (r.data && r.data.subtitles) || [];
+    if (!subs.length) { box.innerHTML = 'هنوز زیرنویسی ندارد'; return; }
+    box.innerHTML = subs.map(s =>
+      '<div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);' +
+      'border-radius:7px;padding:6px 9px;margin-bottom:5px;color:#cbd5e1;">' +
+        '<i class="fas fa-closed-captioning" style="color:#7dd3fc;font-size:11px;"></i>' +
+        '<span>' + esc(s.label || s.lang) + '</span>' +
+        '<code style="font-size:10px;color:#64748b;">' + esc(s.lang) + '</code>' +
+        (Number(s.is_sdh)     ? '<span style="font-size:10px;color:#fbbf24;">SDH</span>' : '') +
+        (Number(s.is_default) ? '<span style="font-size:10px;color:#4ade80;">پیش‌فرض</span>' : '') +
+        '<button onclick="delVodSub(' + s.id + ',' + id + ')" style="margin-right:auto;background:none;' +
+        'border:none;color:#f87171;cursor:pointer;font-size:11px;">حذف</button>' +
+      '</div>'
+    ).join('');
+  }).catch(() => { box.innerHTML = 'فهرست خوانده نشد'; });
+}
+
+function uploadVodSub() {
+  const id   = document.getElementById('vsubVid').value;
+  const file = document.getElementById('vsubFile').files[0];
+  if (!file) { alert('فایل زیرنویس را انتخاب کنید'); return; }
+
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('lang',  document.getElementById('vsubLang').value);
+  fd.append('label', document.getElementById('vsubLabel').value);
+  if (document.getElementById('vsubDefault').checked) fd.append('is_default', '1');
+  if (document.getElementById('vsubSdh').checked)     fd.append('is_sdh', '1');
+
+  const btn = document.getElementById('vsubSave');
+  btn.disabled = true;
+  apiFetch('/api/v1/vod/videos/' + id + '/subtitles', 'POST', fd).then(r => {
+    btn.disabled = false;
+    if (!r.success) { alert(r.message || 'آپلود نشد'); return; }
+    document.getElementById('vsubFile').value = '';
+    loadVodSubs(id);
+  });
+}
+
+function delVodSub(subId, vodId) {
+  if (!confirm('این زیرنویس حذف شود؟')) return;
+  apiFetch('/api/v1/vod/subtitles/' + subId, 'DELETE').then(() => loadVodSubs(vodId));
 }
 </script>

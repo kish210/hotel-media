@@ -259,19 +259,9 @@ class CameraService
      */
     private function rtspTimeoutOption(): string
     {
-        static $opt = null;
-        if ($opt !== null) return $opt;
-
-        $opt = '';
-        if ($this->ffmpeg === '') return $opt;
-
-        $help = (string)shell_exec(
-            escapeshellarg($this->ffmpeg) . ' -hide_banner -h demuxer=rtsp 2>&1'
-        );
-        if (preg_match('/^\s*-stimeout\s/m', $help))     $opt = '-stimeout';
-        elseif (preg_match('/^\s*-timeout\s/m', $help))  $opt = '-timeout';
-
-        return $opt;
+        /* یک منبع حقیقت: همین تابع عینا در `TranscoderService` هم بود و
+           هر دو به `MediaConvertService` منتقل شدند. */
+        return MediaConvertService::rtspTimeoutOption($this->ffmpeg);
     }
 
     /** آخرین خطوط لاگ ffmpeg — برای عیب‌یابی در پنل */

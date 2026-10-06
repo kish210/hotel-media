@@ -178,9 +178,9 @@ sudo bash deploy/install-production.sh
 
 ```powershell
 # یا از PowerShell با Run as Administrator:
-.\setup-native.ps1            # نصب
-.\setup-native.ps1 -Port 8080 # پورت دلخواه
-.\setup-native.ps1 -Uninstall # حذف سرویس‌ها
+.\installer\setup-native.ps1            # نصب
+.\installer\setup-native.ps1 -Port 8080 # پورت دلخواه
+.\installer\setup-native.ps1 -Uninstall # حذف سرویس‌ها
 ```
 
 جزئیات: [نصب‌کننده فارسی](installer/hotelmedia/README.md) · [نصب‌کننده All-in-One](installer/native/README.md)

@@ -169,8 +169,9 @@ Write-Host "  📂  فایل‌ها: $Copied فایل" -ForegroundColor White
 Write-Host ""
 Write-Host "  نحوه استفاده روی سیستم جدید:" -ForegroundColor Cyan
 Write-Host "    1. فایل ZIP را extract کنید"      -ForegroundColor Gray
-Write-Host "    2. Windows: روی SETUP-NO-DOCKER.bat دابل‌کلیک کنید (یا install.ps1)" -ForegroundColor Gray
-Write-Host "    3. Linux:   bash install.sh"        -ForegroundColor Gray
+Write-Host "    2. Windows: روی SETUP-NO-DOCKER.bat دابل‌کلیک کنید" -ForegroundColor Gray
+Write-Host "    3. Linux:   sudo bash scripts/install-ubuntu.sh   (پشته‌ی کامل)" -ForegroundColor Gray
+Write-Host "               bash installer/install.sh            (پشته از قبل نصب است)" -ForegroundColor Gray
 Write-Host ""
 
 # بازکردن پوشه خروجی

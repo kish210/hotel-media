@@ -15,7 +15,9 @@ echo     Detecting your Windows edition and installing everything...
 echo   ============================================================
 echo.
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1" %*
+REM اسکریپت‌های پشتیبان به installer\ منتقل شدند تا ریشه‌ی پروژه فقط
+REM همین دو فایلِ دابل‌کلیکی را داشته باشد.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0installer\install.ps1" %*
 
 echo.
 pause
