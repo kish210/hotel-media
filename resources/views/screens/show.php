@@ -125,10 +125,14 @@ include VIEWS_PATH . '/partials/layout.php';
             <?php endforeach; ?>
           </select>
         </div>
-        <div>
+        <div id="venue-section" style="<?= ($screen['screen_type'] ?? 'signage') === 'iptv' ? 'display:none;' : '' ?>">
           <?php /* محل (Zone): پلی‌لیست می‌تواند روی کل یک محل منتشر شود،
                    پس این فیلد تنها راه رسیدن برنامهٔ «همهٔ صفحه‌های لابی»
-                   به این صفحه است. */ ?>
+                   به این صفحه است.
+
+                   برای تلویزیون اتاق پنهان است: انتشار روی Zone فقط
+                   پلی‌لیست است و اتاق پلی‌لیست پخش نمی‌کند، پس این
+                   انتخاب هم بی‌صدا بی‌اثر می‌ماند. اتاق خودش محلش است. */ ?>
           <label class="form-label">محل در هتل (Zone)</label>
           <select name="venue_id" class="form-input">
             <option value="">— تعیین نشده —</option>
@@ -149,10 +153,16 @@ include VIEWS_PATH . '/partials/layout.php';
           <input type="text" name="tags" class="form-input" value="<?= e($screen['tags'] ?? '') ?>" placeholder="tv-lobby, floor-1, ...">
         </div>
 
+        <?php $isIptvScreen = ($screen['screen_type'] ?? 'signage') === 'iptv'; ?>
         <?php /* انتخاب پلی‌لیست — تا پیش از این اصلا در این صفحه نبود و
                  راهی برای وصل‌کردن پلی‌لیست به یک صفحه وجود نداشت.
                  فقط پلی‌لیست‌های همین دنیا (+ «هر دو») فهرست می‌شوند. */ ?>
-        <div style="grid-column:1/-1;">
+        <?php /* برای تلویزیون اتاق پنهان است: پروفایل پلیر اتاق
+                 (`player/profiles/iptv.php`) هیچ ارجاعی به پلی‌لیست
+                 ندارد. تا پیش از این اپراتور می‌توانست روی یک تلویزیون
+                 اتاق پلی‌لیست بگذارد، ذخیره شود، و هیچ اتفاقی نیفتد —
+                 بی هیچ پیامی که بگوید چرا. */ ?>
+        <div id="playlist-section" style="grid-column:1/-1;<?= $isIptvScreen ? 'display:none;' : '' ?>">
           <label class="form-label">
             پلی‌لیستی که روی این صفحه پخش شود
           </label>
@@ -339,6 +349,12 @@ include VIEWS_PATH . '/partials/layout.php';
     function toggleIptvFields(type) {
       const sec = document.getElementById('iptv-menu-section');
       sec.style.display = type === 'iptv' ? '' : 'none';
+      /* پلی‌لیست روی تلویزیون اتاق پخش نمی‌شود، پس انتخابش هم نباید
+         دیده شود — وگرنه اپراتور چیزی تنظیم می‌کند که بی‌صدا بی‌اثر است */
+      const plSec = document.getElementById('playlist-section');
+      if (plSec) plSec.style.display = type === 'iptv' ? 'none' : '';
+      const vnSec = document.getElementById('venue-section');
+      if (vnSec) vnSec.style.display = type === 'iptv' ? 'none' : '';
       const appr = document.getElementById('iptv-appearance-card');
       if (appr) appr.style.display = type === 'iptv' ? '' : 'none';
       const ifSec = document.getElementById('inflight-section');

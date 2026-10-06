@@ -88,7 +88,16 @@ class PlayerController extends Controller
             }
         }
 
-        if ($screen['status'] === 'active') {
+        /* پلی‌لیست فقط برای صفحه‌هایی حل می‌شود که پخشش می‌کنند.
+           پروفایل تلویزیون اتاق (`profiles/iptv.php`) هیچ ارجاعی به
+           پلی‌لیست ندارد، ولی تا پیش از این برای هر بوتِ هر تلویزیون
+           اتاق هم زنجیره‌ی کامل انتخاب پلی‌لیست اجرا می‌شد — چهار
+           کوئری زمان‌بندی به‌علاوه‌ی واکشی آیتم‌ها، دور ریخته‌شده. در
+           هتل ۲۰۰ اتاقی این هزینه‌ی بی‌دلیل روی هر روشن‌شدن تلویزیون
+           است، و با افزودن لایه‌ی Zone گران‌تر هم شد. */
+        $playsPlaylist = !in_array($screen['screen_type'] ?? 'signage', ['iptv', 'monitor_3d'], true);
+
+        if ($screen['status'] === 'active' && $playsPlaylist) {
             $p = $screenModel->getCurrentPlaylist($screen['id']);
             if ($p) {
                 $playlistModel = new Playlist();

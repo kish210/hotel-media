@@ -296,13 +296,16 @@ function renderScreenCard(array $s, string $tab): void {
        صفحه‌ی بی‌محل از هر انتشار روی Zone جا می‌ماند و هیچ‌جا نمی‌گفت
        چرا، پس مثل نبودنِ پلی‌لیست یک هشدار است نه یک خط خالی. */
     $venue   = trim((string)($s['venue_name'] ?? ''));
-    $vRow    = $venue !== ''
+    /* تلویزیون اتاق محل نمی‌خواهد: اتاق خودش محلش است و انتشار
+       پلی‌لیست روی Zone هم به آن نمی‌رسد (پروفایل اتاق پلی‌لیست پخش
+       نمی‌کند). برچسب «بی‌محل» روی آن یک نقصِ ساختگی می‌ساخت. */
+    $vRow    = $tab === 'iptv' ? '' : ($venue !== ''
         ? "<span style='font-size:10px;color:#7dd3fc;background:rgba(56,189,248,.1);"
           . "border-radius:5px;padding:2px 7px;'><i class='fas fa-location-dot' "
           . "style='font-size:9px;'></i> " . htmlspecialchars($venue, ENT_QUOTES) . "</span>"
         : "<span style='font-size:10px;color:#64748b;' title='بدون محل — انتشار روی Zone "
           . "به این صفحه نمی‌رسد'><i class='fas fa-location-dot' style='font-size:9px;"
-          . "opacity:.45;'></i> بی‌محل</span>";
+          . "opacity:.45;'></i> بی‌محل</span>");
 
     /* ── آنچه اپراتور واقعا لازم دارد ──────────────────────────────
        تا پیش از این کارت فقط نام و کد و محل را می‌گفت. «آنلاین» به
@@ -315,8 +318,35 @@ function renderScreenCard(array $s, string $tab): void {
     $secs    = $s['seconds_ago'];
     $plat    = (string)($s['platform'] ?? '');
 
+    /* ── تلویزیون اتاق، معیار دیگری دارد ─────────────────────────────
+       پروفایل پلیر اتاق (`player/profiles/iptv.php`) هیچ ارجاعی به
+       پلی‌لیست ندارد و آن را پخش نمی‌کند. پس هشدار «پلی‌لیست ندارد»
+       روی یک تلویزیون اتاقِ کاملا درست، هشدارِ دروغ بود — و در هتل
+       ۲۰۰ اتاقی، ۲۰۰ هشدار دروغ اپراتور را به نادیده‌گرفتن همه‌ی
+       هشدارها عادت می‌دهد.
+
+       آنچه واقعا برای اتاق اهمیت دارد، وصل‌بودن به یک اتاق است:
+       پورتال مهمان، صورتحساب، سفارش و سطح دسترسی کانال همه از
+       `iptv_room_id` می‌آیند. بی آن، تلویزیون روشن می‌شود و هیچ‌کدام
+       کار نمی‌کند. */
+    if ($tab === 'iptv') {
+        $room = trim((string)($s['room_number'] ?? ''));
+        if ($room === '') {
+            $plRow = "<div style='font-size:10px;color:#fbbf24;background:rgba(245,158,11,.1);"
+                   . "border-radius:5px;padding:3px 7px;margin-bottom:6px;'>"
+                   . "<i class='fas fa-triangle-exclamation' style='font-size:9px;'></i> "
+                   . "به اتاقی وصل نیست — پورتال مهمان کار نمی‌کند</div>";
+        } else {
+            $rn   = htmlspecialchars($room, ENT_QUOTES);
+            $rnm  = trim((string)($s['room_name'] ?? ''));
+            $plRow = "<div style='font-size:10px;color:#94a3b8;margin-bottom:6px;'>"
+                   . "<i class='fas fa-door-open' style='font-size:9px;color:#1a7ac4;'></i> اتاق {$rn}"
+                   . ($rnm !== '' ? ' · ' . htmlspecialchars($rnm, ENT_QUOTES) : '')
+                   . "</div>";
+        }
+    }
     // نوار پلی‌لیست: نداشتنش یک هشدار است، نه یک خط خالی
-    if ($plName === '') {
+    elseif ($plName === '') {
         $plRow = "<div style='font-size:10px;color:#fbbf24;background:rgba(245,158,11,.1);"
                . "border-radius:5px;padding:3px 7px;margin-bottom:6px;'>"
                . "<i class='fas fa-triangle-exclamation' style='font-size:9px;'></i> پلی‌لیست ندارد</div>";

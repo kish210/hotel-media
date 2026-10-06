@@ -48,6 +48,14 @@ class Screen
                           تک‌تک صفحه‌ها را باز کند. */
                        s.venue_id,
                        v.name AS venue_name,
+                       /* تلویزیون اتاق با پلی‌لیست سنجیده نمی‌شود — با
+                          اتاقش سنجیده می‌شود. فهرست تا پیش از این برای
+                          هر تلویزیون اتاق هشدار «پلی‌لیست ندارد»
+                          می‌داد، که روی یک تلویزیونِ درست‌تنظیم‌شده
+                          هشدار دروغ است. */
+                       s.iptv_room_id,
+                       r.room_number,
+                       r.room_name,
                        p.name AS playlist_name,
                        /* شماره‌ی آیتمی که پلیر گزارش کرده — تا اپراتور از
                           همین فهرست بفهمد تابلو واقعا در حال پخش است یا
@@ -73,8 +81,9 @@ class Screen
                        {$typeField} {$groupFields}
                 FROM screens s
                 LEFT JOIN locations l ON l.id = s.location_id
-                LEFT JOIN venues v    ON v.id = s.venue_id
-                LEFT JOIN playlists p ON p.id = s.current_playlist_id
+                LEFT JOIN venues v      ON v.id = s.venue_id
+                LEFT JOIN iptv_rooms r  ON r.id = s.iptv_room_id
+                LEFT JOIN playlists p   ON p.id = s.current_playlist_id
                 {$groupJoin}
                 WHERE s.tenant_id = ? AND s.status != 'inactive'";
 
