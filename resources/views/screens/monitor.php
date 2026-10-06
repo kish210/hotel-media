@@ -29,10 +29,15 @@
              صفحهٔ هر صفحه‌نمایش بود — یعنی برای هشدار کل هتل باید
              تک‌تک صفحه‌ها را باز می‌کردید. دکمه اینجاست چون در یک
              حادثه، اپراتور روی همین صفحهٔ مانیتورینگ است. */ ?>
+    <?php if (\App\Core\Auth::can('emergency.send')): ?>
+    <?php /* دکمه‌ای که با ۴۰۳ برمی‌گردد نباید دیده شود. گیت واقعی سمت
+             سرور است (`Controller::authorize`)؛ این فقط برای اینکه
+             اپراتورِ بی‌دسترسی دنبال دکمه‌ای نرود که برایش کار نمی‌کند. */ ?>
     <button onclick="openEmg()" class="btn-ghost text-sm flex items-center gap-1.5"
             style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#fca5a5;">
       <i class="fas fa-triangle-exclamation text-xs"></i> اعلان اضطراری همه‌ی صفحه‌ها
     </button>
+    <?php endif; ?>
     <a href="/admin/screens" class="btn-ghost text-sm flex items-center gap-1.5">
       <i class="fas fa-tv text-xs"></i> مدیریت صفحات
     </a>

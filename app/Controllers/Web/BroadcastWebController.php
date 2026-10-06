@@ -23,6 +23,10 @@ class BroadcastWebController extends Controller
     /** POST /admin/screens/{id}/broadcast — پخش فوری از web */
     public function send(Request $req, array $params): void
     {
+        /* اعلان اضطراری روی تلویزیون همه‌ی اتاق‌ها می‌رود و میهمان
+           نمی‌تواند ببنددش — این کار حساب viewer و editor نیست. */
+        if (!$this->authorize("emergency.send", true)) return;
+
         $screenId = (int)$params['id'];
         $tid      = Auth::tenantId();
 
@@ -82,6 +86,8 @@ class BroadcastWebController extends Controller
     /** POST /admin/screens/{id}/broadcast/clear */
     public function clear(Request $req, array $params): void
     {
+        if (!$this->authorize("emergency.send", true)) return;
+
         $this->db->update('screens',
             ['emergency_broadcast' => null],
             ['id' => (int)$params['id'], 'tenant_id' => Auth::tenantId()]

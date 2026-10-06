@@ -259,6 +259,36 @@ match ($command) {
         }
         $db->query("DELETE FROM media WHERE deleted_at IS NOT NULL AND deleted_at < DATE_SUB(NOW(), INTERVAL 7 DAY)");
         echo "Cleaned $n files.\n";
+
+        /* ── هرس ضربان ───────────────────────────────────────────────
+           جدول `heartbeats` هرگز هرس نمی‌شد. روی این سرور آزمایشی با
+           هشت صفحه‌ی عمدتا خاموش، ۱۳ روز یعنی ۳۶۶۵ ردیف — بی‌اهمیت.
+           ولی در هتل واقعی با ۲۰۰ اتاق و فاصله‌ی ۳۰ ثانیه می‌شود
+           ‏۵۷۶٬۰۰۰ ردیف در روز و ۲۱۰ میلیون در سال.
+
+           اهمیتش فقط فضای دیسک نیست: فهرست صفحه‌ها برای هر کارت یک
+           زیرکوئری «آخرین ضربان این صفحه» می‌زند، و همان کوئری است که
+           با رشد جدول کند می‌شود. چهارده روز برای عیب‌یابی («این
+           تلویزیون از کِی قطع شده؟») کافی است و وضعیت لحظه‌ای هم در
+           ستون `last_seen_at` خود صفحه است، نه اینجا.
+
+           حذف دسته‌ای: یک DELETE روی میلیون‌ها ردیف قفل طولانی می‌سازد
+           و ضربان تلویزیون‌ها در همان مدت تایم‌اوت می‌شود. */
+        $hb = 0;
+        try {
+            do {
+                /* rowCount روی همان statement — `$db->affected` وجود
+                   ندارد و با آن، حلقه در دور اول می‌ایستاد و هرس
+                   نیمه‌کاره می‌ماند. */
+                $gone = $db->query("DELETE FROM heartbeats
+                                     WHERE created_at < DATE_SUB(NOW(), INTERVAL 14 DAY)
+                                     LIMIT 5000")->rowCount();
+                $hb  += $gone;
+            } while ($gone >= 5000);
+            echo "Pruned $hb heartbeat rows older than 14 days.\n";
+        } catch (\Throwable $e) {
+            echo "Heartbeat prune skipped: " . $e->getMessage() . "\n";
+        }
     })(),
 
     'epg:sync' => (function() use ($argv) {

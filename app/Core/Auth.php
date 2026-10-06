@@ -7,12 +7,34 @@ class Auth
 {
     private static ?array $user = null;
 
+    /**
+     * نقشهٔ دسترسی نقش‌ها.
+     *
+     * تا فاز ۹ این نقشه **تزئینی** بود: `can()` وجود داشت و هیچ مسیری
+     * صدایش نمی‌زد. صفحات حساس (کاربران، به‌روزرسانی، لاگ، ترنسکد)
+     * گیت دستی `super_admin` داشتند، ولی سطوحی که در فازهای ۲ تا ۸
+     * ساخته شد هیچ گیتی نداشتند — از جمله اعلان اضطراری، که یعنی هر
+     * حساب `viewer` می‌توانست روی تلویزیون تمام اتاق‌های هتل دستور
+     * تخلیه بفرستد.
+     *
+     * ‏`zones` و `emergency` و `vod` و `iptv` اینجا اضافه شدند چون پیش
+     * از اعمالِ نقشه باید کامل باشد، وگرنه اعمالش دسترسی موجودِ
+     * ‏`admin` را می‌گرفت — بدتر از نبودنش.
+     */
     private static array $permissions = [
         'super_admin' => ['*'],
-        'admin'       => ['dashboard', 'screens.*', 'playlists.*', 'media.*', 'layouts.*', 'schedules.*', 'users.*', 'settings.*', 'messages.*', 'reports.*', 'modules.*'],
-        'manager'     => ['dashboard', 'screens.*', 'playlists.*', 'media.*', 'layouts.*', 'schedules.*', 'messages.*', 'reports.view', 'modules.view'],
-        'editor'      => ['dashboard', 'media.*', 'playlists.*', 'layouts.*'],
-        'viewer'      => ['dashboard', 'reports.view'],
+        'admin'       => ['dashboard', 'screens.*', 'zones.*', 'playlists.*', 'media.*', 'layouts.*',
+                          'schedules.*', 'vod.*', 'iptv.*', 'users.*', 'settings.*', 'messages.*',
+                          'emergency.*', 'reports.*', 'modules.*'],
+        /* مدیر شعبه: محتوا و صفحه‌ها بله، کاربر و تنظیمات نه.
+           اعلان اضطراری بله — او کسی است که شب در هتل حاضر است. */
+        'manager'     => ['dashboard', 'screens.*', 'zones.*', 'playlists.*', 'media.*', 'layouts.*',
+                          'schedules.*', 'vod.*', 'iptv.view', 'messages.*', 'emergency.*',
+                          'reports.view', 'modules.view'],
+        /* تولیدکنندهٔ محتوا: می‌سازد و منتشر می‌کند، ولی اعلان اضطراری
+           و تنظیم دستگاه کار او نیست. */
+        'editor'      => ['dashboard', 'media.*', 'playlists.*', 'layouts.*', 'vod.*', 'messages.view'],
+        'viewer'      => ['dashboard', 'reports.view', 'screens.view'],
     ];
 
     public static function check(): bool

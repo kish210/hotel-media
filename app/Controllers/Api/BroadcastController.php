@@ -12,6 +12,10 @@ class BroadcastController extends Controller
      */
     public function send(Request $req, array $params): void
     {
+        /* اعلان اضطراری روی تلویزیون همه‌ی اتاق‌ها می‌رود و میهمان
+           نمی‌تواند ببنددش — این کار حساب viewer و editor نیست. */
+        if (!$this->authorize("emergency.send")) return;
+
         $screenId = (int)$params['id'];
         $tid      = Auth::tenantId();
 
@@ -77,6 +81,8 @@ class BroadcastController extends Controller
      */
     public function clear(Request $req, array $params): void
     {
+        if (!$this->authorize("emergency.send")) return;
+
         $this->db->update('screens',
             ['emergency_broadcast' => null],
             ['id' => (int)$params['id'], 'tenant_id' => Auth::tenantId()]
@@ -103,6 +109,8 @@ class BroadcastController extends Controller
      */
     public function sendAll(Request $req): void
     {
+        if (!$this->authorize("emergency.send")) return;
+
         $tid      = Auth::tenantId();
         $type     = $req->input('type', 'text');
         $content  = $req->input('content', '');

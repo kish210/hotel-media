@@ -90,9 +90,11 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
          آن صفحه روی جدول `campaigns` بود که هیچ صفحه‌ای نمی‌خواندش و
          دکمهٔ «پخش»اش فقط پیام موفقیت فلش می‌کرد. این یکی واقعا در هر
          heartbeat به تلویزیون می‌رسد. */ ?>
+<?php if (\App\Core\Auth::can('messages.view')): ?>
 <a href="/admin/messages" class="sidebar-link <?= isActive('/admin/messages') ?>">
   <span class="icon"><i class="fas fa-bullhorn"></i></span> تبلیغات و اعلان‌ها
 </a>
+<?php endif; ?>
 
 <!-- ══ تلویزیون زنده ══ -->
 <?php if (modOn('iptv')): ?>
