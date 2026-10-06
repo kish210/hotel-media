@@ -447,6 +447,11 @@ function play(i) {
       return;
     }
     var vid = document.createElement('video');
+    /* subtitle track for this media item. Deliberately not <track>:
+       the Orsay profile runs on WebKit 534 which has no TextTrack, so
+       cues are rendered from VTT by tv-subtitles.js instead and every
+       profile behaves the same way. */
+    if (window.TVSUB) TVSUB.attach(vid, item.subtitles);
     vid.setAttribute('autoplay', '');
     vid.setAttribute('muted', '');
     vid.setAttribute('playsinline', '');
@@ -739,5 +744,6 @@ syncTime();
 <!-- صفحه‌کلید عددی فعال‌سازی با ریموت (همه‌ی مدل‌ها) -->
 <script src="/assets/js/tv-activate.js"></script>
 <script src="/assets/js/tv-messages.js"></script>
+<script src="/assets/js/tv-subtitles.js"></script>
 </body>
 </html>

@@ -199,6 +199,11 @@ function play(i) {
              src.indexOf('udp://') === 0 || src.indexOf('rtp://') === 0) {
 
     var vid = document.createElement('video');
+    /* subtitle track for this media item. Deliberately not <track>:
+       the Orsay profile runs on WebKit 534 which has no TextTrack, so
+       cues are rendered from VTT by tv-subtitles.js instead and every
+       profile behaves the same way. */
+    if (window.TVSUB) TVSUB.attach(vid, item.subtitles);
     vid.style.cssText = 'width:100%;height:100%;display:block;background:#000;';
     // Samsung Tizen critical attributes
     vid.setAttribute('autoplay',       '');
@@ -364,5 +369,6 @@ heartbeat();
 <!-- صفحه‌کلید عددی فعال‌سازی با ریموت (همه‌ی مدل‌ها) -->
 <script src="/assets/js/tv-activate.js"></script>
 <script src="/assets/js/tv-messages.js"></script>
+<script src="/assets/js/tv-subtitles.js"></script>
 </body>
 </html>

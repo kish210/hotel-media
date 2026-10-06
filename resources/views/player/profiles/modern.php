@@ -60,6 +60,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 <link rel="stylesheet" href="/assets/css/tv-signage.css<?= v() ?>">
 <script src="/assets/vendor/hls/hls.min.js<?= v() ?>"></script>
 <script src="/assets/js/tv-base.js<?= v() ?>"></script>
+<script src="/assets/js/tv-subtitles.js<?= v() ?>"></script>
 <style>
 /* فقط چیزهای مخصوص این صفحه. بدون var() ، clamp() ، gap ، inset. */
 html, body { background: #000; }
@@ -695,6 +696,9 @@ html, body { background: #000; }
     } else if (kind === 'video') {
       var v = mkVideo(false);
       v.src = src;
+      /* زیرنویس: جدول media_subtitles ساخته شده بود و هیچ‌جا وصل
+         نبود. عمدا <track> نیست — پروفایل Orsay آن را نمی‌شناسد. */
+      if (window.TVSUB) TVSUB.attach(v, item.subtitles);
       v.onended = next;
       v.onerror = next;
       div.appendChild(v);

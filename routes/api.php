@@ -146,6 +146,14 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
     $r->delete('/vod/videos/{id}',           [\App\Controllers\Api\VodController::class, 'deleteVideo']);
     $r->post('/vod/videos/bulk-delete',      [\App\Controllers\Api\VodController::class, 'bulkDelete']);
     $r->post('/vod/videos/{id}/thumbnail',   [\App\Controllers\Api\VodController::class, 'uploadThumbnail']);
+    /* زیرنویس: `SubtitleService::store()` از ابتدا بود و هیچ مسیری
+       نداشت، پس تحویل زیرنویس کار می‌کرد و راهی برای گذاشتنش نبود. */
+    $r->get('/media/{id}/subtitles',         [\App\Controllers\Api\SubtitleController::class, 'listForMedia']);
+    $r->post('/media/{id}/subtitles',        [\App\Controllers\Api\SubtitleController::class, 'storeForMedia']);
+    $r->delete('/media/subtitles/{id}',      [\App\Controllers\Api\SubtitleController::class, 'deleteForMedia']);
+    $r->post('/vod/videos/{id}/subtitles',   [\App\Controllers\Api\SubtitleController::class, 'storeForVod']);
+    $r->delete('/vod/subtitles/{id}',        [\App\Controllers\Api\SubtitleController::class, 'deleteForVod']);
+
     $r->get('/vod/videos/{id}/status',       [\App\Controllers\Api\VodController::class, 'processStatus']);
     $r->post('/vod/videos/{id}/reprocess',   [\App\Controllers\Api\VodController::class, 'reprocess']);
     $r->post('/vod/videos/{id}/cancel',      [\App\Controllers\Api\VodController::class, 'cancelProcess']);

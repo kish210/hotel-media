@@ -286,6 +286,9 @@ function playIdx(i) {
 
   } else if (type === 'video') {
     var vid = document.createElement('video');
+    /* subtitle track for this media item — same shared renderer as the
+       other profiles, so behaviour does not drift between them. */
+    if (window.TVSUB) TVSUB.attach(vid, item.subtitles);
     vid.src = src;
     vid.autoplay = true;
     vid.muted = true;
@@ -465,5 +468,6 @@ heartbeat();
 <!-- صفحه‌کلید عددی فعال‌سازی با ریموت (همه‌ی مدل‌ها) -->
 <script src="/assets/js/tv-activate.js"></script>
 <script src="/assets/js/tv-messages.js"></script>
+<script src="/assets/js/tv-subtitles.js"></script>
 </body>
 </html>

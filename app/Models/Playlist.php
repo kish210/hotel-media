@@ -151,9 +151,47 @@ class Playlist
         $host    = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
         $baseUrl = $scheme . '://' . $host;
 
+        /* زیرنویس همراه خودِ آیتم می‌رود، نه با درخواست جدا: پلیر
+           تلویزیون روی شبکهٔ کند هتل نباید برای شروع پخش منتظر یک
+           رفت‌وبرگشت دیگر بماند. یک کوئری برای کل پلی‌لیست، نه یکی
+           به‌ازای هر آیتم. */
+        $subsByMedia = [];
+        $mediaIds = array_values(array_filter(array_map(
+            static fn($it) => (int)($it['media_id'] ?? 0),
+            $playlist['items']
+        )));
+        if ($mediaIds) {
+            try {
+                $ph   = implode(',', array_fill(0, count($mediaIds), '?'));
+                $rows = $this->db->rows(
+                    "SELECT media_id, lang, label, file_path, is_default
+                       FROM media_subtitles WHERE media_id IN ($ph)
+                      ORDER BY is_default DESC, label",
+                    $mediaIds
+                ) ?: [];
+                foreach ($rows as $r) $subsByMedia[(int)$r['media_id']][] = $r;
+            } catch (\Throwable $e) {
+                /* نصب قدیمی بدون جدول — پخش نباید به‌خاطر نبودِ
+                   زیرنویس متوقف شود */
+            }
+        }
+
         foreach ($playlist['items'] as &$item) {
             $fp  = $item['file_path'] ?? '';
             $url = $item['url'] ?? '';
+
+            $mid = (int)($item['media_id'] ?? 0);
+            $item['subtitles'] = [];
+            foreach ($subsByMedia[$mid] ?? [] as $s) {
+                $item['subtitles'][] = [
+                    'lang'       => $s['lang'],
+                    'label'      => $s['label'],
+                    'is_default' => (int)$s['is_default'],
+                    /* آدرس مطلق، مثل خودِ فایل رسانه: پلیر روی تلویزیون
+                       با host واقعی سرور کار می‌کند نه localhost */
+                    'src'        => $baseUrl . $s['file_path'],
+                ];
+            }
 
             // src برای player — با IP/host واقعی سرور
             if ($fp && !str_starts_with($fp, 'http')) {

@@ -238,6 +238,122 @@ final class SubtitleService
      * @param array{name:string,tmp_name:string,size:int,error:int} $file
      * @return array{ok:bool,message:string,id:int}
      */
+    // ══════════════════════════════════════════════════════════════
+    //  زیرنویس رسانهٔ تابلو
+    // ══════════════════════════════════════════════════════════════
+
+    /**
+     * زیرنویس برای یک رسانهٔ کتابخانه (آیتم پلی‌لیست تابلو).
+     *
+     * جدول `media_subtitles` در migration 039 ساخته شد و هرگز وصل
+     * نشد — تنها ارجاعش در کل مخزن، همان CREATE TABLE بود. پس
+     * قابلیتی که سفارش داده شده بود، فقط یک جدول خالی داشت.
+     *
+     * عمدا از همین سرویس استفاده می‌شود و نه یک کلاس تازه: کار سخت
+     * (خواندن SRT و ASS و تبدیلش به VTT با زمان‌بندی درست) در
+     * `toVtt()` حل شده و دو نسخه از آن یعنی دو رفتار برای یک فایل.
+     */
+    public function storeForMedia(int $tenantId, int $mediaId, array $file, array $meta): array
+    {
+        $fail = static fn(string $m): array => ['ok' => false, 'message' => $m, 'id' => 0];
+
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            return $fail('آپلود فایل ناموفق بود');
+        }
+        if (($file['size'] ?? 0) > self::MAX_BYTES) {
+            return $fail('فایل زیرنویس بیش از حد بزرگ است (سقف ۵ مگابایت)');
+        }
+
+        $ext = strtolower(pathinfo((string)$file['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, self::FORMATS, true)) {
+            return $fail('قالب پشتیبانی نمی‌شود. مجاز: ' . implode('، ', self::FORMATS));
+        }
+
+        $raw = @file_get_contents($file['tmp_name']);
+        if ($raw === false) return $fail('فایل خوانده نشد');
+
+        $conv = $this->toVtt($raw, $ext);
+        if (!$conv['ok']) return $fail($conv['message']);
+
+        $lang = preg_replace('/[^a-z-]/', '', strtolower(trim((string)($meta['lang'] ?? '')))) ?? '';
+        if ($lang === '') return $fail('کد زبان لازم است');
+
+        $dir = PUBLIC_PATH . '/uploads/subtitles/media/' . $mediaId;
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
+            return $fail('پوشهٔ زیرنویس ساخته نشد');
+        }
+
+        $name = $lang . '.vtt';
+        if (@file_put_contents($dir . '/' . $name, $conv['vtt']) === false) {
+            return $fail('فایل زیرنویس ذخیره نشد');
+        }
+        $rel = '/uploads/subtitles/media/' . $mediaId . '/' . $name;
+
+        $row = [
+            'tenant_id'     => $tenantId,
+            'media_id'      => $mediaId,
+            'lang'          => $lang,
+            'label'         => trim((string)($meta['label'] ?? '')) ?: strtoupper($lang),
+            'source_format' => in_array($ext, ['srt','vtt','ass','sub'], true) ? $ext : 'srt',
+            'file_path'     => $rel,
+            'file_size'     => strlen($conv['vtt']),
+            'is_default'    => !empty($meta['is_default']) ? 1 : 0,
+        ];
+
+        /* همان زبان دوباره آپلود شود = جایگزینی، نه خطا. اپراتور
+           معمولا فایل بهتری پیدا کرده است. */
+        $existing = $this->db->value(
+            'SELECT id FROM media_subtitles WHERE media_id = ? AND lang = ?',
+            [$mediaId, $lang]
+        );
+
+        if ($existing) {
+            unset($row['tenant_id'], $row['media_id']);
+            $this->db->update('media_subtitles', $row, ['id' => (int)$existing]);
+            $id = (int)$existing;
+        } else {
+            $id = (int)$this->db->insert('media_subtitles', $row);
+        }
+
+        if ($row['is_default']) {
+            $this->db->query(
+                'UPDATE media_subtitles SET is_default = 0 WHERE media_id = ? AND id <> ?',
+                [$mediaId, $id]
+            );
+        }
+
+        return ['ok' => true, 'message' => 'زیرنویس ذخیره شد', 'id' => $id];
+    }
+
+    /** @return list<array<string,mixed>> */
+    public function forMedia(int $mediaId): array
+    {
+        try {
+            return $this->db->rows(
+                'SELECT id, lang, label, file_path, is_default
+                   FROM media_subtitles WHERE media_id = ? ORDER BY is_default DESC, label',
+                [$mediaId]
+            ) ?: [];
+        } catch (\Throwable $e) {
+            return [];   // نصب قدیمی بدون جدول
+        }
+    }
+
+    public function deleteForMedia(int $id): bool
+    {
+        $row = $this->db->row('SELECT file_path FROM media_subtitles WHERE id = ?', [$id]);
+        if (!$row) return false;
+        if (!empty($row['file_path']) && is_file(PUBLIC_PATH . $row['file_path'])) {
+            @unlink(PUBLIC_PATH . $row['file_path']);
+        }
+        $this->db->delete('media_subtitles', ['id' => $id]);
+        return true;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  زیرنویس فیلم (VOD)
+    // ══════════════════════════════════════════════════════════════
+
     public function store(int $tenantId, int $vodId, array $file, array $meta): array
     {
         $fail = static fn(string $m): array => ['ok' => false, 'message' => $m, 'id' => 0];
