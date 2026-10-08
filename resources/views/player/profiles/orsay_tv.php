@@ -157,6 +157,49 @@ function tvPlay(el) {
   try { el.play(); } catch (e) {}
 }
 
+/* overlayها (لوگو، آب‌وهوا، ساعت، تیکر) را دوباره نمایان می‌کند.
+   وقتی پلن سخت‌افزاری ویدیو تمام‌صفحه می‌شود و برمی‌گردد، بعضی
+   مدل‌های Orsay استایل عناصر را دست‌نخورده نگه می‌دارند ولی بعضی
+   ری‌پینت لازم دارند؛ این یک no-op بی‌ضرر روی مدل‌های سالم است. */
+function reassertOverlays() {
+  var ids = ['brand', 'wx', 'clock', 'ticker'];
+  for (var i = 0; i < ids.length; i++) {
+    var e = document.getElementById(ids[i]);
+    if (!e) continue;
+    /* فقط آن‌هایی که محتوا دارند دوباره نشان داده می‌شوند — ساعت و
+       تیکر خودشان با display:none شروع می‌شوند اگر خاموش باشند. */
+    if (e.getAttribute('data-off') === '1') continue;
+    if (e.style.display === 'none' && e.getAttribute('data-shown') !== '1') continue;
+    var z = e.style.zIndex;
+    e.style.zIndex = '';
+    e.style.zIndex = z || '60';
+  }
+}
+
+/* جلوگیری از تمام‌صفحهٔ بومیِ پلیر سخت‌افزاری. علت باگِ گزارش‌شده:
+   دوبار EXIT روی ریموت، ویدیو را روی پلنِ سخت‌افزاری تمام‌صفحه
+   می‌کرد و overlayهای HTML زیرش گم می‌شدند. */
+function guardFullscreen(v) {
+  if (!v) return;
+  function exitFs() {
+    try { if (v.webkitExitFullscreen)      v.webkitExitFullscreen(); } catch (e) {}
+    try { if (v.webkitExitFullScreen)      v.webkitExitFullScreen(); } catch (e) {}
+    try { if (document.webkitExitFullscreen) document.webkitExitFullscreen(); } catch (e) {}
+    reassertOverlays();
+  }
+  /* نام رویداد روی وبکیت تلویزیون‌ها فرق می‌کند؛ به همه گوش می‌دهیم */
+  if (v.addEventListener) {
+    v.addEventListener('webkitbeginfullscreen', exitFs, false);
+    v.addEventListener('webkitfullscreenchange', reassertOverlays, false);
+    v.addEventListener('fullscreenchange', reassertOverlays, false);
+  }
+  /* صفت‌هایی که ورود خودکار به تمام‌صفحه را مهار می‌کنند */
+  try { v.setAttribute('webkit-playsinline', ''); } catch (e) {}
+  try { v.setAttribute('playsinline', ''); } catch (e) {}
+  try { v.controls = false; } catch (e) {}
+  try { v.removeAttribute('controls'); } catch (e) {}
+}
+
 /* WebKit 537.42 روی Maple ویدیو را با عرض/ارتفاع درصدی مقیاس نمی‌دهد؛
    آن را در اندازه‌ی ذاتی فایل می‌کشد. یک کلیپ 848×480 روی صحنه‌ی
    1280×720 حدود یک‌سومِ صفحه را خالی می‌گذاشت. پس اندازه را همیشه
@@ -259,7 +302,7 @@ function applyBackdrop(div) {
 /* هر بار که این صفحه عوض می‌شود این عدد هم باید عوض شود — در ضربان
    گزارش می‌شود و تنها راه فهمیدن اینکه تلویزیون کد تازه را گرفته یا
    نسخه‌ی کش‌شده‌ی خودش را اجرا می‌کند. */
-var PAGE_BUILD = 'orsay-2026-09-30-e';
+var PAGE_BUILD = 'orsay-2026-10-08-f';
 
 var SERVER = window.location.origin;
 var CODE   = '<?= e($screen['code']??'') ?>';
@@ -523,6 +566,14 @@ function play(i) {
     vid.loop  = false;
     vid.onended = nextItem;
     vid.onerror = function() { setTimeout(nextItem, 1000); };
+    /* ضد تمام‌صفحهٔ بومی سامسونگ — این همان باگی است که با دوبار زدن
+       EXIT روی ریموت دیده می‌شد: پلیرِ سخت‌افزاری تلویزیون ویدیو را
+       روی یک «پلن» بالاتر از لایهٔ HTML تمام‌صفحه می‌کرد و لوگو و
+       آب‌وهوا (که overlayهای HTML‌اند) زیرش پنهان می‌شدند. چون در
+       لایهٔ HTML لوگو z-index بالاتری دارد، تنها راهِ پوشاندنش همین
+       پلنِ سخت‌افزاری است. پس به‌محض ورود به تمام‌صفحه، فوراً خارجش
+       می‌کنیم و overlayها را دوباره نمایان می‌کنیم. */
+    guardFullscreen(vid);
     /* پس‌زمینه قبل از ویدیو به اسلاید اضافه می‌شود تا در همان فریم
        اول زیرش باشد — اگر بعد اضافه شود، لحظه‌ی اول نوار سیاه دیده
        می‌شود و روی تابلو همان لحظه به چشم می‌آید. */
@@ -792,7 +843,31 @@ document.addEventListener('keydown', function(e) {
     var a=document.getElementById('act');
     if(a) doActivate();
   }
+  /* EXIT / RETURN / BACK — روی Orsay همین کلیدها بودند که با دوبار
+     زدن، پلیرِ سخت‌افزاری را تمام‌صفحه می‌کردند و لوگو و آب‌وهوا را
+     می‌پوشاندند. جلوی رفتار پیش‌فرض گرفته می‌شود و به‌جایش overlayها
+     دوباره نمایان و از تمام‌صفحه خارج می‌شویم. فعال‌سازی (صفحهٔ act)
+     دست‌نخورده می‌ماند. */
+  if (e.keyCode===10009 || e.keyCode===88 || e.keyCode===461 || e.keyCode===27 || e.keyCode===8) {
+    if (!document.getElementById('act')) {
+      if (e.preventDefault)  e.preventDefault();
+      if (e.stopPropagation) e.stopPropagation();
+      var vids = document.getElementsByTagName('video');
+      for (var i = 0; i < vids.length; i++) {
+        try { if (vids[i].webkitExitFullscreen) vids[i].webkitExitFullscreen(); } catch (ex) {}
+      }
+      reassertOverlays();
+      return false;
+    }
+  }
 });
+
+/* اگر با هر مسیری — کلید دیگر، منوی تلویزیون — باز هم تمام‌صفحه شد،
+   به‌محض برگشت overlayها را بازمی‌گردانیم. */
+if (document.addEventListener) {
+  document.addEventListener('webkitfullscreenchange', reassertOverlays, false);
+  document.addEventListener('fullscreenchange', reassertOverlays, false);
+}
 
 // ─── Start ────────────────────────────────────────────────────
 <?php if (($screen['status']??'') === 'active'): ?>
