@@ -74,6 +74,42 @@ class MediaConvertService
     }
 
     /**
+     * یک فریم از ویدیو را به‌عنوان پوستر/تامبنیل بیرون می‌کشد.
+     *
+     * برای تایم‌لاین لازم است: تا امروز ویدیو در کتابخانه و روی خط
+     * زمانی فقط یک کادر خاکستری بود و اپراتور نمی‌دانست کدام کلیپ
+     * کدام است.
+     *
+     * فریم از ثانیه‌ی `$at` گرفته می‌شود، نه ثانیه‌ی صفر: فریم اول
+     * خیلی از ویدیوها سیاه یا لوگوی شروع است. اگر ویدیو کوتاه‌تر از
+     * آن باشد ffmpeg خودش آخرین فریم را می‌دهد.
+     *
+     * @return bool موفقیت
+     */
+    public function poster(string $srcAbs, string $destAbs, float $at = 1.0): bool
+    {
+        if ($this->ffmpeg === '' || !is_file($srcAbs)) return false;
+
+        $dir = dirname($destAbs);
+        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) return false;
+
+        /* ‎-ss قبل از -i: جست سریع. scale با force_original_aspect_ratio
+           تا پوستر کشیده نشود؛ عرض ۴۰۰ کافی است و فایل را سبک نگه
+           می‌دارد. */
+        $cmd = escapeshellarg($this->ffmpeg)
+             . ' -y -hide_banner -loglevel error'
+             . ' -ss ' . escapeshellarg(number_format(max(0, $at), 3, '.', ''))
+             . ' -i ' . escapeshellarg($srcAbs)
+             . ' -frames:v 1'
+             . ' -vf ' . escapeshellarg('scale=400:-2:flags=bilinear')
+             . ' ' . escapeshellarg($destAbs)
+             . ' 2>/dev/null';
+        shell_exec($cmd);
+
+        return is_file($destAbs) && filesize($destAbs) > 0;
+    }
+
+    /**
      * ویژگی‌های یک ویدیو برای تصمیم تبدیل.
      *
      * ابعاد «نمایشی» برگردانده می‌شود: ویدیوی عمودی موبایل در فایل

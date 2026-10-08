@@ -108,6 +108,49 @@ class Media
             }
         }
 
+        /* ── ابعاد و مدت ─────────────────────────────────────────────
+           تا امروز آپلود هیچ چیزی را probe نمی‌کرد، پس برای هر ویدیو
+           اپراتور باید دستی مدت را وارد می‌کرد و خط زمانی نمی‌دانست
+           کلیپ چقدر طول می‌کشد. حالا در همان آپلود خوانده می‌شود.
+
+           اگر ffprobe نباشد یا فایل خوانده نشود، مقادیر NULL می‌مانند و
+           رفتار قبلی (ورود دستی) سر جایش است — پس آپلود هرگز به‌خاطر
+           نبودِ ffmpeg شکست نمی‌خورد. */
+        $width = $height = $duration = null;
+        $meta  = [];
+
+        if ($type === 'image') {
+            $size = @getimagesize($absPath);
+            if ($size) { $width = (int)$size[0]; $height = (int)$size[1]; }
+        } else {
+            try {
+                $svc = new \App\Services\MediaConvertService($this->db);
+                if ($svc->available()) {
+                    $p = $svc->probe($absPath);
+                    if (($p['width'] ?? 0) > 0)    $width    = (int)$p['width'];
+                    if (($p['height'] ?? 0) > 0)   $height   = (int)$p['height'];
+                    if (($p['duration'] ?? 0) > 0) $duration = (int)round((float)$p['duration']);
+                    /* آیا باند صوتی دارد — خط زمانی با این تصمیم می‌گیرد
+                       waveform و کنترل صدا نشان دهد یا نه. */
+                    $meta['has_audio'] = ($p['audio'] ?? '') !== '';
+                    $meta['probed']    = true;
+
+                    // پوستر ویدیو برای کتابخانه و خط زمانی
+                    $thumbDir = PUBLIC_PATH . '/uploads/thumbnails/' . $this->tenantId;
+                    $posterAbs = $thumbDir . '/poster_' . pathinfo($filename, PATHINFO_FILENAME) . '.jpg';
+                    $at = $duration !== null ? min(1.0, $duration / 2) : 1.0;
+                    if ($svc->poster($absPath, $posterAbs, $at)) {
+                        $thumbPath = '/uploads/thumbnails/' . $this->tenantId
+                                   . '/poster_' . pathinfo($filename, PATHINFO_FILENAME) . '.jpg';
+                    }
+                }
+            } catch (\Throwable $e) {
+                /* probe نباید آپلود را بیندازد — رسانه بدون ابعاد ذخیره
+                   می‌شود و بعداً با artisan media:dimensions پر می‌شود. */
+                error_log('[MEDIA PROBE] ' . $e->getMessage());
+            }
+        }
+
         $id = $this->db->insert('media', [
             'tenant_id'      => $this->tenantId,
             'uploaded_by'    => Auth::id() ?? 1,
@@ -118,6 +161,10 @@ class Media
             'file_path'      => $relPath,
             'thumbnail_path' => $thumbPath ?? ($type === 'image' ? $relPath : null),
             'file_size'      => filesize($absPath),
+            'width'          => $width,
+            'height'         => $height,
+            'duration'       => $duration,
+            'meta'           => $meta ? json_encode($meta, JSON_UNESCAPED_UNICODE) : null,
         ]);
 
         return $this->find((int)$id) ?? [];

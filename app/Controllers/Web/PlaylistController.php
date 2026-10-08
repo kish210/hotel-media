@@ -77,6 +77,108 @@ class PlaylistController extends Controller
         $this->view('playlists.show', compact('pl','items','media','screens') + ['title' => $pl['name'], 'playlist' => $pl]);
     }
 
+    // ══════════════════════════════════════════════════════════════
+    //  استودیوی تایم‌لاین
+    // ══════════════════════════════════════════════════════════════
+
+    /**
+     * ویرایشگر تایم‌لاین چندلایه. اگر پیش‌نویسی ذخیره نشده، از روی
+     * آیتم‌های فعلی ساخته می‌شود تا هیچ‌وقت خالی باز نشود.
+     */
+    public function studio(Request $req, array $params): void
+    {
+        $id = (int)$params['id'];
+        $pl = $this->playlist->find($id);
+        if (!$pl) { $this->redirect('/admin/playlists'); return; }
+
+        $svc = new \App\Services\TimelineService($this->db);
+
+        $timeline = null;
+        if (!empty($pl['timeline'])) {
+            $decoded = json_decode((string)$pl['timeline'], true);
+            if (is_array($decoded)) $timeline = $svc->sanitize($decoded);
+        }
+        if ($timeline === null) {
+            $timeline = $svc->build($pl, $this->playlist->getItems($id));
+        }
+
+        // کتابخانه‌ی رسانه برای پنل چپ — با ابعاد و مدت که فاز ۲ پر کرد
+        $media = $this->db->rows(
+            "SELECT id, name, type, mime_type, file_path, url, thumbnail_path, duration, width, height
+               FROM media
+              WHERE tenant_id=? AND deleted_at IS NULL AND is_active=1
+              ORDER BY created_at DESC LIMIT 300",
+            [Auth::tenantId()]
+        );
+
+        $this->view('playlists.studio', [
+            'title'    => 'استودیو: ' . $pl['name'],
+            'playlist' => $pl,
+            'timeline' => $timeline,
+            'media'    => $media,
+            'savedAt'  => $pl['timeline_saved_at'] ?? null,
+            'pubAt'    => $pl['timeline_published_at'] ?? null,
+        ]);
+    }
+
+    /** ذخیره‌ی پیش‌نویس تایم‌لاین (JSON). پخش را عوض نمی‌کند. */
+    public function timelineSave(Request $req, array $params): void
+    {
+        $id = (int)$params['id'];
+        if (!$this->ownsPlaylist($id)) { \App\Core\Response::error('پلی‌لیست یافت نشد', 404); return; }
+
+        $svc  = new \App\Services\TimelineService($this->db);
+        $body = $req->json() ?: $req->post();
+        $tl   = $svc->sanitize($body['timeline'] ?? $body);
+
+        $now = date('Y-m-d H:i:s');
+        $this->db->update('playlists', [
+            'timeline'          => json_encode($tl, JSON_UNESCAPED_UNICODE),
+            'timeline_saved_at' => $now,
+        ], ['id' => $id]);
+
+        \App\Core\Response::success(['saved_at' => $now, 'duration' => $tl['duration']], 'پیش‌نویس ذخیره شد');
+    }
+
+    /** انتشار: اعتبارسنجی، سپس کامپایل به playlist_items. */
+    public function timelinePublish(Request $req, array $params): void
+    {
+        $id = (int)$params['id'];
+        if (!$this->ownsPlaylist($id)) { \App\Core\Response::error('پلی‌لیست یافت نشد', 404); return; }
+
+        $svc  = new \App\Services\TimelineService($this->db);
+        $body = $req->json() ?: $req->post();
+        $tl   = $svc->sanitize($body['timeline'] ?? $body);
+
+        $errors = $svc->validate($tl);
+        if ($errors) { \App\Core\Response::error('پیش از انتشار این‌ها را درست کنید', 422, $errors); return; }
+
+        // پیش‌نویس هم با همین نسخه هم‌راستا شود
+        $this->db->update('playlists', [
+            'timeline'          => json_encode($tl, JSON_UNESCAPED_UNICODE),
+            'timeline_saved_at' => date('Y-m-d H:i:s'),
+        ], ['id' => $id]);
+
+        try {
+            $res = $svc->compile($id, $tl);
+        } catch (\Throwable $e) {
+            error_log('[TIMELINE COMPILE] ' . $e->getMessage());
+            \App\Core\Response::error('انتشار ناموفق بود — تغییری اعمال نشد', 500);
+            return;
+        }
+
+        $this->log('playlist.publish', 'Playlist', $id);
+        \App\Core\Response::success($res, $res['items'] . ' آیتم منتشر شد');
+    }
+
+    private function ownsPlaylist(int $id): bool
+    {
+        return (bool)$this->db->value(
+            "SELECT id FROM playlists WHERE id=? AND tenant_id=?",
+            [$id, Auth::tenantId()]
+        );
+    }
+
     public function edit(Request $req, array $params): void
     {
         $pl      = $this->playlist->find((int)$params['id']);
@@ -306,6 +408,18 @@ class PlaylistController extends Controller
             [$playlistId]
         );
 
+        /* ── مدت خودکار ویدیو ────────────────────────────────────────
+           اپراتور نباید مدت ویدیو را دستی وارد کند. اگر رسانه ویدیوی
+           واقعی با مدت شناخته‌شده است، همان مدت گذاشته می‌شود؛ مگر
+           اینکه کاربر عمدا عددی غیر از پیش‌فرض ۱۰ فرستاده باشد (مثلا
+           برای نمایش بخشی از ویدیو). عکس و استریم مثل قبل می‌مانند. */
+        $md = $this->db->row("SELECT type, duration FROM media WHERE id=?", [$mediaId]);
+        if ($md && $md['type'] === 'video' && (int)($md['duration'] ?? 0) > 0) {
+            if ((int)$req->post('duration', 10) === 10) {
+                $duration = (int)$md['duration'];
+            }
+        }
+
         $this->db->insert('playlist_items', [
             'playlist_id' => $playlistId,
             'media_id'    => $mediaId,
@@ -355,19 +469,28 @@ class PlaylistController extends Controller
             [$playlistId]
         );
 
+        /* همان قاعده‌ی مدت خودکار افزودن تکی: ویدیو مدت واقعی خودش را
+           می‌گیرد، عکس مدتِ انتخابی اپراتور را. یک کوئری برای همه. */
+        $wantDefault = (int)$req->post('duration', 10) === 10;
+
         $added = 0;
         foreach ($ids as $mid) {
             // فقط رسانه‌ی همین tenant — جلوی افزودن id دستکاری‌شده
-            $owns = $this->db->value(
-                "SELECT id FROM media WHERE id=? AND tenant_id=? AND deleted_at IS NULL",
+            $md = $this->db->row(
+                "SELECT id, type, duration FROM media WHERE id=? AND tenant_id=? AND deleted_at IS NULL",
                 [$mid, $tid]
             );
-            if (!$owns) continue;
+            if (!$md) continue;
+
+            $itemDur = $duration;
+            if ($wantDefault && $md['type'] === 'video' && (int)($md['duration'] ?? 0) > 0) {
+                $itemDur = (int)$md['duration'];
+            }
 
             $this->db->insert('playlist_items', [
                 'playlist_id' => $playlistId,
                 'media_id'    => $mid,
-                'duration'    => $duration,
+                'duration'    => $itemDur,
                 'start_at'    => $startAt,
                 'end_at'      => $endAt,
                 'sort_order'  => ++$maxOrder,
