@@ -167,6 +167,10 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class, \A
     $r->post('/playlists',            [\App\Controllers\Web\PlaylistController::class, 'store']);
     $r->get('/playlists/{id}',        [\App\Controllers\Web\PlaylistController::class, 'show']);
     $r->get('/playlists/{id}/edit',   [\App\Controllers\Web\PlaylistController::class, 'edit']);
+    // استودیوی تایم‌لاین چندلایه
+    $r->get('/playlists/{id}/studio',          [\App\Controllers\Web\PlaylistController::class, 'studio']);
+    $r->post('/playlists/{id}/timeline',       [\App\Controllers\Web\PlaylistController::class, 'timelineSave']);
+    $r->post('/playlists/{id}/timeline/publish',[\App\Controllers\Web\PlaylistController::class, 'timelinePublish']);
     $r->post('/playlists/{id}',       [\App\Controllers\Web\PlaylistController::class, 'update']);
     $r->post('/playlists/{id}/logo',        [\App\Controllers\Web\PlaylistController::class, 'uploadLogo']);
     $r->post('/playlists/{id}/backdrop',    [\App\Controllers\Web\PlaylistController::class, 'uploadBackdrop']);

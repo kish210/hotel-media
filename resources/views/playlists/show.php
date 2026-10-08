@@ -45,10 +45,17 @@ $typeColors = [
     <span style="font-size:13px;font-weight:700;color:#fff;">
       <i class="fas fa-sliders" style="color:#1a7ac4;margin-left:8px;"></i>خط زمانی پخش
     </span>
-    <button onclick="document.getElementById('addItemModal').classList.remove('hidden')"
-      class="btn-primary text-xs flex items-center gap-1.5" style="padding:6px 12px;">
-      <i class="fas fa-plus text-xs"></i> افزودن محتوا
-    </button>
+    <div style="display:flex;gap:8px;">
+      <a href="/admin/playlists/<?= (int)$playlist['id'] ?>/studio"
+        class="btn-primary text-xs flex items-center gap-1.5"
+        style="padding:6px 12px;background:linear-gradient(135deg,#7c3aed,#2563eb);">
+        <i class="fas fa-clapperboard text-xs"></i> استودیوی تایم‌لاین
+      </a>
+      <button onclick="document.getElementById('addItemModal').classList.remove('hidden')"
+        class="btn-primary text-xs flex items-center gap-1.5" style="padding:6px 12px;">
+        <i class="fas fa-plus text-xs"></i> افزودن محتوا
+      </button>
+    </div>
   </div>
 
   <?php if (empty($items)): ?>
