@@ -56,7 +56,12 @@ var TV_FILES = [
   'public/assets/css/tv-base.css',
   'public/assets/js/tv-base.js',
   'public/assets/js/tv-activate.js',
-  'public/assets/js/tv-trickplay.js'
+  'public/assets/js/tv-trickplay.js',
+  /* ویجت ماژول داخل iframe روی خودِ تلویزیون باز می‌شود، پس همان
+     محدودیت‌های صفحه‌های بالا را دارد. تا امروز بیرون از این فهرست
+     بود و ویجت منو با async/await و fetch نوشته شده بود: روی سامسونگ
+     ۲۰۱۳ فقط سربرگ دیده می‌شد و زیرش خالی می‌ماند، بدون خطا در لاگ. */
+  'app/Modules/Menu/MenuModule.php'
 ];
 
 /* هر قانون: چه چیزی، از کدام Chromium، و جایگزینش چیست.
@@ -171,6 +176,26 @@ var RULES = [
    ۳۴ = Tizen 2.3، قدیمی‌ترین تلویزیونی که پشتیبانی می‌کنیم. */
 var TARGET = parseInt(process.env.TV_CHROMIUM || '34', 10);
 
+/* فایل‌هایی که سراسرشان PHP است و فقط یک قطعه‌ی <script> داخلشان
+   روی تلویزیون اجرا می‌شود.
+
+   چرا جدا: `strip()` بلوک PHP را با الگوی `<?php … ?>` حذف می‌کند و
+   یک کلاس PHP اصلا `?>` ندارد، پس هیچ‌چیز حذف نمی‌شد و کل کلاس
+   به‌عنوان JS بررسی می‌شد — ۱۴۸ ایرادِ ساختگی از خودِ PHP (کلمه‌ی
+   class، عملگر ??). اینجا برعکس عمل می‌کنیم: همه‌چیز بیرون از
+   <script> خالی می‌شود و فقط همان قطعه می‌ماند. */
+var SCRIPT_ONLY = ['app/Modules/Menu/MenuModule.php'];
+
+function scriptsOnly(src) {
+  var out = blank(src);
+  var re = /<script\b[^>]*>([\s\S]*?)<\/script>/gi, m;
+  while ((m = re.exec(src)) !== null) {
+    var start = m.index + m[0].indexOf(m[1]);
+    out = out.slice(0, start) + m[1] + out.slice(start + m[1].length);
+  }
+  return out;
+}
+
 /* بخش‌هایی که نباید بررسی شوند: کامنت‌ها و کد PHP سمت سرور.
    PHP روی سرور اجرا می‌شود، نه تلویزیون — `=>` در آرایه‌ی PHP بی‌ضرر است. */
 function strip(src) {
@@ -207,6 +232,7 @@ TV_FILES.forEach(function (rel) {
   scanned++;
 
   var raw   = fs.readFileSync(abs, 'utf8');
+  if (SCRIPT_ONLY.indexOf(rel) !== -1) raw = scriptsOnly(raw);
   var clean = strip(raw);
 
   RULES.forEach(function (rule) {

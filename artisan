@@ -128,6 +128,45 @@ match ($command) {
         echo $done ? implode("\n", $done) . "\n" : "صف خالی است\n";
     })(),
 
+    'media:dimensions' => (function() use ($argv) {
+        // پر کردن عرض و ارتفاعِ رسانه‌هایی که ثبت نشده‌اند.
+        //   php artisan media:dimensions [--dry-run]
+        //
+        // چرا لازم است: حالت «پر کردن صفحه»ی پلی‌لیست از ابعاد فایل
+        // حساب می‌شود (videoWidth روی تلویزیون‌های ۲۰۱۳ عدد غلط
+        // می‌دهد). رسانه‌ای که پیش از افزوده‌شدن probe بارگذاری شده
+        // ابعاد ندارد و بی‌صدا به حالت «جا شدن کامل» برمی‌گردد.
+        $dry = in_array('--dry-run', $argv, true);
+        $db  = \App\Core\Database::getInstance();
+        $svc = new \App\Services\MediaConvertService($db);
+
+        $rows = $db->rows(
+            "SELECT id, name, file_path FROM media
+              WHERE type = 'video' AND deleted_at IS NULL
+                AND file_path LIKE '/uploads/%'
+                AND (width IS NULL OR height IS NULL OR width = 0 OR height = 0)"
+        );
+        if (!$rows) { echo "  همه‌ی ویدیوها ابعاد دارند\n"; return; }
+
+        $done = 0;
+        foreach ($rows as $m) {
+            $abs = PUBLIC_PATH . $m['file_path'];
+            if (!is_file($abs)) { echo "  #{$m['id']} فایل نیست\n"; continue; }
+
+            $p = $svc->probe($abs);
+            $w = (int)($p['width'] ?? 0);
+            $h = (int)($p['height'] ?? 0);
+            if ($w <= 0 || $h <= 0) { echo "  #{$m['id']} خوانده نشد\n"; continue; }
+
+            echo "  #{$m['id']} {$m['name']} → {$w}×{$h}" . ($dry ? " (آزمایشی)\n" : "\n");
+            if (!$dry) {
+                $db->update('media', ['width' => $w, 'height' => $h], ['id' => (int)$m['id']]);
+                $done++;
+            }
+        }
+        echo '  ' . ($dry ? count($rows) . ' مورد قابل تکمیل' : "$done مورد تکمیل شد") . "\n";
+    })(),
+
     'media:reconvert' => (function() use ($argv) {
         // ویدیوهای «آماده»ای که روی تلویزیون هتلی گیر می‌کنند (۴K، ۶۰ فریم،
         // نرخ فریم متغیر، HDR، فهرست در انتهای فایل) دوباره تبدیل می‌شوند.
@@ -558,6 +597,10 @@ match ($command) {
             'tv-compat-lint.js',
             'php-syntax.js',
             'seed-password-check.js',
+            /* شناسه‌های «نوع نمایش» ماژول در صفحهٔ پلی‌لیست و در خود
+               ماژول از هم جدا افتاده بودند و هر آیتم ماژولی روی تابلو
+               «نامعتبر» نشان می‌داد — بی‌خطا در لاگ و بی‌خطا در کنسول. */
+            'module-zone-check.js',
         ];
 
         // Node ممکن است روی سرور هتل نصب نباشد — تست‌ها رد می‌شوند نه شکست
@@ -603,6 +646,7 @@ match ($command) {
             'transcoder:supervise' => 'Keep live transcoder channels running (cron, every minute)',
             'media:converted' => 'Close out a background video conversion [mediaId exitCode]',
             'media:reconvert' => 'Re-convert ready videos a hotel TV cannot play smoothly [id] [--dry-run]',
+            'media:dimensions'=> 'Fill in missing video width/height (needed by fill-screen) [--dry-run]',
             'vod:process'     => 'Probe, convert if needed, build HLS + poster for one VOD film <id>',
             'vod:queue'       => 'Pick up queued VOD films and reset abandoned processing rows (cron)',
             'ws:start'        => 'Start WebSocket server',

@@ -547,7 +547,28 @@ $typeColors = [
         <div><label class="form-label">پایان (ساعت روز)</label>
           <input type="time" name="end_at" id="edit-end" class="form-input"></div>
       </div>
-      <div><label class="form-label">صدا (%)</label>
+      <?php /* نحوه‌ی نمایش و صدا — فقط برای ویدیو معنا دارند ولی
+               پنهان‌کردنشان برای بقیه، مودال را شرطی و شکننده می‌کند؛
+               روی تصویر و ماژول بی‌اثرند. */ ?>
+      <div><label class="form-label">نحوه‌ی نمایش ویدیو</label>
+        <select name="fit_mode" id="edit-fit" class="form-input">
+          <option value="contain">جا شدن کامل — تصویر کامل، با نوار کناری اگر لازم شد</option>
+          <option value="cover">پر کردن صفحه — بدون نوار، لبه‌ها بریده می‌شود</option>
+        </select>
+        <p class="text-xs text-slate-500 mt-1">
+          «پر کردن صفحه» به ابعاد فایل نیاز دارد؛ برای ویدیوهای قدیمیِ
+          بدون ابعاد، خودکار به حالت «جا شدن کامل» برمی‌گردد.
+        </p>
+      </div>
+
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="hidden" name="muted" value="1">
+        <input type="checkbox" name="muted" id="edit-muted" value="0"
+               class="accent-orange-500 w-4 h-4">
+        <span class="text-sm text-slate-400">پخش با صدا</span>
+      </label>
+
+      <div><label class="form-label">بلندی صدا (%)</label>
         <input type="range" name="volume" id="edit-volume" class="form-input" min="0" max="100" value="100"></div>
 
       <div style="display:flex;gap:10px;padding-top:8px;">
@@ -745,6 +766,11 @@ function openItemEditor(idx) {
   document.getElementById('edit-start').value    = item.start_at || '';
   document.getElementById('edit-end').value      = item.end_at || '';
   document.getElementById('edit-volume').value   = item.volume || 100;
+  document.getElementById('edit-fit').value      = item.fit_mode || 'contain';
+  /* ‏muted از دیتابیس عدد است و از فرم رشته؛ هر دو حالت باید «بی‌صدا»
+     خوانده شوند، وگرنه تیک «پخش با صدا» برعکس نشان داده می‌شود. */
+  document.getElementById('edit-muted').checked  =
+    (String(item.muted === undefined ? 1 : item.muted) === '0');
   document.getElementById('editItemModal').classList.remove('hidden');
 }
 
@@ -822,7 +848,9 @@ const MODULE_FIELDS = {
     title: '🏨 تنظیمات Hotel',
     color: '#d4af37',
     fields: [
-      {key:'zone_type', label:'نوع نمایش', type:'select', options:{events:'رویدادها','amenities':'امکانات','room_service':'سرویس اتاق','welcome':'صفحه خوش‌آمد','attractions':'جاذبه‌ها'}, defVal:'events'},
+      <?php /* همان ایراد menu اینجا هم بود: ماژول هتل پیشوند hotel_
+               می‌خواهد و این فهرست بدون پیشوند می‌داد. */ ?>
+      {key:'zone_type', label:'نوع نمایش', type:'select', options:{hotel_events:'رویدادها','hotel_amenities':'امکانات','hotel_room_service':'سرویس اتاق','hotel_welcome':'صفحه خوش‌آمد','hotel_attractions':'جاذبه‌ها','hotel_directory':'راهنمای طبقات','hotel_checkin':'ورود و خروج','hotel_promo':'پیشنهاد ویژه'}, defVal:'hotel_events'},
       {key:'theme', label:'تم', type:'select', options:{luxury:'لوکس (پیش‌فرض)','modern':'مدرن','classic':'کلاسیک'}, defVal:'luxury'},
       {key:'language', label:'زبان', type:'select', options:{fa:'فارسی','en':'انگلیسی','both':'دوزبانه'}, defVal:'fa'},
       {key:'auto_scroll', label:'پیمایش خودکار', type:'select', options:{'1':'بله','0':'خیر'}, defVal:'1'},
@@ -832,7 +860,12 @@ const MODULE_FIELDS = {
     title: '🍽 تنظیمات Menu',
     color: '#22c55e',
     fields: [
-      {key:'zone_type', label:'نوع نمایش', type:'select', options:{full_menu:'منوی کامل','daily_special':'غذای روز','category':'یک دسته'}, defVal:'full_menu'},
+      /* شناسه‌ها باید دقیقا همان‌هایی باشند که MenuModule می‌شناسد.
+         تا امروز این فهرست full_menu / daily_special / category
+         می‌داد و ماژول menu_full / menu_daily / menu_category
+         می‌خواست، پس هر آیتم منویی که از این صفحه ساخته می‌شد روی
+         تابلو فقط «نامعتبر» نشان می‌داد — بدون هیچ خطایی در لاگ. */
+      {key:'zone_type', label:'نوع نمایش', type:'select', options:{menu_full:'منوی کامل','menu_daily':'غذای روز','menu_category':'یک دسته','menu_featured':'آیتم ویژه','menu_ticker':'نوار متحرک'}, defVal:'menu_full'},
       {key:'category_id', label:'دسته (اختیاری)', type:'number', defVal:0},
       {key:'theme', label:'تم', type:'select', options:{dark:'تاریک',light:'روشن',rustic:'رستیک'}, defVal:'dark'},
       {key:'show_prices', label:'نمایش قیمت', type:'select', options:{'1':'بله','0':'خیر'}, defVal:'1'},

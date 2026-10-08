@@ -406,11 +406,21 @@ class PlaylistController extends Controller
 
     public function editItem(Request $req, array $params): void
     {
+        /* fit_mode از فهرست بسته می‌آید؛ هر چیز دیگری به contain
+           برمی‌گردد تا مقدار دست‌ساز در ENUM خطا ندهد. */
+        $fit = $req->post('fit_mode') === 'cover' ? 'cover' : 'contain';
+
+        /* چک‌باکسِ تیک‌نخورده POST نمی‌شود، پس یک hidden با مقدار ۱
+           جلوتر از آن است و «بی‌صدا» پیش‌فرض می‌ماند. */
+        $muted = $req->post('muted') === '0' ? 0 : 1;
+
         $this->db->update('playlist_items', [
             'duration'   => (int)$req->post('duration', 10),
             'start_at'   => $req->post('start_at') ?: null,
             'end_at'     => $req->post('end_at') ?: null,
             'volume'     => (int)$req->post('volume', 100),
+            'fit_mode'   => $fit,
+            'muted'      => $muted,
         ], ['id' => (int)$params['iid'], 'playlist_id' => (int)$params['id']]);
         $this->flash('success', 'آیتم ویرایش شد');
         $this->redirect('/admin/playlists/' . $params['id']);

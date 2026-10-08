@@ -40,7 +40,10 @@ $posMap  = ['bottom-right'=>'bottom:14px;right:14px','bottom-left'=>'bottom:14px
 body,html{width:100%;height:100%;overflow:hidden;background:#000;}
 #c{position:relative;width:100%;height:100%;}
 /* opacity مستقیم ست می‌شود؛ transition خودش انیمیت می‌کند (بدون classList) */
-.slide{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;background:#000;
+<?php /* overflow پنهان لازم است: در حالت «پر کردن صفحه» ویدیو عمدا
+        بزرگ‌تر از صحنه می‌شود و باید همین‌جا بریده شود، نه اینکه روی
+        تیکر و لوگو بیفتد. */ ?>
+.slide{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;background:#000;overflow:hidden;
        -webkit-transition:opacity .5s;transition:opacity .5s;}
 /* تصویر با background-size:cover — چون object-fit روی Maple نیست */
 .slide-img{width:100%;height:100%;background-repeat:no-repeat;background-position:center center;
@@ -159,11 +162,42 @@ function tvPlay(el) {
    1280×720 حدود یک‌سومِ صفحه را خالی می‌گذاشت. پس اندازه را همیشه
    به پیکسل و از خودِ صحنه می‌دهیم، هم روی style هم روی attribute
    (این نسخه attribute را ترجیح می‌دهد). */
-function sizeVideo(v) {
+function sizeVideo(v, item) {
   if (!v) return;
   var c = document.getElementById('c');
   var w = (c && c.offsetWidth)  || screen.width  || 1280;
   var h = (c && c.offsetHeight) || screen.height || 720;
+
+  /* ── پر کردن صفحه ───────────────────────────────────────────
+     ویدیو را بزرگ‌تر از صحنه می‌کنیم تا کوچک‌ترین بُعدش صحنه را
+     بپوشاند، و با حاشیه‌ی منفی وسط‌چین می‌کنیم؛ اسلاید overflow
+     پنهان دارد پس اضافه بریده می‌شود.
+
+     ابعاد از سرور می‌آید نه از خود ویدیو: `videoWidth` روی موتور
+     ماپل غلط است (برای فایل ۸۴۸×۴۸۰ مقدار ۸۴۸×۸۴۸ داد). اگر سرور
+     هم ابعاد نداشته باشد — رسانه‌ی قدیمی که probe نشده — به حالت
+     «جا شدن کامل» برمی‌گردیم. بدون این بازگشت، با نسبت حدسی تصویر
+     بد بریده می‌شد و کسی نمی‌فهمید چرا. */
+  var mw = item ? parseInt(item.media_width  || 0, 10) : 0;
+  var mh = item ? parseInt(item.media_height || 0, 10) : 0;
+  var fit = item && item.fit_mode ? item.fit_mode : 'contain';
+
+  if (fit === 'cover' && mw > 0 && mh > 0) {
+    var scale = Math.max(w / mw, h / mh);
+    var tw = Math.ceil(mw * scale);
+    var th = Math.ceil(mh * scale);
+    v.setAttribute('width',  tw);
+    v.setAttribute('height', th);
+    v.style.width      = tw + 'px';
+    v.style.height     = th + 'px';
+    v.style.position   = 'absolute';
+    v.style.left       = '50%';
+    v.style.top        = '50%';
+    v.style.marginLeft = (-Math.round(tw / 2)) + 'px';
+    v.style.marginTop  = (-Math.round(th / 2)) + 'px';
+    return;
+  }
+
   v.setAttribute('width',  w);
   v.setAttribute('height', h);
   v.style.width  = w + 'px';
@@ -453,11 +487,39 @@ function play(i) {
        profile behaves the same way. */
     if (window.TVSUB) TVSUB.attach(vid, item.subtitles);
     vid.setAttribute('autoplay', '');
-    vid.setAttribute('muted', '');
     vid.setAttribute('playsinline', '');
     vid.setAttribute('webkit-playsinline', '');
     vid.setAttribute('preload', 'auto');
-    vid.muted = true;
+
+    /* ── صدا ─────────────────────────────────────────────────────
+       تا امروز `muted = true` ثابت در کد بود، پس هیچ تابلویی صدا
+       نداشت و راهی هم برای روشن کردنش نبود. حالا از آیتم می‌آید و
+       پیش‌فرضش همان بی‌صدا است تا تابلوهای در حال کار یک‌باره صدادار
+       نشوند.
+
+       اگر مرورگر تلویزیون پخش خودکارِ صدادار را رد کند، ویدیو اصلا
+       شروع نمی‌شود و تابلو سیاه می‌ماند — که از بی‌صدا بودن خیلی
+       بدتر است. پس چند لحظه بعد بررسی می‌شود و در صورت نخواندن،
+       بی‌صدا دوباره تلاش می‌کند. */
+    var wantSound = item && (item.muted === 0 || item.muted === '0' || item.muted === false);
+    vid.muted = !wantSound;
+    if (!wantSound) vid.setAttribute('muted', '');
+
+    var vol = item ? parseInt(item.volume, 10) : 100;
+    if (!isNaN(vol) && vol >= 0 && vol <= 100) {
+      try { vid.volume = vol / 100; } catch (e) {}
+    }
+
+    if (wantSound) {
+      setTimeout(function () {
+        /* هنوز تکان نخورده یعنی پخش خودکارِ صدادار رد شده */
+        if (vid.paused || vid.currentTime === 0) {
+          vid.muted = true;
+          tvPlay(vid);
+        }
+      }, 1500);
+    }
+
     vid.loop  = false;
     vid.onended = nextItem;
     vid.onerror = function() { setTimeout(nextItem, 1000); };
@@ -466,15 +528,15 @@ function play(i) {
        می‌شود و روی تابلو همان لحظه به چشم می‌آید. */
     applyBackdrop(div);
 
-    vid.oncanplay = function() { sizeVideo(vid); tvPlay(vid); };
+    vid.oncanplay = function() { sizeVideo(vid, item); tvPlay(vid); };
     /* ابعاد ذاتی تا loadedmetadata معلوم نیست، ولی چون اندازه را از
        صحنه می‌گیریم نه از فایل، می‌شود از همان اول هم ست کرد. */
-    vid.onloadedmetadata = function() { sizeVideo(vid); };
-    sizeVideo(vid);
+    vid.onloadedmetadata = function() { sizeVideo(vid, item); };
+    sizeVideo(vid, item);
     vid.src = src;
 
     div.appendChild(vid);
-    sizeVideo(vid);
+    sizeVideo(vid, item);
     swapSlide(div);
     try { vid.load(); } catch(e) {}
     tvPlay(vid);

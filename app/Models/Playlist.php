@@ -100,7 +100,11 @@ class Playlist
     public function getItems(int $playlistId): array
     {
         return $this->db->rows(
-            "SELECT pi.*, m.name AS media_name, m.type AS media_type, m.file_path, m.url, m.thumbnail_path, m.mime_type, m.duration AS media_duration, m.status AS media_status
+            /* ابعاد رسانه لازم است: «پر کردن صفحه» روی تلویزیون باید از
+               نسبت تصویر حساب شود، و `videoWidth` روی موتور ماپل عدد
+               غلط می‌دهد (برای یک فایل ۸۴۸×۴۸۰ مقدار ۸۴۸×۸۴۸ گزارش
+               کرد). پس ابعاد را سرور می‌فرستد، نه تلویزیون. */
+            "SELECT pi.*, m.name AS media_name, m.type AS media_type, m.file_path, m.url, m.thumbnail_path, m.mime_type, m.duration AS media_duration, m.status AS media_status, m.width AS media_width, m.height AS media_height
              FROM playlist_items pi
              LEFT JOIN media m ON m.id=pi.media_id
              WHERE pi.playlist_id=? AND pi.is_active=1
