@@ -73,6 +73,78 @@ class Playlist
     }
 
     /**
+     * overlayهای پنجره‌دارِ تایم‌لاین منتشرشده، آمادهٔ مصرف پلیر.
+     *
+     * فقط کلیپ‌هایی که **واقعا پنجره دارند** برمی‌گردند؛ کلیپ
+     * تمام‌مدت از همان مسیر قدیمی `brand.logo` می‌رود تا رفتار
+     * تابلوهای موجود عوض نشود.
+     *
+     * زمان‌ها همان ثانیهٔ تایم‌لاین‌اند (کلیپ `start` و `duration`
+     * دارد). پلیر زمان سپری‌شده از شروع دور را می‌شمارد و با همین
+     * مقایسه می‌کند.
+     *
+     * @return array{loop:int, items:list<array<string,mixed>>}
+     */
+    private function publishedOverlays(array $playlist, string $baseUrl): array
+    {
+        $none = ['loop' => 0, 'items' => []];
+
+        $raw = (string)($playlist['timeline_published'] ?? '');
+        if ($raw === '') return $none;
+
+        $tl = json_decode($raw, true);
+        if (!is_array($tl) || empty($tl['tracks']) || !is_array($tl['tracks'])) return $none;
+
+        /* طول یک دور: بی این، پنجرهٔ ثانیهٔ ۱۰ تا ۲۰ در دور دوم هم
+           باید دوباره ظاهر شود و پلیر باید بداند کجا بپیچد. */
+        $total = 0;
+        foreach ($tl['tracks'] as $t) {
+            if (($t['type'] ?? '') !== 'video') continue;
+            foreach (($t['clips'] ?? []) as $c) {
+                $total = max($total, (int)($c['start'] ?? 0) + (int)($c['duration'] ?? 0));
+            }
+        }
+
+        $out = [];
+        foreach ($tl['tracks'] as $t) {
+            $type = $t['type'] ?? '';
+            if (!in_array($type, ['logo', 'image', 'overlay'], true)) continue;
+            if (!empty($t['hidden'])) continue;
+
+            foreach (($t['clips'] ?? []) as $c) {
+                $src = (string)($c['src'] ?? '');
+                if ($src === '') continue;
+
+                $start = max(0, (int)($c['start'] ?? 0));
+                $dur   = max(1, (int)($c['duration'] ?? 0));
+
+                /* کلیپی که کل دور را می‌پوشاند پنجره‌دار نیست — همان
+                   لوگوی همیشگی است و از brand.logo می‌رود. اینجا
+                   تکرارش یعنی دو لوگو روی هم. */
+                if ($start === 0 && $total > 0 && $dur >= $total) continue;
+
+                if (!str_starts_with($src, 'http')) {
+                    $src = $baseUrl . (str_starts_with($src, '/') ? '' : '/') . $src;
+                }
+
+                $out[] = [
+                    'src'      => $src,
+                    'start'    => $start,
+                    'end'      => $start + $dur,
+                    'position' => (string)($c['position'] ?? 'top-right'),
+                    'x'        => isset($c['x']) ? (float)$c['x'] : null,
+                    'y'        => isset($c['y']) ? (float)$c['y'] : null,
+                    'scale'    => (int)($c['scale'] ?? 100),
+                    'opacity'  => (int)($c['opacity'] ?? 100),
+                    'rotation' => (int)($c['rotation'] ?? 0),
+                ];
+            }
+        }
+
+        return ['loop' => $total, 'items' => $out];
+    }
+
+    /**
      * چند خط پیام را به یک نوار پیوسته تبدیل می‌کند.
      *
      * خط خالی حذف می‌شود تا اپراتوری که بین پیام‌ها فاصله گذاشته،
@@ -298,6 +370,18 @@ class Playlist
            برمی‌گردند — وگرنه تابلو پس‌زمینه‌ی نیمه‌ساخته نشان می‌دهد. */
         if ($bdMode === 'logo'  && $logo  === '') $bdMode = 'black';
         if ($bdMode === 'image' && $bdImg === '') $bdMode = 'black';
+
+        /* ── overlay پنجره‌دار (فاز ۵/۱۰ استودیو) ───────────────────
+           تا این تغییر، `TimelineService::compile()` یک overlay با
+           پنجرهٔ زمانی را به `logo_path` تمام‌مدت فشرده می‌کرد و
+           هشدار می‌داد «پلیر پنجره‌دار را پشتیبانی نمی‌کند». یعنی
+           اپراتور در استودیو لوگویی را از ثانیهٔ ۱۰ تا ۲۰ می‌گذاشت،
+           ذخیره می‌کرد، و روی تابلو از ابتدا تا انتها می‌دید.
+
+           حالا خودِ پنجره‌ها به پلیر می‌روند. منبع، `timeline_published`
+           است نه `timeline` (پیش‌نویس): چیزی که منتشر نشده نباید روی
+           تلویزیون برود. */
+        $playlist['overlays'] = $this->publishedOverlays($playlist, $baseUrl);
 
         $playlist['brand'] = [
             'logo'        => $logo !== '' ? $logo : null,

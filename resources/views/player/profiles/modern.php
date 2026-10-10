@@ -61,6 +61,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 <script src="/assets/vendor/hls/hls.min.js<?= v() ?>"></script>
 <script src="/assets/js/tv-base.js<?= v() ?>"></script>
 <script src="/assets/js/tv-subtitles.js<?= v() ?>"></script>
+<script src="/assets/js/tv-overlays.js<?= v() ?>"></script>
 <style>
 /* فقط چیزهای مخصوص این صفحه. بدون var() ، clamp() ، gap ، inset. */
 html, body { background: #000; }
@@ -795,6 +796,13 @@ html, body { background: #000; }
       }
       TV.removeClass(TV.id('offline'), 'is-on');
       playlist = d.data.items;
+
+      /* overlayهای پنجره‌دارِ استودیو. هر بار که پلی‌لیست تازه می‌آید
+         از نو بار می‌شوند: اگر اپراتور تایم‌لاین را عوض کرده باشد،
+         پنجره‌های قبلی باید برود — وگرنه لوگوی حذف‌شده روی تابلو
+         می‌ماند تا ریستارت بعدی. */
+      if (window.TVOV) TVOV.load(d.data.overlays);
+
       curIdx = 0;
       playAt(0);
     });
@@ -810,6 +818,20 @@ html, body { background: #000; }
     var kind = mediaType(item);
     var secs = Number(item.duration);
     if (!secs || isNaN(secs) || secs < 1) secs = 10;
+
+    /* ساعت overlayهای پنجره‌دار با شروع هر آیتم هم‌تراز می‌شود.
+       ‏offset از جمع مدت آیتم‌های پیشین حساب می‌شود — همان مبنایی که
+       استودیو هنگام ساختن تایم‌لاین به‌کار برد. بی این هم‌ترازی،
+       بافرشدن ویدیو کم‌کم ساعت را عقب می‌اندازد و بعد از یک ساعت
+       پنجره‌ها جابه‌جا می‌شوند. */
+    if (window.TVOV) {
+      var off = 0, k;
+      for (k = 0; k < idx && k < playlist.length; k++) {
+        var d2 = Number(playlist[k].duration);
+        off += (!d2 || isNaN(d2) || d2 < 1) ? 10 : d2;
+      }
+      TVOV.sync(off);
+    }
 
     /* آیتم‌های قبلی پاک می‌شوند. بدون این، هر دور یک المان ویدیو
        اضافه می‌ماند و بعد از چند ساعت حافظه‌ی تلویزیون پر می‌شود. */
