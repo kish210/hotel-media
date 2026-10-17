@@ -488,6 +488,34 @@ if [ "${USERS:-0}" = "0" ]; then
 fi
 
 # ── ۸) کارهای زمان‌بندی‌شده ─────────────────────────────────────
+# ── پل نصب درایور (پنل ← root) ─────────────────────────────────
+# صفحهٔ «درایورها» در پنل با کاربر www-data اجرا می‌شود و نصب بسته root
+# می‌خواهد. پل، `/usr/local/sbin/hotel-media-driver` است و sudoers فقط
+# همان را مجاز می‌کند؛ همهٔ بررسی‌های امنیتی (فهرست ثابت id، realpath
+# مسیر فایل) داخل خود اسکریپت است.
+#
+# این گام در `deploy/install-production.sh` بود ولی در این نصب‌کننده
+# نبود: روی سرور دوم `/usr/local/sbin/hotel-media-driver` و
+# `/etc/sudoers.d/` خالی بودند، پس صفحهٔ درایور همیشه می‌گفت «ابزار root
+# تنظیم نیست» و هیچ درایوری از پنل نصب نمی‌شد.
+if [ -f "$APP_DIR/deploy/hotel-media-driver.sh" ]; then
+    install -o root -g root -m 0755 "$APP_DIR/deploy/hotel-media-driver.sh" /usr/local/sbin/hotel-media-driver
+    sed -i "s#__APP_DIR__#${APP_DIR}#" /usr/local/sbin/hotel-media-driver
+    mkdir -p "$APP_DIR/storage/drivers/incoming"
+    chown -R www-data:www-data "$APP_DIR/storage/drivers"
+
+    echo 'www-data ALL=(root) NOPASSWD: /usr/local/sbin/hotel-media-driver' > /etc/sudoers.d/hotel-media-driver
+    chmod 0440 /etc/sudoers.d/hotel-media-driver
+    # sudoers نامعتبر **کل sudo را می‌خواباند** (هیچ‌کس دیگر root نمی‌شود)،
+    # پس پیش از ماندن اعتبارسنجی می‌شود.
+    if visudo -cf /etc/sudoers.d/hotel-media-driver >/dev/null 2>&1; then
+        c_ok "پل نصب درایور فعال شد"
+    else
+        rm -f /etc/sudoers.d/hotel-media-driver
+        c_warn "sudoers درایور نامعتبر بود و حذف شد — درایورها از پنل نصب نمی‌شوند"
+    fi
+fi
+
 # ── ثبت TVHeadend در برنامه ─────────────────────────────────────
 # `artisan tvheadend:setup` از ابتدا وجود داشت و کامنتش می‌گفت «نصب‌کننده‌ی
 # production بعد از نصب TVHeadend این را صدا می‌زند» — ولی نصب‌کننده

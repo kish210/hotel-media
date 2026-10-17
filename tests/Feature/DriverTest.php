@@ -68,6 +68,39 @@ $phpIds = array_keys(DriverService::CATALOG);
 sort($phpIds);
 check('فهرست درایورهای PHP و اسکریپت root یکی است', $shIds === $phpIds, implode(',', $shIds) . ' ≠ ' . implode(',', $phpIds));
 
+// ── قفل: نباید به فایل مالک-دیگر وابسته باشد ─────────────────────
+// `/run/lock` همگانی و sticky است و اوبونتو `fs.protected_regular=2` دارد؛
+// در آن‌جا حتی root نمی‌تواند فایلی را که کس دیگری ساخته با `>` باز کند.
+// اگر یک کاربر غیر root قفل را یک بار بسازد، helper برای همیشه با
+// «قفل ساخته نشد» می‌میرد و صفحهٔ درایور پنل خراب می‌ماند (روی سرور دوم
+// رخ داد). قفل باید در پوشه‌ای باشد که فقط root می‌سازد.
+check('قفل در /run/lock مشترک نیست (protected_regular)',
+      !str_contains($sh, '/var/lock/') && !str_contains($sh, '/run/lock/'),
+      'قفل هنوز در پوشهٔ همگانی است');
+check('قفل در پوشهٔ مخصوص root', str_contains($sh, 'LOCKDIR=/run/hotel-media'));
+
+/* رفتار واقعی، نه فقط متن: فایل قفل قدیمی با مالک دیگر در مسیر
+   قدیمی هست و helper باید باز هم کار کند. اگر نمی‌توانیم مالکیت را عوض
+   کنیم (تست بدون root)، این بخش را رد می‌کنیم نه جعل. */
+$old = '/var/lock/hotel-media-driver.lock';
+if (function_exists('posix_geteuid') && posix_geteuid() === 0 && @file_put_contents($old, '') !== false) {
+    @chown($old, 'www-data'); @chmod($old, 0644);
+    [$c] = helper('check');
+    check('با قفل قدیمیِ مالک-دیگر هم helper کار می‌کند', $c === 0, 'EXIT=' . $c);
+    @unlink($old);
+} else {
+    echo "  ⏭ بدون root — آزمون قفل مالک-دیگر رد شد\n";
+}
+
+// ── بستهٔ ناموجود نباید کل نصب را بکشد ──────────────────────────
+// یک بستهٔ ناموجود کل `apt-get install` را با کد ۱۰۰ می‌کشد و بقیه را هم
+// نصب نمی‌کند — همان که `php8.5-opcache` نصب‌کنندهٔ اصلی را زمین زد.
+check('apt_install هر بسته را جدا بررسی می‌کند (apt-cache policy)',
+      str_contains($sh, 'apt-cache policy'));
+check('بستهٔ ناموجود نام برده می‌شود، نه بی‌صدا رد',
+      str_contains($sh, 'رد شد (در مخزن این نسخه نیست)'));
+check('dvb در کاتالوگ PHP است', isset(DriverService::CATALOG['dvb']));
+
 // ── ۲) بررسی‌های PHP پیش از sudo ─────────────────────────────────
 echo "\n── ۲) بارگذاری ──\n";
 $svc = new DriverService();

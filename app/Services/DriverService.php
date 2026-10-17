@@ -61,6 +61,13 @@ final class DriverService
             'types'  => ['deb', 'tar.gz'],
             'manual' => 'Desktop Video برای لینوکس از blackmagicdesign.com/support — آرشیو .tar.gz یا desktopvideo_*.deb',
         ],
+        'dvb' => [
+            'name'   => 'تیونر DVB (ماهواره / زمینی / کابلی)',
+            'why'    => 'فریم‌ور تیونر و ابزار اسکن کانال برای TVHeadend — بدون آن، `/dev/dvb` ساخته نمی‌شود و IPTV زنده کانالی ندارد',
+            'online' => true,
+            'types'  => ['deb', 'tar.gz'],
+            'manual' => 'dvb-tools و linux-firmware؛ برای بعضی تیونرهای USB فریم‌ور جدا (فایل dvb-*.fw) از سایت سازنده',
+        ],
         'v4l' => [
             'name'   => 'Video4Linux (v4l-utils)',
             'why'    => 'ابزار شناسایی کارت‌های کپچر HDMI/کامپوزیت USB و PCIe',
