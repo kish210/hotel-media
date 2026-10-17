@@ -123,6 +123,9 @@ function loadPlaylist() {
     try {
       var d = JSON.parse(x.responseText);
       if (d.success && d.data && d.data.items && d.data.items.length) {
+        /* overlayهای پنجره‌دار استودیو — هر بار با پلی‌لیست تازه از نو
+           بار می‌شوند تا پنجره‌ی حذف‌شده روی تابلو نماند. */
+        if (window.TVOV) TVOV.load(d.data.overlays);
         pl = d.data.items;
         ci = 0;
         play(0);
@@ -141,6 +144,17 @@ function fixUrl(u) {
 function play(i) {
   clearTimeout(tm);
   if (!pl.length) return;
+
+  /* ساعت overlay — نگاه کنید به توضیح در samsung_tv */
+  if (window.TVOV) {
+    var _off = 0, _k, _d;
+    for (_k = 0; _k < i && _k < pl.length; _k++) {
+      _d = Number(pl[_k].duration);
+      _off += (!_d || isNaN(_d) || _d < 1) ? 10 : _d;
+    }
+    TVOV.sync(_off);
+  }
+
   var item = pl[i];
   var src  = fixUrl(item.file_url || item.src || item.file_path || item.url || '');
   var type = item.type || 'image';
@@ -359,5 +373,6 @@ heartbeat();
 <script src="/assets/js/tv-activate.js"></script>
 <script src="/assets/js/tv-messages.js"></script>
 <script src="/assets/js/tv-subtitles.js"></script>
+<script src="/assets/js/tv-overlays.js"></script>
 </body>
 </html>

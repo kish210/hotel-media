@@ -138,26 +138,24 @@ autoinstall:
     layout:
       name: lvm
 
-  # بسته‌ها اینجا هم آمده‌اند تا اگر late-commands شکست خورد، سرور
-  # دست‌کم با یک پشتهٔ کامل بالا بیاید و قابل عیب‌یابی باشد.
+  # فقط بسته‌هایی که نامشان به نسخهٔ اوبونتو بستگی ندارد.
+  #
+  # پیش از این اینجا `php8.3-*` (از جمله `php8.3-opcache`) هاردکد بود.
+  # روی 24.04 درست است، ولی با `UBUNTU_VER=26.04` کل autoinstall با
+  # «بستهٔ ناموجود» می‌شکند: 26.04 فقط PHP 8.5 دارد و `php8.5-opcache`
+  # اصلا وجود ندارد (INSTALL-ISSUES.md، ردیف‌های ۱ و ۲). نگه‌داشتن یک
+  # فهرست PHP دوم همین‌جا، دقیقا همان ناهمگونی را می‌سازد. PHP را
+  # `install-ubuntu.sh` نصب می‌کند: نسخه را از مخزن کشف می‌کند و
+  # opcache را فقط اگر بستهٔ جدا دارد می‌آورد.
   packages:
     - nginx
     - mariadb-server
     - ffmpeg
     - poppler-utils
-    - php8.3-fpm
-    - php8.3-cli
-    - php8.3-mysql
-    - php8.3-mbstring
-    - php8.3-xml
-    - php8.3-curl
-    - php8.3-gd
-    - php8.3-intl
-    - php8.3-zip
-    - php8.3-bcmath
-    - php8.3-opcache
     - curl
     - unzip
+    - gnupg
+    - whiptail
 
   late-commands:
     # /target همان سیستم نصب‌شده است. کد از ISO کپی می‌شود تا نصب

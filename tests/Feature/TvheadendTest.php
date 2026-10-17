@@ -20,7 +20,7 @@ foreach (file(ROOT_PATH . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
     [$k, $v] = explode('=', $l, 2);
     $ENV[trim($k)] = trim($v, " \t\"'");
 }
-function env(string $k, mixed $d = null): mixed { global $ENV; return $ENV[$k] ?? $d; }
+if (!function_exists("env")) { function env(string $k, mixed $d = null): mixed { global $ENV; return $ENV[$k] ?? $d; } }
 
 date_default_timezone_set((string)env('APP_TIMEZONE', 'Asia/Tehran'));
 function request(): object { return new class { public function ip(): string { return '127.0.0.1'; } public function userAgent(): string { return 'test'; } }; }
@@ -52,6 +52,13 @@ $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if ($mode === 'auth') {
     $h = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if ($h !== 'Basic ' . base64_encode('tvhuser:tvhpass')) {
+        /* ۴۰۱ طبق RFC 7235 باید challenge بدهد. HttpDigestClient همان را
+           می‌خواند تا بفهمد Basic بفرستد یا Digest — بی هدر
+           WWW-Authenticate نمی‌داند چه بفرستد و هرگز دوباره تلاش نمی‌کند.
+           تست قدیمی این را نمی‌فرستاد و از وقتی TvheadendService به
+           HttpDigestClient منتقل شد، شکسته بود؛ TVHeadend واقعی همیشه
+           challenge می‌فرستد. */
+        header('WWW-Authenticate: Basic realm="tvheadend"');
         http_response_code(401); echo '{"error":"unauthorized"}'; exit;
     }
 }
@@ -208,7 +215,17 @@ file_put_contents($dir . '/mode.txt', 'ok');
 echo "\n── ۸) بررسی سلامت ──\n";
 $health = $svc->health(1);
 check('گزارش سلامت برگشت', count($health) > 0);
-$h = $health[0] ?? [];
+
+/* منبع خودِ تست را با آدرس برمی‌گزینیم، نه «اولین ردیف».
+   health() همهٔ منابع فعال tenant را برمی‌گرداند؛ روی ماشینی که
+   TVHeadend واقعی هم ثبت است (نصب ISO/اوبونتو همین را می‌سازد)،
+   ردیف اول همان منبع واقعی است و این تست به‌جای ساختگی،
+   «channels=0» ی سرور واقعی بدون تیونر را می‌سنجید — تستی که روی
+   نصب تمیز سبز بود و روی نصب کامل می‌شکست. */
+$h = [];
+foreach ($health as $row) {
+    if (str_contains((string)($row['url'] ?? ''), ':' . $port)) { $h = $row; break; }
+}
 check('وضعیت آنلاین درست است', ($h['online'] ?? false) === true, json_encode($h, JSON_UNESCAPED_UNICODE));
 check('تعداد کانال گزارش شد', (int)($h['channels'] ?? 0) === 3, 'channels=' . ($h['channels'] ?? '?'));
 

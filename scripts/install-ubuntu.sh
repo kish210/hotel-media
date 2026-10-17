@@ -28,13 +28,38 @@ set -euo pipefail
 APP_DIR=/var/www/hotel-media
 DB_NAME=hotel_media
 DB_USER=hotel_media
-PHP_V=8.3
+LOG=/var/log/hotel-media-install.log
+
+# نسخهٔ PHP از مخزن همین سیستم کشف می‌شود، نه هاردکد.
+#
+# پیش از این `PHP_V=8.3` ثابت بود. اوبونتو 24.04 همان 8.3 را دارد و
+# همه‌چیز کار می‌کرد، ولی 26.04 فقط PHP 8.5 دارد و نصب‌کننده روی آن
+# بی‌هیچ پیامی می‌شکست (INSTALL-ISSUES.md، ردیف ۱). ‏PPA ‏ondrej هم
+# راه‌حل نیست: برای 26.04 بسته ندارد (dists/resolute → ۴۰۴).
+#
+# بالاترین نسخهٔ موجود برداشته می‌شود؛ با `PHP_V=8.3 sudo -E bash ...`
+# می‌شود دستی عوضش کرد.
+if [ -z "${PHP_V:-}" ]; then
+    PHP_V=$(apt-cache search --names-only '^php[0-9]+\.[0-9]+-fpm$' 2>/dev/null \
+            | sed -E 's/^php([0-9]+\.[0-9]+)-fpm.*/\1/' | sort -V | tail -1)
+fi
+[ -n "$PHP_V" ] || { echo "هیچ بستهٔ php-fpm در مخزن پیدا نشد" >&2; exit 1; }
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 c_ok()   { printf "\033[32m  ✓\033[0m %s\n" "$1"; }
 c_info() { printf "\033[36m→\033[0m %s\n" "$1"; }
 c_warn() { printf "\033[33m  !\033[0m %s\n" "$1"; }
 c_die()  { printf "\033[31m  ✗ %s\033[0m\n" "$1" >&2; exit 1; }
+
+# رشتهٔ تصادفی با طول مشخص.
+#
+# ‏`tr -dc ... </dev/urandom | head -c N` زیر `set -o pipefail` اسکریپت را
+# **بی‌صدا می‌کشد**: head بعد از N نویسه می‌بندد، tr با SIGPIPE (کد ۱۴۱)
+# می‌میرد، pipefail آن را کد خروج خط می‌کند و `set -e` کل نصب را قطع
+# می‌کند — بی هیچ پیام. نصب روی 26.04 دقیقا همین‌جا، بعد از «آماده‌سازی
+# دیتابیس» می‌مرد (INSTALL-ISSUES.md، ردیف ۹). ‏`|| true` فقط کد خروج را
+# خنثی می‌کند؛ خروجی سالم است.
+rand() { tr -dc 'A-Za-z0-9' </dev/urandom | head -c "$1" || true; }
 
 [ "$(id -u)" = "0" ] || c_die "با sudo اجرا کنید"
 
@@ -63,19 +88,123 @@ apt-get update -qq
 #   php-mbstring متن فارسی
 #   ffmpeg      تبدیل ویدیو، HLS، دوربین، ترنسکد
 #   poppler-utils  تبدیل PDF به تصویر برای کتاب‌خوان تلویزیون
-apt-get install -y -qq --no-install-recommends \
-  nginx mariadb-server ffmpeg poppler-utils curl unzip git ca-certificates \
-  php${PHP_V}-fpm php${PHP_V}-cli php${PHP_V}-mysql php${PHP_V}-mbstring \
-  php${PHP_V}-xml php${PHP_V}-curl php${PHP_V}-gd php${PHP_V}-intl \
-  php${PHP_V}-zip php${PHP_V}-bcmath php${PHP_V}-opcache \
-  >/dev/null || c_die "نصب بسته‌ها ناموفق بود"
-c_ok "بسته‌ها نصب شدند"
+PKGS="nginx mariadb-server ffmpeg poppler-utils curl unzip git ca-certificates whiptail gnupg
+  php${PHP_V}-fpm php${PHP_V}-cli php${PHP_V}-mysql php${PHP_V}-mbstring
+  php${PHP_V}-xml php${PHP_V}-curl php${PHP_V}-gd php${PHP_V}-intl
+  php${PHP_V}-zip php${PHP_V}-bcmath"
+
+# ‏opcache فقط اگر بستهٔ جدا دارد. از PHP 8.5 داخل هسته ادغام شده و
+# `php8.5-opcache` در مخزن **وجود ندارد** — هاردکدکردنش باعث می‌شد
+# کل `apt-get install` با exit=100 بشکند (INSTALL-ISSUES.md، ردیف ۲).
+if [ -n "$(apt-cache policy php${PHP_V}-opcache 2>/dev/null | awk '/Candidate:/ && $2 != "(none)" {print $2}')" ]; then
+    PKGS="$PKGS php${PHP_V}-opcache"
+else
+    c_ok "opcache داخل هستهٔ PHP ${PHP_V} است (بستهٔ جدا لازم نیست)"
+fi
+
+# خروجی apt ثبت می‌شود، نه دور ریخته: با `>/dev/null` فقط «exit=100»
+# دیده می‌شد و علت (یک بستهٔ ناموجود) برای همیشه پنهان می‌ماند.
+# shellcheck disable=SC2086
+if ! apt-get install -y -qq --no-install-recommends $PKGS >>"$LOG" 2>&1; then
+    echo "── آخرین خطوط خروجی apt ($LOG) ──" >&2
+    tail -15 "$LOG" >&2
+    c_die "نصب بسته‌ها ناموفق بود"
+fi
+
+# درستی را بررسی می‌کنیم، نه فقط کد خروج: apt گاهی با کد ۰ برمی‌گردد
+# ولی بسته‌ای نصب نشده. بستهٔ جاافتاده **نام برده می‌شود**.
+MISSING=""
+for p in $PKGS; do
+    dpkg -s "$p" >/dev/null 2>&1 || MISSING="$MISSING $p"
+done
+[ -z "$MISSING" ] || c_die "این بسته‌ها نصب نشدند:$MISSING"
+c_ok "بسته‌ها نصب شدند (PHP ${PHP_V})"
+
+# ── ۱b) TVHeadend ───────────────────────────────────────────────
+# جزو بستهٔ Hotel Media است: ‏IPTV (کانال زنده، EPG، ضبط، تایم‌شیفت)
+# بی آن کار نمی‌کند و کد ما انتظار آن را روی `http://127.0.0.1:9981`
+# دارد (TvheadendService)، یعنی روی همین ماشین.
+#
+# چرا مخزن رسمی و نه `apt install tvheadend`: بسته‌ی tvheadend در مخزن
+# اوبونتو 26.04 **اصلا نیست** (apt-cache خالی برمی‌گرداند — روی
+# سرور دوم دیده شد). مخزن رسمی Cloudsmith برای `resolute` و `noble`
+# هر دو بسته دارد.
+#
+# چرا کلید در keyring جدا و `signed-by` و نه `curl | sudo bash`: اسکریپت
+# راه‌انداز مخزن را بی‌بازبینی با دسترسی root اجرا می‌کند. این‌جا فقط
+# یک کلید عمومی گرفته می‌شود و فقط برای همین یک مخزن معتبر است.
+#
+# نصب شکست بخورد کشنده نیست: بقیهٔ پلتفرم (تابلو، VOD، پورتال مهمان)
+# بی TVHeadend کار می‌کند و اپراتور بعدا می‌تواند دستی نصبش کند.
+install_tvheadend() {
+    local codename; codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
+    local base="https://dl.cloudsmith.io/public/tvheadend/tvheadend"
+
+    # فقط اگر مخزن برای همین نسخه بسته دارد (404 یعنی ندارد)
+    if ! curl -fsI -m 15 "$base/deb/ubuntu/dists/$codename/InRelease" >/dev/null 2>&1; then
+        c_warn "مخزن رسمی TVHeadend برای «$codename» بسته ندارد — رد شد"
+        return 1
+    fi
+
+    install -d -m 0755 /usr/share/keyrings
+    if ! curl -fsSL -m 30 "$base/gpg.key" | gpg --dearmor --yes -o /usr/share/keyrings/tvheadend.gpg 2>>"$LOG"; then
+        c_warn "کلید مخزن TVHeadend گرفته نشد — رد شد"
+        return 1
+    fi
+
+    echo "deb [signed-by=/usr/share/keyrings/tvheadend.gpg] $base/deb/ubuntu $codename main" \
+        > /etc/apt/sources.list.d/tvheadend.list
+    apt-get update -qq >>"$LOG" 2>&1 || { c_warn "به‌روزرسانی فهرست بسته‌ها شکست خورد"; return 1; }
+
+    # tvheadend یک debconf می‌پرسد (نام کاربر/رمز مدیر). noninteractive
+    # پیش‌فرض می‌گذارد؛ رمز را خودمان پایین‌تر می‌گذاریم.
+    if ! apt-get install -y -qq --no-install-recommends tvheadend >>"$LOG" 2>&1; then
+        c_warn "نصب tvheadend شکست خورد — آخرین خطوط:"; tail -5 "$LOG" >&2
+        return 1
+    fi
+    dpkg -s tvheadend >/dev/null 2>&1 || { c_warn "tvheadend نصب نشد"; return 1; }
+
+    # فقط روی loopback. بسته به‌طور پیش‌فرض روی `*` گوش می‌دهد (پورت‌های
+    # ۹۹۸۱ و ۹۹۸۲ از کل شبکهٔ هتل دیده می‌شد — روی سرور دوم با `ss`
+    # دیده شد). برنامهٔ ما فقط با 127.0.0.1 حرف می‌زند، پس هیچ دلیلی
+    # برای باز گذاشتنش نیست؛ اپراتور لازم است از بیرون ببیندش، با
+    # tunnel SSH یا تغییر همین خط.
+    sed -i 's|^OPTIONS=.*|OPTIONS="-u hts -g video -6 -b 127.0.0.1"|' /etc/default/tvheadend
+
+    # حساب ادمین با رمز تصادفی (نگاه کنید به tvheadend-bootstrap.sh)
+    TVH_PASS=$(rand 20)
+    if [ -f "$APP_DIR/scripts/tvheadend-bootstrap.sh" ] \
+       && bash "$APP_DIR/scripts/tvheadend-bootstrap.sh" "$TVH_PASS" >>"$LOG" 2>&1; then
+        # رمز برای tvheadend:setup و پایش ذخیره می‌شود — بی ذخیره‌اش
+        # برنامه نمی‌تواند وصل شود.
+        TVH_USER=hotelmedia
+        c_ok "حساب ادمین TVHeadend ساخته شد"
+    else
+        c_warn "حساب TVHeadend ساخته نشد (آخرین خطوط $LOG را ببینید)"
+        TVH_PASS=""
+    fi
+
+    systemctl enable tvheadend >/dev/null 2>&1 || true
+    systemctl restart tvheadend >/dev/null 2>&1 || true
+    c_ok "TVHeadend $(dpkg-query -W -f='${Version}' tvheadend 2>/dev/null | cut -d~ -f1) نصب شد (http://127.0.0.1:9981)"
+}
+
+c_info "نصب TVHeadend"
+install_tvheadend || c_warn "TVHeadend نصب نشد؛ بقیهٔ نصب ادامه دارد (IPTV زنده بی آن کار نمی‌کند)"
 
 # ── ۲) کد برنامه ──────────────────────────────────────────────────
 c_info "استقرار کد در $APP_DIR"
 mkdir -p "$APP_DIR"
 
-if [ -f "$SRC_DIR/artisan" ] && [ -d "$SRC_DIR/app" ]; then
+if [ "$(readlink -f "$SRC_DIR")" = "$(readlink -f "$APP_DIR")" ]; then
+    # اسکریپت از داخل خودِ پوشهٔ مقصد اجرا شده (مثلا بعد از git clone).
+    # کپی کردن یک پوشه روی خودش لازم نیست و کشنده هم هست: tar فایل‌ها
+    # را «در حین خواندن» تغییر‌یافته می‌بیند، با کد ۱ برمی‌گردد و
+    # `set -e` + `pipefail` کل نصب را می‌کشد — فقط با خطوط
+    # «tar: file changed as we read it» و بی هیچ پیام فارسی
+    # (INSTALL-ISSUES.md، ردیف ۸).
+    c_ok "کد همین‌جاست ($APP_DIR) — کپی لازم نیست"
+elif [ -f "$SRC_DIR/artisan" ] && [ -d "$SRC_DIR/app" ]; then
     # کنار همین اسکریپت کد هست (حالت ISO یا آرشیو)
     tar -C "$SRC_DIR" --exclude=.git --exclude=storage/logs \
         -cf - . | tar -C "$APP_DIR" -xf -
@@ -108,7 +237,7 @@ if [ -f "$APP_DIR/.env" ] && grep -q '^DB_PASSWORD=' "$APP_DIR/.env"; then
     DB_PASS=$(grep '^DB_PASSWORD=' "$APP_DIR/.env" | cut -d= -f2-)
     c_ok "رمز دیتابیس از .env موجود خوانده شد"
 else
-    DB_PASS=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24)
+    DB_PASS=$(rand 24)
 fi
 
 mysql <<SQL
@@ -125,14 +254,14 @@ c_ok "دیتابیس $DB_NAME آماده است"
 if [ ! -f "$APP_DIR/.env" ]; then
     c_info "ساخت .env"
     IP=$(hostname -I | awk '{print $1}')
-    ADMIN_PASS=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 14)
+    ADMIN_PASS=$(rand 14)
 
     cat > "$APP_DIR/.env" <<ENV
 APP_NAME="Hotel Media"
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=http://$IP
-APP_KEY=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48)
+APP_KEY=$(rand 48)
 APP_TIMEZONE=Asia/Tehran
 
 DB_HOST=127.0.0.1
@@ -142,7 +271,7 @@ DB_USERNAME=$DB_USER
 DB_PASSWORD=$DB_PASS
 DB_CHARSET=utf8mb4
 
-JWT_SECRET=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 64)
+JWT_SECRET=$(rand 64)
 JWT_EXPIRY=86400
 JWT_REFRESH_EXPIRY=2592000
 
@@ -222,7 +351,10 @@ php_admin_value[opcache.enable]                  = 1
 php_admin_value[opcache.memory_consumption]      = 192
 php_admin_value[opcache.interned_strings_buffer] = 16
 php_admin_value[opcache.max_accelerated_files]   = 20000
-php_admin_value[opcache.validate_timestamps]     = 0
+; بازبینی هر ۲ ثانیه، نه صفر: با صفر، به‌روزرسانی از پنل فایل را عوض می‌کند ولی
+; PHP کد قدیمی را از حافظه سرو می‌کند تا FPM دستی ریلود شود (INSTALL-ISSUES ردیف ۷)
+php_admin_value[opcache.validate_timestamps]     = 1
+php_admin_value[opcache.revalidate_freq]         = 2
 POOL
 
 # pool پیش‌فرض لازم نیست و فقط حافظه می‌گیرد
@@ -356,6 +488,26 @@ if [ "${USERS:-0}" = "0" ]; then
 fi
 
 # ── ۸) کارهای زمان‌بندی‌شده ─────────────────────────────────────
+# ── ثبت TVHeadend در برنامه ─────────────────────────────────────
+# `artisan tvheadend:setup` از ابتدا وجود داشت و کامنتش می‌گفت «نصب‌کننده‌ی
+# production بعد از نصب TVHeadend این را صدا می‌زند» — ولی نصب‌کننده
+# هرگز صدایش نمی‌زد (صفر ارجاع). یعنی TVHeadend نصب می‌شد و برنامه از
+# وجودش خبر نداشت: IPTV خالی می‌ماند تا اپراتور دستی وصلش کند.
+if [ -n "${TVH_PASS:-}" ]; then
+    c_info "ثبت TVHeadend در برنامه"
+    # توجه: رمز **آرگومان** است (artisan آن را از argv می‌خواند) و در همین
+    # چند ثانیه در `ps` برای هر کاربر محلی دیده می‌شود. این سرور تک‌منظوره
+    # است و حساب محلی دیگری ندارد، و TVHeadend فقط روی loopback است — پس
+    # خطر عملی کم است، ولی صفر نیست. اصلاح درست این است که artisan رمز را
+    # از stdin یا env بخواند؛ در INSTALL-ISSUES.md ثبت شده.
+    if (cd "$APP_DIR" && sudo -u www-data php artisan tvheadend:setup \
+            http://127.0.0.1:9981 "${TVH_USER:-hotelmedia}" "$TVH_PASS" 1) >>"$LOG" 2>&1; then
+        c_ok "TVHeadend در برنامه ثبت شد"
+    else
+        c_warn "ثبت TVHeadend در برنامه ناموفق بود — دستی: php artisan tvheadend:setup"
+    fi
+fi
+
 c_info "ثبت کارهای زمان‌بندی‌شده"
 cat > /etc/cron.d/hotel-media <<'CRON'
 SHELL=/bin/bash

@@ -579,7 +579,19 @@ match ($command) {
             $name = basename($file);
             echo "\n\033[36m══ $name ══\033[0m\n";
 
-            $cmd = escapeshellarg($php) . ' ' . escapeshellarg($file);
+            /* helpers.php با `-d auto_prepend_file` پیش از هر تست بار می‌شود.
+               ۲۴ تست هیچ‌کدام آن را بار نمی‌کردند و هرکدام فقط `env()` را
+               خودش تعریف می‌کرد — پس از وقتی `MediaConvertService::locate()`
+               به `binPath()` تکیه کرد، سه تست (BookTest، MediaConvertTest،
+               TranscoderTest) با «Call to undefined function binPath()»
+               می‌شکستند، بی آنکه کسی ببیند: خروجی `artisan test` شکست را
+               زیر یک خطای نامرتبط (TVHeadend) دفن می‌کرد. همان دامی که
+               برای خودِ artisan پیدا شده بود. توابع helpers با
+               function_exists محافظت شده‌اند، پس تعریف دوباره `env()` در
+               تست‌ها بی‌خطر است. */
+            $cmd = escapeshellarg($php)
+                 . ' -d auto_prepend_file=' . escapeshellarg(ROOT_PATH . '/app/Helpers/helpers.php')
+                 . ' ' . escapeshellarg($file);
             passthru($cmd, $code);
 
             if ($code !== 0) $failed[] = $name;

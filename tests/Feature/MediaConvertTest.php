@@ -23,7 +23,7 @@ foreach (file(ROOT_PATH . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
     [$k, $v] = explode('=', $l, 2);
     $ENV[trim($k)] = trim($v, " \t\"'");
 }
-function env(string $k, mixed $d = null): mixed { global $ENV; return $ENV[$k] ?? $d; }
+if (!function_exists("env")) { function env(string $k, mixed $d = null): mixed { global $ENV; return $ENV[$k] ?? $d; } }
 date_default_timezone_set((string)env('APP_TIMEZONE', 'Asia/Tehran'));
 
 spl_autoload_register(function (string $c): void {
@@ -96,8 +96,15 @@ if (!$svc->available()) {
         . " -b:v 4000k -maxrate 4000k -bufsize 8000k"
         . " -c:a aac -movflags +faststart $dir/light.mp4 2>&1");
     /* HDR (HLG) */
-    shell_exec($ff . sprintf($src, '1920x1080', 30, 5) . " -c:v libx265 -preset ultrafast -pix_fmt yuv420p10le -color_trc arib-std-b67"
-        . " -color_primaries bt2020 -colorspace bt2020nc -c:a aac -f mov $dir/hdr.mov 2>&1");
+    /* برچسب HDR از راه x265-params نوشته می‌شود، نه `-color_trc`.
+       روی ffmpeg 8.0 (اوبونتو 26.04) پرچم ساده‌ی `-color_trc` در فایل
+       **نمی‌نشیند**: ffprobe هیچ color_transfer ای برنمی‌گرداند و فایل
+       «HDR» عملا SDR است — پس تست درست شکست می‌خورد، چون فایل آزمونش
+       HDR نبود، نه چون تشخیص برنامه خراب بود. با x265-params هم روی
+       6.1 و هم 8.0 برچسب واقعا می‌نشیند (روی 8.0 آزموده شد). */
+    shell_exec($ff . sprintf($src, '1920x1080', 30, 5) . " -c:v libx265 -preset ultrafast -pix_fmt yuv420p10le"
+        . " -x265-params colorprim=bt2020:transfer=arib-std-b67:colormatrix=bt2020nc:log-level=none"
+        . " -c:a aac -f mov $dir/hdr.mov 2>&1");
 
     echo "\n── ۲) تصمیم ──\n";
     $pl = fn(string $f, string $m) => $svc->plan("$dir/$f", $m);

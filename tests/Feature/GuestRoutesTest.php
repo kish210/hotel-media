@@ -13,7 +13,7 @@ spl_autoload_register(function (string $class): void {
     $p = APP_PATH . '/' . str_replace(['App\\', '\\'], ['', '/'], $class) . '.php';
     if (file_exists($p)) require $p;
 });
-function env(string $k, mixed $d = null): mixed { return $d; }
+if (!function_exists("env")) { function env(string $k, mixed $d = null): mixed { return $d; } }
 
 $router = new App\Core\Router();
 require ROOT_PATH . '/routes/api.php';

@@ -22,7 +22,7 @@ foreach (file(ROOT_PATH . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
     [$k, $v] = explode('=', $l, 2);
     $ENV[trim($k)] = trim($v, " \t\"'");
 }
-function env(string $k, mixed $d = null): mixed { global $ENV; return $ENV[$k] ?? $d; }
+if (!function_exists("env")) { function env(string $k, mixed $d = null): mixed { global $ENV; return $ENV[$k] ?? $d; } }
 date_default_timezone_set((string)env('APP_TIMEZONE', 'Asia/Tehran'));
 
 spl_autoload_register(function (string $c): void {
