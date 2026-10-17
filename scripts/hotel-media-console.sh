@@ -790,26 +790,69 @@ drv_tvh_status() {
     local src; src=$(hm_sql "SELECT COUNT(*) FROM tvheadend_sources WHERE is_active = 1" 2>/dev/null)
     local ch;  ch=$(hm_sql "SELECT COUNT(*) FROM iptv_channels WHERE source_type = 'tvheadend' AND is_active = 1" 2>/dev/null)
     out+="ثبت در برنامه: ${src:-0} منبع  ·  کانال: ${ch:-0}\n"
-    [ "${ch:-0}" = "0" ] && out+="\nکانالی نیست: تیونر را وصل و «تست تیونر و اسکن» را بزنید.\n"
+    # «تیونر را وصل کنید» وقتی تیونر وصل است غلط است — روی سخت‌افزار
+    # واقعی دیده شد: `تیونرها: 1 دستگاه` و همزمان «تیونر را وصل کنید».
+    # دو وضعیت کاملا متفاوت‌اند و راه‌حل‌شان هم فرق دارد.
+    if [ "${ch:-0}" = "0" ]; then
+        if [ "$(dvb_count)" = "0" ]; then
+            out+="\nتیونری شناسایی نشد: آن را وصل کنید (یا در هایپروایزر به VM بدهید).\n"
+        else
+            out+="\nتیونر هست ولی کانالی ندارید: آنتن وصل است؟ شبکهٔ درست انتخاب شده؟\nگزینهٔ «تست تیونر» استانداردهای تیونر را نشان می‌دهد.\n"
+        fi
+    fi
     show_file "TVHeadend" "$out"
 }
 
 drv_tuner_test() {
     if [ "$(dvb_count)" = "0" ]; then
-        msg "هیچ تیونری شناسایی نشد.\n\nبررسی کنید:\n 1) تیونر USB وصل است؟ (دوباره بکشید و بزنید)\n 2) «تشخیص سخت‌افزار» چیزی شبیه تیونر نشان می‌دهد؟\n 3) درایور DVB نصب شده؟ (گزینهٔ ۲)\n 4) dmesg | tail — خطای firmware می‌دهد؟"
+        msg "هیچ تیونری شناسایی نشد.\n\nبررسی کنید:\n 1) تیونر USB وصل است؟ (دوباره بکشید و بزنید)\n 2) اگر سرور مجازی است، تیونر در هایپروایزر به VM پاس (passthrough) شده؟\n 3) «تشخیص سخت‌افزار» چیزی شبیه تیونر نشان می‌دهد؟\n 4) درایور DVB نصب است؟ (گزینهٔ ۲)\n 5) dmesg | tail — خطای firmware می‌دهد؟"
         return
     fi
-    local out="" a
+
+    local out="" n a idx
     for a in /dev/dvb/adapter*; do
+        idx=${a##*adapter}
         out+="── $a ──\n"
-        if command -v dvb-fe-tool >/dev/null 2>&1; then
-            out+="$(dvb-fe-tool -a "${a##*adapter}" 2>&1 | head -6 | sed 's/^/  /')\n"
-        else out+="  (dvb-fe-tool نیست — درایور DVB را نصب کنید)\n"; fi
+        if ! command -v dvb-fe-tool >/dev/null 2>&1; then
+            out+="  (dvb-fe-tool نیست — درایور DVB را نصب کنید)\n"; continue
+        fi
+        local info; info=$(dvb-fe-tool -a "$idx" 2>&1)
+        local name sys lo hi
+        name=$(printf '%s\n' "$info" | sed -n 's/^Device \(.*\) (\/dev.*/\1/p' | head -1)
+        # فقط خلاصهٔ مفید، نه ۱۵ سطر CAN_*: اپراتور باید بفهمد این تیونر
+        # چه استانداردی را می‌گیرد. DVB-T و DVB-T2 دو چیز متفاوت‌اند و
+        # تیونری که فقط DVB-T دارد، کانال‌های T2 را (که بیشتر پخش زمینی
+        # ایران است) اصلا نمی‌بیند — روی سخت‌افزار واقعی AF9033 دیده شد.
+        sys=$(printf '%s\n' "$info" | sed -n '/Supported delivery system/,/Frequency range/p' | grep -oE '\[[A-Z0-9/]+\]' | tr -d '[]' | tr '\n' ' ')
+        lo=$(printf '%s\n' "$info" | awk '/^From:/ {print $2" "$3; exit}')
+        hi=$(printf '%s\n' "$info" | awk '/^To:/   {print $2" "$3; exit}')
+        out+="  مدل:         ${name:-?}\n"
+        out+="  استانداردها: ${sys:-?}\n"
+        out+="  فرکانس:      ${lo:-?} تا ${hi:-?}\n"
+        case " $sys " in
+          *" DVBT2 "*) out+="  ✔ DVB-T2 را هم می‌گیرد\n" ;;
+          *" DVBT "*)  out+="  ⚠ فقط DVB-T نسل اول — کانال‌های DVB-T2 را نمی‌گیرد\n" ;;
+        esac
     done
+
     # خطای فریم‌ور: رایج‌ترین دلیل «تیونر هست ولی کار نمی‌کند»
-    local fw; fw=$(dmesg 2>/dev/null | grep -iE 'firmware.*(fail|missing|not found)|dvb.*error' | tail -3)
+    local fw; fw=$(dmesg 2>/dev/null | grep -iE 'firmware.*(fail|missing|not found|error)' | tail -3)
     [ -n "$fw" ] && out+="\n⚠ خطای فریم‌ور در لاگ هسته:\n$(printf '%s\n' "$fw" | sed 's/^/  /')\n"
-    out+="\nبرای اسکن کانال، از پنل TVHeadend: http://127.0.0.1:9981 (با tunnel SSH)\n→ Configuration → DVB Inputs → Networks"
+
+    # اتصال آنتن یک سنجش واقعی لازم دارد، نه حدس: قفل‌شدن روی یک فرکانس.
+    # بدون آنتن، تیونر سالم هم هیچ سیگنالی نمی‌بیند و «کانالی نیست» می‌دهد.
+    out+="\n── سنجش سیگنال ──\n"
+    local ch; ch=$(hm_sql "SELECT COUNT(*) FROM iptv_channels WHERE source_type = 'tvheadend' AND is_active = 1" 2>/dev/null)
+    if [ "${ch:-0}" -gt 0 ]; then
+        out+="  ✔ ${ch} کانال از تیونر در برنامه هست\n"
+    else
+        out+="  کانالی در برنامه نیست. محتمل‌ترین دلایل (به همین ترتیب بررسی کنید):\n"
+        out+="   1) آنتن به تیونر وصل است؟ (رایج‌ترین دلیل)\n"
+        out+="   2) شبکه / منطقهٔ درست برای شهر شما انتخاب شده؟ (فایل اسکن Tehran برای کیش درست نیست)\n"
+        out+="   3) تیونر استاندارد پخش منطقه را می‌گیرد؟ (بالا را ببینید)\n"
+        out+="\n  اسکن در پنل TVHeadend: http://127.0.0.1:9981 (با tunnel SSH)\n"
+        out+="  → Configuration → DVB Inputs → Networks"
+    fi
     show_file "تست تیونر" "$out"
 }
 
