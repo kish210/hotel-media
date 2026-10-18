@@ -217,10 +217,12 @@
       <button onclick="closeTest()" style="background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;">&times;</button>
     </div>
     <div style="aspect-ratio:16/9;"><video id="test-vid" autoplay muted controls style="width:100%;height:100%;background:#000;"></video></div>
+    <div id="test-msg" style="font-size:12px;color:#fbbf24;padding:8px 4px;min-height:20px;"></div>
   </div>
 </div>
 
 <script src="/assets/vendor/hls/hls.min.js"></script>
+<script src="/assets/vendor/mpegts/mpegts.js"></script>
 <script>
 // فیلتر و جستجو
 function searchChannels(q) {
@@ -246,28 +248,48 @@ function impType(t) {
 }
 
 // تست پخش
-var _hls = null;
+var _hls = null, _ts = null;
+function stopTest() {
+  var vid = document.getElementById('test-vid');
+  if (_hls) { _hls.destroy(); _hls = null; }
+  if (_ts)  { _ts.destroy();  _ts = null; }
+  try { vid.pause(); } catch (e) {}
+  vid.removeAttribute('src'); vid.load();
+}
 function testStream(url, name) {
   document.getElementById('testModal').classList.remove('hidden');
   document.getElementById('test-ch-name').textContent = '📺 ' + name;
   var vid = document.getElementById('test-vid');
-  if (_hls) { _hls.destroy(); _hls = null; }
+  var msg = document.getElementById('test-msg');
+  stopTest();
+  msg.textContent = '';
+  if (/^(udp|rtp|rtsp|rtmp):/i.test(url)) {
+    msg.textContent = 'مرورگر این پروتکل را پخش نمی‌کند — «تلویزیون آزمایشی» (سرور) را امتحان کنید.';
+    return;
+  }
   if (url.match(/\.m3u8/i) && Hls.isSupported()) {
     _hls = new Hls({ lowLatencyMode: true });
+    _hls.on(Hls.Events.ERROR, function (e, d) { if (d.fatal) msg.textContent = 'خطای HLS: ' + d.details; });
     _hls.loadSource(url);
     _hls.attachMedia(vid);
+  } else if (!/\.(mp4|webm|ogv)(\?|$)/i.test(url) && window.mpegts && mpegts.isSupported()) {
+    // کانال تیونر (/tv/stream/…) MPEG-TS خام است و مرورگر خودش نمی‌پخشد
+    msg.textContent = 'در حال اتصال…';
+    _ts = mpegts.createPlayer({ type: 'mpegts', isLive: true, url: url });
+    _ts.on(mpegts.Events.ERROR, function (t, d) { msg.textContent = 'خطای پخش: ' + t + ' ' + (d || ''); });
+    _ts.attachMediaElement(vid); _ts.load();
+    vid.addEventListener('playing', function () { msg.textContent = ''; }, { once: true });
+    var p = vid.play(); if (p && p.catch) p.catch(function () {});
   } else {
+    vid.onerror = function () { msg.textContent = 'مرورگر نتوانست پخش کند.'; };
     vid.src = url;
     vid.play().catch(function(){});
   }
 }
 function closeTest() {
   document.getElementById('testModal').classList.add('hidden');
-  var vid = document.getElementById('test-vid');
-  vid.pause(); vid.src = '';
-  if (_hls) { _hls.destroy(); _hls = null; }
+  stopTest();
 }
-
 // بررسی FFmpeg
 fetch('/api/v1/iptv/status').then(r => r.json()).then(d => {
   const el = document.getElementById('ffmpeg-status');
