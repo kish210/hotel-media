@@ -361,6 +361,7 @@ $maintenRooms   = count(array_filter($rooms, fn($r) => $r['status']==='maintenan
           <option value="">— بدون گروه —</option>
           <?php foreach ($iptvGroups as $g): ?><option value="<?= $g['id'] ?>"><?= e($g['name']) ?></option><?php endforeach; ?>
         </select>
+        <div style="margin-top:4px;"><a href="/admin/iptv/screen-groups" target="_blank" style="font-size:10px;color:#f87171;text-decoration:none;"><i class="fas fa-external-link text-xs ml-1"></i>مدیریت گروه‌ها</a></div>
       </div>
       <div><label class="form-label">کد PMS</label><input type="text" id="rm-pms-id" class="form-input" placeholder="اختیاری"></div>
       <div style="grid-column:1/-1;"><label class="form-label">یادداشت</label><input type="text" id="rm-notes" class="form-input" placeholder="اختیاری"></div>

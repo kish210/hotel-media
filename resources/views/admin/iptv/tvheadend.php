@@ -134,7 +134,7 @@
       </button>
       <form method="post" action="/admin/iptv/tvheadend/<?= $src['id'] ?>/delete"
             onsubmit="return confirm('سرور حذف شود؟')" style="flex:0;">
-        <?php csrf() ?>
+        <?= csrf_field() ?>
         <button type="submit" class="btn-ghost text-sm" style="color:#ef4444;border-color:rgba(239,68,68,.3);">
           <i class="fas fa-trash text-xs"></i>
         </button>
@@ -174,7 +174,7 @@
     </div>
 
     <form method="post" action="/admin/iptv/tvheadend">
-      <?php csrf() ?>
+      <?= csrf_field() ?>
       <div style="display:flex;flex-direction:column;gap:14px;">
 
         <div>

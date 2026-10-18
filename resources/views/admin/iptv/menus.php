@@ -415,6 +415,7 @@ $allMenus   = $allMenus   ?? [];
           <option value="<?= $g['id'] ?>"><?= e($g['name']) ?></option>
           <?php endforeach; ?>
         </select>
+        <div style="margin-top:4px;"><a href="/admin/iptv/screen-groups" target="_blank" style="font-size:10px;color:#f87171;text-decoration:none;"><i class="fas fa-external-link text-xs ml-1"></i>مدیریت گروه‌ها</a></div>
       </div>
 
       <!-- قالب‌های پیش‌فرض فقط در ایجاد -->

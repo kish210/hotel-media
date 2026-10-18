@@ -291,6 +291,8 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class, \A
 // در منوی مخفی LG (MENU نگه‌داشته → 1105) و منوی هتلی سامسونگ
 // (MUTE → 1 → 1 → 9 → ENTER) همین آدرس در همه‌ی دستگاه‌ها وارد می‌شود.
 // مسیرها کوتاه‌اند چون بعضی منوها فقط IP و پورت می‌پذیرند.
+// پخش کانال TVHeadend برای دستگاه‌ها (امضاشده، بدون ورود)
+$router->get('/tv/stream/{uuid}', [\App\Controllers\Web\StreamProxyController::class, 'stream']);
 $router->get('/tv',              [\App\Controllers\Web\TvBootstrapController::class, 'index']);
 // صفحه‌های تعاملی مهمان — پورتال IPTV در iframe بازشان می‌کند
 $router->get('/tv/guest/{code}/{view}', [\App\Controllers\Web\TvGuestController::class, 'show']);
@@ -352,6 +354,11 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     $r->post('/iptv/{id}/delete',   [\App\Controllers\Web\IPTVController::class, 'delete']);
     $r->post('/iptv/import',        [\App\Controllers\Web\IPTVController::class, 'import']);
     // ── گروه کانال (فاز ۴): تنها حلقهٔ گم‌شدهٔ زنجیرهٔ Live TV ──────
+    // ── گروه IPTV صفحه/اتاق/منو (screen_groups) ────────────────
+    $r->get('/iptv/screen-groups',               [\App\Controllers\Web\IptvScreenGroupController::class, 'index']);
+    $r->post('/iptv/screen-groups',              [\App\Controllers\Web\IptvScreenGroupController::class, 'store']);
+    $r->post('/iptv/screen-groups/{id}',         [\App\Controllers\Web\IptvScreenGroupController::class, 'update']);
+    $r->post('/iptv/screen-groups/{id}/delete',  [\App\Controllers\Web\IptvScreenGroupController::class, 'delete']);
     $r->post('/iptv/groups',             [\App\Controllers\Web\IPTVController::class, 'storeGroup']);
     $r->post('/iptv/groups/{id}/delete', [\App\Controllers\Web\IPTVController::class, 'deleteGroup']);
     $r->post('/iptv/assign-group',       [\App\Controllers\Web\IPTVController::class, 'assignGroup']);

@@ -245,6 +245,8 @@ class PortalController extends Controller
         foreach ($rows as $r) {
             $multicast = (string)($r['multicast_url'] ?? '');
             $http      = (string)$r['stream_url'];
+            // آدرس نسبی (پروکسی برنامه) برای پلیر بومی باید کامل باشد
+            if (str_starts_with($http, '/')) { $http = ($_SERVER['REQUEST_SCHEME'] ?? ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http')) . '://' . ($_SERVER['HTTP_HOST'] ?? '') . $http; }
             $isMulti   = in_array($r['delivery'], ['multicast', 'both'], true) && $multicast !== '';
 
             if ($isMulti && $nativeMulticast) {

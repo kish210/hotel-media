@@ -216,6 +216,9 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
   <i class="fas fa-server" style="margin-left:5px;opacity:.6"></i> زیرساخت
 </div>
 <?php if (modOn('iptv')): ?>
+<a href="/admin/iptv/screen-groups" class="sidebar-link <?= isActive('/admin/iptv/screen-groups') ?>">
+  <span class="icon"><i class="fas fa-layer-group"></i></span> گروه‌های IPTV
+</a>
 <a href="/admin/iptv/test" class="sidebar-link <?= isActive('/admin/iptv/test') ?>">
   <span class="icon"><i class="fas fa-tv"></i></span> تلویزیون آزمایشی
 </a>

@@ -23,6 +23,21 @@ class TvheadendService
 
     private Database $db;
 
+    /**
+     * آدرس پخش برای دستگاه‌ها: از پروکسی خود برنامه (`/tv/stream/{uuid}`) می‌گذرد،
+     * چون آدرس مستقیم TVHeadend روی loopback است و رمز می‌خواهد. امضا جلوی
+     * حدس‌زدن uuid کانال قفل‌شده را می‌گیرد.
+     */
+    public static function sign(string $uuid): string
+    {
+        return substr(hash_hmac('sha256', 'tvh-stream:' . $uuid, (string)env('APP_KEY', 'hotel-media')), 0, 24);
+    }
+
+    public static function streamPath(string $uuid): string
+    {
+        return '/tv/stream/' . $uuid . '?sig=' . self::sign($uuid);
+    }
+
     public function __construct(?Database $db = null)
     {
         $this->db = $db ?? Database::getInstance();
@@ -230,7 +245,7 @@ class TvheadendService
             $number = (int)($ch['number'] ?? 0);
             $icon   = (string)($ch['icon'] ?? '');
 
-            $streamUrl = "$base/stream/channel/$uuid?profile=" . rawurlencode($profile);
+            $streamUrl = self::streamPath($uuid);
 
             // ‏imagecache داخلی TVHeadend از بیرون قابل دسترسی نیست
             $logo = null;

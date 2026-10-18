@@ -42,10 +42,11 @@
 </div>
 
 <script src="/assets/vendor/hls/hls.min.js"></script>
+<script src="/assets/vendor/mpegts/mpegts.js"></script>
 <script>
 const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
 const $ = id => document.getElementById(id);
-let hls = null;
+let hls = null, ts = null;
 
 function guessProto(u) { return /\.m3u8(\?|$)/i.test(u) ? 'hls' : /^rtsp:/i.test(u) ? 'rtsp' : /^rtmp:/i.test(u) ? 'rtmp' : /^(udp|rtp):/i.test(u) ? 'udp' : 'http'; }
 
@@ -53,6 +54,7 @@ function play() {
   const u = $('tt-url').value.trim(); if (!u) return;
   const v = $('tt-vid'); $('tt-msg').textContent = '';
   if (hls) { hls.destroy(); hls = null; }
+  if (ts) { ts.destroy(); ts = null; }
   if (/^(udp|rtp|rtsp|rtmp):/i.test(u)) {
     $('tt-msg').textContent = 'مرورگر این پروتکل را پخش نمی‌کند — «مشخصات (سرور)» را بزنید تا سرور امتحان کند.';
     return;
@@ -61,6 +63,13 @@ function play() {
     hls = new Hls({ lowLatencyMode: true });
     hls.on(Hls.Events.ERROR, (e, d) => { if (d.fatal) $('tt-msg').textContent = 'خطای پخش HLS: ' + d.details; });
     hls.loadSource(u); hls.attachMedia(v);
+  } else if (!/\.(mp4|webm|ogv)(\?|$)/i.test(u) && window.mpegts && mpegts.isSupported()) {
+    // MPEG-TS خام (کانال‌های تی‌وی‌هدند و /tv/stream/…) را مرورگر خودش نمی‌پخشد
+    $('tt-msg').textContent = 'در حال اتصال…';
+    ts = mpegts.createPlayer({ type: 'mpegts', isLive: true, url: u });
+    ts.on(mpegts.Events.ERROR, (t, d) => { $('tt-msg').textContent = 'خطای پخش: ' + t + ' ' + (d || ''); });
+    ts.attachMediaElement(v); ts.load();
+    v.addEventListener('playing', () => { $('tt-msg').textContent = 'پخش می‌شود'; }, { once: true });
   } else {
     v.src = u;
   }

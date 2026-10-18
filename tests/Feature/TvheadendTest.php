@@ -164,7 +164,7 @@ check('لوگوی کانال ایرانی از نام پیدا شد',
     && App\Services\ChannelLogoService::find('irib-tv3') === '/assets/channel-logos/iribtv3.png');
 check('نام ناشناس لوگوی اشتباه نمی‌گیرد', App\Services\ChannelLogoService::find('Some Unknown Zed') === null);
 check('آدرس استریم ساخته شد',
-    str_contains((string)($ch[0]['stream_url'] ?? ''), '/stream/channel/uuid-aaa'),
+    str_contains((string)($ch[0]['stream_url'] ?? ''), '/tv/stream/uuid-aaa?sig='),
     $ch[0]['stream_url'] ?? '');
 check('شماره کانال برای ریموت ثبت شد', (int)($ch[0]['channel_no'] ?? 0) === 1);
 check('uuid به‌عنوان کلید EPG ذخیره شد', ($ch[0]['epg_id'] ?? '') === 'uuid-aaa');

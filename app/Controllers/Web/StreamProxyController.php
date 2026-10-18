@@ -1,0 +1,82 @@
+<?php
+declare(strict_types=1);
+namespace App\Controllers\Web;
+
+use App\Core\{Controller, Request};
+use App\Services\TvheadendService;
+
+/**
+ * پخش کانال TVHeadend برای تلویزیون و مرورگر.
+ *
+ * چرا لازم است: کانال واردشده آدرس `http://127.0.0.1:9981/stream/channel/…`
+ * داشت. تلویزیون به loopback سرور دسترسی ندارد و TVHeadend هم عمدا فقط روی
+ * 127.0.0.1 گوش می‌دهد و احراز هویت Digest می‌خواهد (بدون رمز ۴۰۱). نتیجه:
+ * کانال وارد می‌شد ولی هیچ دستگاهی نمی‌توانست پخشش کند.
+ *
+ * اینجا برنامه با اعتبارنامهٔ ذخیره‌شده از TVHeadend می‌خواند و همان بایت‌ها
+ * را به دستگاه می‌دهد. به تنظیمات TVHeadend دست نمی‌خورد.
+ *
+ * دسترسی: آدرس با HMAC امضا شده (`sig`). کانال قفل‌شده آدرسش را از API
+ * نمی‌گیرد، پس امضایش را هم ندارد؛ حدس‌زدن uuid به‌تنهایی کافی نیست.
+ *
+ * محدودیت: هر بیننده یک کارگر PHP-FPM را اشغال می‌کند (در نصب ما ۹۶ تا).
+ * برای تعداد خیلی بیشتر باید پروکسی در nginx جایگزین شود.
+ */
+class StreamProxyController extends Controller
+{
+    /** GET /tv/stream/{uuid}?sig=… */
+    public function stream(Request $req, array $p): void
+    {
+        $uuid = strtolower((string)($p['uuid'] ?? ''));
+        $sig  = (string)$req->get('sig', '');
+        if (!preg_match('/^[a-f0-9]{32}$/', $uuid) || !hash_equals(TvheadendService::sign($uuid), $sig)) {
+            http_response_code(403); echo 'forbidden'; return;
+        }
+
+        $row = $this->db->row(
+            "SELECT s.* FROM iptv_channels c JOIN tvheadend_sources s ON s.id = c.source_id
+              WHERE c.tvh_uuid = ? AND c.is_active = 1 AND s.is_active = 1 LIMIT 1",
+            [$uuid]
+        );
+        if (!$row) { http_response_code(404); echo 'not found'; return; }
+        if (!function_exists('curl_init')) { http_response_code(500); echo 'curl missing'; return; }
+
+        $profile = $_GET['profile'] ?? '';
+        $profile = preg_match('/^[A-Za-z0-9._-]{1,40}$/', (string)$profile) ? $profile : ($row['stream_profile'] ?: 'pass');
+        $url = rtrim((string)$row['server_url'], '/') . '/stream/channel/' . $uuid . '?profile=' . rawurlencode((string)$profile);
+
+        // نشست را آزاد کن: استریم ساعت‌ها باز می‌ماند و نباید درخواست‌های دیگر
+        // همین کاربر را قفل کند
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+        @set_time_limit(0);
+        ignore_user_abort(false);
+        while (ob_get_level() > 0) ob_end_clean();
+
+        $started = false;
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_HTTPAUTH       => CURLAUTH_DIGEST | CURLAUTH_BASIC,
+            CURLOPT_USERPWD        => ($row['username'] ?? '') . ':' . ($row['password'] ?? ''),
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_LOW_SPEED_LIMIT => 1,
+            CURLOPT_LOW_SPEED_TIME  => 20,     // بیست ثانیه بی‌داده = تیونر/کانال مرده
+            CURLOPT_RETURNTRANSFER => false,
+            CURLOPT_WRITEFUNCTION  => function ($c, string $data) use (&$started): int {
+                if (!$started) {
+                    $code = (int)curl_getinfo($c, CURLINFO_RESPONSE_CODE);
+                    if ($code !== 200) { http_response_code($code === 401 ? 502 : 503); return 0; }
+                    header('Content-Type: video/MP2T');
+                    header('Cache-Control: no-store');
+                    header('X-Accel-Buffering: no');
+                    $started = true;
+                }
+                echo $data;
+                flush();
+                return connection_aborted() ? 0 : strlen($data);
+            },
+        ]);
+        curl_exec($ch);
+        curl_close($ch);
+        if (!$started) { http_response_code(503); echo 'stream unavailable'; }
+    }
+}
