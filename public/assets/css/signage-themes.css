@@ -1,0 +1,30 @@
+/* ═══════════════════════════════════════════════════════════════════
+   تم‌های تابلوی دیجیتال (signage) — رنگ و شکل لایه‌های روی ویدیو:
+   ساعت، برچسب زنده و نوار خبر. محتوای پلی‌لیست دست نمی‌خورد.
+   کلاس روی <body>: sg-theme-light | sg-theme-luxe | sg-theme-bold.
+   بدون کلاس = classic. `sg-ticker-default` یعنی خود صفحه رنگ نوار خبر
+   را تنظیم نکرده؛ فقط آن‌وقت تم نوار را رنگ می‌کند (تنظیم صفحه مقدم است).
+   بدون var()، clamp()، gap، inset (مرورگر تلویزیون).
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* light: روشن و تمیز */
+.sg-theme-light #clock-ov { background: rgba(255, 255, 255, .88); color: #10151f; border-color: rgba(0, 0, 0, .08); }
+.sg-theme-light #clock-date { color: #4b5565; }
+.sg-theme-light.sg-ticker-default #ticker { background: rgba(255, 255, 255, .92); }
+.sg-theme-light.sg-ticker-default .ticker-text { color: #10151f; }
+.sg-theme-light.sg-ticker-default .ticker-sep { color: rgba(0, 0, 0, .3); }
+
+/* luxe: مشکی و طلایی */
+.sg-theme-luxe #clock-ov { background: rgba(12, 10, 6, .82); color: #e8cfa0; border: 1px solid rgba(212, 175, 120, .55); }
+.sg-theme-luxe #clock-date { color: #b9a37a; }
+.sg-theme-luxe.sg-ticker-default #ticker { background: rgba(12, 10, 6, .9); border-top: 1px solid rgba(212, 175, 120, .55); }
+.sg-theme-luxe.sg-ticker-default .ticker-text { color: #e8cfa0; }
+.sg-theme-luxe.sg-ticker-default .ticker-sep { color: rgba(212, 175, 120, .5); }
+
+/* bold: پررنگ و درشت */
+.sg-theme-bold #clock-ov { background: #e11d48; color: #fff; }
+.sg-theme-bold #clock-date { color: #ffe4ea; }
+.sg-theme-bold #clock-time { font-size: 2.4rem; }
+.sg-theme-bold.sg-ticker-default #ticker { background: #e11d48; }
+.sg-theme-bold.sg-ticker-default .ticker-text { color: #fff; font-size: 1.4rem; font-weight: 800; }
+.sg-theme-bold.sg-ticker-default .ticker-sep { color: rgba(255, 255, 255, .6); }

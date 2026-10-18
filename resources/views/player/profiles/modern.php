@@ -58,6 +58,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css<?= v() ?>">
 <link rel="stylesheet" href="/assets/css/tv-base.css<?= v() ?>">
 <link rel="stylesheet" href="/assets/css/tv-signage.css<?= v() ?>">
+<link rel="stylesheet" href="/assets/css/signage-themes.css<?= v() ?>">
 <script src="/assets/vendor/hls/hls.min.js<?= v() ?>"></script>
 <script src="/assets/js/tv-base.js<?= v() ?>"></script>
 <script src="/assets/js/tv-subtitles.js<?= v() ?>"></script>
@@ -249,7 +250,7 @@ html, body { background: #000; }
 #act-err { font-size: .88rem; margin-top: .85rem; min-height: 1.3rem; color: #ff5f57; }
 </style>
 </head>
-<body>
+<body class="<?= preg_match('/^(light|luxe|bold)$/', (string)($groupTheme ?? '')) ? 'sg-theme-' . $groupTheme : '' ?><?= isset($settings['ticker_bg_color']) || isset($settings['ticker_bg']) ? '' : ' sg-ticker-default' ?>">
 
 <div id="stage">
 

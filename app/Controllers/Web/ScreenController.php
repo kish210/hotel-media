@@ -272,6 +272,19 @@ class ScreenController extends Controller
         $this->redirect('/admin/screens?tab=' . $req->post('type', 'signage'));
     }
 
+    /** POST /admin/screens/groups/{id}/theme — theme='' یعنی ارث‌بری */
+    public function setGroupTheme(Request $req, array $params): void
+    {
+        $g = $this->db->row('SELECT id, type FROM screen_groups WHERE id=? AND tenant_id=?', [(int)$params['id'], Auth::tenantId()]);
+        if (!$g) { $this->flash('error', 'گروه پیدا نشد'); $this->redirect('/admin/screens'); return; }
+        $allowed = $g['type'] === 'iptv' ? ['', 'classic', 'hero', 'sidebar', 'luxe'] : ['', 'classic', 'light', 'luxe', 'bold'];
+        $theme = (string)$req->post('theme', '');
+        if (!in_array($theme, $allowed, true)) { $this->flash('error', 'تم نامعتبر'); $this->redirect($req->post('back') === 'iptv' ? '/admin/iptv/screen-groups' : '/admin/screens'); return; }
+        $this->db->update('screen_groups', ['theme' => $theme], ['id' => (int)$g['id'], 'tenant_id' => Auth::tenantId()]);
+        $this->flash('success', 'تم گروه ذخیره شد');
+        $this->redirect($req->post('back') === 'iptv' ? '/admin/iptv/screen-groups' : '/admin/screens');
+    }
+
     public function deleteGroup(Request $req, array $params): void
     {
         $this->db->delete('screen_groups', ['id' => (int)$params['id'], 'tenant_id' => Auth::tenantId()]);

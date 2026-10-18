@@ -156,6 +156,7 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class, \A
     // ── Groups — باید قبل از /screens/{id} باشه تا conflict نشه ──
     $r->post('/screens/groups',                [ScreenController::class, 'storeGroup']);
     $r->post('/screens/groups/{id}/delete',    [ScreenController::class, 'deleteGroup']);
+    $r->post('/screens/groups/{id}/theme',     [ScreenController::class, 'setGroupTheme']);
     // ── Single screen ──
     $r->get('/screens/{id}',                   [ScreenController::class, 'show']);
     $r->post('/screens/{id}',                  [ScreenController::class, 'update']);

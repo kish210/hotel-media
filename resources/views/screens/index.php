@@ -152,7 +152,16 @@ $all3d  = count(array_filter($screens, fn($s) => ($s['screen_type']??'signage')=
     <div style="width:12px;height:12px;border-radius:3px;flex-shrink:0;background:<?=e($group['color']??'#1a7ac4')?>"></div>
     <span style="font-size:14px;font-weight:700;color:#e2e8f0;"><?=e($group['name']??'')?></span>
     <span style="font-size:11px;color:#475569;background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px;"><?=count($groupScreens)?> صفحه</span>
-    <form method="POST" action="/admin/screens/groups/<?=$gid?>/delete" class="inline" style="margin-right:auto;">
+    <form method="POST" action="/admin/screens/groups/<?=$gid?>/theme" class="inline" style="margin-right:auto;">
+      <?=csrf_field()?>
+      <?php $gt = (string)($group['theme'] ?? ''); $opts = ($group['type'] ?? 'signage') === 'iptv'
+          ? ['' => 'تم: پیش‌فرض', 'classic' => 'کلاسیک', 'hero' => 'هیرو', 'sidebar' => 'ستونی', 'luxe' => 'لوکس']
+          : ['' => 'تم: پیش‌فرض', 'classic' => 'کلاسیک', 'light' => 'روشن', 'luxe' => 'لوکس', 'bold' => 'پررنگ']; ?>
+      <select name="theme" onchange="this.form.submit()" style="background:#0f1624;color:#94a3b8;border:1px solid rgba(255,255,255,.1);border-radius:8px;font-size:11px;padding:3px 8px;">
+        <?php foreach ($opts as $k => $v): ?><option value="<?=e($k)?>"<?= $gt === $k ? ' selected' : '' ?>><?=e($v)?></option><?php endforeach; ?>
+      </select>
+    </form>
+    <form method="POST" action="/admin/screens/groups/<?=$gid?>/delete" class="inline">
       <?=csrf_field()?>
       <button type="submit" onclick="return confirm('گروه «<?=e(addslashes($group['name']??''))?>» حذف شود؟')"
         style="background:none;border:none;color:#475569;cursor:pointer;font-size:12px;padding:2px 6px;">

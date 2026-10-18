@@ -333,6 +333,17 @@ $allMenus   = $allMenus   ?? [];
               </div>
             </div>
             <div>
+              <label class="form-label">تم نمایش</label>
+              <select id="ap-theme" class="form-input" onchange="debounceSave()">
+                <option value="">ارث‌بری از گروه</option>
+                <option value="classic">کلاسیک — شبکهٔ کاشی</option>
+                <option value="hero">هیرو — سینمایی با ردیف کارت</option>
+                <option value="sidebar">ستونی — منوی کنار صفحه</option>
+                <option value="luxe">لوکس — مینیمال و مرکزچین</option>
+              </select>
+              <div style="font-size:10px;color:#475569;margin-top:4px;">اولویت: تم منو ← تم گروه صفحه ← تم گروه منو ← کلاسیک</div>
+            </div>
+            <div>
               <label class="form-label">زیرعنوان</label>
               <input type="text" id="ap-welcome-sub" class="form-input" placeholder="مثلاً: لطفاً یک بخش را انتخاب کنید"
                 oninput="debounceSave()">
@@ -927,6 +938,7 @@ function populateAppearance(menu) {
   setImagePreview('bg',   menu.bg_image  || null);
   setImagePreview('logo', menu.logo_url  || null);
   document.getElementById('ap-accent').value               = menu.accent_color || '#ef4444';
+  document.getElementById('ap-theme').value                = menu.theme || '';
   const dim = parseFloat(menu.bg_dim ?? 0.55);
   document.getElementById('ap-bg-dim').value               = dim;
   document.getElementById('ap-bg-dim-val').textContent     = dim;
@@ -1022,6 +1034,7 @@ async function saveAppearance() {
   clearTimeout(apSaveTimer);
   const payload = {
     accent_color:  document.getElementById('ap-accent').value,
+    theme:         document.getElementById('ap-theme').value,
     bg_dim:        parseFloat(document.getElementById('ap-bg-dim').value),
     bg_blur:       parseInt(document.getElementById('ap-bg-blur').value),
     welcome_title: document.getElementById('ap-welcome-title').value.trim(),

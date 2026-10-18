@@ -139,6 +139,12 @@ class PlayerController extends Controller
             if (!in_array($profile, $profiles, true)) $profile = 'modern';
         }
 
+        // تم گروه صفحه (خالی = ارث‌بری/classic)؛ پروفایل‌ها $groupTheme را می‌خوانند
+        $groupTheme = '';
+        if (!empty($screen['group_id'])) {
+            try { $groupTheme = (string)$this->db->value('SELECT theme FROM screen_groups WHERE id=?', [(int)$screen['group_id']]); } catch (\Throwable) {}
+        }
+
         $profileView = VIEWS_PATH . '/player/profiles/' . $profile . '.php';
         if (!file_exists($profileView)) $profileView = VIEWS_PATH . '/player/index.php';
 

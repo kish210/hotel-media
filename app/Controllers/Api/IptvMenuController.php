@@ -94,7 +94,7 @@ class IptvMenuController extends Controller
         $allowed = [
             'name', 'description', 'group_id', 'is_active', 'sort_order',
             // appearance
-            'accent_color', 'bg_dim', 'bg_blur',
+            'accent_color', 'bg_dim', 'bg_blur', 'theme',
             'welcome_title', 'welcome_sub',
             'ticker_text', 'ticker_color', 'ticker_bg', 'ticker_speed',
         ];
@@ -107,7 +107,9 @@ class IptvMenuController extends Controller
             unset($upd['ticker_color']);
         if (isset($upd['ticker_bg']) && !preg_match('/^#[0-9a-f]{6}$/i', $upd['ticker_bg']))
             unset($upd['ticker_bg']);
-        if (isset($upd['bg_dim']))      $upd['bg_dim']      = round(max(0, min(1, (float)$upd['bg_dim'])), 2);
+        if (isset($upd['theme']) && !in_array($upd['theme'], ['', 'classic', 'hero', 'sidebar', 'luxe'], true))
+            unset($upd['theme']);
+        if (isset($upd['bg_dim']))      $upd['bg_dim']      =round(max(0, min(1, (float)$upd['bg_dim'])), 2);
         if (isset($upd['bg_blur']))     $upd['bg_blur']     = max(0, min(20, (int)$upd['bg_blur']));
         if (isset($upd['ticker_speed'])) $upd['ticker_speed'] = max(5, min(200, (int)$upd['ticker_speed']));
 
@@ -290,6 +292,11 @@ class IptvMenuController extends Controller
         $id   = (int)$params['id'];
         $menu = $this->db->row("SELECT * FROM iptv_menus WHERE id=? AND is_active=1", [$id]);
         if (!$menu) Response::notFound();
+
+        // تم گروهِ منو: آخرین ارث‌بری (بعد از تم منو و تم گروه صفحه)
+        try {
+            $menu['group_theme'] = (string)($menu['group_id'] ? $this->db->value('SELECT theme FROM screen_groups WHERE id=?', [$menu['group_id']]) : '');
+        } catch (\Throwable) { $menu['group_theme'] = ''; }
 
         $menu['items'] = $this->db->rows(
             "SELECT * FROM iptv_menu_items WHERE menu_id=? AND is_active=1 ORDER BY sort_order",

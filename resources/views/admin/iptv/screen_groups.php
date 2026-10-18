@@ -38,6 +38,16 @@
     <span style="font-size:11px;color:#64748b;"><?= (int)$g['screens_count'] ?> صفحه · <?= (int)$g['menus_count'] ?> منو</span>
     <button class="btn-ghost text-sm">ذخیره</button>
   </form>
+  <form method="post" action="/admin/screens/groups/<?= (int)$g['id'] ?>/theme" class="sg-row" style="margin-top:8px;">
+    <?= csrf_field() ?>
+    <input type="hidden" name="back" value="iptv">
+    <label style="font-size:12px;color:#94a3b8;">تم این گروه:</label>
+    <select name="theme" class="form-input" style="max-width:240px;" onchange="this.form.submit()">
+      <?php foreach (['' => 'پیش‌فرض (ارث‌بری)', 'classic' => 'کلاسیک — شبکهٔ کاشی', 'hero' => 'هیرو — سینمایی', 'sidebar' => 'ستونی — منوی کنار صفحه', 'luxe' => 'لوکس — مینیمال'] as $k => $v): ?>
+        <option value="<?= e($k) ?>"<?= (string)($g['theme'] ?? '') === $k ? ' selected' : '' ?>><?= e($v) ?></option>
+      <?php endforeach; ?>
+    </select>
+  </form>
   <form method="post" action="/admin/iptv/screen-groups/<?= (int)$g['id'] ?>/delete" style="margin-top:8px;"
         onsubmit="return confirm('گروه حذف شود؟ صفحه‌ها و منوهای آن فقط بی‌گروه می‌شوند و پاک نمی‌شوند.')">
     <?= csrf_field() ?>

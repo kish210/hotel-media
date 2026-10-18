@@ -1,0 +1,108 @@
+/* ═══════════════════════════════════════════════════════════════════
+   تم‌های منوی IPTV — فقط چیدمان کاشی‌ها و سربرگ را عوض می‌کنند.
+   کلاس روی #stage می‌نشیند: theme-hero | theme-sidebar | theme-luxe.
+   بدون کلاس = classic (tv-base.css).
+
+   مثل tv-base.css برای مرورگر تلویزیون قدیمی نوشته شده: بدون var()،
+   clamp()، gap، inset، backdrop-filter. چیدمان با position و inline-block
+   است، نه flex، تا Tizen 2.x و Android 4 هم درست بکشند. جهت‌یابی با
+   ریموت هندسی است (TV.findNeighbor) پس هر چیدمانی کار می‌کند.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── hero: سینمایی؛ خوش‌آمد بزرگ و ردیف افقی کارت‌ها پایین ─────────── */
+.theme-hero .tv-header { padding-top: 3.4rem; }
+.theme-hero .tv-welcome { font-size: 4.2rem; font-weight: 800; letter-spacing: -.02em; }
+.theme-hero .tv-welcome-sub { font-size: 1.35rem; margin-top: .7rem; }
+.theme-hero .tv-divider { display: none; }
+.theme-hero .tv-grid-wrap { position: relative; }
+.theme-hero .tv-grid {
+  display: block; margin: 0; direction: ltr;
+  position: absolute; left: 3.2rem; right: 3.2rem; bottom: 1.4rem;
+  white-space: nowrap; overflow: hidden;
+}
+.theme-hero .tv-grid > * { margin: 0 .55rem .6rem 0; }
+.theme-hero .tv-tile {
+  display: inline-block; vertical-align: bottom;
+  width: 13.5rem; height: 8.4rem; padding-top: 1.3rem;
+  text-align: center;
+  background: rgba(10, 14, 22, .62);
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: .9rem;
+}
+.theme-hero .tv-tile-icon {
+  display: block; width: auto; height: 3rem; margin: 0 0 .7rem;
+  background: none !important; border: 0 !important;
+  font-size: 2.5rem; line-height: 3rem; text-align: center;
+}
+.theme-hero .tv-tile-label { display: block; font-size: 1.05rem; letter-spacing: .02em; }
+.theme-hero .tv-tile.is-focused {
+  background: rgba(255, 255, 255, .94);
+  border-color: #fff; color: #0b1020;
+  -webkit-transform: scale(1.1); -ms-transform: scale(1.1); transform: scale(1.1);
+  box-shadow: 0 .8rem 2.4rem rgba(0, 0, 0, .6);
+}
+.theme-hero .tv-tile.is-focused .tv-tile-label { color: #0b1020; }
+
+/* ── sidebar: ستون منو کنار صفحه، مثل پورتال‌های هتلی LG/Samsung ──── */
+.theme-sidebar .tv-divider { display: none; }
+.theme-sidebar .tv-grid-wrap { padding-top: 1.2rem; }
+.theme-sidebar .tv-grid {
+  display: block; margin: 0; width: 22rem; direction: ltr;
+  padding: .8rem; border-radius: 1.2rem;
+  background: rgba(8, 12, 20, .66);
+  border: 1px solid rgba(255, 255, 255, .1);
+}
+.theme-sidebar .tv-grid > * { margin: .25rem 0; }
+.theme-sidebar .tv-tile {
+  display: block; width: auto; height: 3.6rem; padding: 0 .6rem;
+  text-align: left; white-space: nowrap;
+  background: none; border: 0; border-radius: .7rem;
+  line-height: 3.6rem;
+}
+.theme-sidebar .tv-tile-icon {
+  display: inline-block; vertical-align: middle;
+  width: 2.4rem; height: 2.4rem; margin: 0 .9rem 0 0;
+  background: none !important; border: 0 !important;
+  font-size: 1.4rem; line-height: 2.4rem; text-align: center;
+}
+.theme-sidebar .tv-tile-label {
+  display: inline-block; vertical-align: middle; padding: 0;
+  font-size: 1.2rem; text-align: left;
+}
+.theme-sidebar .tv-tile.is-focused {
+  background: rgba(255, 255, 255, .92); color: #0b1020; border: 0;
+  -webkit-transform: none; -ms-transform: none; transform: none;
+  box-shadow: 0 .3rem 1.2rem rgba(0, 0, 0, .45);
+}
+.theme-sidebar .tv-tile.is-focused .tv-tile-label { color: #0b1020; }
+
+/* ── luxe: مینیمال و مرکزچین، خط باریک، مدالیون گرد ───────────────── */
+.theme-luxe .tv-header { text-align: center; padding-top: 3rem; }
+.theme-luxe .tv-welcome { font-size: 3.4rem; font-weight: 300; letter-spacing: .08em; }
+.theme-luxe .tv-welcome-sub { letter-spacing: .12em; }
+.theme-luxe .tv-divider { height: 1px; margin: 1.4rem 30% 0; background: rgba(212, 175, 120, .55); }
+.theme-luxe .tv-grid-wrap { text-align: center; padding-top: 2.4rem; }
+.theme-luxe .tv-grid { display: block; margin: 0; direction: ltr; }
+.theme-luxe .tv-grid > * { margin: 0 1.1rem 1.4rem; }
+.theme-luxe .tv-tile {
+  display: inline-block; vertical-align: top; width: 9.6rem; height: auto;
+  background: none; border: 0; border-radius: 0; text-align: center;
+}
+.theme-luxe .tv-tile-icon {
+  display: block; width: 6rem; height: 6rem; margin: 0 auto .8rem;
+  border-radius: 50% !important; font-size: 2.2rem; line-height: 5.6rem; text-align: center;
+  background: rgba(212, 175, 120, .08) !important;
+  border: 1px solid rgba(212, 175, 120, .6) !important;
+}
+.theme-luxe .tv-tile-icon i { color: #e8cfa0 !important; }
+.theme-luxe .tv-tile-label { display: block; font-size: 1rem; font-weight: 400; letter-spacing: .06em; color: #d9c9aa; }
+.theme-luxe .tv-tile.is-focused {
+  background: none; border: 0; box-shadow: none;
+  -webkit-transform: scale(1.12); -ms-transform: scale(1.12); transform: scale(1.12);
+}
+.theme-luxe .tv-tile.is-focused .tv-tile-icon {
+  background: rgba(212, 175, 120, .95) !important; border-color: #fff !important;
+  box-shadow: 0 0 2rem rgba(212, 175, 120, .55);
+}
+.theme-luxe .tv-tile.is-focused .tv-tile-icon i { color: #1a1408 !important; }
+.theme-luxe .tv-tile.is-focused .tv-tile-label { color: #fff; }

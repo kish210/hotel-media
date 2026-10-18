@@ -32,6 +32,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 <link rel="stylesheet" href="/assets/vendor/vazirmatn/vazirmatn.css<?= v() ?>">
 <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css<?= v() ?>">
 <link rel="stylesheet" href="/assets/css/tv-base.css<?= v() ?>">
+<link rel="stylesheet" href="/assets/css/tv-themes.css<?= v() ?>">
 <script src="/assets/vendor/hls/hls.min.js<?= v() ?>"></script>
 <?php /* ‏LG Pro:Centric: اگر نصاب hcap.js را از SDK خود LG در این مسیر گذاشته باشد.
          روی بیشتر تلویزیون‌ها مرورگر Pro:Centric خودش hcap را دارد. */
@@ -411,6 +412,7 @@ html.tv-input-live #input-hint.is-on { display: block; }
   'use strict';
 
   var SCREEN_CODE  = '<?= e($screenCode) ?>';
+  var GROUP_THEME  = '<?= e((string)($groupTheme ?? '')) ?>';
   var IPTV_MENU_ID = <?= $iptvMenuId ?>;
   var SCREEN_NAME  = '<?= e($screenName) ?>';
   var WS_PORT      = <?= (int)env('WS_PORT', 8080) ?>;
@@ -494,6 +496,12 @@ html.tv-input-live #input-hint.is-on { display: block; }
 
   /* ── ظاهر از تنظیمات منو ───────────────────────────────────────── */
   function applyAppearance(d) {
+    /* تم: منو، بعد گروه صفحه، بعد گروه منو؛ ناشناخته = classic */
+    var th = d.theme || GROUP_THEME || d.group_theme || 'classic';
+    if (!/^(hero|sidebar|luxe)$/.test(th)) th = 'classic';
+    var stg = TV.id('stage'), ti, names = ['hero', 'sidebar', 'luxe'];
+    for (ti = 0; ti < names.length; ti++) TV.removeClass(stg, 'theme-' + names[ti]);
+    if (th !== 'classic') TV.addClass(stg, 'theme-' + th);
     if (/^#[0-9a-f]{6}$/i.test(d.accent_color || '')) {
       accent    = d.accent_color;
       accentRgb = hexRgb(accent, accentRgb);
