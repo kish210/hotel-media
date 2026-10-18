@@ -159,6 +159,10 @@ check('نام فارسی درست ذخیره شد', ($ch[0]['name'] ?? '') === '
 check('کانال رادیو با برچسب TVHeadend علامت خورد، تلویزیون نه',
     (int)($ch[2]['is_radio'] ?? 0) === 1 && (int)($ch[0]['is_radio'] ?? 1) === 0,
     'radio=' . ($ch[2]['is_radio'] ?? '?') . ' tv=' . ($ch[0]['is_radio'] ?? '?'));
+check('لوگوی کانال ایرانی از نام پیدا شد',
+    App\Services\ChannelLogoService::find('IRIB TV3') === '/assets/channel-logos/iribtv3.png'
+    && App\Services\ChannelLogoService::find('irib-tv3') === '/assets/channel-logos/iribtv3.png');
+check('نام ناشناس لوگوی اشتباه نمی‌گیرد', App\Services\ChannelLogoService::find('Some Unknown Zed') === null);
 check('آدرس استریم ساخته شد',
     str_contains((string)($ch[0]['stream_url'] ?? ''), '/stream/channel/uuid-aaa'),
     $ch[0]['stream_url'] ?? '');

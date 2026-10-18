@@ -268,6 +268,12 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class, \A
     $r->get('/system/drivers/{id}/log',      [\App\Controllers\Web\DriverController::class, 'jobLog']);
     $r->post('/system/drivers/{id}/install', [\App\Controllers\Web\DriverController::class, 'install'], [CsrfMiddleware::class]);
     $r->post('/system/drivers/{id}/upload',  [\App\Controllers\Web\DriverController::class, 'upload'],  [CsrfMiddleware::class]);
+    // ── تیونر و اسکن کانال (فقط super_admin) ───────────────────
+    $r->get('/system/tuner',          [\App\Controllers\Web\TunerController::class, 'index']);
+    $r->get('/system/tuner/status',   [\App\Controllers\Web\TunerController::class, 'status']);
+    $r->post('/system/tuner/setup',   [\App\Controllers\Web\TunerController::class, 'setup'],  [CsrfMiddleware::class]);
+    $r->post('/system/tuner/scan',    [\App\Controllers\Web\TunerController::class, 'scan'],   [CsrfMiddleware::class]);
+    $r->post('/system/tuner/import',  [\App\Controllers\Web\TunerController::class, 'import'], [CsrfMiddleware::class]);
     $r->get('/system/diagnostics/json', [\App\Controllers\Web\DiagnosticsController::class, 'json']);
 
     // Reports
@@ -368,10 +374,14 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     // ── TVHeadend Live TV ──────────────────────────────────────
     $r->get('/iptv/dvr',                          [\App\Controllers\Web\DvrWebController::class, 'index']);
     $r->get('/cameras',                           [\App\Controllers\Web\CameraWebController::class, 'index']);
+    // ── تلویزیون آزمایشی: پخش و آزمایش آدرس استریم ─────────────
+    $r->get('/iptv/test',          [\App\Controllers\Web\IptvTestController::class, 'index']);
+    $r->post('/iptv/test/probe',   [\App\Controllers\Web\IptvTestController::class, 'probe'], [CsrfMiddleware::class]);
     $r->get('/iptv/tvheadend',                    [\App\Controllers\Web\TvheadendController::class, 'index']);
     $r->post('/iptv/tvheadend',                   [\App\Controllers\Web\TvheadendController::class, 'store']);
     $r->post('/iptv/tvheadend/{id}/delete',       [\App\Controllers\Web\TvheadendController::class, 'delete']);
     $r->get('/iptv/tvheadend/{id}/test',          [\App\Controllers\Web\TvheadendController::class, 'testConnection']);
+    $r->get('/iptv/tvheadend/{id}/tuner',        [\App\Controllers\Web\TvheadendController::class, 'tuner']);
     $r->post('/iptv/tvheadend/{id}/sync',         [\App\Controllers\Web\TvheadendController::class, 'syncChannels']);
     $r->post('/iptv/tvheadend/{id}/m3u',          [\App\Controllers\Web\TvheadendController::class, 'importM3u']);
     // ── Messages (scheduled greetings) ────────────────────────

@@ -87,6 +87,18 @@ class TvheadendController extends Controller
         exit;
     }
 
+    // ─── وضعیت زندهٔ تیونر (فقط خواندنی) برای کارت بالای صفحه ──────
+    public function tuner(Request $req, array $p): void
+    {
+        header('Content-Type: application/json');
+        $src = $this->db->row(
+            "SELECT * FROM tvheadend_sources WHERE id=? AND tenant_id=?",
+            [(int)$p['id'], Auth::tenantId()]
+        );
+        if (!$src) { echo json_encode(['success'=>false,'message'=>'سرور یافت نشد']); exit; }
+        echo json_encode(['success'=>true,'data'=>(new \App\Services\TvheadendTunerService())->status($src)]);
+        exit;
+    }
     // ─── سینک کانال‌ها از TVHeadend ─────────────────────────────
     public function syncChannels(Request $req, array $p): void
     {

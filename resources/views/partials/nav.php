@@ -216,6 +216,9 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
   <i class="fas fa-server" style="margin-left:5px;opacity:.6"></i> زیرساخت
 </div>
 <?php if (modOn('iptv')): ?>
+<a href="/admin/iptv/test" class="sidebar-link <?= isActive('/admin/iptv/test') ?>">
+  <span class="icon"><i class="fas fa-tv"></i></span> تلویزیون آزمایشی
+</a>
 <a href="/admin/iptv/tvheadend" class="sidebar-link <?= isActive('/admin/iptv/tvheadend') ?>">
   <span class="icon"><i class="fas fa-tower-cell"></i></span> منابع پخش زنده
 </a>
@@ -237,6 +240,9 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
 </a>
 <a href="/admin/system/drivers" class="sidebar-link <?= isActive('/admin/system/drivers') ?>">
   <span class="icon"><i class="fas fa-microchip" style="color:#f59e0b;"></i></span> درایورها
+</a>
+<a href="/admin/system/tuner" class="sidebar-link <?= isActive('/admin/system/tuner') ?>">
+  <span class="icon"><i class="fas fa-satellite-dish" style="color:#ef4444;"></i></span> تیونر و اسکن کانال
 </a>
 <?php /* دو صفحه‌ی عمدا جدا: این «الان چه خراب است» را می‌گوید و
          لاگ «چه اتفاقی افتاده بود» را. قاطی‌کردنشان یعنی برای دیدن

@@ -32,6 +32,36 @@
   </div>
 </div>
 
+<?php if (!empty($sources)): ?>
+<!-- وضعیت تیونر: فقط خواندنی؛ راه‌اندازی و اسکن در «تیونر و اسکن کانال» (مدیر ارشد) -->
+<div id="tunerCard" style="background:#16161f;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 18px;margin-bottom:20px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <div style="font-size:13px;font-weight:700;color:#fff;"><i class="fas fa-satellite-dish" style="color:#ef4444;margin-left:8px;"></i>تیونر و شبکه</div>
+    <div style="display:flex;gap:8px;">
+      <?php if ((\App\Core\Auth::user()['role'] ?? '') === 'super_admin'): ?>
+      <a href="/admin/system/tuner" class="btn-ghost text-sm"><i class="fas fa-wand-magic-sparkles ml-1"></i>راه‌اندازی و اسکن</a>
+      <?php endif; ?>
+      <a href="/admin/iptv/test" class="btn-ghost text-sm"><i class="fas fa-tv ml-1"></i>تلویزیون آزمایشی</a>
+    </div>
+  </div>
+  <div id="tunerBody" style="font-size:12px;color:#94a3b8;margin-top:10px;line-height:2;">در حال خواندن…</div>
+</div>
+<script>
+(async () => {
+  const el = document.getElementById('tunerBody');
+  try {
+    const r = await fetch('/admin/iptv/tvheadend/<?= (int)$sources[0]['id'] ?>/tuner', { credentials: 'same-origin' });
+    const d = (await r.json()).data || {};
+    if (!d.reachable) { el.textContent = 'TVHeadend در دسترس نیست: ' + (d.error || ''); return; }
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const ins = (d.inputs || []).map(i => '<div><i class="fas fa-microchip" style="color:#22c55e;margin-left:6px"></i>' + esc(i.name) + ' — سیگنال ' + i.signal + ' · SNR ' + i.snr + '</div>').join('')
+      || '<div style="color:#f87171">تیونری دیده نشد</div>';
+    const n = d.network;
+    el.innerHTML = ins + (n ? '<div>' + n.mux + ' فرکانس · ' + n.svc + ' سرویس · ' + n.chn + ' کانال' + (n.queue ? ' · اسکن در جریان (' + n.queue + ')' : '') + '</div>' : '<div>شبکه‌ای تعریف نشده</div>');
+  } catch (e) { el.textContent = 'خطا: ' + e.message; }
+})();
+</script>
+<?php endif; ?>
 <?php if (empty($sources)): ?>
 <!-- حالت خالی -->
 <div style="background:#16161f;border:1px dashed rgba(255,255,255,.1);border-radius:16px;padding:60px 20px;text-align:center;">

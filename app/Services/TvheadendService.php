@@ -238,6 +238,9 @@ class TvheadendService
                 $logo = str_starts_with($icon, 'http') ? $icon : $base . '/' . ltrim($icon, '/');
             }
 
+            // TVHeadend برای کانال زمینی معمولا لوگو ندارد؛ از بستهٔ لوگوی ایرانی
+            $logo ??= ChannelLogoService::find($name);
+
             $existing = $this->db->row(
                 'SELECT id FROM iptv_channels WHERE tenant_id = ? AND tvh_uuid = ?',
                 [$tenantId, $uuid]
@@ -246,15 +249,17 @@ class TvheadendService
             if ($existing) {
                 // آدرس multicast و شماره کانالی که اپراتور دستی داده دست‌نخورده
                 // می‌ماند — وگرنه هر sync فهرست کانال تلویزیون‌ها را خراب می‌کند
-                $this->db->update('iptv_channels', [
+                $upd = [
                     'name'        => $name,
                     'stream_url'  => $streamUrl,
-                    'logo_url'    => $logo,
                     'is_active'   => 1,
                     'is_radio'    => $isRadio,
                     'source_type' => 'tvheadend',
                     'source_id'   => $sourceId,
-                ], ['id' => (int)$existing['id']]);
+                ];
+                // لوگویی که اپراتور گذاشته با null پاک نشود
+                if ($logo !== null) { $upd['logo_url'] = $logo; }
+                $this->db->update('iptv_channels', $upd, ['id' => (int)$existing['id']]);
                 $updated++;
             } else {
                 $this->db->insert('iptv_channels', [
@@ -337,6 +342,27 @@ class TvheadendService
     // ══════════════════════════════════════════════════════════════
     //  Helpers
     // ══════════════════════════════════════════════════════════════
+
+    /**
+     * فراخوانی API روی یک منبع ثبت‌شده. پارامتر آرایه‌ای به JSON تبدیل می‌شود
+     * (TVHeadend `conf`/`node` را JSON می‌خواهد). همه‌چیز با GET است؛ روی
+     * TVHeadend 4.3 برای create/save/scan هم همین جواب می‌دهد.
+     *
+     * @return array{ok:bool,data:?array,error:string}
+     */
+    public function call(array $src, string $path, array $params = []): array
+    {
+        foreach ($params as $k => $v) {
+            if (is_array($v)) { $params[$k] = json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); }
+            elseif (is_bool($v)) { $params[$k] = $v ? '1' : '0'; }
+        }
+        $q = $params ? '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986) : '';
+        $res = $this->request((string)$src['server_url'], '/api/' . ltrim($path, '/') . $q,
+                              (string)($src['username'] ?? ''), (string)($src['password'] ?? ''));
+        if (!$res['ok']) { return ['ok' => false, 'data' => null, 'error' => $res['error']]; }
+        $data = json_decode($res['body'], true);
+        return ['ok' => true, 'data' => is_array($data) ? $data : [], 'error' => ''];
+    }
 
     /** @return array{ok:bool,body:string,error:string} */
     private function request(string $base, string $path, string $user, string $pass): array
