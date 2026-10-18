@@ -99,90 +99,14 @@ class TvheadendController extends Controller
         );
         if (!$src) { echo json_encode(['ok'=>false,'msg'=>'سرور یافت نشد']); exit; }
 
-        // دریافت لیست کانال‌ها
-        $result = $this->tvhRequest($src, '/api/channel/list?limit=2000');
-        if (!$result['ok']) {
-            echo json_encode(['ok'=>false,'msg'=>'خطا در دریافت کانال‌ها: '.$result['error']]);
-            exit;
-        }
-
-        $data = json_decode($result['body'], true);
-        $entries = $data['entries'] ?? [];
-        if (empty($entries)) {
-            echo json_encode(['ok'=>false,'msg'=>'هیچ کانالی یافت نشد']);
-            exit;
-        }
-
-        $baseUrl = rtrim($src['server_url'], '/');
-        $profile = $src['stream_profile'] ?: 'pass';
-        $imported = 0;
-        $updated  = 0;
-
-        foreach ($entries as $ch) {
-            $uuid   = $ch['uuid']   ?? '';
-            $name   = $ch['name']   ?? 'بدون نام';
-            $icon   = $ch['icon']   ?? '';
-            $number = (int)($ch['number'] ?? 0);
-
-            if (!$uuid) continue;
-
-            // آدرس استریم
-            $streamUrl = $baseUrl . '/stream/channel/' . $uuid . '?profile=' . $profile;
-
-            // لوگو
-            $logoUrl = null;
-            if ($icon && !str_starts_with($icon, 'imagecache')) {
-                $logoUrl = str_starts_with($icon, 'http') ? $icon : $baseUrl . '/' . ltrim($icon, '/');
-            }
-
-            // بررسی وجود کانال
-            $existing = $this->db->row(
-                "SELECT id FROM iptv_channels WHERE tenant_id=? AND tvh_uuid=?",
-                [$tid, $uuid]
-            );
-
-            if ($existing) {
-                $this->db->update('iptv_channels', [
-                    'name'        => $name,
-                    'stream_url'  => $streamUrl,
-                    'logo_url'    => $logoUrl,
-                    'sort_order'  => $number,
-                    'is_active'   => 1,
-                    'source_type' => 'tvheadend',
-                    'source_id'   => (int)$src['id'],
-                ], ['id' => $existing['id']]);
-                $updated++;
-            } else {
-                $this->db->insert('iptv_channels', [
-                    'tenant_id'   => $tid,
-                    'name'        => $name,
-                    'stream_url'  => $streamUrl,
-                    'logo_url'    => $logoUrl,
-                    'category'    => 'livetv',
-                    'group_id'    => (new \App\Services\ChannelGroupService($this->db))->resolve($tid, 'livetv'),
-                    'protocol'    => 'http',
-                    'sort_order'  => $number,
-                    'is_active'   => 1,
-                    'source_type' => 'tvheadend',
-                    'source_id'   => (int)$src['id'],
-                    'tvh_uuid'    => $uuid,
-                ]);
-                $imported++;
-            }
-        }
-
-        // آپدیت آمار sync
-        $this->db->update('tvheadend_sources', [
-            'last_sync'  => date('Y-m-d H:i:s'),
-            'sync_count' => (int)$src['sync_count'] + $imported + $updated,
-        ], ['id' => $src['id']]);
-
+        // مسیر واحد خواندن کانال‌ها (grid + fallback به list) در سرویس
+        $r = (new \App\Services\TvheadendService($this->db))->syncChannels($tid, (int)$src['id']);
         echo json_encode([
-            'ok'       => true,
-            'imported' => $imported,
-            'updated'  => $updated,
-            'total'    => count($entries),
-            'msg'      => "$imported کانال جدید + $updated آپدیت از " . count($entries) . " کانال",
+            'ok'       => $r['ok'],
+            'imported' => $r['imported'],
+            'updated'  => $r['updated'],
+            'total'    => $r['total'],
+            'msg'      => $r['ok'] ? $r['imported'] . ' کانال جدید + ' . $r['updated'] . ' آپدیت از ' . $r['total'] . ' کانال' : $r['message'],
         ]);
         exit;
     }

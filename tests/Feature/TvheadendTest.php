@@ -70,13 +70,24 @@ if (str_starts_with($path, '/api/serverinfo')) {
     exit;
 }
 
-if (str_starts_with($path, '/api/channel/list')) {
+/* شکل‌های واقعی TVHeadend 4.3: grid = ورودی کامل، list = فقط {key,val}
+   (روی سخت‌افزار واقعی دیده شد). */
+if (str_starts_with($path, '/api/channeltag/list')) {
+    echo json_encode(['entries' => [['key' => 'tag-radio', 'val' => 'Radio'], ['key' => 'tag-tv', 'val' => 'TV channels']]]);
+    exit;
+}
+if (str_starts_with($path, '/api/channel/grid')) {
     if ($mode === 'empty') { echo json_encode(['entries' => [], 'total' => 0]); exit; }
     echo json_encode(['total' => 3, 'entries' => [
-        ['uuid' => 'uuid-aaa', 'name' => 'شبکه یک',  'number' => 1, 'icon' => 'http://logo/1.png'],
-        ['uuid' => 'uuid-bbb', 'name' => 'شبکه دو',  'number' => 2, 'icon' => 'imagecache/42'],
-        ['uuid' => 'uuid-ccc', 'name' => 'شبکه سه',  'number' => 3, 'icon' => ''],
+        ['uuid' => 'uuid-aaa', 'enabled' => true, 'name' => 'شبکه یک',  'number' => 1, 'icon' => 'http://logo/1.png', 'tags' => ['tag-tv']],
+        ['uuid' => 'uuid-bbb', 'enabled' => true, 'name' => 'شبکه دو',  'number' => 2, 'icon' => 'imagecache/42', 'tags' => ['tag-tv']],
+        ['uuid' => 'uuid-ccc', 'enabled' => true, 'name' => 'رادیو سه', 'number' => 3, 'icon' => '', 'tags' => ['tag-radio']],
     ]]);
+    exit;
+}
+if (str_starts_with($path, '/api/channel/list')) {
+    if ($mode === 'empty') { echo json_encode(['entries' => [], 'total' => 0]); exit; }
+    echo json_encode(['entries' => [['key' => 'uuid-aaa', 'val' => 'x']]]);
     exit;
 }
 
@@ -145,6 +156,9 @@ check('سه کانال وارد شد', $r['channels'] === 3, 'channels=' . $r['c
 $ch = $db->rows("SELECT * FROM iptv_channels WHERE tenant_id=1 AND tvh_uuid LIKE 'uuid-%' ORDER BY channel_no");
 check('کانال‌ها در دیتابیس هستند', count($ch) === 3, 'تعداد=' . count($ch));
 check('نام فارسی درست ذخیره شد', ($ch[0]['name'] ?? '') === 'شبکه یک');
+check('کانال رادیو با برچسب TVHeadend علامت خورد، تلویزیون نه',
+    (int)($ch[2]['is_radio'] ?? 0) === 1 && (int)($ch[0]['is_radio'] ?? 1) === 0,
+    'radio=' . ($ch[2]['is_radio'] ?? '?') . ' tv=' . ($ch[0]['is_radio'] ?? '?'));
 check('آدرس استریم ساخته شد',
     str_contains((string)($ch[0]['stream_url'] ?? ''), '/stream/channel/uuid-aaa'),
     $ch[0]['stream_url'] ?? '');

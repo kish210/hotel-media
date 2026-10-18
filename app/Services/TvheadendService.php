@@ -151,9 +151,19 @@ class TvheadendService
             return ['ok' => false, 'imported' => 0, 'updated' => 0, 'total' => 0, 'message' => 'منبع یافت نشد'];
         }
 
+        /* `channel/grid` نه `channel/list`.
+           `channel/list` در TVHeadend 4.3 فقط فهرست انتخاب است و هر
+           ورودی‌اش `{key, val}` است — نه `{uuid, name, number, icon}`.
+           کد پایین `$ch['uuid']` را می‌خواند، پس همهٔ کانال‌ها را با
+           `continue` رد می‌کرد و در پایان «هیچ کانالی تعریف نشده» می‌گفت،
+           در حالی که ۴۵ کانال واقعی (IRIB TV1 تا TV4 و بقیه) در
+           TVHeadend بود. روی سخت‌افزار واقعی دیده شد.
+
+           تست قبلی این را پنهان می‌کرد: سرور ساختگی‌اش `uuid/name`
+           برمی‌گرداند، شکلی که TVHeadend واقعی هرگز نمی‌دهد. */
         $res = $this->request(
             (string)$src['server_url'],
-            '/api/channel/list?limit=' . self::CHANNEL_LIMIT,
+            '/api/channel/grid?limit=' . self::CHANNEL_LIMIT,
             (string)($src['username'] ?? ''),
             (string)($src['password'] ?? '')
         );
@@ -163,6 +173,21 @@ class TvheadendService
         }
 
         $entries = json_decode($res['body'], true)['entries'] ?? [];
+
+        /* تحمل نسخه‌ها: اگر نسخه‌ای `grid` را نداد یا شکل دیگری برگرداند،
+           به `channel/list` برمی‌گردیم که `{key,val}` است (key=uuid، val=نام).
+           هیچ تغییری در خود TVHeadend لازم نیست. */
+        if (!$entries || !isset($entries[0]['uuid'])) {
+            $alt = $this->request((string)$src['server_url'], '/api/channel/list?limit=' . self::CHANNEL_LIMIT,
+                                  (string)($src['username'] ?? ''), (string)($src['password'] ?? ''));
+            if ($alt['ok']) {
+                $entries = [];
+                foreach ((json_decode($alt['body'], true)['entries'] ?? []) as $e) {
+                    if (isset($e['uuid'])) { $entries[] = $e; }
+                    elseif (isset($e['key'])) { $entries[] = ['uuid' => (string)$e['key'], 'name' => (string)($e['val'] ?? '')]; }
+                }
+            }
+        }
         if (!$entries) {
             return ['ok' => false, 'imported' => 0, 'updated' => 0, 'total' => 0,
                     'message' => 'هیچ کانالی در TVHeadend تعریف نشده — اول در خود TVHeadend اسکن کنید'];
@@ -173,9 +198,33 @@ class TvheadendService
         $imported = 0;
         $updated  = 0;
 
+        /* رادیو را با برچسب TVHeadend می‌شناسیم. بی این، ۲۴ کانال رادیو در
+           فهرست تلویزیون اتاق‌ها می‌آمدند و مهمان با زدن آن‌ها تصویر
+           خالی می‌دید. کانال‌ها `tags` (uuid برچسب) دارند و نامشان از
+           `channeltag/list` می‌آید؛ نام را یک‌بار می‌گیریم، نه به‌ازای هر
+           کانال. اگر گرفته نشد، `$radioTags` خالی می‌ماند و هیچ کانالی
+           اشتباها رادیو علامت نمی‌خورد. */
+        $radioTags = [];
+        $tagRes = $this->request((string)$src['server_url'], '/api/channeltag/list',
+                                 (string)($src['username'] ?? ''), (string)($src['password'] ?? ''));
+        if ($tagRes['ok']) {
+            foreach ((json_decode($tagRes['body'], true)['entries'] ?? []) as $t) {
+                if (stripos((string)($t['val'] ?? ''), 'radio') !== false) $radioTags[(string)$t['key']] = true;
+            }
+        }
+
         foreach ($entries as $ch) {
             $uuid = (string)($ch['uuid'] ?? '');
             if ($uuid === '') continue;
+
+            /* کانال غیرفعال در TVHeadend (مثلا اپراتور آن را خاموش کرده)
+               نباید وارد برنامه شود. */
+            if (array_key_exists('enabled', $ch) && !$ch['enabled']) continue;
+
+            $isRadio = 0;
+            foreach ((array)($ch['tags'] ?? []) as $tg) {
+                if (isset($radioTags[(string)$tg])) { $isRadio = 1; break; }
+            }
 
             $name   = trim((string)($ch['name'] ?? '')) ?: 'بدون نام';
             $number = (int)($ch['number'] ?? 0);
@@ -202,6 +251,7 @@ class TvheadendService
                     'stream_url'  => $streamUrl,
                     'logo_url'    => $logo,
                     'is_active'   => 1,
+                    'is_radio'    => $isRadio,
                     'source_type' => 'tvheadend',
                     'source_id'   => $sourceId,
                 ], ['id' => (int)$existing['id']]);
@@ -221,6 +271,7 @@ class TvheadendService
                     'channel_no'  => $number ?: null,
                     'sort_order'  => $number,
                     'is_active'   => 1,
+                    'is_radio'    => $isRadio,
                     'source_type' => 'tvheadend',
                     'source_id'   => $sourceId,
                     'tvh_uuid'    => $uuid,
