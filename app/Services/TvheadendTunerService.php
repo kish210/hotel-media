@@ -76,6 +76,7 @@ final class TvheadendTunerService
             $out['inputs'][] = [
                 'name'   => $name,
                 'subs'   => (int)($e['subs'] ?? 0),
+                'stream' => (string)($e['stream'] ?? ''),   // مثلا «602MHz in …»: الان روی کدام mux است
                 'signal' => (int)($e['signal'] ?? 0),
                 'snr'    => (int)($e['snr'] ?? 0),
                 'ber'    => (int)($e['ber'] ?? 0),
@@ -96,6 +97,23 @@ final class TvheadendTunerService
             ];
         }
         $out['frontends'] = $this->frontends($src);
+
+        // جدول فرکانس‌ها: کدام mux سرویس دارد و اسکنش چه شد. با یک تیونر فقط یک mux
+        // هم‌زمان دریافت می‌شود، پس این جدول همان چیزی است که تعیین می‌کند کدام
+        // کانال‌ها با هم قابل‌پخش‌اند.
+        $out['muxes'] = [];
+        $mg = $this->tvh->call($src, 'mpegts/mux/grid', ['limit' => 500]);
+        foreach (($mg['data']['entries'] ?? []) as $m) {
+            $out['muxes'][] = [
+                'mhz'    => (int)round(((int)($m['frequency'] ?? 0)) / 1_000_000),
+                'delsys' => (string)($m['delsys'] ?? ''),
+                'state'  => (int)($m['scan_state'] ?? 0),   // 0 بیکار، 1 در صف، 2 در حال اسکن
+                'result' => (int)($m['scan_result'] ?? 0),  // 0 نامشخص، 1 موفق، 2 ناموفق
+                'svc'    => (int)($m['num_svc'] ?? 0),
+                'chn'    => (int)($m['num_chn'] ?? 0),
+            ];
+        }
+        usort($out['muxes'], static fn($a, $b) => $a['mhz'] <=> $b['mhz']);
         return $out;
     }
 

@@ -34,6 +34,12 @@
   <div id="tn-err" style="display:none;color:#f87171;font-size:12px;margin-bottom:8px;"></div>
   <div id="tn-inputs" class="tn-step">در حال خواندن…</div>
   <div class="tn-row" style="margin-top:12px;" id="tn-stats"></div>
+  <div id="tn-muxes" style="margin-top:14px;"></div>
+  <div class="tn-step" style="margin-top:8px;">
+    <i class="fas fa-circle-info ml-1" style="color:#60a5fa;"></i>
+    هر تیونر در هر لحظه فقط <b>یک فرکانس (mux)</b> را می‌گیرد. کانال‌های هم‌فرکانس (مثلا همه‌ی کانال‌های ۶۸۲) با هم قابل‌پخش‌اند، ولی
+    کانالی از فرکانس دیگر تا آزاد‌شدن تیونر پخش نمی‌شود (در پلیر «در دسترس نیست»). برای پخش هم‌زمان از چند فرکانس تیونر بیشتر لازم است.
+  </div>
 </div>
 
 <div class="tn-card">
@@ -102,6 +108,21 @@ async function refresh() {
       ['تیونر وصل', linked + '/' + fe.length], ['صف اسکن', n ? n.queue : 0],
     ].map(([l, v]) => `<div class="tn-stat"><b>${v}</b><span>${l}</span></div>`).join('');
     $('tn-scanning').style.display = (n && n.queue > 0) ? '' : 'none';
+
+    /* جدول فرکانس‌ها + روی کدام فرکانس هستیم */
+    const tuned = (d.inputs || []).map(i => i.stream).filter(Boolean).join(' ');
+    const STATE = ['', 'در صف اسکن', 'در حال اسکن'], RES = ['نامشخص', 'موفق', 'ناموفق'];
+    $('tn-muxes').innerHTML = (d.muxes || []).length ? '<table style="width:100%;font-size:12px;border-collapse:collapse;">' +
+      '<tr style="color:#64748b;text-align:right;"><th style="padding:4px 6px;">فرکانس</th><th>نوع</th><th>اسکن</th><th>سرویس</th><th>کانال</th><th></th></tr>' +
+      d.muxes.map(m => {
+        const here = tuned.indexOf(m.mhz + 'MHz') === 0 || tuned.indexOf(' ' + m.mhz + 'MHz') >= 0;
+        const col = m.svc > 0 ? '#22c55e' : (m.result === 2 ? '#f87171' : '#94a3b8');
+        return '<tr style="border-top:1px solid rgba(255,255,255,.05);">' +
+          '<td style="padding:5px 6px;" class="tn-mono">' + m.mhz + ' MHz</td><td>' + esc(m.delsys) + '</td>' +
+          '<td style="color:' + col + ';">' + (m.state ? STATE[m.state] : RES[m.result]) + '</td>' +
+          '<td>' + m.svc + '</td><td>' + m.chn + '</td>' +
+          '<td>' + (here ? '<span style="color:#fbbf24;"><i class="fas fa-satellite-dish ml-1"></i>تیونر الان اینجاست</span>' : '') + '</td></tr>';
+      }).join('') + '</table>' : '';
   } catch (e) { $('tn-err').style.display = ''; $('tn-err').textContent = e.message; }
 }
 

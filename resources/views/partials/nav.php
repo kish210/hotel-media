@@ -237,15 +237,28 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
 <?php endif; ?>
 
 <?php if ($isSuper): ?>
+<!-- DVB مهم‌ترین بخش IPTV است؛ منوی جدا و بالای بخش سیستم -->
+<div class="sidebar-section">
+  <i class="fas fa-satellite-dish" style="margin-left:5px;opacity:.6"></i> DVB و تیونر
+</div>
+<a href="/admin/system/tuner" class="sidebar-link <?= isActive('/admin/system/tuner') ?>">
+  <span class="icon"><i class="fas fa-satellite-dish" style="color:#ef4444;"></i></span> تیونر و اسکن کانال
+</a>
+<a href="/admin/iptv/tvheadend" class="sidebar-link <?= isActive('/admin/iptv/tvheadend') ?>">
+  <span class="icon"><i class="fas fa-tower-cell" style="color:#ef4444;"></i></span> منبع TVHeadend
+</a>
+<a href="/admin/system/drivers" class="sidebar-link <?= isActive('/admin/system/drivers') ?>">
+  <span class="icon"><i class="fas fa-microchip" style="color:#f59e0b;"></i></span> درایور تیونر
+</a>
+<div class="sidebar-section">
+  <i class="fas fa-gear" style="margin-left:5px;opacity:.6"></i> سیستم
+</div>
 <a href="/admin/system/update" class="sidebar-link <?= isActive('/admin/system/update') ?>">
   <span class="icon"><i class="fas fa-cloud-arrow-down" style="color:#4098db;"></i></span>
   به‌روزرسانی سیستم
 </a>
 <a href="/admin/system/drivers" class="sidebar-link <?= isActive('/admin/system/drivers') ?>">
   <span class="icon"><i class="fas fa-microchip" style="color:#f59e0b;"></i></span> درایورها
-</a>
-<a href="/admin/system/tuner" class="sidebar-link <?= isActive('/admin/system/tuner') ?>">
-  <span class="icon"><i class="fas fa-satellite-dish" style="color:#ef4444;"></i></span> تیونر و اسکن کانال
 </a>
 <?php /* دو صفحه‌ی عمدا جدا: این «الان چه خراب است» را می‌گوید و
          لاگ «چه اتفاقی افتاده بود» را. قاطی‌کردنشان یعنی برای دیدن
