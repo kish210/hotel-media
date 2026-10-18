@@ -283,8 +283,26 @@ $ended     = count(array_filter($messages ?? [], fn($m) => $m['state'] === 'ende
             <option value="fullscreen"><?= __('messages.style.fullscreen') ?></option>
             <option value="popup"><?= __('messages.style.popup') ?></option>
             <option value="banner"><?= __('messages.style.banner') ?></option>
+            <option value="ticker">زیرنویس متحرک (نوار پایین صفحه)</option>
           </select>
+          <div style="font-size:10px;color:#8593a8;margin-top:4px;">
+            زیرنویس روی تلویزیون اتاق و تابلو، هر دو، پخش می‌شود و تصویر را نمی‌پوشاند.
+          </div>
         </div>
+        <div id="ticker-speed-wrap" style="display:none;">
+          <label class="form-label">سرعت زیرنویس (ثانیه برای یک دور)</label>
+          <input type="number" name="ticker_speed" class="form-input" value="40" min="8" max="200">
+          <div style="font-size:10px;color:#8593a8;margin-top:4px;">عدد بزرگ‌تر = حرکت آرام‌تر.</div>
+        </div>
+        <script>
+        (function () {
+          var sel = document.querySelector('select[name="style"]');
+          var box = document.getElementById('ticker-speed-wrap');
+          if (!sel || !box) return;
+          function sync() { box.style.display = sel.value === 'ticker' ? '' : 'none'; }
+          sel.addEventListener('change', sync); sync();
+        })();
+        </script>
         <div>
           <label class="form-label">آیکون (Emoji)</label>
           <input type="text" name="icon" id="msg-icon" class="form-input"

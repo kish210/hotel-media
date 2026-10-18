@@ -10,6 +10,8 @@ $router->group(['prefix' => '/api/v1'], function($r) {
     // ── Screen Player endpoints (screen-key auth, no JWT)
     $r->post('/screens/{code}/heartbeat', [ScreenController::class, 'heartbeat']);
     $r->get('/screens/{code}/playlist',   [ScreenController::class, 'getPlaylist']);
+    /* تیزر شروع — پلیر هنگام بوت یک‌بار می‌خواند (تابلو و اتاق) */
+    $r->get('/screens/{code}/intro',      [ScreenController::class, 'getIntro']);
 
     /* زمان سرور. تابلوها قبلا این را صدا می‌زدند ولی مسیرش وجود نداشت،
        پس همگام‌سازی همیشه بی‌صدا شکست می‌خورد و ساعتِ لابی همان ساعتِ

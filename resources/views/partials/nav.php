@@ -68,6 +68,11 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
   <span class="icon"><i class="fas fa-satellite-dish"></i></span> ثبت و فرمان دستگاه
 </a>
 
+<?php /* تیزر: اولین چیزی که مهمان هنگام روشن‌کردن تلویزیون می‌بیند */ ?>
+<a href="/admin/intro" class="sidebar-link <?= isActive('/admin/intro') ?>">
+  <span class="icon"><i class="fas fa-clapperboard"></i></span> تیزر شروع
+</a>
+
 <!-- ══ محتوا — مشترک بین تابلو و اتاق ══ -->
 <div class="sidebar-section">
   <i class="fas fa-photo-film" style="margin-left:5px;opacity:.6"></i> محتوا

@@ -395,6 +395,11 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     $r->post('/iptv/tvheadend/{id}/sync',         [\App\Controllers\Web\TvheadendController::class, 'syncChannels']);
     $r->post('/iptv/tvheadend/{id}/m3u',          [\App\Controllers\Web\TvheadendController::class, 'importM3u']);
     // ── Messages (scheduled greetings) ────────────────────────
+    // ── تیزر شروع (عکس/ویدیوی اول روشن‌شدن تلویزیون) ──────────
+    $r->get('/intro',                 [\App\Controllers\Web\TvIntroController::class, 'index']);
+    $r->post('/intro',                [\App\Controllers\Web\TvIntroController::class, 'store'],  [CsrfMiddleware::class]);
+    $r->post('/intro/{id}/toggle',    [\App\Controllers\Web\TvIntroController::class, 'toggle'], [CsrfMiddleware::class]);
+    $r->post('/intro/{id}/delete',    [\App\Controllers\Web\TvIntroController::class, 'delete'], [CsrfMiddleware::class]);
     $r->get('/messages',                      [\App\Controllers\Web\MessagesController::class, 'index']);
     $r->post('/messages',                     [\App\Controllers\Web\MessagesController::class, 'store']);
     $r->post('/messages/{id}/delete',         [\App\Controllers\Web\MessagesController::class, 'delete']);

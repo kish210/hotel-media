@@ -82,7 +82,29 @@
       '#' + OV_ID + ' .tvmsg-rule{height:3px;width:70px;margin:12px auto;border-radius:2px;}' +
       '#' + OV_ID + ' .tvmsg-body{font-size:21px;line-height:1.7;}' +
       '#' + OV_ID + ' .as-banner .tvmsg-body{font-size:17px;}' +
-      '#' + OV_ID + ' .tvmsg-hint{margin-top:16px;font-size:14px;opacity:.75;}'
+      '#' + OV_ID + ' .tvmsg-hint{margin-top:16px;font-size:14px;opacity:.75;}' +
+      /* ── زیرنویس متحرک ──────────────────────────────────────────
+         نوار باریک پایین صفحه که پخش را نمی‌پوشاند و خودش بسته می‌شود.
+         پس‌زمینهٔ overlay برای این سبک برداشته می‌شود، وگرنه کل تصویر
+         تیره می‌شد برای یک خط متن. حرکت با transform است نه left:
+         روی SoC تلویزیون فقط transform روی GPU می‌افتد. */
+      '#' + OV_ID + '.as-ticker-ov{background:transparent;}' +
+      '#' + OV_ID + ' .tvmsg-ticker{position:absolute;left:0;right:0;bottom:0;' +
+      'overflow:hidden;white-space:nowrap;padding:10px 0;' +
+      'border-top:2px solid #4098db;box-sizing:border-box;}' +
+      '#' + OV_ID + ' .tvmsg-ticker-in{display:inline-block;' +
+      'font-size:24px;font-weight:700;white-space:nowrap;' +
+      '-webkit-animation:tvmsgMarquee linear infinite;animation:tvmsgMarquee linear infinite;}' +
+      /* فارسی از چپ وارد می‌شود و به راست می‌رود (آینهٔ تیکر انگلیسی):
+         ابتدای جمله در راست‌چین سمت راست است و باید اول دیده شود. */
+      '#' + OV_ID + ' .tvmsg-ticker-in.rtl{' +
+      '-webkit-animation-name:tvmsgMarqueeRtl;animation-name:tvmsgMarqueeRtl;}' +
+      '@-webkit-keyframes tvmsgMarquee{0%{-webkit-transform:translateX(100%);}' +
+      '100%{-webkit-transform:translateX(-100%);}}' +
+      '@keyframes tvmsgMarquee{0%{transform:translateX(100%);}100%{transform:translateX(-100%);}}' +
+      '@-webkit-keyframes tvmsgMarqueeRtl{0%{-webkit-transform:translateX(-100%);}' +
+      '100%{-webkit-transform:translateX(100%);}}' +
+      '@keyframes tvmsgMarqueeRtl{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}'
     ));
     (d.head || d.getElementsByTagName('head')[0]).appendChild(st);
   }
@@ -153,6 +175,25 @@
          بد می‌نشیند و برعکس. */
       var rtl = /[؀-ۿ]/.test(title + body);
 
+      /* ── زیرنویس: نوار متحرک، نه کارت ───────────────────────────────
+         عنوان و متن پشت سر هم روی یک خط می‌روند. دو نسخه از متن کنار هم
+         قرار می‌گیرد تا حلقه بدون پرش دیده شود. */
+      if (style === 'ticker') {
+        var line = (title && body) ? (title + ' — ' + body) : (title || body);
+        var spd  = parseInt(m.ticker_speed, 10); if (!spd || spd < 8) spd = 40;
+        var dur  = secs;
+        ov.className = 'on as-ticker-ov';
+        ov.innerHTML = '<div class="tvmsg-ticker" dir="' + (rtl ? 'rtl' : 'ltr') +
+          '" style="background:' + esc(bg) + ';color:' + esc(fg) + ';border-color:' + esc(accent) + '">' +
+          '<span class="tvmsg-ticker-in' + (rtl ? ' rtl' : '') +
+          '" style="-webkit-animation-duration:' + spd + 's;animation-duration:' + spd + 's">' +
+          esc(line) + '</span></div>';
+        var selfT = this;
+        clearTimeout(this.timer);
+        this.timer = setTimeout(function () { selfT.dismiss(); }, dur * 1000);
+        return;
+      }
+
       var html = '<div class="tvmsg-card as-' + esc(style) + '" dir="' + (rtl ? 'rtl' : 'ltr') + '"' +
                  ' style="background:' + esc(bg) + ';color:' + esc(fg) +
                  ';border-color:' + esc(accent) + '">';
@@ -191,7 +232,7 @@
 
     hide: function () {
       var ov = d.getElementById(OV_ID);
-      if (ov) { ov.className = ''; ov.innerHTML = ''; }
+      if (ov) { ov.className = ''; ov.innerHTML = ''; }   // as-ticker-ov هم با همین پاک می‌شود
     },
 
     dismiss: function () {
@@ -205,7 +246,7 @@
     },
 
     /** آیا پیامی روی صفحه است — پروفایل می‌تواند بپرسد تا کلید را ندزدد */
-    isOpen: function () { return !!this.now; }
+    isOpen: function () { return !!this.now && (this.now.style || '') !== 'ticker'; }
   };
 
   /* کلیدهای ریموت: OK/Enter و Back/Escape پیام را می‌بندند.
@@ -213,6 +254,10 @@
      هر دو پذیرفته می‌شوند چون یک فایل روی هر دو اجرا می‌شود. */
   function onKey(e) {
     if (!TVMSG.now) return;
+    /* زیرنویس پیام وضعیتی نیست؛ کارِ مهمان را قطع نمی‌کند. اگر کلید را
+       اینجا می‌خوردیم، اولین فشار دکمه به‌جای عوض‌کردن کانال فقط نوار را
+       می‌بست. */
+    if ((TVMSG.now.style || '') === 'ticker') return;
     var k = e.keyCode || e.which;
     if (k === 13 || k === 27 || k === 10009 || k === 461) {
       TVMSG.dismiss();

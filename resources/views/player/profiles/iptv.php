@@ -40,6 +40,8 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 <script src="/assets/vendor/lg/hcap.js<?= v() ?>"></script>
 <?php endif; ?>
 <script src="/assets/js/tv-base.js<?= v() ?>"></script>
+<script src="/assets/js/tv-intro.js<?= v() ?>"></script>
+<script src="/assets/js/tv-messages.js<?= v() ?>"></script>
 <script src="/assets/js/tv-trickplay.js<?= v() ?>"></script>
 <style>
 /* فقط چیزهایی که مخصوص همین صفحه‌اند. بقیه در tv-base.css است.
@@ -1443,6 +1445,14 @@ html.tv-input-live #input-hint.is-on { display: block; }
           return;
         }
         runCommands(d.data.commands);
+        /* پیام‌های زمان‌بندی‌شدهٔ پنل (جدول screen_messages) تا امروز فقط به
+           تابلو می‌رسید و تلویزیون اتاق همین کلید را دور می‌ریخت — یعنی
+           زیرنویس یا اعلانی که اپراتور برای «همهٔ صفحه‌ها» می‌ساخت، در
+           اتاق‌ها دیده نمی‌شد. پیام‌های خودِ اتاق (room-info) جدا هستند و
+           سر جایشان می‌مانند. */
+        if (window.TVMSG && d.data.messages && d.data.messages.length) {
+          TVMSG.enqueue(d.data.messages);
+        }
         scheduleHeartbeat(d.data.sync_interval || 30);
       });
   }
@@ -1500,7 +1510,9 @@ html.tv-input-live #input-hint.is-on { display: block; }
   }
 
   /* ── شروع ──────────────────────────────────────────────────────── */
-  loadMenu();
+  /* تیزر اول، منو بعد. اگر تیزری نبود یا سرور دیر کرد، TVINTRO همان
+     لحظه loadMenu را صدا می‌زند؛ تیزر هرگز جلوی منو را نمی‌گیرد. */
+  if (window.TVINTRO) { TVINTRO.play(SCREEN_CODE, loadMenu); } else { loadMenu(); }
   loadRoom();
   connectWS();
 

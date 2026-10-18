@@ -251,6 +251,18 @@ class ScreenController extends Controller
         ]);
     }
 
+    /**
+     * GET /api/v1/screens/{code}/intro — تیزر شروع این صفحه.
+     * بدون احراز هویت مثل خود playlist: تلویزیون با کد صفحه می‌آید.
+     */
+    public function getIntro(Request $req, array $params): void
+    {
+        $screen = $this->screen->findByCode($params['code']);
+        if (!$screen) Response::notFound();
+        $items = (new \App\Services\TvIntroService())->forScreen((int)$screen['tenant_id'], $screen);
+        Response::success(['items' => $items]);
+    }
+
     public function getPlaylist(Request $req, array $params): void
     {
         $screen = $this->screen->findByCode($params['code']);

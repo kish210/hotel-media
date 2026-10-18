@@ -69,7 +69,7 @@ class MessagesController extends Controller
         $this->ensureTable();
 
         $types  = ['welcome','congratulation','announcement','warning','info'];
-        $styles = ['overlay','fullscreen','popup','banner'];
+        $styles = ['overlay','fullscreen','popup','banner','ticker'];
         $repeats = ['once','daily','weekly','monthly'];
         $targets = ['all','screen','group'];
 
@@ -93,6 +93,8 @@ class MessagesController extends Controller
             'type'         => in_array($req->post('type'), $types) ? $req->post('type') : 'announcement',
             'style'        => in_array($req->post('style'), $styles) ? $req->post('style') : 'overlay',
             'icon'         => trim($req->post('icon', '')) ?: null,
+            // سرعت زیرنویس: ثانیه برای یک دور کامل (فقط سبک ticker)
+            'ticker_speed' => max(8, min(200, (int)$req->post('ticker_speed', 40))),
             /* تبلیغ تصویری: جدول مردهٔ `campaigns` ستون media_id را
                داشت ولی هیچ صفحه‌ای آن جدول را نمی‌خواند، و این جدول
                که واقعا تحویل می‌شود ستونش را نداشت. نتیجه: تبلیغ

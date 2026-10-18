@@ -63,6 +63,7 @@ $todayJalali = function_exists('jalaliDate') ? jalaliDate() : '';
 <script src="/assets/js/tv-base.js<?= v() ?>"></script>
 <script src="/assets/js/tv-subtitles.js<?= v() ?>"></script>
 <script src="/assets/js/tv-overlays.js<?= v() ?>"></script>
+<script src="/assets/js/tv-intro.js<?= v() ?>"></script>
 <style>
 /* فقط چیزهای مخصوص این صفحه. بدون var() ، clamp() ، gap ، inset. */
 html, body { background: #000; }
@@ -789,6 +790,12 @@ html, body { background: #000; }
 
   /* ── چرخش پلی‌لیست ─────────────────────────────────────────────── */
   function loadPlaylist() {
+    /* تیزر شروع فقط پیش از **اولین** بارگذاری؛ تازه‌سازی دوره‌ای
+       پلی‌لیست نباید وسط کار تلویزیون تیزر بیندازد. */
+    if (!loadPlaylist.booted) {
+      loadPlaylist.booted = true;
+      if (window.TVINTRO) { TVINTRO.play(SCREEN_CODE, loadPlaylist); return; }
+    }
     TV.get(ORIGIN + '/api/v1/screens/' + SCREEN_CODE + '/playlist', function (err, d) {
       if (err) { showOffline(); return; }
       if (!d || !d.success || !d.data || !d.data.items || !d.data.items.length) {
