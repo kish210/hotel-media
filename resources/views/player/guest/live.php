@@ -262,7 +262,16 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
       /* پخش‌کننده‌ی بومی: HLS روی Tizen و webOS، و UDP multicast */
       v.src = src.url;
     }
-    try { var p = v.play(); if (p && p['catch']) p['catch'](function () {}); } catch (e3) {}
+    /* Chrome/Edge دسکتاپ: ویدیوی دارای صدا بدون کلیک کاربر خودکار پخش نمی‌شود و
+       play() رد می‌شود؛ پلیر بعد از ۱۲ ثانیه کانال را «ناموجود» می‌دانست. در این
+       حالت بی‌صدا شروع می‌کنیم و با اولین کلید/کلیک صدا را باز می‌کنیم. */
+    try {
+      var p = v.play();
+      if (p && p['catch']) p['catch'](function () {
+        try { v.muted = true; var p2 = v.play(); if (p2 && p2['catch']) p2['catch'](function () {}); } catch (e4) {}
+        armUnmute();
+      });
+    } catch (e3) {}
 
     /* منبعی که نه خطا می‌دهد نه پخش می‌کند — روی بعضی تلویزیون‌ها
        آدرس بد همین‌طور می‌ماند و صفحه سیاه */
@@ -278,6 +287,17 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
       player.lastT = t;
       if (player.stuck >= 12) next();
     }, 3000);
+  }
+
+  function armUnmute() {
+    if (armUnmute.done) return;
+    armUnmute.done = true;
+    function on() {
+      armUnmute.done = false;
+      document.removeEventListener('keydown', on); document.removeEventListener('click', on);
+      if (player.v) { try { player.v.muted = false; } catch (e5) {} }
+    }
+    document.addEventListener('keydown', on); document.addEventListener('click', on);
   }
 
   function zap(dir) {
