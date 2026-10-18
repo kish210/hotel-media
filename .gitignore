@@ -34,3 +34,6 @@ installer/hotelmedia/**/hotelmedia.ico
 # تنظیمات محلی Claude Code — مخصوص همین دستگاه است و در آن
 # رشته‌های مجوز ذخیره می‌شود که ممکن است توکن داشته باشند.
 .claude/settings.local.json
+
+# نمونه‌های مرجع (حجیم، فقط محلی)
+/sample/
