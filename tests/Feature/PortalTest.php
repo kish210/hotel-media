@@ -183,7 +183,15 @@ check('اتاق خالی است ولی خطا نداد', ($d2['room']['occupied'
 check('نام مهمان null است',
     array_key_exists('guest_name', $d2['room'] ?? []) && $d2['room']['guest_name'] === null,
     'مقدار=' . var_export($d2['room']['guest_name'] ?? 'missing', true));
-check('منوی پیش‌فرض tenant پیدا شد', count($d2['menu'] ?? []) === 4, 'تعداد=' . count($d2['menu'] ?? []));
+/* عدد دقیق («دقیقا ۴ آیتم») به محض افزودن یک آیتم منو می‌شکست، بی‌آنکه چیزی
+   خراب شده باشد. آنچه واقعا اهمیت دارد: منو خالی نیست و هر آیتم کلیدهایی را
+   دارد که پلیر تلویزیون می‌خواند. */
+$menuItems = $d2['menu'] ?? [];
+check('منوی پیش‌فرض tenant پیدا شد', count($menuItems) > 0, 'تعداد=' . count($menuItems));
+check('آیتم‌های منو کلیدهای لازم پلیر را دارند',
+    $menuItems !== [] && !array_filter($menuItems,
+        static fn($it) => !isset($it['type'], $it['label'])),
+    'نمونه=' . json_encode($menuItems[0] ?? null, JSON_UNESCAPED_UNICODE));
 
 echo "\n── ۸) کد نامعتبر ──\n";
 $r3 = portal('home', ['code' => 'NOSUCH']);
