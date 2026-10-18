@@ -66,7 +66,7 @@ function play() {
   } else if (!/\.(mp4|webm|ogv)(\?|$)/i.test(u) && window.mpegts && mpegts.isSupported()) {
     // MPEG-TS خام (کانال‌های تی‌وی‌هدند و /tv/stream/…) را مرورگر خودش نمی‌پخشد
     $('tt-msg').textContent = 'در حال اتصال…';
-    ts = mpegts.createPlayer({ type: 'mpegts', isLive: true, url: u });
+    ts = mpegts.createPlayer({ type: 'mpegts', isLive: true, url: /^\/tv\/stream\//.test(u) ? u + '&compat=1' : u });
     ts.on(mpegts.Events.ERROR, (t, d) => { $('tt-msg').textContent = 'خطای پخش: ' + t + ' ' + (d || ''); });
     ts.attachMediaElement(v); ts.load();
     v.addEventListener('playing', () => { $('tt-msg').textContent = 'پخش می‌شود'; }, { once: true });

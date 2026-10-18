@@ -275,7 +275,7 @@ function testStream(url, name) {
   } else if (!/\.(mp4|webm|ogv)(\?|$)/i.test(url) && window.mpegts && mpegts.isSupported()) {
     // کانال تیونر (/tv/stream/…) MPEG-TS خام است و مرورگر خودش نمی‌پخشد
     msg.textContent = 'در حال اتصال…';
-    _ts = mpegts.createPlayer({ type: 'mpegts', isLive: true, url: url });
+    _ts = mpegts.createPlayer({ type: 'mpegts', isLive: true, url: /^\/tv\/stream\//.test(url) ? url + '&compat=1' : url });
     _ts.on(mpegts.Events.ERROR, function (t, d) { msg.textContent = 'خطای پخش: ' + t + ' ' + (d || ''); });
     _ts.attachMediaElement(vid); _ts.load();
     vid.addEventListener('playing', function () { msg.textContent = ''; }, { once: true });

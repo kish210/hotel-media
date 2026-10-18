@@ -33,6 +33,7 @@ $code = (string)($screen['code'] ?? '');
 <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css<?= v() ?>">
 <link rel="stylesheet" href="/assets/css/tv-base.css<?= v() ?>">
 <script src="/assets/vendor/hls/hls.min.js<?= v() ?>"></script>
+<script src="/assets/vendor/mpegts/mpegts.js<?= v() ?>"></script>
 <script src="/assets/js/tv-base.js<?= v() ?>"></script>
 <style>
 body { background: #000; color: #e2e8f0; overflow: hidden; }
@@ -174,7 +175,7 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
     var s = [], seen = {};
     function add(url, kind) { if (url && !seen[url]) { seen[url] = 1; s.push({ url: url, kind: kind }); } }
     if (ch.multicast_url && ch.delivery !== 'unicast' && (PLATFORM === 'webos' || PLATFORM === 'tizen')) add(ch.multicast_url, 'native');
-    function kindOf(u) { return /\.m3u8(\?|$)/i.test(u) ? 'hls' : 'native'; }
+    function kindOf(u) { return /\.m3u8(\?|$)/i.test(u) ? 'hls' : (/^\/tv\/stream\/|\.ts(\?|$)/i.test(u) ? 'ts' : 'native'); }
     add(ch.stream_url, kindOf(ch.stream_url || ''));
     add(ch.backup_stream_url, kindOf(ch.backup_stream_url || ''));
     return s;
@@ -183,6 +184,7 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
   function stopPlayer() {
     clearTimeout(player.settle); clearInterval(player.watch); clearTimeout(player.retry);
     if (player.hls) { try { player.hls.destroy(); } catch (e) {} player.hls = null; }
+    if (player.ts) { try { player.ts.destroy(); } catch (e) {} player.ts = null; }
     if (player.v) { try { player.v.pause(); player.v.removeAttribute('src'); player.v.load(); } catch (e2) {} }
     TV.id('lv-video').innerHTML = '';
     player.v = null;
@@ -220,6 +222,7 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
     var ch = channels[cur];
     clearTimeout(player.settle); clearInterval(player.watch);
     if (player.hls) { try { player.hls.destroy(); } catch (e) {} player.hls = null; }
+    if (player.ts) { try { player.ts.destroy(); } catch (e) {} player.ts = null; }
     TV.id('lv-video').innerHTML = '';
 
     if (player.idx >= player.sources.length) {
@@ -248,6 +251,13 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
       h.on(window.Hls.Events.ERROR, function (ev, data) { if (data && data.fatal) next(); });
       h.loadSource(src.url);
       h.attachMedia(v);
+    } else if (src.kind === 'ts' && !(v.canPlayType && v.canPlayType('video/mp2t')) && window.mpegts && window.mpegts.isSupported()) {
+      /* مرورگر دسکتاپ MPEG-TS خام (کانال تیونر) را نمی‌پخشد؛ تلویزیون‌ها بومی می‌پخشند */
+      var tp = window.mpegts.createPlayer({ type: 'mpegts', isLive: true, url: src.url + (src.url.indexOf('?') < 0 ? '?' : '&') + 'compat=1' });
+      player.ts = tp;
+      tp.on(window.mpegts.Events.ERROR, function () { next(); });
+      tp.attachMediaElement(v);
+      tp.load();
     } else {
       /* پخش‌کننده‌ی بومی: HLS روی Tizen و webOS، و UDP multicast */
       v.src = src.url;

@@ -39,6 +39,8 @@ class StreamProxyController extends Controller
             [$uuid]
         );
         if (!$row) { http_response_code(404); echo 'not found'; return; }
+        // مرورگر دسکتاپ: ترنسکد سبک به H.264 پروگرسیو
+        if ($req->get('compat') === '1') { $this->compat($uuid); return; }
         if (!function_exists('curl_init')) { http_response_code(500); echo 'curl missing'; return; }
 
         $profile = $_GET['profile'] ?? '';
@@ -78,5 +80,49 @@ class StreamProxyController extends Controller
         curl_exec($ch);
         curl_close($ch);
         if (!$started) { http_response_code(503); echo 'stream unavailable'; }
+    }
+
+    /**
+     * حالت سازگار برای مرورگر دسکتاپ: کانال‌های زمینی ایران H.264 **ردیفی**
+     * (۵۷۶i، ۴ فریم مرجع) هستند و دیکودر مرورگر آن را با
+     * PIPELINE_ERROR_DECODE رد می‌کند (تلویزیون با دیکودر سخت‌افزاری می‌پخشد).
+     * ffmpeg همان استریم امضاشدهٔ خودمان را می‌خواند (بدون رمز دوم)، deinterlace
+     * و به H.264 پروگرسیو تبدیل می‌کند. هر بیننده یک ffmpeg دارد، پس فقط برای
+     * آزمایش در مرورگر است نه تلویزیون‌ها.
+     */
+    private function compat(string $uuid): void
+    {
+        // is_executable()/file_exists() روی /usr/bin با open_basedir استخر ممنوع است؛
+        // اگر ffmpeg نبود proc_open خودش شکست می‌خورد
+        $ffmpeg = '/usr/bin/ffmpeg';
+        if (strtolower((string)($_SERVER['HTTPS'] ?? '')) === 'on') { http_response_code(501); echo 'compat unavailable'; return; }
+
+        $in = 'http://127.0.0.1:' . ((int)($_SERVER['SERVER_PORT'] ?? 80) ?: 80) . TvheadendService::streamPath($uuid);
+        $cmd = [$ffmpeg, '-hide_banner', '-loglevel', 'quiet', '-fflags', 'nobuffer', '-i', $in,
+                '-vf', 'yadif', '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency',
+                '-profile:v', 'main', '-g', '50', '-c:a', 'aac', '-b:a', '128k', '-ac', '2',
+                '-f', 'mpegts', 'pipe:1'];
+        $proc = proc_open($cmd, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        if (!is_resource($proc)) { http_response_code(500); echo 'ffmpeg failed'; return; }
+        fclose($pipes[2]);   // loglevel quiet: چیزی نمی‌نویسد
+
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+        @set_time_limit(0);
+        ignore_user_abort(false);
+        while (ob_get_level() > 0) ob_end_clean();
+        header('Content-Type: video/MP2T');
+        header('Cache-Control: no-store');
+        header('X-Accel-Buffering: no');
+
+        while (!feof($pipes[1])) {
+            $chunk = fread($pipes[1], 65536);
+            if ($chunk === false || $chunk === '') { usleep(20000); continue; }
+            echo $chunk;
+            flush();
+            if (connection_aborted()) break;
+        }
+        proc_terminate($proc, 15);
+        fclose($pipes[1]);
+        proc_close($proc);
     }
 }
