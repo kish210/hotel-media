@@ -76,12 +76,12 @@ $tabs  = ['' => 'همه', 'signage' => '🖼 تابلو', 'iptv' => '📺 تلو
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
       <?php if (!empty($p['transition'])): ?>
       <span style="font-size:11px;background:rgba(255,255,255,0.05);color:#64748b;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.07);">
-        <?= e($p['transition']) ?>
+        <?= e(["fade" => "محو", "slide" => "لغزش", "zoom" => "بزرگ‌نمایی", "none" => "بدون انتقال", "dissolve" => "حل‌شدن", "wipe" => "پاک‌کردن"][$p["transition"]] ?? $p["transition"]) ?>
       </span>
       <?php endif; ?>
       <?php if (!empty($p['shuffle'])): ?>
       <span style="font-size:11px;background:rgba(59,130,246,0.1);color:#60a5fa;padding:2px 8px;border-radius:6px;border:1px solid rgba(59,130,246,0.2);">
-        🔀 تصادفی
+        <i class="fas fa-shuffle"></i> تصادفی
       </span>
       <?php endif; ?>
     </div>

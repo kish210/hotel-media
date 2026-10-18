@@ -122,6 +122,37 @@ $all3d  = count(array_filter($screens, fn($s) => ($s['screen_type']??'signage')=
   </a>
 </div>
 
+<!-- ─── جست‌وجو و فیلتر (سمت مرورگر؛ فقط روی کارت‌های همین صفحه) ─────── -->
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
+  <input id="scr-q" type="search" class="form-input" style="max-width:280px;" placeholder="جست‌وجوی نام، کد یا محل…" aria-label="جست‌وجوی صفحه">
+  <button type="button" class="btn-ghost text-sm" data-scr-chip="" aria-pressed="true">همه</button>
+  <button type="button" class="btn-ghost text-sm" data-scr-chip="offline" aria-pressed="false" style="color:#f87171;">فقط آفلاین</button>
+  <button type="button" class="btn-ghost text-sm" data-scr-chip="wait" aria-pressed="false" style="color:#fbbf24;">در انتظار</button>
+  <span id="scr-count" style="font-size:12px;color:#8593a8;"></span>
+</div>
+<script>
+(function () {
+  const q = document.getElementById('scr-q'), cnt = document.getElementById('scr-count');
+  let chip = '';
+  const norm = s => String(s).toLowerCase().replace(/ي/g, 'ی').replace(/ك/g, 'ک');
+  function apply() {
+    const t = norm(q.value.trim()); let shown = 0, all = 0;
+    document.querySelectorAll('[data-scr]').forEach(el => {
+      all++;
+      const ok = (!chip || el.dataset.st === chip) && (!t || norm(el.dataset.s).indexOf(t) >= 0);
+      el.style.display = ok ? '' : 'none'; if (ok) shown++;
+    });
+    cnt.textContent = (t || chip) ? shown + ' از ' + all : '';
+  }
+  q.addEventListener('input', apply);
+  document.querySelectorAll('[data-scr-chip]').forEach(b => b.addEventListener('click', () => {
+    chip = b.dataset.scrChip;
+    document.querySelectorAll('[data-scr-chip]').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+    apply();
+  }));
+})();
+</script>
+
 <!-- ─── آمار ─────────────────────────────────────────────────── -->
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">
   <?php foreach([
@@ -393,8 +424,10 @@ function renderScreenCard(array $s, string $tab): void {
         ? "<span style='font-size:9px;color:#64748b;background:rgba(255,255,255,.05);"
           . "padding:1px 6px;border-radius:5px;'>{$platLbl}</span>"
         : '';
+    $stKey = $online ? 'online' : ($active ? 'offline' : 'wait');
     echo <<<HTML
-<div style="background:#16161f;border:1px solid rgba(255,255,255,.07);border-radius:12px;
+<div data-scr data-st="{$stKey}" data-s="{$name} {$code} {$loc}"
+     style="background:#16161f;border:1px solid rgba(255,255,255,.07);border-radius:12px;
             overflow:hidden;transition:all .2s;"
      onmouseenter="this.style.borderColor='rgba(26,122,196,.3)'"
      onmouseleave="this.style.borderColor='rgba(255,255,255,.07)'">

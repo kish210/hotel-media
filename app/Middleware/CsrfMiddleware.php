@@ -17,6 +17,18 @@ class CsrfMiddleware
 
         $token = $request->post('_token') ?? $request->header('X-CSRF-Token') ?? '';
         if (!$token || !hash_equals($_SESSION['_csrf'] ?? '', $token)) {
+            /* فرم معمولی (نه fetch): تا امروز تکنسین یک صفحهٔ JSON خام می‌دید و
+               هرچه نوشته بود می‌پرید. حالا برمی‌گردد به همان صفحه با پیام فارسی. */
+            if (!$request->isJson() && !$request->isAjax()) {
+                $ref  = (string)($_SERVER['HTTP_REFERER'] ?? '');
+                $host = (string)($_SERVER['HTTP_HOST'] ?? '');
+                $back = ($ref !== '' && parse_url($ref, PHP_URL_HOST) === parse_url('http://' . $host, PHP_URL_HOST)) ? $ref : '/admin';
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    $_SESSION['_flash']['error'] = 'نشست شما تمام شده بود؛ دوباره وارد شوید یا یک بار دیگر امتحان کنید.';
+                }
+                Response::redirect($back);
+                return;
+            }
             Response::error('CSRF token نامعتبر', 419);
         }
 

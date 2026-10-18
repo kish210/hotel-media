@@ -689,3 +689,38 @@ tbody tr:last-child td { border-bottom: none; }
               transform var(--t-fast);
 }
 .btn:active { transform: scale(.975); }
+
+/* ═══ بهبود UX پنل (آرنا ۱) ═══════════════════════════════════════════
+   همبرگر تبلت/موبایل، پرش به محتوا، کنتراست متن کم‌رنگ، ابزار .ltr، دیالوگ
+   تأیید و اهداف لمسی. بقیهٔ سیستم دست نمی‌خورد. */
+.skip-link { position: absolute; top: -48px; inset-inline-start: 8px; z-index: 9999; background: #1a7ac4; color: #fff;
+  padding: 8px 14px; border-radius: 8px; font-size: 13px; transition: top .15s; }
+.skip-link:focus { top: 8px; }
+.menu-btn { display: none; background: transparent; border: 1px solid rgba(255,255,255,.12); color: #fff;
+  width: 40px; height: 40px; border-radius: 10px; cursor: pointer; font-size: 16px; }
+.menu-btn:focus-visible { outline: 2px solid #4098db; outline-offset: 2px; }
+.menu-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 90; }
+.menu-backdrop.on { display: block; }
+.ltr { direction: ltr; unicode-bidi: isolate; text-align: left; }
+@media (max-width: 960px) {
+  .menu-btn { display: inline-flex; align-items: center; justify-content: center; }
+  .sidebar { z-index: 100; }
+  button, select, input:not([type=checkbox]):not([type=radio]):not([type=color]), .btn, .btn-primary, .btn-ghost { min-height: 40px; }
+  .modal { max-width: 96vw !important; }
+  main { padding: 14px !important; }
+}
+/* متن کم‌رنگ: #475569 و #64748b روی تیره حدود ۲٫۵ به ۱ است (زیر AA). فقط
+   مقدار color را روشن می‌کنیم؛ پس‌زمینه و حاشیه دست‌نخورده می‌مانند. */
+[style*="color:#475569"], [style*="color: #475569"] { color: #8593a8 !important; }
+[style*="color:#64748b"], [style*="color: #64748b"] { color: #94a3b8 !important; }
+.prod-chip { font-size: 9.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; margin-inline-start: 6px; vertical-align: middle; letter-spacing: .02em; }
+.prod-chip.iptv { background: rgba(239,68,68,.16); color: #fca5a5; }
+.prod-chip.sig  { background: rgba(59,130,246,.16); color: #93c5fd; }
+.confirm-ov { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.confirm-box { background: #151a25; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; max-width: 420px; width: 100%; padding: 22px; }
+.confirm-box h3 { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+.confirm-box p { font-size: 12.5px; color: #94a3b8; line-height: 1.9; margin-bottom: 18px; }
+.confirm-box .row { display: flex; gap: 8px; justify-content: flex-start; }
+.confirm-box button { padding: 8px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid rgba(255,255,255,.14); background: transparent; color: #e2e8f0; }
+.confirm-box button.danger { background: #dc2626; border-color: #dc2626; color: #fff; }
+.confirm-box button:focus-visible { outline: 2px solid #4098db; outline-offset: 2px; }

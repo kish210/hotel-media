@@ -174,7 +174,9 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
   function sourcesOf(ch) {
     var s = [], seen = {};
     function add(url, kind) { if (url && !seen[url]) { seen[url] = 1; s.push({ url: url, kind: kind }); } }
-    if (ch.multicast_url && ch.delivery !== 'unicast' && (PLATFORM === 'webos' || PLATFORM === 'tizen')) add(ch.multicast_url, 'native');
+    /* کانال تیونر (/tv/stream/…) فرستندهٔ multicast ندارد: اول مستقیم unicast */
+    var viaApp = /^\/tv\/stream\//.test(ch.stream_url || '');
+    if (!viaApp && ch.multicast_url && ch.delivery !== 'unicast' && (PLATFORM === 'webos' || PLATFORM === 'tizen')) add(ch.multicast_url, 'native');
     function kindOf(u) { return /\.m3u8(\?|$)/i.test(u) ? 'hls' : (/^\/tv\/stream\/|\.ts(\?|$)/i.test(u) ? 'ts' : 'native'); }
     add(ch.stream_url, kindOf(ch.stream_url || ''));
     add(ch.backup_stream_url, kindOf(ch.backup_stream_url || ''));
@@ -226,7 +228,25 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
     TV.id('lv-video').innerHTML = '';
 
     if (player.idx >= player.sources.length) {
-      msg('این کانال الان در دسترس نیست', 'هر ۳۰ ثانیه دوباره امتحان می‌شود');
+      msg('این کانال الان در دسترس نیست', 'در حال بررسی علت…');
+      /* به‌جای صفحهٔ سیاه علت را بگو: تیونر نیست / سیگنال ضعیف / فرکانس دیگر.
+         XHR (نه fetch) چون مرورگر تلویزیون قدیمی است. */
+      try {
+        var xr = new XMLHttpRequest();
+        xr.open('GET', '/tv/stream-status', true);
+        xr.onreadystatechange = function () {
+          if (xr.readyState !== 4) return;
+          var why = 'هر ۳۰ ثانیه دوباره امتحان می‌شود';
+          try {
+            var s = JSON.parse(xr.responseText);
+            if (!s.tuner) why = 'تیونر به سرور وصل نیست';
+            else if (s.weak) why = 'سیگنال آنتن ضعیف است (' + s.snr + ' dB) · ▲▼ کانال بعد';
+            else if (ch && /^\/tv\/stream\//.test(ch.stream_url || '')) why = 'تیونر روی فرکانس دیگری است؛ کانال دیگری را امتحان کنید · ▲▼ کانال بعد';
+          } catch (e6) {}
+          msg('این کانال الان در دسترس نیست', why);
+        };
+        xr.send();
+      } catch (e7) {}
       var keep = cur;
       player.retry = setTimeout(function () { if (cur === keep) play(keep); }, 30000);
       return;

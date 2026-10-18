@@ -76,7 +76,9 @@ final class TvheadendTunerService
             $out['inputs'][] = [
                 'name'   => $name,
                 'subs'   => (int)($e['subs'] ?? 0),
-                'stream' => (string)($e['stream'] ?? ''),   // مثلا «602MHz in …»: الان روی کدام mux است
+                'stream' => (string)($e['stream'] ?? ''),
+                // snr_scale 2 = دسی‌بل ×۱۰۰۰ (کیفیت سیگنال؛ زیر ~۱۵ dB تصویر خراب/قطع)
+                'snr_db' => ((int)($e['snr_scale'] ?? 0) === 2 && (int)($e['snr'] ?? 0) > 0) ? round(((int)$e['snr']) / 1000, 1) : null,   // مثلا «602MHz in …»: الان روی کدام mux است
                 'signal' => (int)($e['signal'] ?? 0),
                 'snr'    => (int)($e['snr'] ?? 0),
                 'ber'    => (int)($e['ber'] ?? 0),

@@ -113,8 +113,10 @@ class MulticastService
         $cfg = $this->config($tenantId);
 
         $channels = $this->db->rows(
+            /* کانال تیونر (tvh_uuid) فرستندهٔ multicast ندارد؛ آدرس دادن به آن
+               فقط پلیر را ۱۲ ثانیه روی منبع مرده نگه می‌داشت. */
             'SELECT id, name, multicast_url FROM iptv_channels
-              WHERE tenant_id = ? AND is_active = 1
+              WHERE tenant_id = ? AND is_active = 1 AND tvh_uuid IS NULL
               ORDER BY channel_no IS NULL, channel_no, sort_order, id',
             [$tenantId]
         );

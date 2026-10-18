@@ -143,6 +143,7 @@ $router->get('/logout', [AuthController::class, 'logout']);
 $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class, \App\Middleware\PermissionMiddleware::class]], function($r) {
     // Dashboard
     $r->get('/dashboard', [DashboardController::class, 'index']);
+    $r->get('/tv/health', [\App\Controllers\Web\TvHealthController::class, 'summary']);
     $r->get('/',          [DashboardController::class, 'index']);
 
     // Screens
@@ -156,7 +157,7 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class, \A
     // ── Groups — باید قبل از /screens/{id} باشه تا conflict نشه ──
     $r->post('/screens/groups',                [ScreenController::class, 'storeGroup']);
     $r->post('/screens/groups/{id}/delete',    [ScreenController::class, 'deleteGroup']);
-    $r->post('/screens/groups/{id}/theme',     [ScreenController::class, 'setGroupTheme']);
+    $r->post('/screens/groups/{id}/theme',     [ScreenController::class, 'setGroupTheme'], [CsrfMiddleware::class]);
     // ── Single screen ──
     $r->get('/screens/{id}',                   [ScreenController::class, 'show']);
     $r->post('/screens/{id}',                  [ScreenController::class, 'update']);
@@ -293,6 +294,7 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class, \A
 // (MUTE → 1 → 1 → 9 → ENTER) همین آدرس در همه‌ی دستگاه‌ها وارد می‌شود.
 // مسیرها کوتاه‌اند چون بعضی منوها فقط IP و پورت می‌پذیرند.
 // پخش کانال TVHeadend برای دستگاه‌ها (امضاشده، بدون ورود)
+$router->get('/tv/stream-status', [\App\Controllers\Web\StreamProxyController::class, 'status']);
 $router->get('/tv/stream/{uuid}', [\App\Controllers\Web\StreamProxyController::class, 'stream']);
 $router->get('/tv',              [\App\Controllers\Web\TvBootstrapController::class, 'index']);
 // صفحه‌های تعاملی مهمان — پورتال IPTV در iframe بازشان می‌کند
@@ -357,9 +359,9 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     // ── گروه کانال (فاز ۴): تنها حلقهٔ گم‌شدهٔ زنجیرهٔ Live TV ──────
     // ── گروه IPTV صفحه/اتاق/منو (screen_groups) ────────────────
     $r->get('/iptv/screen-groups',               [\App\Controllers\Web\IptvScreenGroupController::class, 'index']);
-    $r->post('/iptv/screen-groups',              [\App\Controllers\Web\IptvScreenGroupController::class, 'store']);
-    $r->post('/iptv/screen-groups/{id}',         [\App\Controllers\Web\IptvScreenGroupController::class, 'update']);
-    $r->post('/iptv/screen-groups/{id}/delete',  [\App\Controllers\Web\IptvScreenGroupController::class, 'delete']);
+    $r->post('/iptv/screen-groups',              [\App\Controllers\Web\IptvScreenGroupController::class, 'store'], [CsrfMiddleware::class]);
+    $r->post('/iptv/screen-groups/{id}',         [\App\Controllers\Web\IptvScreenGroupController::class, 'update'], [CsrfMiddleware::class]);
+    $r->post('/iptv/screen-groups/{id}/delete',  [\App\Controllers\Web\IptvScreenGroupController::class, 'delete'], [CsrfMiddleware::class]);
     $r->post('/iptv/groups',             [\App\Controllers\Web\IPTVController::class, 'storeGroup']);
     $r->post('/iptv/groups/{id}/delete', [\App\Controllers\Web\IPTVController::class, 'deleteGroup']);
     $r->post('/iptv/assign-group',       [\App\Controllers\Web\IPTVController::class, 'assignGroup']);

@@ -40,16 +40,17 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
 <div class="sidebar-section">
   <i class="fas fa-tv" style="margin-left:5px;opacity:.6"></i> تلویزیون و صفحه‌ها
 </div>
-<a href="/admin/screens" class="sidebar-link <?= isActive('/admin/screens') && !isActive('/admin/screens/monitor') ? 'active' : '' ?>">
+<a href="/admin/screens" class="sidebar-link <?= isActive('/admin/screens') && !isActive('/admin/screens/monitor') && !isset($_GET['tab']) ? 'active' : '' ?>">
   <span class="icon"><i class="fas fa-table-list"></i></span> همه‌ی صفحه‌ها
 </a>
 <?php /* همان فهرست با تب از پیش انتخاب‌شده — تب‌ها از قبل در صفحه بودند
          و اینجا فقط میان‌بر می‌شوند. */ ?>
-<a href="/admin/screens?tab=iptv" class="sidebar-link">
-  <span class="icon"><i class="fas fa-door-open"></i></span> تلویزیون اتاق‌ها
+<?php $__tab = (string)($_GET['tab'] ?? ''); $__onScreens = isActive('/admin/screens') && !isActive('/admin/screens/monitor'); ?>
+<a href="/admin/screens?tab=iptv" class="sidebar-link <?= $__onScreens && $__tab === 'iptv' ? 'active' : '' ?>">
+  <span class="icon"><i class="fas fa-door-open"></i></span> تلویزیون اتاق‌ها <span class="prod-chip iptv">IPTV</span>
 </a>
-<a href="/admin/screens?tab=signage" class="sidebar-link">
-  <span class="icon"><i class="fas fa-panorama"></i></span> صفحه‌های عمومی
+<a href="/admin/screens?tab=signage" class="sidebar-link <?= $__onScreens && $__tab === 'signage' ? 'active' : '' ?>">
+  <span class="icon"><i class="fas fa-panorama"></i></span> صفحه‌های عمومی <span class="prod-chip sig">تابلو</span>
 </a>
 <?php /* محل‌ها: Zone واقعی محصول. برای همه‌ی نقش‌ها باز است چون انتشار
          پلی‌لیست روی یک محل، کارِ روزمره‌ی اپراتور است نه کار فنی. */ ?>
@@ -61,11 +62,11 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
   <span class="icon"><i class="fas fa-object-group"></i></span> گروه‌های صفحه
 </a>
 <?php endif; ?>
-<?php if (modOn('iptv')): ?>
+<?php /* دستگاه (جعبهٔ فیزیکی) مشترک بین IPTV و تابلو است؛ قبلا فقط با ماژول IPTV دیده می‌شد
+         و هتل فقط-تابلو راهی برای ثبت دستگاه نداشت. */ ?>
 <a href="/admin/devices" class="sidebar-link <?= isActive('/admin/devices') ?>">
   <span class="icon"><i class="fas fa-satellite-dish"></i></span> ثبت و فرمان دستگاه
 </a>
-<?php endif; ?>
 
 <!-- ══ محتوا — مشترک بین تابلو و اتاق ══ -->
 <div class="sidebar-section">
@@ -222,9 +223,11 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
 <a href="/admin/iptv/test" class="sidebar-link <?= isActive('/admin/iptv/test') ?>">
   <span class="icon"><i class="fas fa-tv"></i></span> تلویزیون آزمایشی
 </a>
+<?php if (!$isSuper): /* مدیر ارشد همین را در گروه «DVB و تیونر» دارد */ ?>
 <a href="/admin/iptv/tvheadend" class="sidebar-link <?= isActive('/admin/iptv/tvheadend') ?>">
   <span class="icon"><i class="fas fa-tower-cell"></i></span> منابع پخش زنده
 </a>
+<?php endif; ?>
 <?php endif; ?>
 <?php if (modOn('vod')): ?>
 <a href="/admin/transcoder" class="sidebar-link <?= isActive('/admin/transcoder') ?>">
@@ -256,9 +259,6 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
 <a href="/admin/system/update" class="sidebar-link <?= isActive('/admin/system/update') ?>">
   <span class="icon"><i class="fas fa-cloud-arrow-down" style="color:#4098db;"></i></span>
   به‌روزرسانی سیستم
-</a>
-<a href="/admin/system/drivers" class="sidebar-link <?= isActive('/admin/system/drivers') ?>">
-  <span class="icon"><i class="fas fa-microchip" style="color:#f59e0b;"></i></span> درایورها
 </a>
 <?php /* دو صفحه‌ی عمدا جدا: این «الان چه خراب است» را می‌گوید و
          لاگ «چه اتفاقی افتاده بود» را. قاطی‌کردنشان یعنی برای دیدن

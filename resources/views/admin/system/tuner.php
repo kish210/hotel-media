@@ -143,7 +143,7 @@ async function act(what) {
   busy = false; refresh();
 }
 
-refresh(); setInterval(refresh, 4000);
+refresh(); setInterval(function () { if (!document.hidden) refresh(); }, 5000);
 </script>
 <?php endif; ?>
 <?php include VIEWS_PATH . '/partials/layout_footer.php'; ?>

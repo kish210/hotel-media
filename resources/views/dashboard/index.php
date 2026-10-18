@@ -1,4 +1,5 @@
 <?php include VIEWS_PATH . '/partials/layout.php'; ?>
+<?php include VIEWS_PATH . '/partials/tv_health.php'; /* فقط برای نقش فنی (داخل خود partial) */ ?>
 
 <!-- Stats Grid -->
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

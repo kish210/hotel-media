@@ -85,9 +85,52 @@ window.showToast = showToast;
 // Auto-dismiss flash
 setTimeout(() => { document.getElementById('flash-msg')?.remove(); }, 4000);
 
-// Confirm delete
-document.querySelectorAll('[data-confirm]').forEach(btn => {
-  btn.addEventListener('click', e => { if (!confirm(btn.dataset.confirm)) e.preventDefault(); });
+// دیالوگ تأیید یکپارچه: عنوان با نام آیتم، یک خط پیامد، دکمهٔ قرمز «حذف» و
+// «انصراف» که به‌طور پیش‌فرض فوکوس دارد (Enter تصادفی چیزی را پاک نمی‌کند).
+// data-confirm="متن" [data-confirm-name="نام"] [data-confirm-ok="حذف"] روی دکمه یا فرم.
+window.confirmDialog = function (o) {
+  return new Promise(function (resolve) {
+    const ov = document.createElement('div');
+    ov.className = 'confirm-ov'; ov.setAttribute('role', 'alertdialog'); ov.setAttribute('aria-modal', 'true');
+    const box = document.createElement('div'); box.className = 'confirm-box';
+    const h = document.createElement('h3'); h.textContent = o.title || 'مطمئن هستید؟';
+    const p = document.createElement('p'); p.textContent = o.text || '';
+    const row = document.createElement('div'); row.className = 'row';
+    const ok = document.createElement('button'); ok.type = 'button'; ok.className = o.danger === false ? '' : 'danger'; ok.textContent = o.ok || 'حذف';
+    const no = document.createElement('button'); no.type = 'button'; no.textContent = 'انصراف';
+    row.append(ok, no); box.append(h, p, row); ov.append(box); document.body.appendChild(ov);
+    function done(v) { document.removeEventListener('keydown', key); ov.remove(); resolve(v); }
+    function key(e) { if (e.key === 'Escape') done(false); }
+    ok.onclick = function () { done(true); }; no.onclick = function () { done(false); };
+    ov.addEventListener('click', function (e) { if (e.target === ov) done(false); });
+    document.addEventListener('keydown', key); no.focus();
+  });
+};
+document.addEventListener('click', function (e) {
+  const el = e.target.closest && e.target.closest('[data-confirm]');
+  if (!el || el.dataset.confirmed === '1') return;
+  e.preventDefault(); e.stopPropagation();
+  const name = el.dataset.confirmName;
+  window.confirmDialog({
+    title: name ? ('«' + name + '» ' + (el.dataset.confirmOk || 'حذف') + ' شود؟') : el.dataset.confirm,
+    text: name ? el.dataset.confirm : '',
+    ok: el.dataset.confirmOk || 'حذف'
+  }).then(function (yes) {
+    if (!yes) return;
+    el.dataset.confirmed = '1';
+    if (el.tagName === 'A' || el.type === 'submit' || el.tagName === 'BUTTON') el.click(); else if (el.form) el.form.submit();
+  });
+}, true);
+
+// جلوگیری از ثبت دوبارهٔ فرم (دابل‌کلیک): دکمه‌های ثبت بعد از ارسال غیرفعال می‌شوند.
+// فرم‌هایی که با fetch ارسال می‌شوند (preventDefault) دست‌نخورده‌اند.
+document.addEventListener('submit', function (e) {
+  const f = e.target;
+  setTimeout(function () {
+    if (e.defaultPrevented || !f || f.dataset.noLock) return;
+    f.querySelectorAll('button[type=submit],button:not([type]),input[type=submit]').forEach(function (b) { b.disabled = true; });
+    setTimeout(function () { f.querySelectorAll('button,input[type=submit]').forEach(function (b) { b.disabled = false; }); }, 8000);
+  }, 0);
 });
 </script>
 

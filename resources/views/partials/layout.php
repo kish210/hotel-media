@@ -7,7 +7,9 @@ if (!Auth::check() && !str_starts_with($_SERVER['REQUEST_URI'] ?? '', '/player')
 }
 
 $authUser    = Auth::user() ?? [];
-$currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+/* view داخل یک تابع include می‌شود، پس این متغیر محلی بود و `global $currentPath`
+   در isActive() همیشه خالی می‌دید: صفحهٔ جاری در منو هرگز هایلایت نمی‌شد. */
+$currentPath = $GLOBALS['currentPath'] = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $flash       = $_SESSION['_flash'] ?? [];
 unset($_SESSION['_flash']);
 
@@ -77,9 +79,10 @@ if (!function_exists('modOn')) {
 </style>
 </head>
 <body class="dark">
+<a class="skip-link" href="#main">رفتن به محتوا</a>
 
 <!-- ═══ Sidebar ════════════════════════════════════════════════════════════ -->
-<nav class="sidebar">
+<nav class="sidebar" id="sidebar" aria-label="منوی اصلی">
 
   <!-- نشان: یک بلوک واحد. قبلا دو نشان رقیب اینجا بود (کاشی نارنجی + کارت
        سما با رنگ‌های نامربوط)؛ حالا لوگوی واقعی سما نشانِ اصلی است. -->
@@ -99,6 +102,7 @@ if (!function_exists('modOn')) {
 <div class="main">
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:12px;">
+    <button type="button" class="menu-btn" id="menu-btn" aria-label="باز کردن منو" aria-controls="sidebar" aria-expanded="false"><i class="fas fa-bars"></i></button>
     <span style="font-size:15px;font-weight:700;color:#fff;"><?= e($title ?? __('nav.dashboard')) ?></span>
   </div>
   <div style="display:flex;align-items:center;gap:12px;">
@@ -188,7 +192,25 @@ if (!function_exists('modOn')) {
 </div>
 
 <!-- Main content -->
-<main style="flex:1;padding:24px;max-width:1600px;width:100%;">
+<main id="main" tabindex="-1" style="flex:1;padding:24px;max-width:1600px;width:100%;">
+<div class="menu-backdrop" id="menu-backdrop"></div>
+<script>
+// ── منوی کشویی تبلت/موبایل (زیر ۹۶۰px): باز/بسته با دکمه، پس‌زمینه و Esc ──
+(function () {
+  var btn = document.getElementById('menu-btn'), sb = document.getElementById('sidebar'),
+      bd = document.getElementById('menu-backdrop');
+  if (!btn || !sb) return;
+  function set(open) {
+    sb.classList.toggle('open', open);
+    bd.classList.toggle('on', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  btn.addEventListener('click', function () { set(!sb.classList.contains('open')); });
+  bd.addEventListener('click', function () { set(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') set(false); });
+  sb.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('a')) set(false); });
+})();
+</script>
 <script>
 // ── بستن dropdown زبان با کلیک خارج ──────────────────────────────────
 document.addEventListener('click', function(e) {

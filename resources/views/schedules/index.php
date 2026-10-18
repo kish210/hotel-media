@@ -40,7 +40,7 @@
         }
         ?>
         <td class="p-3 text-slate-400"><?= $tgt ?></td>
-        <td class="p-3"><span class="badge-pending px-2 py-0.5 rounded-full text-xs border"><?=e($sc['type'])?></span></td>
+        <td class="p-3"><span class="badge-pending px-2 py-0.5 rounded-full text-xs border"><?= e(["daily" => "روزانه", "weekly" => "هفتگی", "once" => "یک‌بار", "always" => "همیشه"][$sc["type"] ?? ""] ?? $sc["type"]) ?></span></td>
         <td class="p-3 text-slate-400 font-mono"><?=e($sc['priority'])?></td>
         <td class="p-3">
           <form method="POST" action="/admin/schedules/<?=$sc['id']?>/delete" class="inline">

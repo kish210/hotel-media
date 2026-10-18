@@ -39,6 +39,19 @@ class StreamProxyController extends Controller
             [$uuid]
         );
         if (!$row) { http_response_code(404); echo 'not found'; return; }
+        /* سقف اتصال هم‌زمان برای هر IP: پلیرِ در حال ریتری و تب‌های رهاشده هر کدام
+           یک اشتراک روی تیونر نگه می‌داشتند (روی سرور آزمایشی ۱۱ اشتراک بی‌حاصل
+           دیده شد). قفل فایل با پایان پردازش خودکار آزاد می‌شود، پس نشتی ندارد.
+           loopback (ffmpeg حالت compat) سقف ندارد. */
+        $slot = null;
+        $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+        if ($ip !== '127.0.0.1' && $ip !== '::1') {
+            $slot = $this->acquireSlot($ip, 3);
+            if ($slot === null) {
+                http_response_code(429); header('Retry-After: 10'); echo 'too_many_streams'; return;
+            }
+        }
+
         // مرورگر دسکتاپ: ترنسکد سبک به H.264 پروگرسیو
         if ($req->get('compat') === '1') { $this->compat($uuid); return; }
         if (!function_exists('curl_init')) { http_response_code(500); echo 'curl missing'; return; }
@@ -60,8 +73,11 @@ class StreamProxyController extends Controller
             CURLOPT_HTTPAUTH       => CURLAUTH_DIGEST | CURLAUTH_BASIC,
             CURLOPT_USERPWD        => ($row['username'] ?? '') . ':' . ($row['password'] ?? ''),
             CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_LOW_SPEED_LIMIT => 1,
-            CURLOPT_LOW_SPEED_TIME  => 20,     // بیست ثانیه بی‌داده = تیونر/کانال مرده
+            /* «۱ بایت بر ثانیه» هرگز فعال نمی‌شد: تی‌وی‌هدند روی فرکانس خراب هم چند
+               بایت می‌فرستد. زیر ۸ کیلوبایت بر ثانیه (کانال عادی ۲۰۰+) به‌مدت ۱۰ ثانیه
+               یعنی سیگنال/کانال عملا مرده است و اشتراک را رها می‌کنیم. */
+            CURLOPT_LOW_SPEED_LIMIT => 8000,
+            CURLOPT_LOW_SPEED_TIME  => 10,
             CURLOPT_RETURNTRANSFER => false,
             CURLOPT_WRITEFUNCTION  => function ($c, string $data) use (&$started): int {
                 if (!$started) {
@@ -80,6 +96,46 @@ class StreamProxyController extends Controller
         curl_exec($ch);
         curl_close($ch);
         if (!$started) { http_response_code(503); echo 'stream unavailable'; }
+    }
+
+    /** یک اسلات قفل‌فایلی برای IP یا null اگر همهٔ $max اسلات پر است. */
+    private function acquireSlot(string $ip, int $max)
+    {
+        $dir = '/tmp/hm-stream';
+        if (!is_dir($dir)) { @mkdir($dir, 0775, true); }
+        $key = preg_replace('/[^0-9a-fA-F.:]/', '_', $ip);
+        for ($i = 0; $i < $max; $i++) {
+            $fh = @fopen("$dir/$key.$i", 'c');
+            if ($fh && flock($fh, LOCK_EX | LOCK_NB)) { return $fh; }
+            if ($fh) { fclose($fh); }
+        }
+        return null;
+    }
+
+    /**
+     * GET /tv/stream-status — فقط وضعیت درشت و بی‌رمز، برای اینکه پلیر به‌جای صفحهٔ
+     * سیاه علت را بگوید: تیونر نیست / سیگنال ضعیف / تیونر روی فرکانس دیگری است.
+     */
+    public function status(Request $req): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        $out = ['tuner' => false, 'weak' => false, 'mux' => '', 'snr' => null];
+        try {
+            $svc = new \App\Services\TvheadendTunerService();
+            $src = $svc->source(1);
+            if ($src) {
+                $st = $svc->status($src);
+                if (!empty($st['inputs'])) {
+                    $in = $st['inputs'][0];
+                    $out['tuner'] = true;
+                    $out['mux']   = preg_match('/^(\d+)MHz/', (string)$in['stream'], $m) ? $m[1] : '';
+                    $out['snr']   = $in['snr_db'] ?? null;
+                    $out['weak']  = $out['snr'] !== null && $out['snr'] < 15;
+                }
+            }
+        } catch (\Throwable) {}
+        echo json_encode($out);
     }
 
     /**
