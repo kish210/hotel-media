@@ -670,7 +670,8 @@ html.tv-input-live #input-hint.is-on { display: block; }
        یک کاشی در منوی مشترک برای همه‌ی اتاق‌ها کار می‌کند. */
     /* کاشی «زنده» یا «رادیو» بدون آدرس یعنی فهرست کانال‌ها؛ با آدرس،
        همان رفتار قدیم (یک کانال مشخص). */
-    if (GUEST_VIEWS[it.type] && !((it.type === 'live' || it.type === 'radio' || CONTENT_KINDS[it.type]) && it.target_url)) {
+    /* «فیلم‌ها» بدون لینک = کتابخانه؛ با لینک همان یک فیلم مثل قبل */
+    if (GUEST_VIEWS[it.type] && !((it.type === 'live' || it.type === 'radio' || it.type === 'vod' || CONTENT_KINDS[it.type]) && it.target_url)) {
       openGuest(it); return;
     }
 
@@ -703,9 +704,11 @@ html.tv-input-live #input-hint.is-on { display: block; }
     TV.addClass(host, 'is-on');
 
     var src = it.target_url || '';
+    var isPage = false;
 
     if (!src) {
       iframe(ORIGIN + '/player/module/' + encodeURIComponent(it.type || ''), host);
+      isPage = true;
     } else if (/\.m3u8(\?|$)/i.test(src)) {
       hls(src, host);
     } else if (src.indexOf('udp://') === 0 || src.indexOf('rtp://') === 0 ||
@@ -720,14 +723,17 @@ html.tv-input-live #input-hint.is-on { display: block; }
       video(src, host);
     } else {
       iframe(src, host);
+      isPage = true;
     }
 
-    /* بازگشت خودکار بعد از ۵ دقیقه تا تلویزیون روی یک صفحه گیر نکند */
-    autoTimer = setTimeout(back, 300000);
+    /* بازگشت خودکار بعد از ۵ دقیقه فقط برای صفحه‌ی ساکن، تا تلویزیون
+       روی آن گیر نکند. فیلم و کانال نه: قبلا هر فیلمی دقیقه‌ی پنجم
+       قطع می‌شد و مهمان به منو پرت می‌شد. فیلم با onended برمی‌گردد. */
+    if (isPage) autoTimer = setTimeout(back, 300000);
   }
 
   var GUEST_VIEWS = { reserve: 1, services: 1, folio: 1, live: 1, radio: 1,
-                      news: 1, quran: 1, book: 1, directory: 1, epg: 1, cameras: 1, offers: 1 };
+                      news: 1, quran: 1, book: 1, directory: 1, epg: 1, cameras: 1, offers: 1, vod: 1 };
   var CONTENT_KINDS = { news: 1, quran: 1, book: 1, directory: 1 };
 
   function openGuest(it) {

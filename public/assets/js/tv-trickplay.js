@@ -89,8 +89,11 @@
    * @param {HTMLElement} host ظرفی که نوار داخلش می‌نشیند (باید position دار باشد)
    * @return {object|null} کنترلر، یا null اگر منبع قابل جست‌وجو نبود
    */
-  T.attach = function (v, host) {
+  /* opts.noKeys: صفحه‌ی داخل iframe پورتال کلید را از TVGuestKey می‌گیرد،
+     نه از keydown خودش؛ آنجا صفحه با .key(name) کلید را می‌دهد. */
+  T.attach = function (v, host, opts) {
     if (!v || !host) return null;
+    opts = opts || {};
 
     registerMediaKeys();
 
@@ -210,7 +213,16 @@
     /* نوار با پیشرفت پخش تازه می‌شود */
     function onTime() { if (dir === 0) render(); }
 
-    if (document.addEventListener) document.addEventListener('keydown', onKey, false);
+    if (!opts.noKeys && document.addEventListener) document.addEventListener('keydown', onKey, false);
+
+    /* نام کلید (TV.keyName) → true اگر مصرف شد */
+    var NAMES = { FORWARD: 417, REWIND: 412, PLAY: 415, PAUSE: 19, STOP: 413, OK: 13, RIGHT: 39, LEFT: 37 };
+    function byName(name) {
+      var c = NAMES[name];
+      if (!c || !alive) return false;
+      onKey({ keyCode: c });
+      return true;
+    }
     if (v.addEventListener) {
       v.addEventListener('timeupdate', onTime, false);
       v.addEventListener('loadedmetadata', function () { render(); show(); }, false);
@@ -226,11 +238,12 @@
         alive = false;
         if (timer) clearInterval(timer);
         clearTimeout(hideTm);
-        if (document.removeEventListener) document.removeEventListener('keydown', onKey, false);
+        if (!opts.noKeys && document.removeEventListener) document.removeEventListener('keydown', onKey, false);
         if (v.removeEventListener) v.removeEventListener('timeupdate', onTime, false);
         if (ui.wrap.parentNode) ui.wrap.parentNode.removeChild(ui.wrap);
       },
-      isSeekable: seekable
+      isSeekable: seekable,
+      key: byName
     };
   };
 

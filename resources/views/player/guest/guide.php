@@ -82,7 +82,7 @@ $code = (string)($screen['code'] ?? '');
 
   var dayList = [{ date: YESTERDAY, label: 'دیروز' }].concat(DAYS).concat([{ date: '', label: 'ضبط‌های من' }]);
   var st = { zone: 'ch', day: 1, ch: 0, pr: 0, channels: [], programs: [], recs: [], mode: 'guide' };
-  var dlg = null, hls = null, playing = false;
+  var dlg = null, hls = null, playing = false, trick = null;
 
   // ── داده ────────────────────────────────────────────────────────
   function loadChannels() {
@@ -196,10 +196,12 @@ $code = (string)($screen['code'] ?? '');
       hls = new window.Hls(); hls.loadSource(url); hls.attachMedia(v);
     } else { v.src = url; }   /* فایل ضبط TVHeadend (TS) با پخش‌کننده‌ی بومی تلویزیون */
     try { var p = v.play(); if (p && p['catch']) p['catch'](function () {}); } catch (e) {}
-    if (window.TVTrick) { try { window.TVTrick.attach(v, TV.id('gd-video')); } catch (e2) {} }
+    /* کلید از TVGuestKey می‌رسد (داخل iframe پورتال keydown خود صفحه نمی‌آید) */
+    if (window.TVTrick) { try { trick = window.TVTrick.attach(v, TV.id('gd-video'), { noKeys: true }); } catch (e2) { trick = null; } }
   }
   function stopPlay() {
     playing = false;
+    if (trick) { try { trick.destroy(); } catch (e0) {} trick = null; }
     if (hls) { try { hls.destroy(); } catch (e) {} hls = null; }
     TV.id('gd-video').innerHTML = '';
     TV.id('gd-player').style.display = 'none';
@@ -266,7 +268,10 @@ $code = (string)($screen['code'] ?? '');
 
   // ── ریموت ───────────────────────────────────────────────────────
   TVG.mount(function (k) {
-    if (playing) { if (k === 'BACK' || k === 'EXIT') { stopPlay(); return true; } return false; }
+    if (playing) {
+      if (k === 'BACK' || k === 'EXIT') { stopPlay(); return true; }
+      return trick ? trick.key(k) : false;
+    }
     if (dlg) {
       if ((k === 'LEFT' || k === 'RIGHT') && !dlg.single) { dlg.focus = 1 - dlg.focus; paintDlg(); return true; }
       if (k === 'OK') { if (dlg.focus === 0) dlg.onOk(); else closeDlg(); return true; }

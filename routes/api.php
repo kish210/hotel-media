@@ -365,6 +365,11 @@ $router->group(['prefix' => '/api/v1', 'middleware' => [\App\Middleware\ApiAuthM
 $router->get('/api/v1/guest/{code}/folio',                [\App\Controllers\Api\FolioController::class, 'guestFolio']);
 $router->get('/api/v1/guest/{code}/menus',                [\App\Controllers\Api\FolioController::class, 'guestMenus']);
 $router->post('/api/v1/guest/{code}/checkout',            [\App\Controllers\Api\FolioController::class, 'guestCheckout']);
+// فیلم‌ها روی تلویزیون اتاق: کتابخانه، ادامه‌ی تماشا، پیشنهاد (TODO ۳.۳)
+$router->get('/api/v1/guest/{code}/vod',                  [\App\Controllers\Api\GuestVodController::class, 'index']);
+$router->get('/api/v1/guest/{code}/vod/{id}',             [\App\Controllers\Api\GuestVodController::class, 'show']);
+$router->post('/api/v1/guest/{code}/vod/{id}/progress',   [\App\Controllers\Api\GuestVodController::class, 'progress']);
+$router->post('/api/v1/guest/{code}/vod/{id}/hide',       [\App\Controllers\Api\GuestVodController::class, 'hide']);
 $router->get('/api/v1/guest/{code}/vod/{id}/access',      [\App\Controllers\Api\FolioController::class, 'guestAccess']);
 $router->post('/api/v1/guest/{code}/vod/{id}/purchase',   [\App\Controllers\Api\FolioController::class, 'guestPurchase']);
 
