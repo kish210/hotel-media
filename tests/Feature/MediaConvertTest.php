@@ -30,6 +30,8 @@ spl_autoload_register(function (string $c): void {
     $p = APP_PATH . '/' . str_replace(['App\\', '\\'], ['', '/'], $c) . '.php';
     if (file_exists($p)) require $p;
 });
+/* binPath() و دیگر توابع سراسری که سرویس‌ها صدا می‌زنند */
+require_once APP_PATH . '/Helpers/helpers.php';
 
 use App\Services\MediaConvertService as MC;
 
