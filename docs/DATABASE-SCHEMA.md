@@ -6,7 +6,7 @@
 منبع حقیقت، خود مهاجرت‌هاست. هر نصب با اجرای ترتیبی `database/migrations/*.sql` ساخته می‌شود
 (`php artisan db:migrate`). مهاجرت‌ها **قابل اجرای دوباره** نوشته شده‌اند: ستونی که هست دوباره اضافه نمی‌شود.
 
-جمع: **92 جدول**، **1330 ستون**، از 32 فایل مهاجرت.
+جمع: **93 جدول**، **1341 ستون**، از 33 فایل مهاجرت.
 
 ## فهرست
 
@@ -14,7 +14,7 @@
 - [صفحه‌ها و دستگاه‌ها (مشترک)](#صفحه-ها-و-دستگاه-ها-مشترک-) — 13 جدول
 - [محتوا و تابلوی دیجیتال](#محتوا-و-تابلوی-دیجیتال) — 14 جدول
 - [IPTV و پخش زنده](#IPTV-و-پخش-زنده) — 18 جدول
-- [ویدیو درخواستی (VOD)](#ویدیو-درخواستی-VOD-) — 5 جدول
+- [ویدیو درخواستی (VOD)](#ویدیو-درخواستی-VOD-) — 6 جدول
 - [هتل و مهمان](#هتل-و-مهمان) — 23 جدول
 - [پرواز و شرکتی](#پرواز-و-شرکتی) — 7 جدول
 
@@ -1273,6 +1273,24 @@
 | `price` | DECIMAL(12,2) NOT NULL DEFAULT 0 COMMENT | _(افزوده در 022_room_folio)_ |
 | `access_hours` | SMALLINT UNSIGNED NOT NULL DEFAULT 24 COMMENT | _(افزوده در 022_room_folio)_ |
 | `currency` | VARCHAR(10) NOT NULL DEFAULT | _(افزوده در 022_room_folio)_ |
+
+### `vod_watch_history`
+
+<sub>از مهاجرت 058_vod_watch_history · 11 ستون</sub>
+
+| ستون | نوع | توضیح |
+|---|---|---|
+| `id` | INT UNSIGNED NOT NULL AUTO_INCREMENT |  |
+| `tenant_id` | INT UNSIGNED NOT NULL DEFAULT 1 |  |
+| `room_id` | INT UNSIGNED NOT NULL |  |
+| `stay_started_at` | DATETIME NOT NULL |  |
+| `video_id` | INT UNSIGNED NOT NULL |  |
+| `position` | INT UNSIGNED NOT NULL DEFAULT 0 | ثانیه |
+| `duration` | INT UNSIGNED NOT NULL DEFAULT 0 | ثانیه، از خود پخش‌کننده |
+| `completed` | TINYINT(1) NOT NULL DEFAULT 0 |  |
+| `hidden` | TINYINT(1) NOT NULL DEFAULT 0 | مهمان از «ادامه‌ی تماشا» برداشت |
+| `started_at` | TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP |  |
+| `updated_at` | TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP |  |
 
 ### `vod_categories`
 

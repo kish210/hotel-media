@@ -62,7 +62,7 @@ const GROUPS = [
     'epg_channel_map', 'dvr_recordings', 'dvr_quotas', 'multicast_config', 'transcoder_jobs',
     'cameras', 'portal_live_cache', 'portal_translations']],
   ['ویدیو درخواستی (VOD)', '', [
-    'vod_videos', 'vod_categories', 'vod_subtitles', 'vod_audio_tracks', 'ppv_purchases']],
+    'vod_videos', 'vod_watch_history', 'vod_categories', 'vod_subtitles', 'vod_audio_tracks', 'ppv_purchases']],
   ['هتل و مهمان', 'رزرو، صورتحساب، سفارش و خدمات اتاق.', [
     'reservations', 'room_charges', 'checkout_requests', 'guest_services', 'guest_requests',
     'guest_request_items', 'guest_request_log', 'minibar_items', 'minibar_checks',
