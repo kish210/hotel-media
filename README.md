@@ -537,3 +537,10 @@ Digital Solutions Provider | Kish Island, Iran
 *Made with ❤️ for digital signage professionals*
 
 </div>
+
+## مستندات توسعه
+
+- [docs/CODEBASE.md](docs/CODEBASE.md) — نقشهٔ کد: کجا چه چیزی است، چرخهٔ درخواست، قراردادها و چک‌لیست افزودن قابلیت.
+- [docs/DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md) — اسکیمای کامل دیتابیس (تولیدشده از مهاجرت‌ها با `node tools/gen-schema-doc.js`).
+- [docs/API.md](docs/API.md) — فهرست APIها.
+- [docs/INSTALL-ISSUES.md](docs/INSTALL-ISSUES.md) — مشکلات نصب واقعی و درس‌های میدانی.

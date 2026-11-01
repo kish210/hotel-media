@@ -103,6 +103,9 @@ if (!function_exists('modOn')) {
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:12px;">
     <button type="button" class="menu-btn" id="menu-btn" aria-label="باز کردن منو" aria-controls="sidebar" aria-expanded="false"><i class="fas fa-bars"></i></button>
+    <button type="button" class="cmdp-btn" onclick="openCommandPalette()" title="جست‌وجوی سریع (Ctrl+K)">
+      <i class="fas fa-magnifying-glass"></i> <span style="opacity:.7">Ctrl K</span>
+    </button>
     <span style="font-size:15px;font-weight:700;color:#fff;"><?= e($title ?? __('nav.dashboard')) ?></span>
   </div>
   <div style="display:flex;align-items:center;gap:12px;">

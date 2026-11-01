@@ -30,6 +30,7 @@
 </div>
 
 <!-- WebSocket -->
+<script src="/assets/js/command-palette.js<?= function_exists('v') ? v() : '' ?>"></script>
 <script>
 let ws = null, wsTimer = null;
 

@@ -724,3 +724,22 @@ tbody tr:last-child td { border-bottom: none; }
 .confirm-box button { padding: 8px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid rgba(255,255,255,.14); background: transparent; color: #e2e8f0; }
 .confirm-box button.danger { background: #dc2626; border-color: #dc2626; color: #fff; }
 .confirm-box button:focus-visible { outline: 2px solid #4098db; outline-offset: 2px; }
+
+/* ── جست‌وجوی سریع (Ctrl+K) ───────────────────────────────────────── */
+#cmdp{position:fixed;inset:0;z-index:10050;display:none;}
+#cmdp.on{display:block;}
+#cmdp .cmdp-bd{position:absolute;inset:0;background:rgba(0,0,0,.6);}
+#cmdp .cmdp-win{position:relative;max-width:560px;margin:10vh auto 0;background:#151a25;
+  border:1px solid rgba(255,255,255,.12);border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+#cmdp #cmdp-q{width:100%;box-sizing:border-box;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.08);
+  color:#fff;font-size:15px;padding:16px 18px;outline:none;font-family:inherit;}
+#cmdp #cmdp-list{max-height:52vh;overflow-y:auto;}
+#cmdp .cmdp-it{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:11px 18px;color:#cbd5e1;text-decoration:none;font-size:13.5px;}
+#cmdp .cmdp-it small{color:#8593a8;font-size:11px;}
+#cmdp .cmdp-it.on,#cmdp .cmdp-it:hover{background:rgba(26,122,196,.22);color:#fff;}
+#cmdp .cmdp-empty{padding:22px 18px;color:#8593a8;font-size:13px;text-align:center;}
+#cmdp .cmdp-foot{padding:9px 18px;font-size:11px;color:#8593a8;border-top:1px solid rgba(255,255,255,.07);}
+.cmdp-btn{background:transparent;border:1px solid rgba(255,255,255,.12);color:#94a3b8;
+  border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit;}
+.cmdp-btn:hover{color:#fff;border-color:rgba(255,255,255,.25);}

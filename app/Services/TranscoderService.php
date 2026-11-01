@@ -253,8 +253,20 @@ final class TranscoderService
         ]);
         @file_put_contents($work . '/cmd.txt', implode(' ', array_map('escapeshellarg', $cmd)));
 
+        /* لاگ **اضافه** می‌شود نه بازنویسی. کار زنده که ورودی‌اش خراب است هر
+           چند ثانیه دوباره اجرا می‌شود و با `>` هر بار پیام خطای قبلی پاک
+           می‌شد — اپراتور دکمهٔ «لاگ» را می‌زد و فایل خالی می‌دید، یعنی دقیقا
+           وقتی که بیشترین نیاز را به علت داشت. برای اینکه فایل بی‌نهایت رشد
+           نکند، پیش از هر اجرا در صورت بزرگ‌شدن کوتاه می‌شود. */
+        $logFile = $work . '/ffmpeg.log';
+        if (is_file($logFile) && (int)@filesize($logFile) > 512 * 1024) {
+            $keep = (string)@file_get_contents($logFile);
+            @file_put_contents($logFile, substr($keep, -128 * 1024));
+        }
+        @file_put_contents($logFile, "\n=== " . date('Y-m-d H:i:s') . " — اجرا ===\n", FILE_APPEND);
+
         $sh  = 'nohup setsid ' . implode(' ', array_map('escapeshellarg', $cmd))
-             . ' > ' . escapeshellarg($work . '/ffmpeg.log') . ' 2>&1 & echo $!';
+             . ' >> ' . escapeshellarg($logFile) . ' 2>&1 & echo $!';
         $pid = (int)trim((string)shell_exec($sh));
 
         if ($pid <= 0) {
@@ -356,7 +368,8 @@ final class TranscoderService
                         && ($st['age'] < 0 || $st['age'] > self::STALL_SECONDS);
                 if (!$stalled) {
                     if ($job['status'] !== 'running' && $st['age'] >= 0 && $st['age'] <= self::STALL_SECONDS) {
-                        $this->db->update('transcoder_jobs', ['status' => 'running'], ['id' => $id]);
+                        // رسید به اجرا: شمارندهٔ شکست صفر شود
+                        $this->db->update('transcoder_jobs', ['status' => 'running', 'fail_count' => 0], ['id' => $id]);
                     }
                     continue;
                 }
@@ -367,6 +380,13 @@ final class TranscoderService
                 $log[] = "#$id stalled, killed";
             } else {
                 $err = $this->lastLogLine($job);
+                /* چند بار پشت سر هم شکست خورده؟ پیام را صریح‌تر می‌کنیم تا
+                   اپراتور بفهمد این «در حال شروع» نیست، یک حلقهٔ شکست است. */
+                $fails = (int)($job['fail_count'] ?? 0) + 1;
+                try { $this->db->update('transcoder_jobs', ['fail_count' => $fails], ['id' => $id]); } catch (\Throwable) {}
+                if ($fails >= 3 && $err !== '') {
+                    $err = "پس از {$fails} تلاش ناموفق: " . $err;
+                }
                 if ($job['status'] !== 'error' || $err) {
                     $this->db->update('transcoder_jobs', ['status' => 'error', 'last_error' => $err ?: 'ffmpeg متوقف شد'], ['id' => $id]);
                 }
