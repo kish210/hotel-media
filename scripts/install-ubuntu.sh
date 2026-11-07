@@ -554,6 +554,13 @@ CRON
 chmod 644 /etc/cron.d/hotel-media
 c_ok "کارهای زمان‌بندی‌شده ثبت شدند"
 
+# چرخش لاگ: بدون این، لاگ سرویس وب‌سوکت بی‌نهایت رشد می‌کند
+# (روی یک سرور واقعی به ۵ مگابایت رسیده بود و قاعده‌ای نداشت).
+if [ -f "$APP_DIR/deploy/logrotate-hotel-media" ]; then
+    install -m644 -o root -g root "$APP_DIR/deploy/logrotate-hotel-media" /etc/logrotate.d/hotel-media
+    c_ok "چرخش لاگ‌ها تنظیم شد"
+fi
+
 # ── ۹) کنسول مدیریت ────────────────────────────────────────────
 c_info "نصب کنسول مدیریت"
 if [ -f "$APP_DIR/scripts/hotel-media-console.sh" ]; then

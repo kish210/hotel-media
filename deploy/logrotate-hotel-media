@@ -1,0 +1,37 @@
+# چرخش لاگ‌های Hotel Media
+#
+# چرا لازم است: روی سرور «پالاس» فایل `hotel-media.ws.log` به ۵ مگابایت
+# رسیده بود و هیچ قاعده‌ی چرخشی نداشت — سرویس وب‌سوکت هر ۳۰ ثانیه یک خط
+# وضعیت می‌نویسد و این تا پر شدن دیسک ادامه پیدا می‌کند. فقط
+# `php8.3-fpm` قاعده داشت و لاگ‌های خودِ استخرِ این برنامه بیرون از آن
+# بودند.
+#
+# نصب:  cp deploy/logrotate-hotel-media /etc/logrotate.d/hotel-media
+#
+# `copytruncate` عمدی است: PHP-FPM و سرویس وب‌سوکت فایل را باز نگه
+# می‌دارند و با rename ساده به نوشتن در فایلِ حذف‌شده ادامه می‌دهند
+# (لاگ ناپدید می‌شود ولی فضا آزاد نمی‌شود، تا ریستارت سرویس).
+
+/var/log/php-fpm/hotel-media*.log {
+    daily
+    rotate 7
+    maxsize 20M
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+    su root root
+}
+
+/var/www/hotel-media/storage/logs/*.log {
+    weekly
+    rotate 4
+    maxsize 10M
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+    su www-data www-data
+}
