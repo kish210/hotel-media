@@ -142,7 +142,7 @@ $catCount       = count($categories);
             <div style="display:flex;align-items:center;gap:6px;">
               <!-- availability toggle -->
               <form method="POST" action="/admin/modules/menu/items/<?= $item['id'] ?>">
-                <?= csrf_input() ?>
+                <?= csrf_field() ?>
                 <input type="hidden" name="category_id"  value="<?= $item['category_id'] ?? '' ?>">
                 <input type="hidden" name="name"         value="<?= e($item['name']) ?>">
                 <input type="hidden" name="price"        value="<?= $item['price'] ?>">
@@ -163,7 +163,7 @@ $catCount       = count($categories);
               </button>
               <!-- delete -->
               <form method="POST" action="/admin/modules/menu/items/<?= $item['id'] ?>/delete" onsubmit="return confirm('حذف شود؟')">
-                <?= csrf_input() ?>
+                <?= csrf_field() ?>
                 <button type="submit" style="width:30px;height:30px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;color:#f87171;cursor:pointer;font-size:12px;">
                   <i class="fas fa-trash"></i>
                 </button>
@@ -211,7 +211,7 @@ $catCount       = count($categories);
       <button onclick="closeModal('catModal')" style="background:none;border:none;color:#475569;font-size:18px;cursor:pointer;"><i class="fas fa-xmark"></i></button>
     </div>
     <form id="catForm" method="POST" action="/admin/modules/menu/categories">
-      <?= csrf_input() ?>
+      <?= csrf_field() ?>
       <input type="hidden" name="_method_cat" value="store">
       <div style="display:grid;gap:14px;">
         <div>
@@ -253,7 +253,7 @@ $catCount       = count($categories);
       <button onclick="closeModal('itemModal')" style="background:none;border:none;color:#475569;font-size:18px;cursor:pointer;"><i class="fas fa-xmark"></i></button>
     </div>
     <form id="itemForm" method="POST" action="/admin/menu/items">
-      <?= csrf_input() ?>
+      <?= csrf_field() ?>
       <div style="display:grid;gap:14px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div>
