@@ -129,12 +129,22 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
   var API   = '/api/v1/guest/' + encodeURIComponent(CODE);
   var STORE = 'hm_live_' + CODE + (RADIO ? '_radio' : '');
 
+  /* Orsay/Maple (سامسونگ ۲۰۱۳) هیچ MediaSource ندارد، پس hls.js و mpegts.js
+     رویش اصلا بالا نمی‌آیند. پیش از این «other» حساب می‌شد و هر دو مسیر
+     بی‌صدا شکست می‌خوردند تا فقط «کانال در دسترس نیست» دیده شود. */
   var PLATFORM = (function () {
     var ua = (navigator.userAgent || '').toLowerCase();
     if (ua.indexOf('webos') !== -1 || ua.indexOf('web0s') !== -1) return 'webos';
     if (ua.indexOf('tizen') !== -1) return 'tizen';
+    if (ua.indexOf('maple') !== -1 || ua.indexOf('smarthub') !== -1) return 'orsay';
     return 'other';
   })();
+
+  /* MSE نبود یعنی هیچ‌کدام از دو کتابخانهٔ جاوااسکریپتی نمی‌توانند کار کنند.
+     جدا حساب می‌شود تا مسیرهایی که محکوم به شکست‌اند اصلا امتحان نشوند. */
+  var HAS_MSE = !!(window.MediaSource || window.WebKitMediaSource);
+  var HAS_HLSJS = HAS_MSE && !!(window.Hls && window.Hls.isSupported && window.Hls.isSupported());
+  var HAS_MPEGTS = HAS_MSE && !!(window.mpegts && window.mpegts.isSupported && window.mpegts.isSupported());
 
   var channels = [], epg = {}, token = '';
   var cur = -1, listOpen = false, listFocus = 0;
@@ -178,13 +188,39 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
     var viaApp = /^\/tv\/stream\//.test(ch.stream_url || '');
     if (!viaApp && ch.multicast_url && ch.delivery !== 'unicast' && (PLATFORM === 'webos' || PLATFORM === 'tizen')) add(ch.multicast_url, 'native');
     function kindOf(u) { return /\.m3u8(\?|$)/i.test(u) ? 'hls' : (/^\/tv\/stream\/|\.ts(\?|$)/i.test(u) ? 'ts' : 'native'); }
+
+    /* ── مسیر Orsay ──────────────────────────────────────────────
+       بدون MSE نه hls.js کار می‌کند نه mpegts.js، و Maple هم m3u8 بومی
+       ندارد. تنها راه پخش، فایل MP4 تدریجی است که خودِ <video> بخواند.
+       پس منبع، همان کانال با پارامتر حداکثر پنجره است: سرور برای کانال
+       تیونر یک MP4 با سقف ۱۰ دقیقه و برای نشانی مادر یک remux همان‌قدر
+       می‌سازد. پنجره بعد از پایان خودکار عوض می‌شود.
+       ترتیب: پنجرهٔ اصلی، بعد پشتیبان، و در آخر نشانی خام (اگر Maple
+       خودش بتواند بخواند — امتحانش ضرری ندارد). */
+    if (PLATFORM === 'orsay' && !HAS_MSE) {
+      /* آدرس امضاشده را سرور داده (mp4_url) — این‌جا هیچ امضایی ساخته
+         نمی‌شود، فقط پارامتر پنجره اضافه می‌شود. */
+      add(windowUrl(ch.mp4_url), 'window');
+      add(windowUrl(ch.mp4_backup_url), 'window');
+    }
     add(ch.stream_url, kindOf(ch.stream_url || ''));
     add(ch.backup_stream_url, kindOf(ch.backup_stream_url || ''));
     return s;
   }
 
+  function windowUrl(u) {
+    if (!u) return '';
+    return u + (u.indexOf('?') < 0 ? '?' : '&') + 'win=' + MP4_WIN;
+  }
+
+  /* پنجره ۱۰ دقیقه است. کمی زودتر عوض می‌شود تا انتهای فایل دیده نشود:
+     ۴ ثانیه قبل از پایان، منبع بعدی از همان شماره شروع می‌کند. */
+  var MP4_WIN = 600;
+  var windowNo = 0, windowSwap = null;
+
   function stopPlayer() {
     clearTimeout(player.settle); clearInterval(player.watch); clearTimeout(player.retry);
+    clearTimeout(windowSwap);
     if (player.hls) { try { player.hls.destroy(); } catch (e) {} player.hls = null; }
     if (player.ts) { try { player.ts.destroy(); } catch (e) {} player.ts = null; }
     if (player.v) { try { player.v.pause(); player.v.removeAttribute('src'); player.v.load(); } catch (e2) {} }
@@ -222,7 +258,7 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
 
   function trySource() {
     var ch = channels[cur];
-    clearTimeout(player.settle); clearInterval(player.watch);
+    clearTimeout(player.settle); clearInterval(player.watch); clearTimeout(windowSwap);
     if (player.hls) { try { player.hls.destroy(); } catch (e) {} player.hls = null; }
     if (player.ts) { try { player.ts.destroy(); } catch (e) {} player.ts = null; }
     TV.id('lv-video').innerHTML = '';
@@ -243,6 +279,10 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
             else if (s.weak) why = 'سیگنال آنتن ضعیف است (' + s.snr + ' dB) · ▲▼ کانال بعد';
             else if (ch && /^\/tv\/stream\//.test(ch.stream_url || '')) why = 'تیونر روی فرکانس دیگری است؛ کانال دیگری را امتحان کنید · ▲▼ کانال بعد';
           } catch (e6) {}
+          /* روی Orsay اگر هر سه مسیر رفته باشند، علت تیونر نیست: موتور
+             مرورگر خودش نمی‌تواند این قالب را پخش کند. صریح گفته می‌شود
+             تا کسی دنبال آنتن نگردد. */
+          if (PLATFORM === 'orsay' && !HAS_MSE && !s) why = 'این تلویزیون قالب پخش این کانال را پشتیبانی نمی‌کند';
           msg('این کانال الان در دسترس نیست', why);
         };
         xr.send();
@@ -265,13 +305,20 @@ body { background: #000; color: #e2e8f0; overflow: hidden; }
     v.onerror = function () { next(); };
     v.onplaying = function () { started = true; };
 
-    if (src.kind === 'hls' && window.Hls && window.Hls.isSupported()) {
+    if (src.kind === 'window') {
+      /* Orsay: MP4 تدریجی که خودِ <video> می‌خواند — تنها مسیر بدون MSE */
+      v.src = src.url + '&w=' + (++windowNo);
+      clearTimeout(windowSwap);
+      windowSwap = setTimeout(function () {
+        if (cur >= 0 && player.v === v) next();
+      }, (MP4_WIN - 4) * 1000);
+    } else if (src.kind === 'hls' && HAS_HLSJS) {
       var h = new window.Hls({ liveSyncDurationCount: 3, manifestLoadingMaxRetry: 2, levelLoadingMaxRetry: 2 });
       player.hls = h;
       h.on(window.Hls.Events.ERROR, function (ev, data) { if (data && data.fatal) next(); });
       h.loadSource(src.url);
       h.attachMedia(v);
-    } else if (src.kind === 'ts' && !(v.canPlayType && v.canPlayType('video/mp2t')) && window.mpegts && window.mpegts.isSupported()) {
+    } else if (src.kind === 'ts' && !(v.canPlayType && v.canPlayType('video/mp2t')) && HAS_MPEGTS) {
       /* مرورگر دسکتاپ MPEG-TS خام (کانال تیونر) را نمی‌پخشد؛ تلویزیون‌ها بومی می‌پخشند */
       var tp = window.mpegts.createPlayer({ type: 'mpegts', isLive: true, url: src.url + (src.url.indexOf('?') < 0 ? '?' : '&') + 'compat=1' });
       player.ts = tp;

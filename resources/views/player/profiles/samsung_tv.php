@@ -160,17 +160,29 @@ function makeSlide() {
   return div;
 }
 
+/* ترتیب مهم است: نسخهٔ پیشین هر دو را با هم (۵۰ms) شروع می‌کرد، پس
+   اسلاید قبلی پیش از ظاهر شدن کاملِ تازه محو می‌شد. جمع دو opacity
+   مدتی حدود ۵۰٪ می‌ماند و زیرشان سیاهی دیده می‌شد. حالا قبلی فقط بعد
+   از تمام شدن محوشدن تازه کنار می‌رود. */
 function swapSlide(newDiv) {
   var c = document.getElementById('c');
   c.appendChild(newDiv);
-  // تأخیر کوتاه برای render
-  setTimeout(function(){ newDiv.classList.add('on'); }, 50);
+  setTimeout(function(){ newDiv.classList.add('on'); }, 20);
   if (curSlide) {
     var old = curSlide;
     setTimeout(function(){
       old.classList.remove('on');
-      setTimeout(function(){ if(old.parentNode) old.parentNode.removeChild(old); }, 600);
-    }, 50);
+      setTimeout(function(){
+        /* ویدیویِ رفته باید صریح متوقف شود، وگرنه دیکودر ادامه می‌دهد
+           و روی پلن سخت‌افزاری تصویرِ قبلی می‌ماند */
+        var vs = old.getElementsByTagName ? old.getElementsByTagName('video') : [];
+        for (var k = 0; k < vs.length; k++) {
+          try { vs[k].pause(); } catch (e1) {}
+          try { vs[k].removeAttribute('src'); vs[k].load(); } catch (e2) {}
+        }
+        if (old.parentNode) old.parentNode.removeChild(old);
+      }, 600);
+    }, 520);
   }
   curSlide = newDiv;
 }
@@ -197,6 +209,10 @@ function play(i) {
   var type = item.type || 'image';
   var dur  = (item.duration || 10) * 1000;
   var div  = makeSlide();
+
+  /* آیتم بی‌نوع و بی‌آدرس پیش‌تر به شاخهٔ iframe می‌افتاد و یک مستطیل
+     سیاه خالی روی تابلو می‌گذاشت تا نوبت آیتم بعد برسد. */
+  if (!src && type !== 'dynamic') { setTimeout(nextItem, 50); return; }
 
   // ─ IMAGE ─
   if (type === 'image' || src.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i)) {
@@ -255,11 +271,17 @@ function play(i) {
     }
 
     div.appendChild(vid);
-    swapSlide(div);
+    /* اسلاید فقط با اولین فریم واقعی ظاهر می‌شود — وگرنه سرِ هر ویدیو
+       یک مکث سیاه کوتاه دیده می‌شد (قبلی محو شده و تازه هنوز چیزی
+       برای نشان دادن ندارد). */
+    var swapped = false;
+    function revealIt() { if (swapped) return; swapped = true; swapSlide(div); }
+    vid.onplaying = revealIt;
     vid.load();
     // Samsung گاهی پخش خودکار را رد می‌کند؛ یک تلاش دوباره با تاخیر
     tvPlay(vid);
     setTimeout(function () { tvPlay(vid); }, 500);
+    setTimeout(function () { if (!swapped) { revealIt(); } }, 2500);
 
     if (dur > 0 && dur < 7200000) tm = setTimeout(nextItem, dur);
 

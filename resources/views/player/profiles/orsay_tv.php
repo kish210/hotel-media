@@ -43,7 +43,11 @@ body,html{width:100%;height:100%;overflow:hidden;background:#000;}
 <?php /* overflow پنهان لازم است: در حالت «پر کردن صفحه» ویدیو عمدا
         بزرگ‌تر از صحنه می‌شود و باید همین‌جا بریده شود، نه اینکه روی
         تیکر و لوگو بیفتد. */ ?>
-.slide{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;background:#000;overflow:hidden;
+/* پس‌زمینه عمدا شفاف است، نه مشکی. اسلاید تازه روی قبلی محو می‌شود؛
+   اگر خودش هم مشکی باشد، در میانهٔ انیمیشن نیمی از تصویر قبلی را
+   می‌پوشاند و سر هر تعویض یک تیرگیِ کوتاه دیده می‌شود. سیاهی از body
+   می‌آید که همیشه زیر همه است. */
+.slide{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;background:transparent;overflow:hidden;
        -webkit-transition:opacity .5s;transition:opacity .5s;}
 /* تصویر با background-size:cover — چون object-fit روی Maple نیست */
 .slide-img{width:100%;height:100%;background-repeat:no-repeat;background-position:center center;
@@ -480,17 +484,35 @@ function makeSlide() {
   return div;
 }
 
-/* بدون classList: opacity را مستقیم ست می‌کنیم و transition انیمیت می‌کند */
+/* بدون classList: opacity را مستقیم ست می‌کنیم و transition انیمیت می‌کند.
+ *
+ * ترتیب مهم است. نسخهٔ پیشین هر دو را با فاصلهٔ ۵۰ms شروع می‌کرد، یعنی
+ * اسلاید قبلی پیش از آن‌که تازه کاملا ظاهر شود محو می‌شد. حاصلش این بود
+ * که جمعِ دو opacity مدتی حدود ۵۰٪ می‌ماند و زیرشان سیاهیِ صفحه دیده
+ * می‌شد: دقیقا همان «چند ثانیه یک بار صفحه مشکی می‌شود» که گزارش شد.
+ * حالا اول تازه ظاهر می‌شود، و تنها پس از پایان محوشدنش قبلی کنار
+ * می‌رود. انیمیشن ۰٫۵ ثانیه است، پس ۵۰۰ms صبر می‌کنیم. */
 function swapSlide(newDiv) {
   var c = document.getElementById('c');
   c.appendChild(newDiv);
-  setTimeout(function(){ newDiv.style.opacity = '1'; }, 50);
+  setTimeout(function(){ newDiv.style.opacity = '1'; }, 20);
   if (curSlide) {
     var old = curSlide;
     setTimeout(function(){
       old.style.opacity = '0';
-      setTimeout(function(){ if(old.parentNode) old.parentNode.removeChild(old); }, 600);
-    }, 50);
+      setTimeout(function(){
+        /* ویدیوی اسلایدِ رفته باید صریحا متوقف شود. اگر فقط از DOM
+           برداشته شود، روی این نسل دیکودر گاهی ادامه می‌دهد و روی پلن
+           سخت‌افزاری تصویرِ قبلی را نگه می‌دارد — همان چیزی که به‌شکل
+           «صفحه سیاه / تصویر گیرکرده» دیده می‌شد. */
+        var vs = old.getElementsByTagName ? old.getElementsByTagName('video') : [];
+        for (var k = 0; k < vs.length; k++) {
+          try { vs[k].pause(); } catch (e1) {}
+          try { vs[k].removeAttribute('src'); vs[k].load(); } catch (e2) {}
+        }
+        if (old.parentNode) old.parentNode.removeChild(old);
+      }, 600);
+    }, 520);
   }
   curSlide = newDiv;
 }
@@ -515,6 +537,12 @@ function play(i) {
   var type = item.type || 'image';
   var dur  = (item.duration || 10) * 1000;
   var div  = makeSlide();
+
+  /* آیتمی که نه نوع دارد نه آدرس، پیش‌تر به شاخهٔ iframe می‌افتاد و یک
+     مستطیل سیاهِ خالی روی تابلو می‌گذاشت — تا نوبت آیتم بعد برسد. روی
+     پلی‌لیست واقعی همین هتل، آیتم شمارهٔ ۳۳ دقیقا این‌طور بود (type و
+     file_path هر دو خالی). مستقیم رد می‌شود. */
+  if (!src && type !== 'dynamic') { setTimeout(nextItem, 50); return; }
 
   // ─ IMAGE ─ (background-size:cover به‌جای object-fit)
   if (type === 'image' || src.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i)) {
@@ -581,19 +609,45 @@ function play(i) {
     vid.loop  = false;
     vid.onended = nextItem;
     vid.onerror = function() { setTimeout(nextItem, 1000); };
-    /* ضد تمام‌صفحهٔ بومی سامسونگ — این همان باگی است که با دوبار زدن
-       EXIT روی ریموت دیده می‌شد: پلیرِ سخت‌افزاری تلویزیون ویدیو را
-       روی یک «پلن» بالاتر از لایهٔ HTML تمام‌صفحه می‌کرد و لوگو و
-       آب‌وهوا (که overlayهای HTML‌اند) زیرش پنهان می‌شدند. چون در
-       لایهٔ HTML لوگو z-index بالاتری دارد، تنها راهِ پوشاندنش همین
-       پلنِ سخت‌افزاری است. پس به‌محض ورود به تمام‌صفحه، فوراً خارجش
-       می‌کنیم و overlayها را دوباره نمایان می‌کنیم. */
+    /* ── تمام‌صفحه: جلوگیری، نه بیرون‌کشیدن ─────────────────────
+       تا امروز فقط «اگر وارد شد بیرونش بیاور» بود. روی Orsay آن‌قدر
+       دیر جواب می‌داد که تلویزیون یک قاب کامل سیاه نشان می‌داد و صدای
+       پخش هم قطع می‌شد؛ چون کاربر «ویدیو تمام‌صفحه نمی‌شود» می‌دید در
+       حالی که پلیر سخت‌افزاری واقعا وارد شده بود و بعد بیرون آمده بود.
+       راه درست این است که اصلا وارد نشود: ویدیو با `playsinline` و
+       بی‌کنترل می‌ماند و پلیر خودِ اپ (پلن HTML) همان است که دیده
+       می‌شود. guardFullscreen فقط تور ایمنی برای وقتی است که پلیر
+       سخت‌افزاری به‌هرحال بالا بیاید.
+
+       مهم: `controls` و پخش خودکار تمام‌صفحه را هم خاموش می‌کنیم؛ روی
+       این نسل، ویدیوی دارای صدا اغلب همین دو را بهانه می‌کند. */
+    vid.setAttribute('controls', 'false');
+    try { vid.controls = false; } catch (e) {}
+    vid.setAttribute('disablePictureInPicture', '');
+    vid.setAttribute('x-webkit-airplay', 'deny');
     guardFullscreen(vid);
     /* پس‌زمینه قبل از ویدیو به اسلاید اضافه می‌شود تا در همان فریم
        اول زیرش باشد — اگر بعد اضافه شود، لحظه‌ی اول نوار سیاه دیده
        می‌شود و روی تابلو همان لحظه به چشم می‌آید. */
     applyBackdrop(div);
 
+    /* ── تعویض با اولین فریم واقعی ──────────────────────────────
+       تا امروز اسلاید ویدیو بلافاصله swap می‌شد، پیش از آن‌که حتی یک
+       فریم رمزگشایی شده باشد. روی Maple این یعنی مکث سیاهِ کوتاه سرِ
+       هر ویدیو: اسلاید قبلی محو شده و پلن سخت‌افزاری هنوز چیزی برای
+       نشان دادن ندارد. حالا اسلاید تازه تا `playing` اول به‌صورت
+       نامرئی بالای قبلی می‌نشیند و فقط با اولین فریم ظاهر می‌شود؛ اگر
+       ویدیو پخش نشد، همان قبلی روی صفحه می‌ماند.
+
+       بررسی ۲٫۵ ثانیه‌ای برای فایل خراب است: اگر `playing` نیامد،
+       بی‌صدا یک بار دیگر تلاش می‌شود و در نهایت رد می‌شود. */
+    var swapped = false;
+    function revealIt() {
+      if (swapped) return;
+      swapped = true;
+      swapSlide(div);
+    }
+    vid.onplaying = function() { sizeVideo(vid, item); revealIt(); };
     vid.oncanplay = function() { sizeVideo(vid, item); tvPlay(vid); };
     /* ابعاد ذاتی تا loadedmetadata معلوم نیست، ولی چون اندازه را از
        صحنه می‌گیریم نه از فایل، می‌شود از همان اول هم ست کرد. */
@@ -603,10 +657,17 @@ function play(i) {
 
     div.appendChild(vid);
     sizeVideo(vid, item);
-    swapSlide(div);
     try { vid.load(); } catch(e) {}
     tvPlay(vid);
     setTimeout(function(){ tvPlay(vid); }, 500);
+
+    setTimeout(function () {
+      if (swapped) return;
+      /* نه پخش شد نه خطا داد — یک تلاش بی‌صدا، بعد رها کن */
+      try { vid.muted = true; } catch (e) {}
+      if (vid.paused) tvPlay(vid);
+      setTimeout(function () { if (!swapped) { revealIt(); setTimeout(nextItem, 200); } }, 1500);
+    }, 2500);
 
     if (dur > 0 && dur < 7200000) tm = setTimeout(nextItem, dur);
 

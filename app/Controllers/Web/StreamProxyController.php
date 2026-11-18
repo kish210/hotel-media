@@ -24,6 +24,17 @@ use App\Services\TvheadendService;
  */
 class StreamProxyController extends Controller
 {
+    /**
+     * کانال‌هایی که مستقیماً از TVHeadend نمی‌آیند (مثلاً جریان HTTP سرور
+     * قدیمی) با همین امضا از /tv/relay/… رد می‌شوند تا Orsay فایل MP4
+     * تدریجی بگیرد. آدرس اصلی هرگز به تلویزیون نمی‌رود، پس نشانی داخلی
+     * شبکه هم لو نمی‌رود.
+     */
+    public static function relaySign(string $url): string
+    {
+        return substr(hash_hmac('sha256', 'relay:' . $url, (string)env('APP_KEY', 'hotel-media')), 0, 24);
+    }
+
     /** GET /tv/stream/{uuid}?sig=… */
     public function stream(Request $req, array $p): void
     {
@@ -54,6 +65,8 @@ class StreamProxyController extends Controller
 
         // مرورگر دسکتاپ: ترنسکد سبک به H.264 پروگرسیو
         if ($req->get('compat') === '1') { $this->compat($uuid); return; }
+        // تلویزیون Orsay (بدون MSE): پنجرهٔ MP4
+        if ($req->get('mp4') === '1') { $this->mp4($uuid); return; }
         if (!function_exists('curl_init')) { http_response_code(500); echo 'curl missing'; return; }
 
         $profile = $_GET['profile'] ?? '';
@@ -96,6 +109,67 @@ class StreamProxyController extends Controller
         curl_exec($ch);
         curl_close($ch);
         if (!$started) { http_response_code(503); echo 'stream unavailable'; }
+    }
+
+    /**
+     * GET /tv/relay?u=<base64url>&sig=…&mp4=1&win=600
+     *
+     * فقط برای Orsay. آدرس اصلی هرگز به تلویزیون نمی‌رود؛ کسی که
+     * امضا ندارد نمی‌تواند از این مسیر به آدرس دلخواه سرور برسد (وگرنه
+     * یک SSRF بود).
+     */
+    public function relay(Request $req): void
+    {
+        $enc = (string)$req->get('u', '');
+        $sig = (string)$req->get('sig', '');
+        $url = base64_decode(strtr($enc, '-_', '+/'), true);
+        if ($url === false || !$url
+            || !hash_equals(self::relaySign($url), $sig)
+            || !preg_match('#^https?://#i', $url)) {
+            http_response_code(403); echo 'forbidden'; return;
+        }
+
+        $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+        if ($ip !== '127.0.0.1' && $ip !== '::1' && $this->acquireSlot($ip, 3) === null) {
+            http_response_code(429); header('Retry-After: 10'); echo 'too_many_streams'; return;
+        }
+
+        if ($req->get('mp4') === '1') {
+            $win = (int)(filter_input(INPUT_GET, 'win', FILTER_VALIDATE_INT) ?: 600);
+            $win = max(30, min(3600, $win));
+            $this->transcode($url, true, $win);
+            return;
+        }
+        $this->relayPassthrough($url);
+    }
+
+    /** عبور خام منبع HTTP — برای پلیرهایی که خودشان HLS/TS می‌خوانند. */
+    private function relayPassthrough(string $url): void
+    {
+        if (!function_exists('curl_init')) { http_response_code(500); echo 'curl missing'; return; }
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+        @set_time_limit(0);
+        ignore_user_abort(false);
+        while (ob_get_level() > 0) ob_end_clean();
+
+        $started = false;
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_FOLLOWLOCATION   => true,
+            CURLOPT_MAXREDIRS        => 3,
+            CURLOPT_CONNECTTIMEOUT   => 5,
+            CURLOPT_LOW_SPEED_LIMIT  => 8000,
+            CURLOPT_LOW_SPEED_TIME   => 10,
+            CURLOPT_RETURNTRANSFER   => false,
+            CURLOPT_WRITEFUNCTION    => function ($c, string $data) use (&$started): int {
+                if (!$started) { header('Content-Type: application/octet-stream'); header('Cache-Control: no-store'); $started = true; }
+                echo $data; flush();
+                return connection_aborted() ? 0 : strlen($data);
+            },
+        ]);
+        curl_exec($ch);
+        curl_close($ch);
+        if (!$started) { http_response_code(503); echo 'relay unavailable'; }
     }
 
     /** یک اسلات قفل‌فایلی برای IP یا null اگر همهٔ $max اسلات پر است. */
@@ -148,16 +222,63 @@ class StreamProxyController extends Controller
      */
     private function compat(string $uuid): void
     {
+        $in = 'http://127.0.0.1:' . ((int)($_SERVER['SERVER_PORT'] ?? 80) ?: 80) . TvheadendService::streamPath($uuid);
+        $this->transcode($in, false, 0);
+    }
+
+    /**
+     * GET /tv/stream/{uuid}?sig=…&mp4=1&win=600 — پنجرهٔ MP4 برای تلویزیون Orsay
+     *
+     * چرا: موتور Maple (سامسونگ ۲۰۱۳) نه MediaSource دارد نه HLS بومی. پس
+     * hls.js و mpegts.js هر دو بی‌اثرند و تنها چیزی که <video> می‌پذیرد یک
+     * فایل MP4 واقعی است. اینجا ffmpeg همان کانال را به MP4 تکه‌تکه
+     * (`frag_keyframe`) تبدیل می‌کند تا بدون نیاز به seek بتوان از لوله
+     * فرستاد، و پس از `win` ثانیه خودش تمام می‌شود. پلیر ۴ ثانیه پیش از
+     * پایان پنجرهٔ بعدی را می‌گیرد، پس تصویر قطع نمی‌شود.
+     *
+     * هزینه: هر بیننده یک ffmpeg (مثل compat). برای تعداد زیاد اتاق،
+     * ترنسکدر دائمی با خروجی HLS بهتر است؛ این مسیر برای هتل‌هایی است که
+     * تلویزیون قدیمی دارند و تعدادشان کم است.
+     */
+    private function mp4(string $uuid): void
+    {
+        $win = (int)(filter_input(INPUT_GET, 'win', FILTER_VALIDATE_INT) ?: 600);
+        $win = max(30, min(3600, $win));
+        $in  = 'http://127.0.0.1:' . ((int)($_SERVER['SERVER_PORT'] ?? 80) ?: 80) . TvheadendService::streamPath($uuid);
+        $this->transcode($in, true, $win);
+    }
+
+    /**
+     * @param bool $mp4  خروجی قطعه‌بندی‌شدهٔ MP4 به‌جای MPEG-TS
+     * @param int  $win  سقف ثانیه (۰ = بی‌پایان)
+     */
+    private function transcode(string $in, bool $mp4, int $win): void
+    {
         // is_executable()/file_exists() روی /usr/bin با open_basedir استخر ممنوع است؛
         // اگر ffmpeg نبود proc_open خودش شکست می‌خورد
         $ffmpeg = '/usr/bin/ffmpeg';
         if (strtolower((string)($_SERVER['HTTPS'] ?? '')) === 'on') { http_response_code(501); echo 'compat unavailable'; return; }
 
-        $in = 'http://127.0.0.1:' . ((int)($_SERVER['SERVER_PORT'] ?? 80) ?: 80) . TvheadendService::streamPath($uuid);
-        $cmd = [$ffmpeg, '-hide_banner', '-loglevel', 'quiet', '-fflags', 'nobuffer', '-i', $in,
-                '-vf', 'yadif', '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency',
-                '-profile:v', 'main', '-g', '50', '-c:a', 'aac', '-b:a', '128k', '-ac', '2',
-                '-f', 'mpegts', 'pipe:1'];
+        $cmd = [$ffmpeg, '-hide_banner', '-loglevel', 'quiet', '-fflags', 'nobuffer', '-i', $in];
+        if ($win > 0) { $cmd[] = '-t'; $cmd[] = (string)$win; }
+        /* yuv420p اجباری است: profile main تنها همین را می‌پذیرد و دیکودر
+           سخت‌افزاری تلویزیون هم فقط همین را می‌پخشد. بدون این، منبع
+           غیر 4:2:0 (مثلاً 4:4:4) بی‌صدا هیچ خروجی نمی‌دهد: ffmpeg با
+           «main profile doesn't support 4:4:4» می‌میرد و بیننده صفحهٔ
+           سیاه می‌بیند. */
+        array_push($cmd,
+            '-vf', 'yadif,format=yuv420p', '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency',
+            '-profile:v', 'main', '-g', '50', '-c:a', 'aac', '-b:a', '128k', '-ac', '2');
+        if ($mp4) {
+            /* frag_keyframe + empty_moov: فایل بدون نوشتن moov در ابتدا/انتها
+               قابل‌پخش تدریجی است — بدون این دو، ffmpeg تا آخر باید seek کند
+               و لوله اصلا کار نمی‌کند. +faststart اینجا زیان می‌رساند. */
+            array_push($cmd, '-movflags', 'frag_keyframe+empty_moov+default_base_moof',
+                            '-f', 'mp4', 'pipe:1');
+        } else {
+            array_push($cmd, '-f', 'mpegts', 'pipe:1');
+        }
+
         $proc = proc_open($cmd, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
         if (!is_resource($proc)) { http_response_code(500); echo 'ffmpeg failed'; return; }
         fclose($pipes[2]);   // loglevel quiet: چیزی نمی‌نویسد
@@ -165,10 +286,16 @@ class StreamProxyController extends Controller
         if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
         @set_time_limit(0);
         ignore_user_abort(false);
-        while (ob_get_level() > 0) ob_end_clean();
-        header('Content-Type: video/MP2T');
-        header('Cache-Control: no-store');
+        /* nginx بافر نکند وگرنه MP4 تکه‌تکه جمع می‌شود و تلویزیون تا آخر
+           پنجره منتظر می‌ماند */
         header('X-Accel-Buffering: no');
+        if ($mp4) {
+            header('Content-Type: video/mp4');
+            header('Cache-Control: no-store');
+        } else {
+            header('Content-Type: video/MP2T');
+            header('Cache-Control: no-store');
+        }
 
         while (!feof($pipes[1])) {
             $chunk = fread($pipes[1], 65536);

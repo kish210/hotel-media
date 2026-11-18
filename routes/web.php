@@ -296,6 +296,8 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class, \A
 // پخش کانال TVHeadend برای دستگاه‌ها (امضاشده، بدون ورود)
 $router->get('/tv/stream-status', [\App\Controllers\Web\StreamProxyController::class, 'status']);
 $router->get('/tv/stream/{uuid}', [\App\Controllers\Web\StreamProxyController::class, 'stream']);
+// رلهٔ منبع HTTP خارجی برای تلویزیون Orsay (بدون MSE) — امضاشده
+$router->get('/tv/relay', [\App\Controllers\Web\StreamProxyController::class, 'relay']);
 $router->get('/tv',              [\App\Controllers\Web\TvBootstrapController::class, 'index']);
 // صفحه‌های تعاملی مهمان — پورتال IPTV در iframe بازشان می‌کند
 $router->get('/tv/guest/{code}/{view}', [\App\Controllers\Web\TvGuestController::class, 'show']);

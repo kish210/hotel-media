@@ -135,6 +135,13 @@ class ContentController extends Controller
         $unlocked = $token !== '' && $ctx['room_id']
             && $this->access->verifyToken((int)$ctx['tenant_id'], (int)$ctx['room_id'], $token);
 
+        /* Orsay/Maple (سامسونگ ۲۰۱۳) نه MediaSource دارد نه HLS بومی، پس
+           hls.js و mpegts.js رویش بالا نمی‌آیند. برای این نسل نسخهٔ MP4 کانال
+           از قبل امضا و همراه پاسخ فرستاده می‌شود، چون جاوااسکریپت تلویزیون
+           نمی‌تواند HMAC حساب کند (relaySign سمت سرور است). */
+        $ua    = (string)($req->header('User-Agent') ?: ($_SERVER['HTTP_USER_AGENT'] ?? ''));
+        $orsay = stripos($ua, 'maple') !== false || stripos($ua, 'smarthub') !== false;
+
         foreach ($channels as &$c) {
             if ($unlocked) $c['locked'] = false;
 
@@ -144,7 +151,14 @@ class ContentController extends Controller
                 $c['stream_url'] = null;
                 $c['multicast_url'] = null;
                 $c['backup_stream_url'] = null;
+                $c['mp4_url'] = null;
+                $c['mp4_backup_url'] = null;
+                continue;
             }
+            unset($c['mp4_url'], $c['mp4_backup_url']);
+            if (!$orsay) continue;
+            $c['mp4_url']        = self::mp4Url((string)($c['stream_url'] ?? ''));
+            $c['mp4_backup_url'] = self::mp4Url((string)($c['backup_stream_url'] ?? ''));
         }
         unset($c);
 
@@ -153,6 +167,25 @@ class ContentController extends Controller
             'parental_active' => (int)($ctx['parental_enabled'] ?? 0) === 1,
             'unlocked'        => $unlocked,
         ]);
+    }
+
+    /**
+     * نشانی MP4 تدریجی برای یک کانال، یا null اگر ساختنی نباشد.
+     * کانال تیونر (آدرس نسبی `/tv/stream/…`) و منبع HTTP خارجی هر دو از
+     * مسیر رده‌مانده‌اند؛ `win` از پلیر می‌آید و در سمت سرور سقف‌دار است.
+     */
+    private static function mp4Url(string $url): ?string
+    {
+        if ($url === '') return null;
+        if (preg_match('#^/tv/stream/#', $url)) {
+            return $url . (str_contains($url, '?') ? '&' : '?') . 'mp4=1';
+        }
+        if (preg_match('#^https?://#i', $url)) {
+            return '/tv/relay?u=' . rtrim(strtr(base64_encode($url), '+/', '-_'), '=')
+                 . '&sig=' . \App\Controllers\Web\StreamProxyController::relaySign($url)
+                 . '&mp4=1';
+        }
+        return null;
     }
 
     /** POST /api/v1/guest/{code}/parental/unlock — body: { pin } */
