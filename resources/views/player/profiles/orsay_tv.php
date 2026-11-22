@@ -185,7 +185,19 @@ function reassertOverlays() {
    می‌کرد و overlayهای HTML زیرش گم می‌شدند. */
 function guardFullscreen(v) {
   if (!v) return;
+  /* ── چرا سقف تلاش ────────────────────────────────────────────────
+     پلیر سخت‌افزاری سامسونگ گاهی بعد از هر بار بافر شدن دوباره وارد
+     تمام‌صفحه می‌شود. نسخهٔ قبل بی‌قیدوشرط هر بار بیرونش می‌آورد، و
+     روی تابلوی واقعی این تبدیل به یک کشمکش می‌شد: ورود، خروج، ورود…
+     و هر خروج یک پرش سیاه روی تصویر می‌گذاشت («هر چند ثانیه صفحه
+     سیاه می‌شود»). حالا حداکثر سه بار و با فاصلهٔ دست‌کم دو ثانیه
+     تلاش می‌شود؛ اگر تلویزیون اصرار داشت، تصویر تمام‌صفحه بماند
+     بهتر از چشمک‌زدن دائمی است (فقط overlayها زیر آن پنهان می‌شوند). */
+  var tries = 0, lastTry = 0;
   function exitFs() {
+    var now = (new Date()).getTime();
+    if (tries >= 3 || (now - lastTry) < 2000) { reassertOverlays(); return; }
+    tries++; lastTry = now;
     try { if (v.webkitExitFullscreen)      v.webkitExitFullscreen(); } catch (e) {}
     try { if (v.webkitExitFullScreen)      v.webkitExitFullScreen(); } catch (e) {}
     try { if (document.webkitExitFullscreen) document.webkitExitFullscreen(); } catch (e) {}
@@ -227,7 +239,14 @@ function sizeVideo(v, item) {
      بد بریده می‌شد و کسی نمی‌فهمید چرا. */
   var mw = item ? parseInt(item.media_width  || 0, 10) : 0;
   var mh = item ? parseInt(item.media_height || 0, 10) : 0;
-  var fit = item && item.fit_mode ? item.fit_mode : 'contain';
+  /* ── چرا پیش‌فرض دیگر contain نیست ───────────────────────────────
+     تابلوی تبلیغاتی باید پر شود؛ نوار سیاه دور ویدیو روی تابلوی هتل
+     مثل خرابی دیده می‌شود. روی سرور واقعی هیچ آیتمی `fit_mode` را
+     صریح ست نکرده بود و ابعاد رسانه هم به پلیر نمی‌رسید، پس هر
+     ویدیو letterbox می‌شد — همان «تمام‌صفحه نیست» که گزارش شد.
+     حالا پیش‌فرض پر کردن است و اپراتور می‌تواند برای یک آیتم خاص
+     (مثلا پوستری که نباید بریده شود) `contain` را انتخاب کند. */
+  var fit = item && item.fit_mode ? item.fit_mode : 'cover';
 
   if (fit === 'cover' && mw > 0 && mh > 0) {
     var scale = Math.max(w / mw, h / mh);
@@ -367,16 +386,53 @@ function startTicker() {
   t.style.paddingRight = vw + 'px';
 
   /* اگر متن عوض شود این دوباره صدا زده می‌شود؛ بدون پاک‌کردن تایمر
-     قبلی، دو حلقه هم‌زمان left را می‌نویسند و نوار تند و پرشی می‌شود. */
-  if (_tickTimer) clearInterval(_tickTimer);
+     قبلی، دو حلقه هم‌زمان حرکت را می‌نویسند و نوار تند و پرشی می‌شود. */
+  if (_tickTimer) { clearInterval(_tickTimer); _tickTimer = null; }
+
+  /* ── چرا دیگر setInterval(16ms) نیست ───────────────────────────────
+     نسخهٔ قبل ۶۰ بار در ثانیه `left` را از جاوااسکریپت می‌نوشت. تغییر
+     `left` چیدمان را دوباره حساب می‌کند (reflow) و روی موتور ماپلِ
+     تلویزیون — همان سخت‌افزاری که این پروفایل برایش نوشته شده — این
+     کار با دیکود ویدیو بر سر یک هسته رقابت می‌کرد. نتیجه روی تابلوی
+     واقعی: پرش و کندی پخش.
+
+     حالا حرکت با انیمیشن CSS روی `transform` است: مرورگر آن را روی
+     لایهٔ ترکیب‌بندی اجرا می‌کند، بدون reflow و بدون کار جاوااسکریپت.
+     اگر این موتور انیمیشن CSS نداشته باشد، به همان تایمر برمی‌گردیم
+     ولی با فاصلهٔ ۳۳ میلی‌ثانیه (۳۰ فریم) که نصف بار قبلی است. */
+  var dist  = t.offsetWidth;
+  var speed = 90;                                  // پیکسل در ثانیه
+  var secs  = Math.max(8, Math.round(dist / speed));
+  var st    = t.style;
+  var canCss = ('webkitAnimationName' in st) || ('animationName' in st);
+
+  if (canCss) {
+    t.style.left = '0px';
+    /* کلید انیمیشن یک‌بار ساخته می‌شود؛ ساختن دوباره‌اش در هر
+       به‌روزرسانی متن، استایل‌شیت را بی‌دلیل بزرگ می‌کند. */
+    if (!document.getElementById('tick-kf')) {
+      var sEl = document.createElement('style');
+      sEl.id = 'tick-kf';
+      sEl.appendChild(document.createTextNode(
+        '@-webkit-keyframes tickmove{from{-webkit-transform:translateX(0)}' +
+        'to{-webkit-transform:translateX(-' + Math.round(dist / 2) + 'px)}}' +
+        '@keyframes tickmove{from{transform:translateX(0)}' +
+        'to{transform:translateX(-' + Math.round(dist / 2) + 'px)}}'
+      ));
+      (document.head || document.getElementsByTagName('head')[0]).appendChild(sEl);
+    }
+    st.webkitAnimation = 'tickmove ' + secs + 's linear infinite';
+    st.animation       = 'tickmove ' + secs + 's linear infinite';
+    return;
+  }
 
   var pos = 0;
   t.style.left = '0px';
   _tickTimer = setInterval(function(){
-    pos -= 1.5;
+    pos -= 3;
     if (pos < -t.offsetWidth / 2) pos = 0;
     t.style.left = pos + 'px';
-  }, 16);
+  }, 33);
 }
 
 startTicker();
@@ -657,9 +713,14 @@ function play(i) {
 
     div.appendChild(vid);
     sizeVideo(vid, item);
-    try { vid.load(); } catch(e) {}
+    /* ── چرا load() صدا زده نمی‌شود ───────────────────────────────
+       `src` همین چند خط بالاتر ست شده و مرورگر خودش بارگذاری را شروع
+       کرده است. صدا زدن `load()` بعد از آن، عنصر را **ریست** می‌کند و
+       هرچه بافر شده دور ریخته می‌شود — شروعِ کندتر و یک بافر دورریخته
+       در هر اسلاید. نمایش اسلاید را `revealIt()` بالاتر، وقتی پخش
+       واقعا شروع شد، انجام می‌دهد؛ پس اینجا فقط نباید بارگذاری را از
+       صفر دوباره شروع کنیم. */
     tvPlay(vid);
-    setTimeout(function(){ tvPlay(vid); }, 500);
 
     setTimeout(function () {
       if (swapped) return;

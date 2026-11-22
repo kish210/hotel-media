@@ -222,6 +222,40 @@ class Playlist
                            || $it['media_status'] === 'ready'
         ));
 
+        /* ── رسانه‌ای که فایلش روی دیسک نیست ─────────────────────────
+           روی سرور تولید دیده شد: یک ردیف رسانه به
+           `/uploads/media/special_offer.mp4` اشاره می‌کرد که وجود نداشت،
+           ولی در سه آیتم یک پلی‌لیست فعال بود. تابلو هر دور سه بار روی
+           آن می‌رفت، `onerror` پس از یک ثانیه رد می‌کرد، و اپراتور
+           «پرش و سیاهی» می‌دید بی‌آنکه بداند از کجاست.
+
+           فقط وقتی حذف می‌شود که مسیر محلی باشد و قطعا نبودنش معلوم
+           شود؛ رسانه‌ی بدون `file_path` (آدرس بیرونی، استریم، ماژول)
+           دست‌نخورده می‌ماند تا یک بررسی اشتباه محتوای سالم را حذف نکند. */
+        $pub = defined('PUBLIC_PATH') ? PUBLIC_PATH : (defined('ROOT_PATH') ? ROOT_PATH . '/public' : '');
+        if ($pub !== '') {
+            $playlist['items'] = array_values(array_filter(
+                $playlist['items'],
+                static function ($it) use ($pub) {
+                    /* فقط رسانه‌ی فایل‌محور سنجیده می‌شود. روی سرور تولید
+                       دیده شد که یک آیتمِ ماژول (`type=url`) مسیر مسیریابی
+                       `/player/module/menu?settings=…` را در همین ستون دارد؛
+                       سنجیدنش به‌عنوان فایل، یک منوی رستورانِ سالم را از
+                       تابلو حذف می‌کرد. علامتِ «این فایل نیست» هم نوع رسانه
+                       است و هم وجود `?` در مسیر. */
+                    $type = (string)($it['media_type'] ?? '');
+                    if (!in_array($type, ['image', 'video', 'audio'], true)) return true;
+
+                    $p = (string)($it['file_path'] ?? '');
+                    if ($p === '' || !str_starts_with($p, '/') || str_contains($p, '?')) return true;
+                    if (is_file($pub . $p)) return true;
+
+                    error_log('[PLAYLIST] فایل رسانه نیست، آیتم رد شد: ' . $p);
+                    return false;
+                }
+            ));
+        }
+
         // از IP/host واقعی سرور استفاده کن (نه APP_URL که localhost هست)
         $scheme  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host    = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
