@@ -261,6 +261,9 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
 <div class="sidebar-section">
   <i class="fas fa-gear" style="margin-left:5px;opacity:.6"></i> سیستم
 </div>
+<a href="/admin/system/ai" class="sidebar-link <?= isActive('/admin/system/ai') ?>">
+  <span class="icon"><i class="fas fa-wand-magic-sparkles" style="color:#a855f7;"></i></span> دستیار هوشمند
+</a>
 <a href="/admin/system/update" class="sidebar-link <?= isActive('/admin/system/update') ?>">
   <span class="icon"><i class="fas fa-cloud-arrow-down" style="color:#4098db;"></i></span>
   به‌روزرسانی سیستم

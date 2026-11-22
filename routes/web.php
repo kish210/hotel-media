@@ -271,6 +271,12 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class, \A
     $r->post('/system/drivers/{id}/install', [\App\Controllers\Web\DriverController::class, 'install'], [CsrfMiddleware::class]);
     $r->post('/system/drivers/{id}/upload',  [\App\Controllers\Web\DriverController::class, 'upload'],  [CsrfMiddleware::class]);
     // ── تیونر و اسکن کانال (فقط super_admin) ───────────────────
+    // ── دستیار هوشمند (فقط super_admin) ───────────────────────
+    $r->get('/system/ai',              [\App\Controllers\Web\AiController::class, 'index']);
+    $r->get('/system/ai/models',       [\App\Controllers\Web\AiController::class, 'models']);
+    $r->post('/system/ai/model',       [\App\Controllers\Web\AiController::class, 'setModel'], [CsrfMiddleware::class]);
+    $r->post('/system/ai/ask',         [\App\Controllers\Web\AiController::class, 'ask'],      [CsrfMiddleware::class]);
+    $r->post('/system/ai/apply',       [\App\Controllers\Web\AiController::class, 'apply'],    [CsrfMiddleware::class]);
     $r->get('/system/tuner',          [\App\Controllers\Web\TunerController::class, 'index']);
     $r->get('/system/tuner/status',   [\App\Controllers\Web\TunerController::class, 'status']);
     $r->post('/system/tuner/setup',   [\App\Controllers\Web\TunerController::class, 'setup'],  [CsrfMiddleware::class]);
