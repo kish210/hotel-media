@@ -4,6 +4,25 @@
   <button onclick="document.getElementById('addScheduleModal').classList.remove('hidden')" class="btn-primary text-sm flex items-center gap-2"><i class="fas fa-plus text-xs"></i> زمان‌بندی جدید</button>
 </div>
 
+<?php if (!empty($clashes)): ?>
+<div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.3);
+            border-radius:14px;padding:14px 18px;margin-bottom:16px;">
+  <div style="font-size:13px;font-weight:700;color:#fbbf24;margin-bottom:8px;">
+    <i class="fas fa-triangle-exclamation ml-1"></i>زمان‌بندی‌های هم‌پوشان
+  </div>
+  <div style="font-size:12px;color:#8593a8;line-height:2;margin-bottom:10px;">
+    این‌ها روی یک هدف و با اولویت یکسان فعال‌اند، پس معلوم نیست کدام پخش می‌شود.
+    یکی را خاموش کنید یا اولویتش را عوض کنید.
+  </div>
+  <?php foreach ($clashes as $c): ?>
+    <div style="font-size:12.5px;color:#e2e8f0;padding:4px 0;">
+      • <b><?= e($c['target']) ?></b> — اولویت <?= (int)$c['priority'] ?>:
+      <?= (int)$c['n'] ?> زمان‌بندی (<?= e($c['names']) ?>)
+    </div>
+  <?php endforeach; ?>
+</div>
+<?php endif; ?>
+
 <div class="card overflow-hidden">
   <table class="w-full text-sm">
     <thead><tr class="border-b border-white/5 text-xs text-slate-500 uppercase">
@@ -19,7 +38,40 @@
       <tr><td colspan="6" class="text-center py-12 text-slate-600"><i class="fas fa-calendar text-4xl mb-3 block opacity-20"></i>زمان‌بندی‌ای تنظیم نشده</td></tr>
       <?php else: foreach ($schedules as $sc): ?>
       <tr class="table-row border-b border-white/3">
-        <td class="p-3 text-white font-medium"><?=e($sc['name'])?></td>
+        <?php
+        /* ── جملهٔ خلاصه ────────────────────────────────────────────
+           جدول نُه فیلد خام را در ستون‌های جدا نشان می‌داد و اپراتور
+           باید خودش سر هم می‌کرد که «این کِی پخش می‌شود». یک جملهٔ
+           فارسی همان را می‌گوید. */
+        $DAY = ['شنبه','یک‌شنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه'];
+        $bits = [];
+        $ty = (string)($sc['type'] ?? '');
+        if ($ty === 'always')      $bits[] = 'همیشه';
+        elseif ($ty === 'daily')   $bits[] = 'هر روز';
+        elseif ($ty === 'weekly') {
+            $wd = json_decode((string)($sc['weekdays'] ?? ''), true);
+            $bits[] = is_array($wd) && $wd
+                ? implode('، ', array_map(fn($d) => $DAY[(int)$d] ?? '', $wd))
+                : 'هفتگی';
+        } elseif ($ty === 'once')  $bits[] = 'یک‌بار';
+
+        if (!empty($sc['start_time'])) {
+            $bits[] = 'از ' . substr((string)$sc['start_time'], 0, 5)
+                    . (!empty($sc['end_time']) ? ' تا ' . substr((string)$sc['end_time'], 0, 5) : '');
+        }
+        if (!empty($sc['start_date'])) {
+            $bits[] = 'از تاریخ ' . (string)$sc['start_date']
+                    . (!empty($sc['end_date']) ? ' تا ' . (string)$sc['end_date'] : '');
+        }
+        $off = isset($sc['is_active']) && !(int)$sc['is_active'];
+        ?>
+        <td class="p-3 text-white font-medium"<?= $off ? ' style="opacity:.5;"' : '' ?>>
+          <?=e($sc['name'])?>
+          <?php if ($off): ?><span style="font-size:10px;color:#fbbf24;">(خاموش)</span><?php endif; ?>
+          <div style="font-size:11px;color:#8593a8;font-weight:400;margin-top:3px;">
+            <?= e(implode(' · ', $bits)) ?>
+          </div>
+        </td>
         <td class="p-3 text-slate-400"><?=e($sc['playlist_name'])?></td>
         <?php
         /* هدف واقعی برنامه. پیش از افزودن انتشار روی محل، این ستون هر
@@ -43,6 +95,14 @@
         <td class="p-3"><span class="badge-pending px-2 py-0.5 rounded-full text-xs border"><?= e(["daily" => "روزانه", "weekly" => "هفتگی", "once" => "یک‌بار", "always" => "همیشه"][$sc["type"] ?? ""] ?? $sc["type"]) ?></span></td>
         <td class="p-3 text-slate-400 font-mono"><?=e($sc['priority'])?></td>
         <td class="p-3">
+          <form method="POST" action="/admin/schedules/<?=$sc['id']?>/toggle" class="inline">
+            <?= csrf_field() ?><button type="submit" class="btn-ghost text-xs px-2 py-1"
+              title="<?= $off ? 'روشن کردن' : 'خاموش کردن' ?>"><i class="fas fa-<?= $off ? 'play' : 'pause' ?>"></i></button>
+          </form>
+          <form method="POST" action="/admin/schedules/<?=$sc['id']?>/duplicate" class="inline">
+            <?= csrf_field() ?><button type="submit" class="btn-ghost text-xs px-2 py-1"
+              title="کپی (خاموش ساخته می‌شود)"><i class="fas fa-copy"></i></button>
+          </form>
           <form method="POST" action="/admin/schedules/<?=$sc['id']?>/delete" class="inline">
             <?= csrf_field() ?><button type="submit" class="btn-danger text-xs px-2 py-1" onclick="return confirm('حذف شود؟')"><i class="fas fa-trash text-xs"></i></button>
           </form>

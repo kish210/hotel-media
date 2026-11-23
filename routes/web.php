@@ -201,6 +201,8 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class, \A
     $r->get('/schedules',      [\App\Controllers\Web\ScheduleController::class, 'index']);
     $r->post('/schedules',     [\App\Controllers\Web\ScheduleController::class, 'store']);
     $r->post('/schedules/{id}/delete', [\App\Controllers\Web\ScheduleController::class, 'destroy']);
+    $r->post('/schedules/{id}/duplicate', [\App\Controllers\Web\ScheduleController::class, 'duplicate'], [CsrfMiddleware::class]);
+    $r->post('/schedules/{id}/toggle',    [\App\Controllers\Web\ScheduleController::class, 'toggle'],    [CsrfMiddleware::class]);
 
     // Menu Board
     $r->get('/menu',                         [\App\Controllers\Web\MenuController::class, 'index']);
