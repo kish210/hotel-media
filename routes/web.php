@@ -308,6 +308,7 @@ $router->get('/tv/stream/{uuid}', [\App\Controllers\Web\StreamProxyController::c
 $router->get('/tv/relay', [\App\Controllers\Web\StreamProxyController::class, 'relay']);
 // عیب‌یابی پخش روی خودِ تلویزیون — بدون ورود (تلویزیون نمی‌تواند وارد پنل شود)،
 // فقط می‌خواند و گزارش می‌دهد و چیزی را تغییر نمی‌دهد.
+$router->get('/tv/diag/{code}/plane', [\App\Controllers\Web\TvDiagController::class, 'plane']);
 $router->get('/tv/diag/{code}',  [\App\Controllers\Web\TvDiagController::class, 'show']);
 $router->post('/tv/diag/{code}', [\App\Controllers\Web\TvDiagController::class, 'report']);
 

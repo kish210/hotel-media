@@ -37,7 +37,18 @@ $posMap  = ['bottom-right'=>'bottom:14px;right:14px','bottom-left'=>'bottom:14px
 *{margin:0;padding:0;box-sizing:border-box;}
 /* درصد به‌جای پیکسل ثابت — چیدمان با هر رزولوشنی که تلویزیون
    گزارش کند جور درمی‌آید. درصد از WebKit خیلی قدیمی هم کار می‌کند. */
+<?php /* ── چرا یک کلاس جدا برای «ویدیو روی صفحه است» ──────────────────
+        روی Orsay/Maple ویدیو را خودِ سخت‌افزار روی یک «پلنِ ویدیو»
+        رمزگشایی می‌کند که *زیرِ* تمام لایهٔ HTML می‌نشیند. مرورگر
+        صفحه را روی آن سوار می‌کند. پس هر پیکسلِ ماتی که روی ناحیهٔ
+        ویدیو کشیده شود — از جمله پس‌زمینهٔ خودِ body — تصویر را
+        می‌پوشاند و فقط صدا می‌ماند. دقیقا همان «صدا می‌آمد ولی تصویر
+        سیاه بود».
+        پس تا وقتی ویدیو پخش می‌شود body شفاف می‌شود تا پلن دیده شود،
+        و به محض رفتن به تصویر یا متن دوباره سیاه می‌شود (وگرنه سر
+        تعویض اسلاید سفیدی دیده می‌شود). */ ?>
 body,html{width:100%;height:100%;overflow:hidden;background:#000;}
+html.on-video,html.on-video body,html.on-video #c{background:transparent;}
 #c{position:relative;width:100%;height:100%;}
 /* opacity مستقیم ست می‌شود؛ transition خودش انیمیت می‌کند (بدون classList) */
 <?php /* overflow پنهان لازم است: در حالت «پر کردن صفحه» ویدیو عمدا
@@ -52,12 +63,13 @@ body,html{width:100%;height:100%;overflow:hidden;background:#000;}
 /* تصویر با background-size:cover — چون object-fit روی Maple نیست */
 .slide-img{width:100%;height:100%;background-repeat:no-repeat;background-position:center center;
            -webkit-background-size:cover;background-size:cover;}
-<?php /* ویدیو پس‌زمینه‌ی خودش را ندارد: اگر سیاه باشد، نوارهای خالیِ
-        بالا-پایین را خودش سیاه می‌کند و پس‌زمینه‌ی تابلو هیچ‌وقت دیده
-        نمی‌شود. زیرش .slide-bg است که آن نوارها را پر می‌کند. */ ?>
-.slide video{width:100%;height:100%;display:block;background:transparent;position:relative;z-index:2;}
-<?php /* لایه‌ی پس‌زمینه — پشت ویدیو، به اندازه‌ی کل اسلاید */ ?>
-.slide-bg{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;}
+<?php /* `position` و `z-index` عمدا اینجا نیست. دادنِ z-index به ویدیو
+        روی این نسل یک «لایهٔ ترکیب‌شدهٔ HTML» می‌سازد و مرورگر تلاش
+        می‌کند قاب‌ها را خودش بکشد؛ نتیجه تصویرِ سیاه با صدای سالم
+        است. ویدیو باید در جریان عادی بماند تا پلنِ سخت‌افزاری کار
+        خودش را بکند. به همین دلیل هم `.slide-bg` دیگر زیر ویدیو
+        گذاشته نمی‌شود — روی پلنِ سخت‌افزاری «زیر» وجود ندارد. */ ?>
+.slide video{width:100%;height:100%;display:block;background:transparent;}
 .slide iframe{width:100%;height:100%;border:0;}
 <?php /* اگر تنظیماتِ صفحه متنی نداشته باشد پنهان شروع می‌شود، ولی متنِ
         پلی‌لیست که رسید startTicker خودش نمایانش می‌کند. */ ?>
@@ -270,57 +282,16 @@ function sizeVideo(v, item) {
   v.style.height = h + 'px';
 }
 
-/* ── پس‌زمینه‌ی پشت ویدیو ────────────────────────────────────────
-   ویدیویی که نسبت تصویرش با صفحه یکی نیست، نوار خالی می‌گذارد. این
-   لایه آن نوار را پر می‌کند.
-
-   عمدا هیچ‌جا به videoWidth تکیه نمی‌شود: روی موتور ماپل آن عدد
-   غلط است (روی تلویزیون واقعی همین هتل برای یک فایل ۱۶:۹ مقدار
-   1280x1280 گزارش شد)، پس هر محاسبه‌ای بر پایه‌ی آن روی همان
-   تلویزیون‌هایی می‌شکند که این پروفایل برایشان نوشته شده. پس‌زمینه
-   به اندازه‌ی ویدیو کاری ندارد و همیشه درست است. */
+/* ── پس‌زمینهٔ پشت ویدیو: روی این نسل ممکن نیست ───────────────────
+   اینجا تا امروز لایه‌ای ساخته می‌شد تا نوارهای خالیِ کنارِ ویدیویی
+   که نسبتش با صفحه یکی نیست پر شود. روی Orsay/Maple اصلا شدنی نیست:
+   ویدیو روی پلنِ سخت‌افزاری *زیرِ* کل لایهٔ HTML رمزگشایی می‌شود، پس
+   چنین لایه‌ای زیر ویدیو نمی‌رود بلکه رویش می‌افتد و تصویر را
+   می‌خورد — همان تابلوی سیاه با صدای سالم. نوار خالی حالا سیاهِ خودِ
+   تلویزیون است. مقدارها نگه داشته می‌شوند چون /playlist می‌فرستدشان
+   و پروفایل‌های دیگر (مرورگرهای تازه) از آن‌ها استفاده می‌کنند. */
 var BACKDROP = null;   // از /playlist می‌آید
 var VIDEO_FIT = 'fit';
-
-function applyBackdrop(div) {
-  if (!BACKDROP || BACKDROP.mode === 'black') return;
-
-  var bg = document.createElement('div');
-  bg.className = 'slide-bg';
-
-  var c = document.getElementById('c');
-  var w = (c && c.offsetWidth) || screen.width || 1280;
-
-  if (BACKDROP.mode === 'color') {
-    bg.style.backgroundColor = BACKDROP.color || '#000000';
-
-  } else if (BACKDROP.mode === 'image') {
-    bg.style.backgroundImage    = 'url("' + BACKDROP.image + '")';
-    bg.style.backgroundRepeat   = 'no-repeat';
-    bg.style.backgroundPosition = 'center center';
-    /* cover تا تصویر پس‌زمینه خودش نوار خالی نسازد */
-    bg.style.webkitBackgroundSize = 'cover';
-    bg.style.backgroundSize       = 'cover';
-
-  } else if (BACKDROP.mode === 'logo') {
-    /* لوگوی تکرارشونده. اندازه‌ی کاشی از عرض صفحه حساب می‌شود، نه
-       عدد ثابت — روی ۱۲۸۰ و ۱۹۲۰ هر دو باید یک‌جور دیده شود.
-
-       رنگ روی خودِ اسلاید می‌نشیند نه روی این لایه: opacity کل لایه را
-       محو می‌کند و اگر رنگ هم همین‌جا بود، رنگ پس‌زمینه هم کم‌رنگ
-       می‌شد و نوار خالی دوباره خاکستریِ بی‌رنگ می‌شد. */
-    var tile = Math.max(60, Math.round(w / 9));
-    div.style.backgroundColor = BACKDROP.color || '#0b1220';
-    bg.style.backgroundImage  = 'url("' + BACKDROP.image + '")';
-    bg.style.backgroundRepeat = 'repeat';
-    bg.style.webkitBackgroundSize = tile + 'px auto';
-    bg.style.backgroundSize       = tile + 'px auto';
-    /* کم‌رنگ، وگرنه پس‌زمینه با خودِ آگهی رقابت می‌کند */
-    bg.style.opacity = 0.18;
-  }
-
-  div.appendChild(bg);
-}
 
 /* هر بار که این صفحه عوض می‌شود این عدد هم باید عوض شود — در ضربان
    گزارش می‌شود و تنها راه فهمیدن اینکه تلویزیون کد تازه را گرفته یا
@@ -600,6 +571,11 @@ function play(i) {
      file_path هر دو خالی). مستقیم رد می‌شود. */
   if (!src && type !== 'dynamic') { setTimeout(nextItem, 50); return; }
 
+  /* پیش‌فرض هر آیتم: صفحهٔ مات و سیاه. فقط شاخهٔ ویدیو پایین‌تر آن را
+     شفاف می‌کند تا پلنِ سخت‌افزاری دیده شود. اگر اینجا پاک نشود، روی
+     تصویر و متن هم شفاف می‌ماند و حاشیه‌ها سفید دیده می‌شود. */
+  document.documentElement.className = '';
+
   // ─ IMAGE ─ (background-size:cover به‌جای object-fit)
   if (type === 'image' || src.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i)) {
     // پیش‌بارگذاری تا موقع سوییچ، فریمِ خالی دیده نشود
@@ -685,7 +661,14 @@ function play(i) {
     /* پس‌زمینه قبل از ویدیو به اسلاید اضافه می‌شود تا در همان فریم
        اول زیرش باشد — اگر بعد اضافه شود، لحظه‌ی اول نوار سیاه دیده
        می‌شود و روی تابلو همان لحظه به چشم می‌آید. */
-    applyBackdrop(div);
+    /* ── هیچ لایه‌ای زیر ویدیو کشیده نمی‌شود ────────────────────
+       پیش‌تر اینجا یک پس‌زمینه (رنگ/تصویر/لوگو) ساخته می‌شد تا نوارهای
+       خالیِ بالا و پایین را پر کند. روی Orsay این کار خودِ تصویر را
+       می‌کشت: پس‌زمینه در لایهٔ HTML است و لایهٔ HTML *روی* پلنِ
+       سخت‌افزاری می‌نشیند، پس نه «زیرِ» ویدیو می‌رفت، بلکه رویش. نتیجه
+       همان تابلوی سیاه با صدای سالم بود. نوارهای خالی حالا سیاهِ خودِ
+       تلویزیون‌اند — که درست و بی‌هزینه است. */
+    document.documentElement.className = 'on-video';
 
     /* ── تعویض با اولین فریم واقعی ──────────────────────────────
        تا امروز اسلاید ویدیو بلافاصله swap می‌شد، پیش از آن‌که حتی یک

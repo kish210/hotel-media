@@ -20,11 +20,38 @@ class TvDiagController extends Controller
     /** GET /tv/diag/{code} */
     public function show(Request $req, array $p): void
     {
-        $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)($p['code'] ?? '')));
+        $code = $this->code($p);
         if ($code === '') { http_response_code(404); echo 'bad code'; return; }
+        $videos = $this->videos($code);
+        include VIEWS_PATH . '/player/diag.php';
+    }
 
-        /* ویدیوهای واقعی همین هتل، نه فایل نمونه: مشکل ممکن است فقط با
-           قالب یا رزولوشن همین فایل‌ها باشد. */
+    /**
+     * GET /tv/diag/{code}/plane — آزمون بصری پلنِ ویدیو.
+     *
+     * چرا جدا از صفحهٔ بالا: آن صفحه متن گزارش می‌دهد، این یکی باید
+     * تمامِ صفحه را به خودِ ویدیو بدهد. «صدا می‌آید ولی تصویر سیاه
+     * است» دو علتِ کاملا متفاوت دارد (پوشیده‌شدن پلنِ سخت‌افزاری، یا
+     * سنگین بودن پروفایل H.264) و تنها راه تفکیکشان این است که یک
+     * فایل را چند حالت پخش کنیم و اپراتور ببیند کدام تصویر دارد.
+     */
+    public function plane(Request $req, array $p): void
+    {
+        $code = $this->code($p);
+        if ($code === '') { http_response_code(404); echo 'bad code'; return; }
+        $videos = $this->videos($code);
+        include VIEWS_PATH . '/player/diag_plane.php';
+    }
+
+    private function code(array $p): string
+    {
+        return strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)($p['code'] ?? '')));
+    }
+
+    /** ویدیوهای واقعی همین هتل، نه فایل نمونه: مشکل ممکن است فقط با
+     *  قالب یا رزولوشن همین فایل‌ها باشد. */
+    private function videos(string $code): array
+    {
         $videos = [];
         try {
             $screen = $this->db->row('SELECT tenant_id FROM screens WHERE code = ?', [$code]);
@@ -51,7 +78,7 @@ class TvDiagController extends Controller
             $videos[] = ['name' => 'هیچ ویدیویی روی این سرور نبود', 'url' => ''];
         }
 
-        include VIEWS_PATH . '/player/diag.php';
+        return $videos;
     }
 
     /**
