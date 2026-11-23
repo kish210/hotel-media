@@ -32,7 +32,61 @@ class Playlist
             $sql .= " AND p.screen_type IN (?, 'any')"; $params[] = $filters['screen_type'];
         }
         $sql .= " ORDER BY p.updated_at DESC";
-        return $this->db->paginate($sql, $params, $page, $perPage);
+        $res = $this->db->paginate($sql, $params, $page, $perPage);
+
+        /* ── پیش‌نمایش کارت ─────────────────────────────────────────────
+           کارت پلی‌لیست تا امروز فقط یک آیکن فیلم داشت و همهٔ پلی‌لیست‌ها
+           شبیه هم بودند؛ اپراتور برای فهمیدن محتوای هرکدام باید بازش
+           می‌کرد. چند تصویر اول اینجا می‌آید تا از روی کارت معلوم باشد.
+
+           یک کوئری برای کل صفحه، نه یکی به‌ازای هر پلی‌لیست: با ۵۰
+           پلی‌لیست، حالت دوم ۵۰ رفت‌وبرگشت اضافه بود. */
+        $ids = array_column($res['data'] ?? $res['items'] ?? [], 'id');
+        if ($ids) {
+            $in   = implode(',', array_fill(0, count($ids), '?'));
+            $thumbs = [];
+            try {
+                $rows = $this->db->rows(
+                    "SELECT pi.playlist_id, m.type, m.thumbnail_path, m.file_path
+                       FROM playlist_items pi
+                       JOIN media m ON m.id = pi.media_id AND m.deleted_at IS NULL
+                      WHERE pi.playlist_id IN ($in) AND pi.is_active = 1
+                        AND m.type IN ('image','video')
+                      ORDER BY pi.playlist_id, pi.sort_order",
+                    $ids
+                ) ?: [];
+                foreach ($rows as $r) {
+                    $pid = (int)$r['playlist_id'];
+                    if (count($thumbs[$pid] ?? []) >= 4) continue;
+                    /* ── فقط چیزی که واقعا تصویر است ─────────────────────
+                       روی سرور تولید معلوم شد `thumbnail_path` بعضی ویدیوها
+                       به خودِ فایل `.mp4` اشاره می‌کند. گذاشتن آن در <img>
+                       یعنی مرورگر چند مگابایت ویدیو را دانلود می‌کند تا در
+                       پایان چیزی نشان ندهد — با ۵۰ پلی‌لیست روی شبکهٔ هتل
+                       فاجعه است. پس پسوند سنجیده می‌شود، نه نوع رسانه.
+
+                       وجود فایل هم بررسی می‌شود: رسانهٔ حذف‌شده از دیسک
+                       (که روی همین سرور هست) کارت را با تصویر شکسته پر
+                       می‌کرد. */
+                    $src = (string)($r['thumbnail_path'] ?? '');
+                    if ($src === '' && $r['type'] === 'image') $src = (string)$r['file_path'];
+                    if ($src === '' || !preg_match('/\.(jpe?g|png|gif|webp|avif|bmp)$/i', $src)) continue;
+
+                    $pub = defined('PUBLIC_PATH') ? PUBLIC_PATH : ROOT_PATH . '/public';
+                    if (str_starts_with($src, '/') && !is_file($pub . $src)) continue;
+
+                    $thumbs[$pid][] = $src;
+                }
+            } catch (\Throwable) { $thumbs = []; }
+
+            $key = isset($res['data']) ? 'data' : 'items';
+            foreach ($res[$key] as &$p) {
+                $p['thumbs'] = $thumbs[(int)$p['id']] ?? [];
+            }
+            unset($p);
+        }
+
+        return $res;
     }
 
     public function find(int $id): ?array

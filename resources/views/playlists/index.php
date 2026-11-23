@@ -28,11 +28,13 @@ $tabs  = ['' => 'همه', 'signage' => '🖼 تابلو', 'iptv' => '📺 تلو
 </div>
 
 <?php if (empty($list)): ?>
-<div class="card text-center py-16">
-  <i class="fas fa-list text-5xl text-slate-700 mb-4 block"></i>
-  <p class="text-slate-500 mb-4">پلی‌لیستی ساخته نشده</p>
-  <a href="/admin/playlists/create" class="btn-primary text-sm">اولین پلی‌لیست را بساز</a>
-</div>
+<?php $empty = [
+    'icon'  => 'fa-film',
+    'title' => 'هنوز پلی‌لیستی نساخته‌اید',
+    'text'  => 'پلی‌لیست فهرستی از عکس و ویدیو است که تابلو پشت سر هم پخش می‌کند. '
+             . 'اول رسانه را در کتابخانه بگذارید، بعد اینجا پلی‌لیست بسازید و از زمان‌بندی به یک صفحه وصلش کنید.',
+    'cta'   => ['href' => '/admin/playlists/create', 'label' => 'ساخت اولین پلی‌لیست'],
+]; include VIEWS_PATH . '/partials/empty_state.php'; ?>
 <?php else: ?>
 
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -41,9 +43,25 @@ $tabs  = ['' => 'همه', 'signage' => '🖼 تابلو', 'iptv' => '📺 تلو
 
     <div class="flex items-start justify-between mb-3">
       <div class="flex items-center gap-3">
+        <?php /* پیش‌نمایش محتوا: تا چهار تصویر اول. پلی‌لیستی که فقط ویدیوی
+                 بدون thumbnail دارد همان آیکن قبلی را می‌گیرد، چون گذاشتن
+                 خود فایل ویدیو در کارت یعنی دانلود چند مگابایت بی‌دلیل. */
+              $thumbs = array_slice($p['thumbs'] ?? [], 0, 4); ?>
+        <?php if ($thumbs): ?>
+        <div style="width:62px;height:42px;border-radius:10px;overflow:hidden;flex-shrink:0;
+                    display:grid;grid-template-columns:repeat(<?= count($thumbs) > 1 ? 2 : 1 ?>,1fr);
+                    grid-auto-rows:1fr;gap:1px;background:#0b0f18;">
+          <?php foreach ($thumbs as $th): ?>
+            <img src="<?= e($th) ?>" alt="" loading="lazy"
+                 style="width:100%;height:100%;object-fit:cover;display:block;"
+                 onerror="this.style.display='none'">
+          <?php endforeach; ?>
+        </div>
+        <?php else: ?>
         <div style="width:42px;height:42px;background:rgba(26,122,196,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
           <i class="fas fa-film" style="color:#1a7ac4;font-size:17px;"></i>
         </div>
+        <?php endif; ?>
         <div>
           <h3 style="font-size:14px;font-weight:700;color:#fff;">
             <?= e($p['name']) ?>

@@ -167,6 +167,67 @@ match ($command) {
         echo '  ' . ($dry ? count($rows) . ' مورد قابل تکمیل' : "$done مورد تکمیل شد") . "\n";
     })(),
 
+    'media:thumbs' => (function() use ($argv) {
+        // ساخت تصویر پیش‌نمایش (poster) برای ویدیوهایی که ندارند.
+        //   php artisan media:thumbs [--dry-run] [--force]
+        //
+        // چرا لازم شد: روی سرور تولید معلوم شد `thumbnail_path` ویدیوها به
+        // خودِ فایل `.mp4` اشاره می‌کند، چون هیچ‌وقت ابزاری برای ساخت
+        // پیش‌نمایش نبود. نتیجه: کارت پلی‌لیست و کتابخانه یا آیکن خالی
+        // نشان می‌داد، یا بدتر، مرورگر چند مگابایت ویدیو را دانلود می‌کرد
+        // تا در پایان چیزی نشان ندهد.
+        //
+        // فریم از ثانیهٔ سوم گرفته می‌شود نه صفر: فریم اول بسیاری از
+        // کلیپ‌ها سیاه یا فید-این است و پیش‌نمایشِ سیاه از نبودنش بهتر نیست.
+        $dry   = in_array('--dry-run', $argv, true);
+        $force = in_array('--force', $argv, true);
+        $db    = \App\Core\Database::getInstance();
+
+        $ff = null;
+        foreach (['/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg'] as $c) { if (@is_executable($c)) { $ff = $c; break; } }
+        if ($ff === null) { echo "  ffmpeg روی این سرور نیست\n"; return; }
+
+        $rows = $db->rows(
+            "SELECT id, name, file_path, thumbnail_path FROM media
+              WHERE type = 'video' AND deleted_at IS NULL AND file_path LIKE '/uploads/%'"
+        ) ?: [];
+
+        $made = 0; $skip = 0;
+        foreach ($rows as $m) {
+            $th = (string)($m['thumbnail_path'] ?? '');
+            $isImage = $th !== '' && preg_match('/\\.(jpe?g|png|webp)$/i', $th);
+            if (!$force && $isImage && is_file(PUBLIC_PATH . $th)) { $skip++; continue; }
+
+            $abs = PUBLIC_PATH . $m['file_path'];
+            if (!is_file($abs)) { echo "  #{$m['id']} فایل نیست\n"; continue; }
+
+            $out    = preg_replace('/\\.[A-Za-z0-9]+$/', '', (string)$m['file_path']) . '_thumb.jpg';
+            $outAbs = PUBLIC_PATH . $out;
+            echo "  #{$m['id']} {$m['name']}" . ($dry ? " (آزمایشی)\n" : "\n");
+            if ($dry) continue;
+
+            @mkdir(dirname($outAbs), 0775, true);
+            $cmd = escapeshellarg($ff) . ' -y -loglevel error -ss 3 -i ' . escapeshellarg($abs)
+                 . ' -frames:v 1 -vf ' . escapeshellarg('scale=480:-2')
+                 . ' ' . escapeshellarg($outAbs) . ' 2>&1';
+            @shell_exec($cmd);
+            // کلیپ کوتاه‌تر از سه ثانیه فریمی در آن لحظه ندارد
+            if (!is_file($outAbs) || filesize($outAbs) < 512) {
+                @shell_exec(escapeshellarg($ff) . ' -y -loglevel error -i ' . escapeshellarg($abs)
+                    . ' -frames:v 1 -vf ' . escapeshellarg('scale=480:-2') . ' ' . escapeshellarg($outAbs) . ' 2>&1');
+            }
+            if (is_file($outAbs) && filesize($outAbs) > 512) {
+                @chmod($outAbs, 0644);
+                $db->update('media', ['thumbnail_path' => $out], ['id' => (int)$m['id']]);
+                $made++;
+            } else {
+                @unlink($outAbs);
+                echo "     ساخته نشد\n";
+            }
+        }
+        echo "  ساخته شد: $made · از قبل داشت: $skip\n";
+    })(),
+
     'media:reconvert' => (function() use ($argv) {
         // ویدیوهای «آماده»ای که روی تلویزیون هتلی گیر می‌کنند (۴K، ۶۰ فریم،
         // نرخ فریم متغیر، HDR، فهرست در انتهای فایل) دوباره تبدیل می‌شوند.
@@ -659,6 +720,7 @@ match ($command) {
             'media:converted' => 'Close out a background video conversion [mediaId exitCode]',
             'media:reconvert' => 'Re-convert ready videos a hotel TV cannot play smoothly [id] [--dry-run]',
             'media:dimensions'=> 'Fill in missing video width/height (needed by fill-screen) [--dry-run]',
+            'media:thumbs'    => 'Generate a poster image for videos that have none [--dry-run] [--force]',
             'vod:process'     => 'Probe, convert if needed, build HLS + poster for one VOD film <id>',
             'vod:queue'       => 'Pick up queued VOD films and reset abandoned processing rows (cron)',
             'ws:start'        => 'Start WebSocket server',
