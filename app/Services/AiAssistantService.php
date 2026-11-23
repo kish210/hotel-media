@@ -197,17 +197,18 @@ final class AiAssistantService
     /**
      * پرسش از مدل. خروجی: تشخیص به فارسی + پیشنهادهای تغییر تنظیمات.
      *
-     * @return array{ok:bool,answer:string,suggestions:array,raw_model:string,message:string}
+     * @return array{ok:bool,answer:string,suggestions:array,raw_model:string,tried:array,message:string}
      */
     public function diagnose(int $tenantId, string $question = ''): array
     {
-        $fail = static fn(string $m): array =>
-            ['ok' => false, 'answer' => '', 'suggestions' => [], 'raw_model' => '', 'message' => $m];
+        $fail = static fn(string $m, array $tried = []): array =>
+            ['ok' => false, 'answer' => '', 'suggestions' => [], 'raw_model' => '',
+             'tried' => $tried, 'message' => $m];
 
         if (!$this->enabled()) return $fail('دستیار هوشمند تنظیم نشده — کلید در .env نیست یا خاموش است.');
 
-        $model = trim((string)env('AI_MODEL', ''));
-        if ($model === '') return $fail('مدلی انتخاب نشده. از همین صفحه یکی را انتخاب کنید.');
+        $chain = $this->modelChain();
+        if (!$chain) return $fail('مدلی انتخاب نشده. از همین صفحه یکی را انتخاب کنید.');
 
         $snap = $this->snapshot($tenantId);
         $keys = [];
@@ -227,6 +228,18 @@ final class AiAssistantService
         $user = "وضعیت سامانه:\n" . json_encode($snap, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         if ($question !== '') $user .= "\n\nپرسش اپراتور: " . mb_substr($question, 0, 500);
 
+        /* ── چرا حلقه ────────────────────────────────────────────────
+           روی سرویس این هتل دیده شد که یک مدل ممکن است ۴۲۹ (سقف مصرف)
+           بدهد، یا پاسخش وسط شبکه گیر کند، یا همهٔ توکنش را صرف
+           «فکر کردن» کند و متنی نماند. تکیه به یک مدل یعنی دستیار در
+           بدترین لحظه بی‌جواب می‌ماند. پس به‌ترتیب سراغ مدل بعدی
+           می‌رویم و هرکدام جواب داد همان را برمی‌گردانیم.
+
+           خطای کلید (۴۰۱/۴۰۳) تکرار نمی‌شود: ایراد از تنظیمات است و
+           امتحان مدل دیگر فقط وقت می‌گیرد. */
+        $tried = [];
+        $lastMsg = '';
+        foreach ($chain as $model) {
         $r = $this->http('POST', '/chat/completions', [
             'model'       => $model,
             'messages'    => [['role' => 'system', 'content' => $sys], ['role' => 'user', 'content' => $user]],
@@ -240,7 +253,13 @@ final class AiAssistantService
                از مدل سبک استفاده کنید اگر پاسخ نیمه‌کاره ماند. */
             'max_tokens'  => 900,
         ]);
-        if (!$r['ok']) return $fail($r['message']);
+        if (!$r['ok']) {
+            $tried[] = ['model' => $model, 'why' => $r['message']];
+            $lastMsg = $r['message'];
+            // کلید اشتباه با مدل دیگر هم درست نمی‌شود
+            if (str_contains($r['message'], 'کلید پذیرفته نشد')) break;
+            continue;
+        }
 
         $j = json_decode($r['body'], true);
         $msg     = (array)($j['choices'][0]['message'] ?? []);
@@ -252,9 +271,10 @@ final class AiAssistantService
            تشخیصِ کمی نامرتب از هیچ‌چیز بهتر است. */
         if ($content === '') $content = trim((string)($msg['reasoning'] ?? ''));
         if ($content === '') {
-            return $fail($finish === 'length'
-                ? 'پاسخ مدل نیمه‌کاره ماند (سقف توکن). مدل سبک‌تری انتخاب کنید.'
-                : 'مدل پاسخ خالی داد.');
+            $why = $finish === 'length' ? 'پاسخ نیمه‌کاره ماند (سقف توکن)' : 'پاسخ خالی داد';
+            $tried[] = ['model' => $model, 'why' => $why];
+            $lastMsg = $why;
+            continue;
         }
 
         /* مدل گاهی JSON را داخل ```json می‌گذارد یا جمله‌ای قبلش می‌نویسد */
@@ -272,7 +292,37 @@ final class AiAssistantService
         }
 
         return ['ok' => true, 'answer' => trim($answer), 'suggestions' => $suggestions,
-                'raw_model' => $model, 'message' => ''];
+                'raw_model' => $model, 'tried' => $tried, 'message' => ''];
+        }
+
+        return $fail('هیچ‌کدام از مدل‌ها جواب ندادند — آخرین خطا: ' . $lastMsg, $tried);
+    }
+
+    /**
+     * ترتیب امتحان مدل‌ها: اول انتخاب اپراتور، بعد جایگزین‌های `.env`،
+     * و در آخر چند مدل سبکِ شناخته‌شده. تکراری‌ها حذف می‌شوند.
+     *
+     * @return array<int,string>
+     */
+    public function modelChain(): array
+    {
+        $out = [];
+        $add = static function (string $m) use (&$out): void {
+            $m = trim($m);
+            if ($m !== '' && !in_array($m, $out, true)) $out[] = $m;
+        };
+
+        $add((string)env('AI_MODEL', ''));
+        foreach (explode(',', (string)env('AI_FALLBACK_MODELS', '')) as $m) $add($m);
+
+        /* اگر اپراتور چیزی تعریف نکرده باشد، این‌ها روی همین دروازه
+           آزمایش شده‌اند و پاسخ فارسی می‌دهند. مدل رایگان عمدا آخر است
+           چون سقف مصرف دارد و زود ۴۲۹ می‌دهد. */
+        if (count($out) < 2) {
+            foreach (['gemini-flash-lite', 'claude-sonnet-4', 'deepseek-v4-pro'] as $m) $add($m);
+        }
+
+        return array_slice($out, 0, 5);   // بیش از این، انتظار کاربر طولانی می‌شود
     }
 
     /** پیشنهاد مدل را با فهرست سفید می‌سنجد؛ نامعتبر → null. */

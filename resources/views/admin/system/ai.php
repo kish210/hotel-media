@@ -130,7 +130,12 @@ async function ask() {
           <span class="ai-note" id="sug-st-${i}"></span></div>`;
       });
     }
-    html += '<div class="ai-note" style="margin-top:12px;opacity:.7;">مدل: ' + esc(d.raw_model) + '</div>';
+    html += '<div class="ai-note" style="margin-top:12px;opacity:.75;">پاسخ از مدل: <b>' + esc(d.raw_model) + '</b>';
+    if (d.tried && d.tried.length) {
+      html += ' — این‌ها جواب ندادند و رد شدند: ' +
+        d.tried.map(x => esc(x.model) + ' (' + esc(x.why) + ')').join('، ');
+    }
+    html += '</div>';
     $('ai-out').innerHTML = html;
   } catch (e) {
     $('ai-out').innerHTML = '<div class="ai-note" style="color:#f87171;">✗ ' + esc(e.message) + '</div>';
