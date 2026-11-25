@@ -391,6 +391,17 @@ $router->group(['prefix' => '/admin', 'middleware' => [\App\Middleware\AuthMiddl
     $r->get('/reservations',        [\App\Controllers\Web\ReservationWebController::class, 'index']);
     $r->get('/offers',              [\App\Controllers\Web\OfferWebController::class, 'index']);
     $r->get('/content',             [\App\Controllers\Web\ContentWebController::class, 'index']);
+
+    // ── تله‌تکست — متن ۴۰×۲۳ روی تلویزیون اتاق ─────────────────
+    $r->get('/teletext',                    [\App\Controllers\Web\TeletextController::class, 'index']);
+    $r->post('/teletext',                   [\App\Controllers\Web\TeletextController::class, 'save'],    [CsrfMiddleware::class]);
+    $r->post('/teletext/import',            [\App\Controllers\Web\TeletextController::class, 'import'],  [CsrfMiddleware::class]);
+    $r->post('/teletext/{id}/delete',       [\App\Controllers\Web\TeletextController::class, 'delete'],  [CsrfMiddleware::class]);
+
+    // ── مهاجرت از سیستم قدیمی — فقط مدیر ارشد (گیت داخل کنترلر) ──
+    $r->get('/legacy',                      [\App\Controllers\Web\LegacyImportController::class, 'index']);
+    $r->post('/legacy/preview',             [\App\Controllers\Web\LegacyImportController::class, 'preview'], [CsrfMiddleware::class]);
+    $r->post('/legacy/import',              [\App\Controllers\Web\LegacyImportController::class, 'import'],  [CsrfMiddleware::class]);
     // ── Devices — مدیریت تلویزیون‌ها ───────────────────────────
     $r->get('/devices',       [\App\Controllers\Web\DeviceWebController::class, 'index']);
     $r->get('/devices/feed',  [\App\Controllers\Web\DeviceWebController::class, 'feed']);

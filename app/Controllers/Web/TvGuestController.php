@@ -17,7 +17,7 @@ use App\Models\Screen;
  */
 class TvGuestController extends Controller
 {
-    private const VIEWS = ['reserve', 'services', 'folio', 'live', 'content', 'cameras', 'guide', 'offers', 'vod'];
+    private const VIEWS = ['reserve', 'services', 'folio', 'live', 'content', 'cameras', 'guide', 'offers', 'vod', 'teletext'];
 
     /** GET /tv/guest/{code}/{view} */
     public function show(Request $req, array $params): void
@@ -31,6 +31,7 @@ class TvGuestController extends Controller
             echo 'صفحه یافت نشد';
             return;
         }
+
 
         /* تاریخ شمسی را سرور می‌سازد: مرورگر تلویزیون داده‌ی Intl برای
            fa-IR ندارد و آنجا تاریخ میلادی نشان می‌دهد. ۶۰ روز کافی است،
@@ -55,6 +56,19 @@ class TvGuestController extends Controller
 
         /* صفحه‌ی محتوا: خبر، قرآن، کتاب، دفترچه تلفن */
         $kind = in_array($req->get('kind'), ['news', 'quran', 'book', 'directory'], true) ? (string)$req->get('kind') : 'news';
+
+        /* تله‌تکست: صفحه‌ها متن ۴۰×۲۳ هستند و همان‌جا رندر می‌شوند. */
+        $teletextIndex = [];
+        $teletextPage  = null;
+        if ($view === 'teletext') {
+            $tenantId = (int)($screen['tenant_id'] ?? 1);
+            $svc      = new \App\Services\TeletextService();
+            $teletextIndex = $svc->index($tenantId);
+
+            $want   = (int)$req->get('p', 0);
+            $pageNo = $want > 0 ? $want : (int)($teletextIndex[0]['page_no'] ?? 0);
+            $teletextPage = $pageNo > 0 ? $svc->render($pageNo, $tenantId) : null;
+        }
 
         header('Cache-Control: no-store');
         include VIEWS_PATH . '/player/guest/' . $view . '.php';

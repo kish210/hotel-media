@@ -54,6 +54,9 @@ if (!function_exists('modOn')) {
 <link rel="stylesheet" href="/assets/vendor/inter/inter.css">
 <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="/assets/css/design-system.css">
+<?php /* لایهٔ تم سماع — توکن‌های رسمی diزاین‌سیستم شرکت را روی همان
+         نام‌های موجود می‌نشاند؛ صفحه‌ای دست نمی‌خورد. */ ?>
+<link rel="stylesheet" href="/assets/css/sama.css<?= v() ?>">
 <script src="/assets/vendor/tailwind/tailwind.min.js"></script>
 <script>
   // ‏Tailwind برای کلاس‌های کمکی در نماهای موجود می‌ماند؛ رنگ‌ها و
@@ -64,9 +67,10 @@ if (!function_exists('modOn')) {
       extend: {
         fontFamily: { sans: ['Vazirmatn', 'Inter', 'sans-serif'], mono: ['Inter', 'monospace'] },
         colors: {
+          /* پالت رسمی سماع رایانه کیش (sama-design-system v1.3.0) */
           brand: {
-            50:'#eef6fd', 100:'#d6e9f9', 200:'#b0d4f2', 300:'#7bb8e8', 400:'#4098db',
-            500:'#1a7ac4', 600:'#1668b3', 700:'#12558f', 800:'#104670', 900:'#0d3a5c',
+            50:'#EEF1F7', 100:'#DCE2EE', 200:'#BAC5DD', 300:'#94A4C7', 400:'#6E83AE',
+            500:'#5A6FA2', 600:'#4B5F97', 700:'#324A7A', 800:'#283A60', 900:'#1B2843',
           },
         },
       },

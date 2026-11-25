@@ -1,0 +1,186 @@
+{
+ "advertise": {
+  "adv": false,
+  "adv_delay": 0,
+  "adv_end": 0,
+  "adv_in": null,
+  "adv_in_rf": false,
+  "adv_out": [],
+  "adv_start": 0,
+  "azan": false,
+  "azan_in": null,
+  "azan_out": [
+   "all",
+   "archive",
+   "vod"
+  ]
+ },
+ "cccams": [],
+ "general": {
+  "city_geo": [
+   53.97,
+   26.53
+  ],
+  "clocks": "Africa/Abidjan",
+  "debug": 0,
+  "gamari_shift": 0,
+  "internet_loc": "www.livedata.ir/static/rss.xml",
+  "npvr_per_user": "1",
+  "prayer_city": "کیش",
+  "record_base": "Time",
+  "sub_merg": true,
+  "sub_rf": false,
+  "system_name": "iptv",
+  "time_shift_time": "0 Hour",
+  "time_zone": "Asia/Tehran",
+  "vod_subtitle": 0,
+  "weather_city": "iran"
+ },
+ "input_dvb": [
+  {
+   "freq": 594000,
+   "id": 0,
+   "is_dvbt": true,
+   "name": ""
+  },
+  {
+   "freq": 626000,
+   "id": 1,
+   "is_dvbt": true,
+   "name": ""
+  },
+  {
+   "freq": 682000,
+   "id": 2,
+   "is_dvbt": true,
+   "name": ""
+  },
+  {
+   "freq": 0,
+   "id": 3,
+   "is_dvbt": true,
+   "name": ""
+  }
+ ],
+ "middleware": {
+  "client_hotspot": "",
+  "config_version": 41,
+  "def_chan": "",
+  "font": {
+   "en": "EN_01.ttf",
+   "fa": "FA_Bardia.ttf"
+  },
+  "guest": {
+   "ar": "مرجبا عزیزی",
+   "en": "Dear Guest",
+   "fa": "میهمان گرامی"
+  },
+  "hls_transcoding_abrate": "No_Change",
+  "hls_transcoding_audio": "No_Change",
+  "hls_transcoding_brate": "No_Change",
+  "hls_transcoding_extra": "",
+  "hls_transcoding_fps": "No_Change",
+  "hls_transcoding_mode": "No_Change",
+  "hls_transcoding_preset": "ultrafast",
+  "hls_transcoding_size": "No_Change",
+  "home_automation": "",
+  "language": "English",
+  "launcher": "Line",
+  "menu": [
+   {
+    "components": [
+     "tv"
+    ],
+    "name": "one_item",
+    "permission": ""
+   },
+   {
+    "components": [
+     "vod"
+    ],
+    "name": "one_item",
+    "permission": ""
+   },
+   {
+    "components": [
+     "quran"
+    ],
+    "name": "one_item",
+    "permission": ""
+   },
+   {
+    "components": [
+     "newsletter"
+    ],
+    "name": "one_item",
+    "permission": ""
+   },
+   {
+    "components": [
+     "tv",
+     "radio",
+     "vod",
+     "aod",
+     "pic",
+     "quran",
+     "newsletter",
+     "setting"
+    ],
+    "name": "menu",
+    "permission": ""
+   }
+  ],
+  "pms": {
+   "ip": "172.16.198.5",
+   "name": "Asa_System"
+  },
+  "server_stat": true,
+  "startup": "",
+  "support_server": "support.moojafzar.com",
+  "test_user": "638",
+  "theme": "theme1",
+  "ui_startup": "",
+  "unit": "Room",
+  "welcome": {
+   "ar": "اهلا و سهلا",
+   "en": "Welcome To",
+   "fa": "به هتل بین المللی کیش خوش آمدید"
+  }
+ },
+ "network": {
+  "extra": [],
+  "nas": {
+   "dir": "",
+   "ip": ""
+  },
+  "nat_address": "172.16.10.1",
+  "net_config": [
+   {
+    "desc": "Stream",
+    "ip": "172.16.10.10",
+    "mask": "255.255.254.0",
+    "name": ""
+   }
+  ],
+  "net_dns": "4.2.2.4",
+  "net_gw": "172.16.10.1",
+  "net_media": "",
+  "net_media_ip": "172.16.10.10",
+  "net_multicast": "239.2.1.1",
+  "net_multicast_nic": "",
+  "server_stat": true,
+  "support_server": "support.moojafzar.com"
+ },
+ "output_dvb": {
+  "dvbs": [],
+  "dvbt": [],
+  "mode_s": "S:QPSK:45000:7/8:72",
+  "mode_t": "T:64QAM:7/8:1/32:31.668449",
+  "pcr": 0
+ },
+ "paytv": [],
+ "permissions": [],
+ "server_stat": true,
+ "support_server": "support.moojafzar.com",
+ "unscram": []
+}

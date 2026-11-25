@@ -1,0 +1,238 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Hotel Media — لایهٔ تم «سماع»
+   منبع استاندارد: github.com/kish210/sama-design-system (v1.3.0)
+
+   چرا لایه و نه بازنویسی: design-system.css پنل، توکن‌های خودش را دارد
+   و ۵۰ صفحه با همان توکن‌ها ساخته شده‌اند. بازنویسی آن یعنی دست‌زدن به
+   همهٔ صفحه‌ها؛ در حالی که استاندارد سماع فقط **مقادیر** را عوض می‌کند
+   (رنگ، شعاع، چگالی، فوکوس). پس همان نام‌ها حفظ می‌شوند و مقدارشان از
+   توکن‌های رسمی می‌آید.
+
+   قاعده‌های استاندارد که اینجا اعمال شده‌اند:
+     • ۸۰٪ خنثی / ۱۵٪ برند / ۵٪ وضعیت
+     • فقط پالت رسمی: آبی #4B5F97، سرمه‌ای #324A7A، تیره #1B2843،
+       طلایی #B18A5A (اکسنت، حداکثر ۵٪)
+     • سه‌گانهٔ فاصله ۴/۸/۱۲/۱۶/۲۴/۳۲ (در توکن‌های موجود رعایت شده)
+     • شعاع ۴ کنترل · ۶ کارت · ۸ دیالوگ
+     • فوکوس همیشه دیده شود (حلقهٔ ۲px آبی برند)
+     • حرکت ۱۵۰–۲۵۰ms و احترام به «کاهش حرکت»
+
+   این فایل عمدا کوچک است. هر چیزی که اینجا اضافه شود، روی کل پنل اثر
+   می‌گذارد؛ پس فقط توکن و چند قاعدهٔ سراسری.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── پالت رسمی سماع ─────────────────────────────────────────── */
+  --sama-blue-50:  #EEF1F7;
+  --sama-blue-100: #DCE2EE;
+  --sama-blue-200: #BAC5DD;
+  --sama-blue-300: #94A4C7;
+  --sama-blue-400: #6E83AE;
+  --sama-blue-500: #5A6FA2;
+  --sama-blue-600: #4B5F97;  /* اصلی */
+  --sama-blue-700: #324A7A;  /* سرمه‌ای */
+  --sama-blue-800: #283A60;
+  --sama-blue-900: #1B2843;  /* تیره — سایدبار */
+
+  --sama-gold-50:  #F8F3EC;
+  --sama-gold-100: #EFE3D1;
+  --sama-gold-200: #DFC9A6;
+  --sama-gold-300: #CDAC7B;
+  --sama-gold-400: #BE9A66;
+  --sama-gold-500: #B18A5A;  /* اکسنт */
+  --sama-gold-600: #936F45;
+  --sama-gold-700: #6F5333;
+
+  --sama-gray-0:   #FFFFFF;
+  --sama-gray-50:  #F6F8FB;
+  --sama-gray-100: #EEF1F6;
+  --sama-gray-150: #E7EBF2;
+  --sama-gray-200: #E0E5EE;
+  --sama-gray-300: #CCD4E0;
+  --sama-gray-400: #A7B1C2;
+  --sama-gray-500: #7B8699;
+  --sama-gray-600: #5A6478;
+  --sama-gray-700: #3F4859;
+  --sama-gray-800: #29303F;
+  --sama-gray-900: #161C2A;
+
+  --sama-success-50:  #E9F5EE; --sama-success-500: #2E7D52; --sama-success-700: #1F5A3A;
+  --sama-warning-50:  #FBF1DD; --sama-warning-500: #C9881E; --sama-warning-700: #8F5F12;
+  --sama-danger-50:   #FBECEB; --sama-danger-500:  #C2403A; --sama-danger-700:  #8E2A26;
+
+  /* ── نگاشت به توکن‌های پنل (همان نام‌ها؛ مقدار تازه) ─────────── */
+  --brand-50:  var(--sama-blue-50);
+  --brand-100: var(--sama-blue-100);
+  --brand-200: var(--sama-blue-200);
+  --brand-300: var(--sama-blue-300);
+  --brand-400: var(--sama-blue-400);
+  --brand-500: var(--sama-blue-600);   /* دکمهٔ اصلی */
+  --brand-600: var(--sama-blue-700);
+  --brand-700: var(--sama-blue-800);
+  --brand-800: var(--sama-blue-900);
+  --brand-900: #131D33;
+
+  /* رنگ‌های وضعیت — فقط برای معنا */
+  --ok:    var(--sama-success-500);
+  --warn:  var(--sama-warning-500);
+  --error: var(--sama-danger-500);
+  --info:  var(--sama-blue-600);
+
+  --ok-bg:    var(--sama-success-50);
+  --warn-bg:  var(--sama-warning-50);
+  --error-bg: var(--sama-danger-50);
+  --info-bg:  var(--sama-blue-50);
+
+  /* ── لایه‌های تیره، با ته‌رنگ سرمه‌ای برند ───────────────────── */
+  --bg:        #0E131C;
+  --surface-1: #151B26;
+  --surface-2: #1A2130;
+  --surface-3: #212A3B;
+  --surface-4: #29344A;
+
+  --text-1: #F2F5F9;
+  --text-2: #AEB9C9;
+  --text-3: #6D7A8D;
+  --text-4: #48536380;
+
+  --line-1: rgba(255,255,255,.08);
+  --line-2: rgba(255,255,255,.13);
+  --line-3: rgba(255,255,255,.2);
+
+  /* ── گردی استاندارد: ۴ کنترل · ۶ کارت · ۸ دیالوگ ─────────────── */
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-xl: 12px;
+  --r-full: 999px;
+
+  /* ── حرکت استاندارد ─────────────────────────────────────────── */
+  --ease:     cubic-bezier(.2,.8,.2,1);
+  --ease-out: cubic-bezier(.2,.8,.2,1);
+  --t-fast:   .15s var(--ease);
+  --t-base:   .2s var(--ease);
+  --t-slow:   .25s var(--ease);
+
+  --glow: 0 0 0 3px rgba(75,95,151,.45);
+
+  /* ── چگالی: هتل‌مدیا «لمسی» است (استاندارد، بخش ۴) ───────────── */
+  --hm-control-h: 48px;
+  --hm-row-h: 56px;
+  --hm-tap: 44px;
+}
+
+/* ── تم روشن — پالت رسمی سماع ─────────────────────────────────────
+   اپراتور لابیِ پرنور با تم تیره خوانا نمی‌بیند. */
+:root[data-theme="light"] {
+  --bg:        var(--sama-gray-50);
+  --surface-1: var(--sama-gray-0);
+  --surface-2: var(--sama-gray-0);
+  --surface-3: var(--sama-gray-100);
+  --surface-4: var(--sama-gray-150);
+
+  --text-1: var(--sama-gray-900);
+  --text-2: var(--sama-gray-700);
+  --text-3: var(--sama-gray-500);
+  --text-4: var(--sama-gray-400);
+
+  --line-1: var(--sama-gray-200);
+  --line-2: var(--sama-gray-300);
+  --line-3: var(--sama-gray-400);
+
+  --ok-bg:    var(--sama-success-50);
+  --warn-bg:  var(--sama-warning-50);
+  --error-bg: var(--sama-danger-50);
+  --info-bg:  var(--sama-blue-50);
+
+  --shadow-1: 0 1px 2px rgba(22,28,42,.06);
+  --shadow-2: 0 2px 8px rgba(22,28,42,.08);
+  --shadow-3: 0 8px 24px rgba(22,28,42,.12);
+  --shadow-4: 0 16px 48px rgba(22,28,42,.18);
+}
+
+/* ── دسترس‌پذیری: فوکوس همیشه دیده شود ──────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--sama-blue-600);
+  outline-offset: 2px;
+}
+
+/* ── ناحیهٔ لمس در دستگاه‌های لمسی ──────────────────────────────── */
+@media (pointer: coarse) {
+  .btn-primary, .btn-ghost, .btn-danger, .sidebar-link, .form-input {
+    min-height: var(--hm-tap);
+  }
+}
+
+/* ── احترام به «کاهش حرکت» ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ── دکمهٔ اصلی: رنگ برند + یک primary در هر فرم ─────────────────
+   فقط رنگ و شعاع؛ چیدمان دست نمی‌خورد تا صفحه‌های موجود نشکنند. */
+.btn-primary {
+  background: var(--sama-blue-600);
+  border-color: var(--sama-blue-600);
+  color: #fff;
+  border-radius: var(--r-sm);
+}
+.btn-primary:hover { background: var(--sama-blue-700); border-color: var(--sama-blue-700); }
+.btn-primary:active { background: var(--brand-900); }
+.btn-primary:disabled { opacity: .5; }
+
+.btn-ghost { border-radius: var(--r-sm); }
+
+/* ── اکسنت طلایی فقط یک‌جا: نشان نسخه/لایسنس ────────────────────── */
+.sama-accent {
+  color: var(--sama-gold-500);
+}
+.sama-badge-gold {
+  background: var(--sama-gold-50);
+  color: var(--sama-gold-700);
+  border: 1px solid var(--sama-gold-200);
+  border-radius: var(--r-sm);
+  padding: 2px 8px;
+  font-size: 11px;
+}
+:root:not([data-theme="light"]) .sama-badge-gold {
+  background: rgba(177,138,90,.14);
+  color: var(--sama-gold-300);
+  border-color: rgba(177,138,90,.35);
+}
+
+/* ── جدول‌های داده: هدر چسبان، ارقام هم‌عرض (استاندارد، بخش ۷) ──── */
+.hm-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface-2);
+}
+.hm-table td.num,
+.hm-num {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-num);
+}
+
+/* ── نوار کناری با رنگ سرمه‌ای برند (۸۰/۱۵/۵) ────────────────────── */
+.sidebar, .sidebar-inner, .app-sidebar {
+  background: var(--sama-blue-900);
+}
+:root[data-theme="light"] .sidebar,
+:root[data-theme="light"] .sidebar-inner,
+:root[data-theme="light"] .app-sidebar {
+  background: var(--sama-blue-900);
+}
+
+/* ── دیالوگ: پشت‌زمینهٔ مات و سایهٔ نرم (عمق، بخش ۱۰) ─────────────── */
+.hm-dialog-backdrop {
+  background: rgba(11,15,23,.6);
+  backdrop-filter: blur(6px);
+}
+.hm-dialog {
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-4);
+}

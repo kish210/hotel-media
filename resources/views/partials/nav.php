@@ -156,6 +156,9 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
 <a href="/admin/messages" class="sidebar-link <?= isActive('/admin/messages') ?>">
   <span class="icon"><i class="fas fa-message"></i></span> پیام به اتاق
 </a>
+<a href="/admin/teletext" class="sidebar-link <?= isActive('/admin/teletext') ?>">
+  <span class="icon"><i class="fas fa-tv"></i></span> تله‌تکست
+</a>
 <?php endif; ?>
 
 <!-- ══ تابلو ══ -->
@@ -267,6 +270,9 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
 <a href="/admin/system/update" class="sidebar-link <?= isActive('/admin/system/update') ?>">
   <span class="icon"><i class="fas fa-cloud-arrow-down" style="color:#4098db;"></i></span>
   به‌روزرسانی سیستم
+</a>
+<a href="/admin/legacy" class="sidebar-link <?= isActive('/admin/legacy') ?>">
+  <span class="icon"><i class="fas fa-arrow-right-to-bracket" style="color:#94A4C7;"></i></span> مهاجرت از سیستم قدیمی
 </a>
 <?php /* دو صفحه‌ی عمدا جدا: این «الان چه خراب است» را می‌گوید و
          لاگ «چه اتفاقی افتاده بود» را. قاطی‌کردنشان یعنی برای دیدن

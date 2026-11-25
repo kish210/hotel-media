@@ -97,7 +97,10 @@ autoinstall:
   # تا نصب در هتلِ بدون اینترنت هم کامل شود.
   late-commands:
     - mkdir -p /target/opt/hotel-media-src
-    - cp -a /cdrom/hotel-media/. /target/opt/hotel-media-src/ || true
+    # دو شکل بسته‌بندی: پوشهٔ باز (build-iso.sh روی لینوکس) یا یک
+    # ‏tar.gz (build-iso.py روی ویندوز/بدون root). هر دو یک نتیجه می‌دهند؛
+    # نصب‌کننده نباید بداند کدام روش ISO را ساخته.
+    - if [ -d /cdrom/hotel-media ]; then cp -a /cdrom/hotel-media/. /target/opt/hotel-media-src/; else tar -xzf /cdrom/hotel-media.tar.gz -C /target/opt/hotel-media-src; fi || true
     # اسکریپت پس از اولین بوت — نصب اینجا انجام نمی‌شود چون در محیط
     # نصب‌کننده سرویس‌ها بالا نمی‌آیند و MariaDB قابل راه‌اندازی نیست.
     - cp /cdrom/hotel-media/deploy/iso/firstboot.sh /target/usr/local/sbin/hotel-media-firstboot.sh

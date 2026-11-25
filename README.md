@@ -472,6 +472,17 @@ FIDS_HTTP_PROXY=          # http://proxy-ip:port (برای سرور خارج ا�
 
 ## 📋 Changelog
 
+### v1.35.0 — مهاجرت از سیستم قدیمی + دیزاین‌سیستم سماع
+- ✅ **بدون لایسنس** — همهٔ امکانات باز است؛ هیچ کلید، فعال‌سازی یا سقفی لازم نیست
+  پنل ویرایش سه‌زبانه، ورود از فایل‌های `teletext*.conf` قدیمی
+- 📥 **مهاجرت داده** — `legacy:import`: کانال‌ها، ۳۲۸ اتاق، لوگوها، تنظیمات و PMS قدیمی؛
+  ادغام بی‌خطر (اجرای دوباره چیزی را پاک نمی‌کند) + پیش‌نمایش بدون نوشتن
+- 🔌 **درایور PMS آسا** — `register_view` / `guest_view` / ثبت فیلم با امضای HMAC و پاسخ gzip/base64
+- 🎨 **دیزاین‌سیستم سماع** — پالت رسمی (#4B5F97/#324A7A/#1B2843 + طلایی)، توکن‌های
+  `sama.css`، فوکوس دسترس‌پذیر، چگالی لمسی؛ جزئیات: [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md)
+- 💿 **ISO بدون root** — `deploy/iso/build-iso.py` (pycdlib) برای ساخت ISO نصب خودکار روی ویندوز/لینوکس
+- 🔄 **به‌روزرسانی از مخزن** — `php artisan update:git` و `deploy/update.sh` (پشتیبان → pull → migrate)
+
 ### v1.8.0 — نسخه‌ی کامل (Complete Package)
 - 🏨 **نصب‌کننده‌ی فارسی هتل مدیا** — `Setup-HotelMedia.exe`: تک‌فایل، UI فارسی RTL، صفحه‌ی نام هتل، بدون هیچ پیش‌نیاز، سرویس‌های خودکار، Tray فارسی، صفحه‌ی welcome، rollback و uninstaller با سوال «حذف داده‌ها؟»
 - 🟢 **نصب‌کننده‌ی All-in-One** — `HotelMedia-setup.exe`: PHP + MariaDB بسته‌بندی‌شده

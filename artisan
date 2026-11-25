@@ -701,6 +701,87 @@ match ($command) {
         echo "\033[32m✓ همه " . count($files) . " فایل تست پاس شدند\033[0m\n";
     })(),
 
+    /* ── مهاجرت از سیستم قدیمی ─────────────────────────────────────
+       مثال: php artisan legacy:import /opt/backup/conf --logos
+       پیش‌فرض «ادغام» است: ردیف موجود به‌روز می‌شود، پاک نمی‌شود. */
+    'legacy:import' => (function() use ($argv) {
+        $path = $argv[2] ?? '';
+        if ($path === '' || str_starts_with($path, '--')) {
+            echo "استفاده: php artisan legacy:import <مسیر conf> [--dry] [--logos] [--teletext] [--tenant=1]\n";
+            return;
+        }
+
+        $dry = in_array('--dry', $argv, true);
+        $tenant = 1;
+        foreach ($argv as $a) {
+            if (str_starts_with($a, '--tenant=')) $tenant = (int)substr($a, 9);
+        }
+
+        $res = (new \App\Services\LegacyImportService())->run($path, [
+            'mode'      => $dry ? 'dry' : 'merge',
+            'tenant_id' => $tenant,
+            'logos'     => in_array('--logos', $argv, true),
+            'teletext'  => in_array('--teletext', $argv, true),
+        ]);
+
+        echo ($res['ok'] ? "\033[32m✓ " : "\033[31m✗ ") . $res['message'] . "\033[0m\n";
+        $r = $res['report'];
+        if ($r) {
+            printf("  کانال %d · اتاق %d · لوگو %d · تنظیم %d · کاتالوگ فیلم %d\n",
+                $r['channels'] ?? 0, $r['rooms'] ?? 0, $r['logos'] ?? 0,
+                $r['settings'] ?? 0, $r['vod'] ?? 0);
+            echo '  منبع: ' . ($r['source'] ?? '') . "\n";
+        }
+    })(),
+
+    'teletext:import' => (function() use ($argv) {
+        $dir = $argv[2] ?? '';
+        if ($dir === '' || !is_dir($dir)) {
+            echo "استفاده: php artisan teletext:import <پوشه‌ای که teletext*.conf دارد> [--lang=fa]\n";
+            return;
+        }
+        $lang = 'fa';
+        foreach ($argv as $a) {
+            if (str_starts_with($a, '--lang=')) $lang = substr($a, 7);
+        }
+        $res = (new \App\Services\TeletextService())->importDir($dir, 1, $lang);
+        printf("  %d صفحه از %d فایل وارد شد\n", $res['pages'], $res['files']);
+    })(),
+
+    /* ── به‌روزرسانی از مخزن گیت ──────────────────────────────────────
+       برای نصب‌هایی که با git clone نصب شده‌اند. نصب ISO از بستهٔ
+       انتشار استفاده می‌کند (SystemUpdateService). */
+    'update:git' => (function() use ($argv) {
+        $branch = 'main';
+        foreach ($argv as $a) {
+            if (str_starts_with($a, '--branch=')) $branch = substr($a, 9);
+        }
+
+        exec('git -C ' . escapeshellarg(ROOT_PATH) . ' rev-parse --is-inside-work-tree 2>&1', $o, $c);
+        if ($c !== 0) {
+            echo "این نصب مخزن گیت نیست. از /admin/system/update استفاده کنید.\n";
+            return;
+        }
+
+        $before = trim((string)@file_get_contents(ROOT_PATH . '/VERSION'));
+        exec('git -C ' . escapeshellarg(ROOT_PATH) . ' pull --ff-only origin ' . escapeshellarg($branch) . ' 2>&1', $out, $code);
+        echo implode("\n", $out) . "\n";
+        if ($code !== 0) {
+            echo "\033[31m✗ به‌روزرسانی گیت ناموفق بود\033[0m\n";
+            return;
+        }
+
+        $php = phpCliPath();
+        if ($php !== '') {
+            exec(escapeshellarg($php) . ' ' . escapeshellarg(ROOT_PATH . '/artisan') . ' db:migrate 2>&1', $m, $mc);
+            echo implode("\n", $m) . "\n";
+        }
+
+        $after = trim((string)@file_get_contents(ROOT_PATH . '/VERSION'));
+        echo "\033[32m✓ نسخه {$before} → {$after}\033[0m\n";
+        echo "  برای اعمال کد در PHP-FPM: sudo systemctl reload php8.3-fpm nginx\n";
+    })(),
+
     'cache:clear' => (function() {
         array_map('unlink', glob(STORAGE_PATH.'/cache/*'));
         echo "Cache cleared.\n";
@@ -726,6 +807,9 @@ match ($command) {
             'ws:start'        => 'Start WebSocket server',
             'storage:clean'   => 'Remove soft-deleted media files',
             'cache:clear'     => 'Clear application cache',
+            'legacy:import'   => 'Import channels/rooms/settings from old VINAK backup <path> [--dry] [--logos]',
+            'teletext:import' => 'Import teletext pages from legacy teletext*.conf files <dir> [--lang=fa]',
+            'update:git'      => 'Pull the latest code from git and run migrations [--branch=main]',
             'epg:sync'        => 'Sync EPG from TVHeadend / XMLTV sources [tenantId]',
             'pms:push'        => 'Push room charges to the hotel PMS [tenantId]',
             'news:sync'       => 'Pull news from the configured RSS feeds [tenantId]',
