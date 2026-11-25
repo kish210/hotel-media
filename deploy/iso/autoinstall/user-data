@@ -16,10 +16,11 @@ autoinstall:
   # ── زبان و صفحه‌کلید ───────────────────────────────────────────────
   locale: en_US.UTF-8
   keyboard:
+    # ‏subiquity فقط layout و variant را می‌شناسد؛ «variants» یا
+    # «toggle» باعث خطای Malformed autoinstall می‌شود و نصب را
+    # کامل متوقف می‌کند (در تست VMware همین اتفاق افتاد).
     layout: us
-    # فارسی به‌عنوان چیدمان دوم؛ کنسول سرور با us راحت‌تر است
-    variants: ''
-    toggle: alt_shift_toggle
+    variant: ''
 
   timezone: Asia/Tehran
 
@@ -73,8 +74,12 @@ autoinstall:
     - php8.3-opcache
     - php8.3-bcmath
     - ffmpeg
-    - tvheadend
-    - udpxy
+    # ⚠ tvheadend و udpxy از مخازن اوبونتو ۲۴٫۰۴ برداشته شده‌اند (فقط
+    # تا ۲۲٫۰۴ بودند). اگر اینجا بیایند، نصب با «returned non-zero exit
+    # status 100» شکست می‌خورد — در تست VMware دقیقاً همین شد.
+    # TVHeadend را install-production.sh از مخزن رسمی Cloudsmith می‌آورد و
+    # اگر نبود، بدون آن ادامه می‌دهد. udpxy کاملاً اختیاری است و از پنل
+    # به‌صورت آدرس بیرونی تنظیم می‌شود.
     - composer
     - curl
     - unzip
@@ -104,12 +109,15 @@ autoinstall:
     # دو شکل بسته‌بندی: پوشهٔ باز (build-iso.sh روی لینوکس) یا یک
     # ‏tar.gz (build-iso.py روی ویندوز/بدون root). هر دو یک نتیجه می‌دهند؛
     # نصب‌کننده نباید بداند کدام روش ISO را ساخته.
-    - if [ -d /cdrom/hotel-media ]; then cp -a /cdrom/hotel-media/. /target/opt/hotel-media-src/; else tar -xzf /cdrom/hotel-media.tar.gz -C /target/opt/hotel-media-src; fi || true
+    - if [ -d /cdrom/hotel-media ]; then cp -a /cdrom/hotel-media/. /target/opt/hotel-media-src/; else tar -xzf /cdrom/hotel-media.tar.gz -C /target/opt/hotel-media-src; fi
     # اسکریپت پس از اولین بوت — نصب اینجا انجام نمی‌شود چون در محیط
     # نصب‌کننده سرویس‌ها بالا نمی‌آیند و MariaDB قابل راه‌اندازی نیست.
-    - cp /cdrom/hotel-media/deploy/iso/firstboot.sh /target/usr/local/sbin/hotel-media-firstboot.sh
+    # ‏منبع همیشه پس از استخراج در /target/opt/hotel-media-src است؛
+    # قبلاً از /cdrom/hotel-media خوانده می‌شد که در بستهٔ tar.gz وجود
+    # ندارد و سرویس نصب اولیه هرگز نصب نمی‌شد (باگ واقعی تست VMware).
+    - cp /target/opt/hotel-media-src/deploy/iso/firstboot.sh /target/usr/local/sbin/hotel-media-firstboot.sh
     - chmod +x /target/usr/local/sbin/hotel-media-firstboot.sh
-    - cp /cdrom/hotel-media/deploy/iso/hotel-media-firstboot.service /target/etc/systemd/system/
+    - cp /target/opt/hotel-media-src/deploy/iso/hotel-media-firstboot.service /target/etc/systemd/system/
     - curtin in-target --target=/target -- systemctl enable hotel-media-firstboot.service
 
   # در صورت خطا، لاگ کامل روی خود سیستم می‌ماند
