@@ -80,6 +80,10 @@ autoinstall:
     - unzip
     - git
     - rsync
+    # ‏open-vm-tools فقط برای آزمایش ISO در VMware است: به vmrun اجازه
+    # می‌دهد داخل سیستم نصب‌شده فرمان اجرا کند. روی سرور واقعی بی‌ضرر
+    # است و مهمان VMware نبودنش هم چیزی را خراب نمی‌کند.
+    - open-vm-tools
 
   # ‏tvheadend وگرنه وسط نصب سؤال تعاملی می‌پرسد و نصب خودکار معلق می‌ماند
   debconf-selections: |
