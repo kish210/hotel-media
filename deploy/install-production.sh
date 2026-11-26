@@ -210,10 +210,21 @@ if [[ "$INSTALL_TVHEADEND" == "1" ]]; then
 
             # کلید امضا. بدون signed-by، بسته‌های این مخزن روی کل سیستم
             # اعتبار پیدا می‌کنند — که نباید.
-            if curl -1sLf --max-time 30 \
-                 'https://dl.cloudsmith.io/public/tvheadend/tvheadend/gpg.C6CC06BD69B430C6.key' \
-                 | gpg --dearmor > "$TVH_KEYRING" 2>/dev/null
-            then
+            # شبکهٔ اولیه ممکن است هنوز کامل بالا نیامده باشد (systemd
+            # firstboot)، پس چند بار تلاش می‌کنیم.
+            _tvh_key_ok=0
+            for _try in 1 2 3 4 5; do
+                if curl -1sLf --max-time 30 --retry 3 --retry-delay 5 \
+                     'https://dl.cloudsmith.io/public/tvheadend/tvheadend/gpg.C6CC06BD69B430C6.key' \
+                     | gpg --dearmor > "$TVH_KEYRING" 2>/dev/null
+                then
+                    _tvh_key_ok=1
+                    break
+                fi
+                warn "تلاش $_try برای دانلود کلید TVHeadend ناموفق بود — ۵ ثانیه صبر"
+                sleep 5
+            done
+            if [[ "$_tvh_key_ok" == "1" ]]; then
                 printf 'deb [signed-by=%s] https://dl.cloudsmith.io/public/tvheadend/tvheadend/deb/ubuntu %s main\n' \
                     "$TVH_KEYRING" "$TVH_CODENAME" > "$TVH_LIST"
 
