@@ -267,6 +267,9 @@ $isTech  = in_array($role, ['super_admin', 'admin'], true);
 <a href="/admin/system/ai" class="sidebar-link <?= isActive('/admin/system/ai') ?>">
   <span class="icon"><i class="fas fa-wand-magic-sparkles" style="color:#a855f7;"></i></span> دستیار هوشمند
 </a>
+<a href="/admin/system/agent" class="sidebar-link <?= isActive('/admin/system/agent') ?>">
+  <span class="icon"><i class="fas fa-hand" style="color:#22c55e;"></i></span> OpenHand — عامل اجرایی
+</a>
 <a href="/admin/system/update" class="sidebar-link <?= isActive('/admin/system/update') ?>">
   <span class="icon"><i class="fas fa-cloud-arrow-down" style="color:#4098db;"></i></span>
   به‌روزرسانی سیستم

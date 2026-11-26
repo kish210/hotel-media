@@ -75,6 +75,31 @@ class ScreenController extends Controller
 
         $this->screen->heartbeat($screen['id'], array_merge($body, ['ip' => $req->ip()]));
 
+        /* ── لاگِ اندازه‌های دستگاه ───────────────────────────────
+           پلیر از قبل یک بستهٔ کامل `metrics` می‌فرستاد — اندازهٔ پنل،
+           بومِ مرورگر، اندازهٔ واقعیِ عنصر ویدیو — و سرور همه را دور
+           می‌ریخت. روی تلویزیونی که کنسول ندارد و از راه دور قابل
+           بازرسی نیست، این تنها راهِ دیدنِ اعداد واقعی است؛ بدون آن هر
+           تشخیصی حدس می‌ماند.
+
+           پیش‌فرض خاموش است و با PLAYER_METRICS_LOG=1 روشن می‌شود:
+           نُه تابلو که هر ۱۵ ثانیه ضربان می‌زنند، همیشه‌روشن یعنی یک
+           لاگِ بی‌پایان. */
+        if (!empty($body['metrics']) && is_array($body['metrics'])
+            && (string)env('PLAYER_METRICS_LOG', '') === '1') {
+            $parts = [];
+            foreach ($body['metrics'] as $k => $val) {
+                if (is_scalar($val)) {
+                    $parts[] = $k . '=' . mb_substr((string)$val, 0, 120);
+                }
+            }
+            @file_put_contents(
+                ROOT_PATH . '/storage/logs/tv-metrics.log',
+                '[' . date('H:i:s') . '] ' . $screen['code'] . ' ' . implode('  ', $parts) . "\n",
+                FILE_APPEND | LOCK_EX
+            );
+        }
+
         /* هر فرمان با هر دو کلید فرستاده می‌شود.
            سرور cmd می‌دهد ولی پخش‌کننده‌هایی که همین حالا روی
            تلویزیون‌های هتل در حال اجرا هستند دنبال command می‌گردند —

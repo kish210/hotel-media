@@ -279,6 +279,13 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class, \A
     $r->post('/system/ai/model',       [\App\Controllers\Web\AiController::class, 'setModel'], [CsrfMiddleware::class]);
     $r->post('/system/ai/ask',         [\App\Controllers\Web\AiController::class, 'ask'],      [CsrfMiddleware::class]);
     $r->post('/system/ai/apply',       [\App\Controllers\Web\AiController::class, 'apply'],    [CsrfMiddleware::class]);
+    // ── OpenHand — عامل اجرایی (فقط super_admin) ─────────────
+    // هر تغییر این بخش در سرویس با پشتیبان و بازگشت خودکار انجام می‌شود
+    $r->get('/system/agent',              [\App\Controllers\Web\OpenHandController::class, 'index']);
+    $r->post('/system/agent/chat',        [\App\Controllers\Web\OpenHandController::class, 'chat'],     [CsrfMiddleware::class]);
+    $r->post('/system/agent/rollback',    [\App\Controllers\Web\OpenHandController::class, 'rollback'], [CsrfMiddleware::class]);
+    $r->post('/system/agent/reset',       [\App\Controllers\Web\OpenHandController::class, 'reset'],    [CsrfMiddleware::class]);
+    $r->get('/system/agent/changes',      [\App\Controllers\Web\OpenHandController::class, 'changes']);
     $r->get('/system/tuner',          [\App\Controllers\Web\TunerController::class, 'index']);
     $r->get('/system/tuner/status',   [\App\Controllers\Web\TunerController::class, 'status']);
     $r->post('/system/tuner/setup',   [\App\Controllers\Web\TunerController::class, 'setup'],  [CsrfMiddleware::class]);

@@ -391,7 +391,7 @@ final class AiAssistantService
     // ══════════════════════════════════════════════════════════════
 
     /** @return array{ok:bool,body:string,message:string} */
-    private function http(string $method, string $path, ?array $json = null): array
+    public function http(string $method, string $path, ?array $json = null): array
     {
         $base = rtrim((string)env('AI_BASE_URL', ''), '/');
         $key  = (string)env('AI_API_KEY', '');
