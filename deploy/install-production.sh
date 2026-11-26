@@ -266,6 +266,14 @@ DEBCONF
             chmod 600 /etc/hotel-media/tvheadend.cred
 
             systemctl enable --now tvheadend >/dev/null 2>&1 || true
+
+            # دسترسی به /dev/dvb: بستهٔ tvheadend کاربر hts را در گروه
+            # video نمی‌گذارد؛ بدون این، تیونر USB در سیستم دیده می‌شود
+            # ولی TVHeadend (و صفحهٔ «تیونر و اسکن») هیچ آداپتوری نمی‌بیند.
+            # در تست VMware: /dev/dvb/adapter0 بود ولی inputs خالی بود.
+            usermod -aG video hts >/dev/null 2>&1 || true
+            systemctl restart tvheadend >/dev/null 2>&1 || true
+
             ok "TVHeadend نصب شد (کاربر: ${TVH_USER})"
         else
             warn "نصب TVHeadend ناموفق بود — بدون آن ادامه می‌دهیم"
@@ -366,12 +374,18 @@ else
     ok ".env موجود حفظ شد"
 fi
 
-# ‏ISO سفارشی vendor/ را از قبل همراه دارد؛ روی سرور آفلاین composer
-# نه در دسترس است نه لازم.
+# اگر vendor/ همراه بسته آمده باشد (ISO با vendor ساخته شده)، هیچ
+# دانلودی لازم نیست. وگرنه composer باید کار کند و اینترنت می‌خواهد.
 if [[ -f vendor/autoload.php ]]; then
     ok "وابستگی‌های PHP از قبل همراه برنامه هستند"
 elif command -v composer >/dev/null 2>&1; then
-    composer install --no-dev --optimize-autoloader --quiet --no-interaction \
+    # ‏composer زیر root بدون HOME متوقف می‌شود:
+    #   The HOME or COMPOSER_HOME environment variable must be set
+    # در تست VMware همین باعث شکست نصب شد.
+    HOME="${HOME:-/root}" \
+    COMPOSER_HOME="${COMPOSER_HOME:-/root/.composer}" \
+    COMPOSER_ALLOW_SUPERUSER=1 \
+        composer install --no-dev --optimize-autoloader --quiet --no-interaction \
         && ok "وابستگی‌های PHP نصب شدند" \
         || die "نصب وابستگی‌های PHP ناموفق بود"
 else

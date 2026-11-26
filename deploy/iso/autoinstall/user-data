@@ -118,6 +118,11 @@ autoinstall:
     - cp /target/opt/hotel-media-src/deploy/iso/firstboot.sh /target/usr/local/sbin/hotel-media-firstboot.sh
     - chmod +x /target/usr/local/sbin/hotel-media-firstboot.sh
     - cp /target/opt/hotel-media-src/deploy/iso/hotel-media-firstboot.service /target/etc/systemd/system/
+    # فریمور تیونرهای DVB-T USB (ITE IT9135 — سری MyGica/Geniatech).
+    # حتی اگر کسی فریمور را به‌نسخه نیامده باشد، بعد از نصب با نسخهٔ
+    # نصب‌شده کار می‌کند؛ وجودش برای دستگاه‌های 048d:9005/9006/9135 لازم است.
+    - install -m 0644 /target/opt/hotel-media-src/deploy/iso/firmware/dvb-usb-it9135-01.fw /target/lib/firmware/
+    - install -m 0644 /target/opt/hotel-media-src/deploy/iso/firmware/dvb-usb-it9135-02.fw /target/lib/firmware/
     - curtin in-target --target=/target -- systemctl enable hotel-media-firstboot.service
 
   # در صورت خطا، لاگ کامل روی خود سیستم می‌ماند

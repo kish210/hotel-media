@@ -110,6 +110,30 @@ sudo nano /etc/hotel-media/tvheadend.cred # رمز TVHeadend
 2. Configuration ← DVB Inputs ← شبکه و تیونر را تنظیم و اسکن کنید
 3. سپس: `sudo -u www-data php /var/www/hotel-media/artisan tvheadend:setup`
 
+### ۴) تیونر USB (DVB-T)
+
+تیونرهای USB خانوادهٔ ITE IT9135 — که بیشتر برندهای MyGica/Geniatech
+می‌فروشند — بدون نصب چیزی کار می‌کنند: درایور `dvb-usb-it913x` در
+هستهٔ اوبونتو هست و فریمور لازم همراه خود ISO می‌آید
+(`deploy/iso/firmware/dvb-usb-it9135-0{1,2}.fw` → `/lib/firmware/`).
+
+بررسی بعد از وصل کردن:
+
+```bash
+lsusb | grep 048d          # باید IT9135 BDA را نشان دهد
+ls /dev/dvb/adapter0/      # frontend0 و dvr0
+```
+
+اگر `adapter0` نبود، یعنی فریمور یا درایور نبوده:
+
+```bash
+sudo dmesg | grep -i -E 'it913x|dvb-usb'   # خطای دانلود فریمور را نشان می‌دهد
+sudo modprobe dvb-usb-it913x
+```
+
+دستگاهی که با `048d:9005` می‌آید نسخهٔ ۱ چیپ است و فریمور
+`dvb-usb-it9135-01.fw` می‌خواهد؛ درایور خودش بر اساس PID انتخاب می‌کند.
+
 ---
 
 ## عیب‌یابی
@@ -131,7 +155,7 @@ sudo nano /etc/hotel-media/tvheadend.cred # رمز TVHeadend
 ```
 بوت از USB
    ↓
-GRUB → autoinstall ds=nocloud;s=/cdrom/server/
+GRUB → autoinstall ds=nocloud;s=/cdrom/
    ↓
 subiquity فایل user-data را می‌خواند
    ├─ پارتیشن‌بندی LVM روی کل دیسک

@@ -42,8 +42,11 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 
 # چیزهایی که روی سرور هتل لازم نیستند. حذفشان ISO را چند صد مگابایت
 # کوچک‌تر می‌کند و نصب را سریع‌تر؛ چیزی از کارکرد کم نمی‌شود.
+# ‏vendor/ عمداً مستثنی نیست: نصب روی هتلی که به repo.packagist.org
+# دسترسی ندارد باید بدون دانلود composer کامل شود (در تست VMware،
+# packagist تایم‌اوت داد و نصب شکست خورد).
 EXCLUDE_DIRS = {
-    ".git", ".github", ".claude", ".freebuff", "node_modules", "vendor",
+    ".git", ".github", ".claude", ".freebuff", "node_modules",
     "dist", "android", "ios", "fastlane", "windows-player", "promo-video.html",
     "storage/logs", "storage/cache", "storage/sessions", "storage/update",
     "public/uploads", "public/apk", "tests", "offline-pool",
@@ -136,6 +139,10 @@ def main() -> None:
     print("→ بسته‌بندی برنامه…")
     n = build_tarball(tarball)
     print("   %d فایل، %.1f MB" % (n, os.path.getsize(tarball) / 1048576))
+    if not os.path.isfile(os.path.join(REPO, "vendor", "autoload.php")):
+        print("   ⚠ vendor/ نیست — نصب با این ISO به اینترنت (packagist) نیاز دارد")
+    else:
+        print("   ✔ vendor/ همراه بسته است — نصب بدون اینترنت هم کامل می‌شود")
 
     # ‏user-data همان فایل مخزن است؛ late-commands هم پوشه و هم tar را
     # می‌فهمد. فقط یک خط به آن اضافه می‌شود تا نسخهٔ ISO داخل خودش
