@@ -72,12 +72,16 @@ html.on-video,html.on-video body,html.on-video #c{background:transparent;}
 .slide video{width:100%;height:100%;display:block;background:transparent;}
 .slide iframe{width:100%;height:100%;border:0;}
 <?php /* اگر تنظیماتِ صفحه متنی نداشته باشد پنهان شروع می‌شود، ولی متنِ
-        پلی‌لیست که رسید startTicker خودش نمایانش می‌کند. */ ?>
-#ticker{position:absolute;bottom:0;left:0;width:100%;height:40px;background:rgba(0,0,0,.8);overflow:hidden;<?= $ticker?'':'display:none;'?>}
+        پلی‌لیست که رسید startTicker خودش نمایانش می‌کند.
+
+        z-index صریح لازم است: زیرنویس و ساعت و لوگو داخل #c و *قبل از*
+        اسلایدها در DOM هستند، پس اسلایدِ ویدیو که position دارد رویشان
+        می‌افتاد و زیرنویس زیر ویدیو گم می‌شد. */ ?>
+#ticker{position:absolute;z-index:60;bottom:0;left:0;width:100%;height:40px;background:rgba(0,0,0,.8);overflow:hidden;<?= $ticker?'':'display:none;'?>}
 <?php /* فاصله‌ی پیش از تکرار متن تیکر را JS از عرض واقعی صفحه ست
         می‌کند؛ عدد ثابت روی صفحه‌ی باریک‌تر شکاف بی‌جا می‌ساخت. */ ?>
 #tick{position:absolute;top:0;height:40px;white-space:nowrap;font:600 19px/40px Arial,sans-serif;color:#fff;}
-#logo{position:absolute;<?= $posMap[$logoPos]??$posMap['bottom-right'] ?>;opacity:.85;<?= $logoUrl?'':'display:none;'?>}
+#logo{position:absolute;z-index:60;<?= $posMap[$logoPos]??$posMap['bottom-right'] ?>;opacity:.85;<?= $logoUrl?'':'display:none;'?>}
 #logo img{width:120px;}
 <?php /* لوگوی پلی‌لیست همیشه بالا-راست می‌نشیند و پس‌زمینه ندارد؛
         روی تصویر روشن هم باید خوانا بماند، پس یک سایه‌ی نرم دارد.
@@ -100,7 +104,7 @@ html.on-video,html.on-video body,html.on-video #c{background:transparent;}
         صفحه روشن می‌شد و آن تنظیمات روی صفحه‌های واقعی هتل خالی بود،
         پس عملا هیچ تلویزیونی ساعت نداشت. برای خاموش کردنش باید
         show_clock صراحتا false باشد. */ ?>
-#clock{position:absolute;bottom:54px;right:14px;padding:7px 16px;background:rgba(0,0,0,.55);border-radius:8px;font:700 28px/1 monospace;color:#fff;<?= $clk?'':'display:none;'?>}
+#clock{position:absolute;z-index:60;bottom:54px;right:14px;padding:7px 16px;background:rgba(0,0,0,.55);border-radius:8px;font:700 28px/1 monospace;color:#fff;<?= $clk?'':'display:none;'?>}
 <?php /* تابلوی پرواز — با table نه flex: روی WebKit ماپل flex نسخه‌ی
         قدیمی است و ستون‌ها جابه‌جا می‌شوند. واحدها درصدی‌اند تا روی
         ۱۲۸۰ و ۱۹۲۰ هر دو درست بنشیند. */ ?>
@@ -260,10 +264,14 @@ function sizeVideo(v, item) {
      (مثلا پوستری که نباید بریده شود) `contain` را انتخاب کند. */
   var fit = item && item.fit_mode ? item.fit_mode : 'cover';
 
-  if (fit === 'cover' && mw > 0 && mh > 0) {
-    var scale = Math.max(w / mw, h / mh);
-    var tw = Math.ceil(mw * scale);
-    var th = Math.ceil(mh * scale);
+  /* ── چیدنِ ویدیو، همیشه وسط‌چین و با مقیاسِ پلن ────────────────────
+     هر دو حالت (پر کردن و جا شدن) از یک جا می‌گذرند تا PLANE_SCALE
+     جایی از قلم نیفتد. قبلا حالت بازگشتی اصلا وسط‌چین نمی‌شد و فقط
+     عرض و ارتفاع می‌گرفت؛ با مقیاس، همان یعنی ویدیوی چسبیده به
+     گوشهٔ بالا-چپ. */
+  function place(tw, th) {
+    tw = Math.ceil(tw * PLANE_SCALE);
+    th = Math.ceil(th * PLANE_SCALE);
     v.setAttribute('width',  tw);
     v.setAttribute('height', th);
     v.style.width      = tw + 'px';
@@ -273,13 +281,15 @@ function sizeVideo(v, item) {
     v.style.top        = '50%';
     v.style.marginLeft = (-Math.round(tw / 2)) + 'px';
     v.style.marginTop  = (-Math.round(th / 2)) + 'px';
+  }
+
+  if (fit === 'cover' && mw > 0 && mh > 0) {
+    var scale = Math.max(w / mw, h / mh);
+    place(mw * scale, mh * scale);
     return;
   }
 
-  v.setAttribute('width',  w);
-  v.setAttribute('height', h);
-  v.style.width  = w + 'px';
-  v.style.height = h + 'px';
+  place(w, h);
 }
 
 /* ── پس‌زمینهٔ پشت ویدیو: روی این نسل ممکن نیست ───────────────────
@@ -296,12 +306,38 @@ var VIDEO_FIT = 'fit';
 /* هر بار که این صفحه عوض می‌شود این عدد هم باید عوض شود — در ضربان
    گزارش می‌شود و تنها راه فهمیدن اینکه تلویزیون کد تازه را گرفته یا
    نسخه‌ی کش‌شده‌ی خودش را اجرا می‌کند. */
-var PAGE_BUILD = 'orsay-2026-10-08-f';
+<?php
+/* ── شناسهٔ نسخهٔ کدی که روی دستگاه اجرا می‌شود ────────────────────
+   این مقدار دست‌نویس بود و با هر اصلاح به‌روز نمی‌شد. نتیجه: دستگاه
+   در ضربان نسخهٔ ماه‌ها پیش را گزارش می‌کرد و من یک بار نزدیک بود
+   اشتباه نتیجه بگیرم که تلویزیون کد تازه را نگرفته. حالا به فایل
+   VERSION گره خورده، پس هر استقرار خودش عوضش می‌کند. */
+$__build = @file_get_contents(ROOT_PATH . '/VERSION');
+$__build = $__build !== false && trim($__build) !== '' ? trim($__build) : '0';
+
+/* ── مقیاس پلنِ ویدیو ─────────────────────────────────────────────
+   روی بعضی Orsayها بومِ مرورگر ۱۲۸۰×۷۲۰ است ولی پنل ۱۹۲۰×۱۰۸۰؛
+   لایهٔ HTML را خودِ تلویزیون بزرگ می‌کند (پس تصویرها درست پر
+   می‌شوند) ولی پلنِ سخت‌افزاریِ ویدیو مختصات را پیکسلِ فیزیکی
+   می‌گیرد. حاصل: ویدیو وسطِ صفحه با نوار سیاه دور تا دور — همان
+   «از هر طرف ۲۰ سانت مشکی».
+   جاوااسکریپت اندازهٔ واقعی پنل را نمی‌بیند (screen.width هم ۱۲۸۰
+   می‌گوید)، پس عدد حدس‌زدنی نیست و باید تنظیم‌شدنی باشد. ۱ یعنی
+   دست‌نزن؛ برای پنل Full HD با بومِ ۷۲۰p مقدار ۱٫۵ درست است. */
+$__pscale = isset($settings['plane_scale']) ? (float)$settings['plane_scale'] : 1.0;
+if ($__pscale < 1 || $__pscale > 3) $__pscale = 1.0;
+?>
+var PAGE_BUILD  = <?= json_encode($__build) ?>;
+var PLANE_SCALE = <?= json_encode($__pscale) ?>;
 
 var SERVER = window.location.origin;
 var CODE   = '<?= e($screen['code']??'') ?>';
 var __plSig = null;   /* امضای پلی‌لیستِ در حال پخش */
 var pl = [], ci = 0, tm = null, curSlide = null;
+/* نگهبانِ پیشرفتِ ویدیو. بیرون از play() است تا با عوض‌شدن آیتم حتما
+   خاموش شود؛ نگهبانِ آیتمِ رفته اگر زنده بماند آیتمِ تازه را رد می‌کند. */
+var progTimer = null;
+function stopProg() { if (progTimer) { clearInterval(progTimer); progTimer = null; } }
 var _serverOffset = 0;
 
 // ─── Server time ─────────────────────────────────────────────
@@ -546,6 +582,7 @@ function swapSlide(newDiv) {
 
 function play(i) {
   clearTimeout(tm);
+  stopProg();
   if (!pl.length) return;
 
   /* ساعت overlay را با شروع هر آیتم هم‌تراز کن. offset از جمع مدت
@@ -639,8 +676,8 @@ function play(i) {
     }
 
     vid.loop  = false;
-    vid.onended = nextItem;
-    vid.onerror = function() { setTimeout(nextItem, 1000); };
+    vid.onended = function() { stopProg(); nextItem(); };
+    vid.onerror = function() { stopProg(); setTimeout(nextItem, 1000); };
     /* ── تمام‌صفحه: جلوگیری، نه بیرون‌کشیدن ─────────────────────
        تا امروز فقط «اگر وارد شد بیرونش بیاور» بود. روی Orsay آن‌قدر
        دیر جواب می‌داد که تلویزیون یک قاب کامل سیاه نشان می‌داد و صدای
@@ -705,13 +742,38 @@ function play(i) {
        صفر دوباره شروع کنیم. */
     tvPlay(vid);
 
-    setTimeout(function () {
-      if (swapped) return;
-      /* نه پخش شد نه خطا داد — یک تلاش بی‌صدا، بعد رها کن */
-      try { vid.muted = true; } catch (e) {}
-      if (vid.paused) tvPlay(vid);
-      setTimeout(function () { if (!swapped) { revealIt(); setTimeout(nextItem, 200); } }, 1500);
-    }, 2500);
+    /* ── نگهبان: بر پایهٔ پیشرفتِ واقعی، نه رویداد ──────────────────
+       نسخهٔ پیشین بعد از ۲٫۵ ثانیه، اگر رویداد `playing` نیامده بود،
+       ویدیو را «خراب» می‌شمرد: بی‌صدا می‌کرد و ۱٫۵ ثانیه بعد می‌پرید
+       به کلیپ بعدی. ولی این نسل سامسونگ آن رویداد را عملا نمی‌فرستد،
+       پس نگهبان روی ویدیوهای کاملا سالم هم شلیک می‌کرد. روی تابلو
+       همان «۲ ثانیه تصویر، بعد سیاه، بعد کلیپ بعدی» دیده می‌شد.
+
+       تنها سیگنالِ قابل‌اعتماد روی ماپل خودِ `currentTime` است: اگر
+       جلو می‌رود، ویدیو واقعا پخش می‌شود — هر رویدادی هم که نیاید.
+       پس نگهبان فقط وقتی دست به کار می‌شود که زمان **هیچ** تکانی
+       نخورده باشد. */
+    var lastT = -1, stuck = 0;
+    progTimer = setInterval(function () {
+      var t = 0;
+      try { t = vid.currentTime || 0; } catch (e) {}
+
+      /* اولین کسری از ثانیه یعنی فریم واقعی روی پلن نشسته است */
+      if (t > 0.05) revealIt();
+
+      if (t > lastT + 0.02) { lastT = t; stuck = 0; return; }
+
+      stuck++;
+      /* ۵ ثانیه بی‌حرکت: شاید پخشِ خودکارِ صدادار رد شده — بی‌صدا یک
+         تلاش دیگر. */
+      if (stuck === 10) {
+        try { vid.muted = true; } catch (e) {}
+        if (vid.paused) tvPlay(vid);
+      }
+      /* ۱۲ ثانیه بی‌حرکت: فایل واقعا باز نمی‌شود، رد کن. این آستانه
+         عمدا بلند است؛ کوتاهش همان باگی بود که اصلاح شد. */
+      if (stuck >= 24) { stopProg(); revealIt(); nextItem(); }
+    }, 500);
 
     if (dur > 0 && dur < 7200000) tm = setTimeout(nextItem, dur);
 
@@ -804,6 +866,84 @@ function hhmm(s) {
   return m ? m[1] + ':' + m[2] : '';
 }
 
+/* ── آزمون پلنِ ویدیو، از راه دور ─────────────────────────────────
+   «صدا می‌آید ولی تصویر سیاه است» دو علتِ کاملا متفاوت دارد و از
+   بیرون قابل تفکیک نیستند:
+     ۱) لایهٔ HTML روی پلنِ سخت‌افزاری ویدیو افتاده و تصویر را پوشانده
+     ۲) پروفایل H.264 فایل برای دیکودرِ این نسل سنگین است
+   این تابع یک ویدیوی واقعیِ همین پلی‌لیست را چهار حالت پخش می‌کند و
+   شمارهٔ حالت را درشت می‌نویسد. اپراتور فقط نگاه می‌کند و می‌گوید در
+   کدام شماره‌ها تصویر داشت — همین جواب را قطعی می‌کند.
+
+   از صف فرمان می‌آید، نه از آدرس: تلویزیون روی صفحهٔ پیش‌فرض خودش
+   می‌ماند و کسی لازم نیست سرِ دستگاه برود و URL عوض کند. */
+function runPlaneTest() {
+  var src = '';
+  for (var i = 0; i < pl.length; i++) {
+    var s = pl[i].file_url || pl[i].src || pl[i].file_path || pl[i].url || '';
+    if ((pl[i].type === 'video') || String(s).match(/\.(mp4|webm|ogv|mov)(\?|$)/i)) { src = fixUrl(s); break; }
+  }
+
+  /* پخش عادی باید کامل بخوابد، وگرنه اسلایدِ بعدی وسط آزمون می‌آید و
+     پس‌زمینه‌اش دوباره پلن را می‌پوشاند و نتیجه بی‌معنا می‌شود. */
+  clearTimeout(tm);
+  stopProg();
+  var c = document.getElementById('c');
+  if (c) {
+    var vs = c.getElementsByTagName('video');
+    for (var k = 0; k < vs.length; k++) { try { vs[k].pause(); } catch (e) {} }
+    c.style.display = 'none';
+  }
+
+  var ov = document.createElement('div');
+  /* خودِ این لایه باید شفاف بماند؛ ماتی هر حالت از پس‌زمینهٔ html
+     می‌آید. اگر اینجا رنگ بگذاریم، هر چهار حالت سیاه می‌شود. */
+  ov.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:9998;background:transparent;';
+  var lbl = document.createElement('div');
+  lbl.style.cssText = 'position:absolute;top:0;right:0;z-index:9999;background:rgba(0,0,0,.72);'
+    + 'color:#fff;font:700 30px/1.5 Tahoma,Arial,sans-serif;padding:10px 22px;';
+  var vid = document.createElement('video');
+  vid.setAttribute('muted', ''); vid.muted = true;
+  vid.setAttribute('playsinline', ''); vid.setAttribute('webkit-playsinline', '');
+  vid.setAttribute('autoplay', ''); vid.loop = true;
+  vid.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:block;';
+  ov.appendChild(vid); ov.appendChild(lbl);
+  document.body.appendChild(ov);
+
+  if (!src) { lbl.innerHTML = 'در پلی‌لیست این صفحه هیچ ویدیویی نیست'; setTimeout(hardReload, 20000); return; }
+
+  var MODES = [
+    { n: '۱', cls: '',                   layer: true,  t: 'مثل قبل: پس‌زمینه مات + لایه روی ویدیو' },
+    { n: '۲', cls: 'on-video',           layer: true,  t: 'پس‌زمینه شفاف، ویدیو لایه‌دار' },
+    { n: '۳', cls: '',                   layer: false, t: 'پس‌زمینه مات، ویدیو بدون لایه' },
+    { n: '۴', cls: 'on-video',           layer: false, t: 'پس‌زمینه شفاف، بدون لایه ← اصلاحیه' }
+  ];
+  var m = -1;
+  function step() {
+    m++;
+    if (m >= MODES.length) {
+      lbl.innerHTML = 'پایان آزمون — تا چند لحظه به پخش عادی برمی‌گردد';
+      setTimeout(hardReload, 4000);
+      return;
+    }
+    var M = MODES[m];
+    document.documentElement.className = M.cls;
+    /* همان z-index که علت احتمالی است: در حالت‌های «لایه‌دار» گذاشته
+       می‌شود تا با نبودش مقایسه شود. */
+    vid.style.position = M.layer ? 'relative' : 'absolute';
+    vid.style.zIndex   = M.layer ? '2' : '';
+    lbl.innerHTML = 'حالت ' + M.n + ' — ' + M.t;
+    /* سورس هر بار از نو ست می‌شود: عوض‌کردن استایلِ ویدیویی که در حال
+       پخش است روی این نسل هیچ اثری ندارد. */
+    try { vid.pause(); } catch (e) {}
+    vid.src = src;
+    try { vid.load(); } catch (e) {}
+    tvPlay(vid);
+    setTimeout(step, 9000);
+  }
+  setTimeout(step, 600);
+}
+
 // ─── Heartbeat ────────────────────────────────────────────────
 function heartbeat() {
   var x = new XMLHttpRequest();
@@ -841,6 +981,9 @@ function heartbeat() {
         if (n==='reboot') hardReload();
         if (n==='instant_media' || n==='emergency') showInstant(p);
         if (n==='clear_instant') clearInstant();
+        /* عیب‌یابی از راه دور: تلویزیون روی آدرس پیش‌فرضش می‌ماند و
+           آزمون از همین‌جا اجرا می‌شود. */
+        if (n==='diag_plane') runPlaneTest();
       }
     } catch(e) {}
   };
