@@ -509,6 +509,7 @@ FIDS_HTTP_PROXY=          # http://proxy-ip:port (برای سرور خارج ا�
   **پشتیبانی اندروید ۴.۱ تا ۴.۴** (minSdk 16؛ همه‌ی APIهای تازه محافظت‌شده) — [README](android/README.md)
 - 🍓 **کلاینت رزبری‌پای** — پلیر کیوسک پایتون + سرویس systemd + نصب‌کننده — [README](rpi/hotel-media-player/README.md)
 - 🗄️ **دیتابیس** — پلتفرم `rpi` در `screens.platform` (مهاجرت ۰۶۱) و تشخیص خودکار آن در `DeviceService`
+- 📀 **ISO ۱.۳۶.۰** — `dist/HotelMedia-1.36.0-amd64.iso` + چک‌سام؛ راهنمای کامل نسخه: [docs/RELEASE-1.36.0.md](docs/RELEASE-1.36.0.md)
 
 ### v1.35.0 — مهاجرت از سیستم قدیمی + دیزاین‌سیستم سماع
 - ✅ **بدون لایسنس** — همهٔ امکانات باز است؛ هیچ کلید، فعال‌سازی یا سقفی لازم نیست
