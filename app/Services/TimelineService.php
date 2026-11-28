@@ -66,7 +66,8 @@ class TimelineService
                 'duration'    => $dur,
                 'sourceStart' => 0,
                 'fit'         => ($it['fit_mode'] ?? 'contain') === 'cover' ? 'cover' : 'contain',
-                'muted'       => (int)($it['muted'] ?? 1) === 1,
+                /* صدا به‌صورت پیش‌فرض با صدا است؛ بقیه بی‌صدا */
+                'muted'       => (int)($it['muted'] ?? (($it['media_type'] ?? '') === 'audio' ? 0 : 1)) === 1,
                 'volume'      => (int)($it['volume'] ?? 100),
             ];
             $cursor += $dur;

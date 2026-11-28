@@ -125,6 +125,7 @@ $plId = (int)$playlist['id'];
           <span class="st-lib-tab act" data-f="all">همه</span>
           <span class="st-lib-tab" data-f="video">ویدیو</span>
           <span class="st-lib-tab" data-f="image">تصویر</span>
+          <span class="st-lib-tab" data-f="audio">صدا</span>
           <span class="st-lib-tab" data-f="url">ماژول</span>
         </div>
       </div>
@@ -227,7 +228,7 @@ function renderLib(){
     const th=el('div','th');
     const poster=m.thumbnail_path||(m.type==='image'?m.file_path:null);
     if(poster) th.style.backgroundImage="url('"+esc(poster)+"')";
-    else th.innerHTML='<i class="fas '+(m.type==='video'?'fa-film':m.type==='url'?'fa-puzzle-piece':'fa-image')+'"></i>';
+    else th.innerHTML='<i class="fas '+(m.type==='video'?'fa-film':m.type==='audio'?'fa-volume-high':m.type==='url'?'fa-puzzle-piece':'fa-image')+'"></i>';
     if(m.type==='video'&&m.duration) th.innerHTML+='<span class="bdg">'+fmtDur(m.duration)+'</span>';
     const nm=el('div','nm'); nm.textContent=m.name;
     a.appendChild(th);a.appendChild(nm);
@@ -252,7 +253,7 @@ function addMediaClip(m){
   const clip={
     id:uid(), mediaId:m.id, itemType: m.mime_type==='application/x-signage-module'?'media':'media',
     name:m.name, mediaType:m.type, thumb:m.thumbnail_path||(m.type==='image'?m.file_path:''),
-    start:endOfTrack, duration:dur, sourceStart:0, fit:'contain', muted:true, volume:100
+    start:endOfTrack, duration:dur, sourceStart:0, fit:'contain', muted:(m.type!=='audio'), volume:100
   };
   trk.clips.push(clip);
   selId=clip.id; markDirty(); renderAll();

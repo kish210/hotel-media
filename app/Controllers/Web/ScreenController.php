@@ -154,12 +154,13 @@ class ScreenController extends Controller
 
         // Normal update — only allow safe fields
         $section = $req->post('section', 'update');
-        $allowed = ['name', 'description', 'orientation', 'resolution', 'location_id', 'brightness', 'volume', 'tags', 'screen_type', 'group_id', 'venue_id', 'iptv_menu_id', 'iptv_room_id', 'inflight_flight_id'];
+        $allowed = ['name', 'description', 'orientation', 'resolution', 'location_id', 'brightness', 'volume', 'tags', 'screen_type', 'group_id', 'venue_id', 'iptv_menu_id', 'iptv_room_id', 'inflight_flight_id', 'current_playlist_id'];
+        $data    = array_intersect_key($req->post(), array_flip($allowed));
+
         if (isset($data['screen_type'])) {
             $data['screen_type'] = in_array($data['screen_type'], ['signage','iptv','inflight','monitor_3d'])
                 ? $data['screen_type'] : 'signage';
         }
-        $data    = array_intersect_key($req->post(), array_flip($allowed));
 
         // empty string → null برای فیلدهای integer
         foreach (['location_id', 'layout_id', 'current_playlist_id', 'group_id', 'venue_id', 'iptv_menu_id', 'iptv_room_id', 'inflight_flight_id'] as $field) {
