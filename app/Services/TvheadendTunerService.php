@@ -193,7 +193,10 @@ final class TvheadendTunerService
 
         $st = $this->status($src);
         if (!$st['reachable']) return $fail('TVHeadend در دسترس نیست: ' . $st['error']);
-        if (!$st['inputs']) return $fail('تیونری دیده نشد. دستگاه را وصل کنید و درایور را از «درایورها» نصب کنید.');
+        /* سخت‌افزار تیونر را از درخت فرانت‌اندها می‌خوانیم، نه از status/inputs؛
+           inputs فقط اشتراک‌های فعال (پخش در جریان) را نشان می‌دهد و روی نصب تازه
+           همیشه خالی است — با آن، «راه‌اندازی» پیش از اولین پخش همیشه رد می‌شد. */
+        if (!$st['frontends']) return $fail('تیونری دیده نشد. دستگاه را وصل کنید و درایور را از «درایورها» نصب کنید.');
 
         $net = $this->network($src);
         if ($net) {
@@ -276,13 +279,42 @@ final class TvheadendTunerService
         }
         if (!$uuids) return ['ok' => true, 'message' => 'سرویس بی‌کانال نیست', 'services' => 0];
 
-        $r = $this->tvh->call($src, 'service/mapper/save', ['node' => [
-            'services' => $uuids, 'encrypted' => false, 'merge_same_name' => false,
-            'check_availability' => false, 'type_tags' => true, 'provider_tags' => false,
-            'network_tags' => false,
-        ]]);
-        return $r['ok']
-            ? ['ok' => true, 'message' => count($uuids) . ' سرویس به کانال تبدیل شد', 'services' => count($uuids)]
-            : ['ok' => false, 'message' => $r['error'], 'services' => 0];
+        /* دسته‌بندی لازم است: TVHeadend درخواست GET با URL بلندتر از ~۱ کیلوبایت
+           را با 403 رد می‌کند (روی نصب واقعی: ۲۰ سرویس 403، ۱۰ سرویس 200).
+           با فرستادن همهٔ ۴۵ سرویس در یک درخواست، «تبدیل سرویس به کانال»
+           همیشه شکست می‌خورد و پیام گمراه‌کنندهٔ «رمز پذیرفته نشد» می‌داد. */
+        $mapped = 0;
+        foreach (array_chunk($uuids, 10) as $chunk) {
+            $r = $this->tvh->call($src, 'service/mapper/save', ['node' => [
+                'services' => $chunk, 'encrypted' => false, 'merge_same_name' => false,
+                'check_availability' => false, 'type_tags' => true, 'provider_tags' => false,
+                'network_tags' => false,
+            ]]);
+            if (!$r['ok']) return ['ok' => false, 'message' => $r['error'], 'services' => $mapped];
+            $mapped += count($chunk);
+        }
+
+        /* ساخت کانال در TVHeadend غیرهمزمان است. اگر بلافاصله sync شود،
+           فقط بخشی از کانال‌ها وجود دارند (روی نصب واقعی: بار اول ۱۱ از ۲۵).
+           پس تا وقتی همهٔ سرویس‌های همین درخواست کانال گرفته‌اند صبر می‌کنیم،
+           با سقف ۳۰ ثانیه تا درخواست هیچ‌وقت معلق نماند. */
+        $pending = count($uuids);
+        $deadline = microtime(true) + 30;
+        while (true) {
+            $g2 = $this->tvh->call($src, 'mpegts/service/grid', ['limit' => 5000]);
+            $pending = 0;
+            if ($g2['ok']) {
+                $lookup = array_flip($uuids);
+                foreach (($g2['data']['entries'] ?? []) as $s) {
+                    if (isset($lookup[(string)($s['uuid'] ?? '')]) && empty($s['channel'])) $pending++;
+                }
+            }
+            if ($pending === 0 || microtime(true) >= $deadline) break;
+            usleep(700000);
+        }
+
+        $done = max(0, count($uuids) - $pending);
+        return ['ok' => true, 'message' => $done . ' سرویس به کانال تبدیل شد'
+                 . ($pending > 0 ? " ($pending در صف TVHeadend)" : ''), 'services' => $done];
     }
 }
