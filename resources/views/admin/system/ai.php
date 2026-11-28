@@ -50,6 +50,9 @@
   <div class="ai-row" style="margin-top:10px;">
     <label class="ai-note"><input type="checkbox" id="ai-on" <?= $status['enabled'] ? 'checked' : '' ?>> دستیار فعال باشد</label>
     <button class="btn-primary text-sm" onclick="saveConfig()"><i class="fas fa-floppy-disk ml-1"></i>ذخیرهٔ اتصال</button>
+    <?php if ($status['key_hint'] !== ''): ?>
+      <button class="btn-ghost text-sm" onclick="clearKey()"><i class="fas fa-trash ml-1"></i>حذف کلید</button>
+    <?php endif; ?>
     <span id="ai-cstat" class="ai-note"></span>
   </div>
 
@@ -172,6 +175,22 @@ async function saveConfig() {
   } catch (e) {
     st.textContent = ' ✗ ' + e.message;
   }
+}
+
+async function clearKey() {
+  if (!confirm('کلید ذخیره‌شده از .env پاک شود؟ دستیار خاموش می‌شود.')) return;
+  const st = $('ai-cstat');
+  st.textContent = ' در حال حذف…';
+  try {
+    await call('/admin/system/ai/config', new URLSearchParams({
+      base_url: $('ai-base').value.trim(),
+      model:    $('ai-model-in').value.trim(),
+      enabled:  '0',
+      clear_key: '1',
+    }));
+    st.textContent = ' ✓ کلید حذف شد';
+    setTimeout(() => location.reload(), 700);
+  } catch (e) { st.textContent = ' ✗ ' + e.message; }
 }
 
 async function applySug(i, s) {

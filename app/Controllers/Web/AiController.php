@@ -78,6 +78,7 @@ class AiController extends Controller
         $key    = trim((string)$req->post('api_key', ''));
         $model  = trim((string)$req->post('model', ''));
         $on     = (string)$req->post('enabled', '') === '1';
+        $clear  = (string)$req->post('clear_key', '') === '1';
 
         if ($base !== '' && !preg_match('#^https?://[^\s//]{3,200}(/\S*)?$#', $base)) {
             Response::error('آدرس سرویس معتبر نیست (باید با http:// یا https:// شروع شود)', 422); return;
@@ -89,7 +90,7 @@ class AiController extends Controller
             Response::error('نام مدل معتبر نیست', 422); return;
         }
 
-        $curKey = trim((string)env('AI_API_KEY', ''));
+        $curKey = $clear ? '' : trim((string)env('AI_API_KEY', ''));
         $pairs  = [
             'AI_BASE_URL' => $base,
             'AI_MODEL'    => $model,
@@ -97,7 +98,8 @@ class AiController extends Controller
             // فیلد در فرم همیشه خالی نمایش داده می‌شود.
             'AI_ENABLED'  => ($on && $base !== '' && ($key !== '' || $curKey !== '')) ? 'true' : 'false',
         ];
-        if ($key !== '') $pairs['AI_API_KEY'] = $key;
+        if ($key !== '')     $pairs['AI_API_KEY'] = $key;
+        elseif ($clear)      $pairs['AI_API_KEY'] = '';
 
         if (!$this->envPut($pairs)) {
             Response::error('فایل .env قابل نوشتن نیست — مجوز فایل را بررسی کنید', 500); return;

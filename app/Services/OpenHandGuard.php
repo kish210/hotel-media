@@ -235,7 +235,11 @@ final class OpenHandGuard
         $host   = parse_url($appUrl, PHP_URL_HOST) ?: '127.0.0.1';
         $port   = (int)(parse_url($appUrl, PHP_URL_PORT) ?: 80);
 
-        $ch = curl_init("http://127.0.0.1:{$port}/admin/login");
+        /* مسیر عمدا `/login` است: پنل ورودی زیر `/admin/login` ندارد و
+           درخواست به آن ۴۰۴ می‌گرفت. نتیجه‌اش این بود که بررسی سلامت
+           **پس از هر تغییر** شکست می‌خورد و گارد همان تغییر را برمی‌گرداند —
+           یعنی دستیار می‌گفت کاری می‌کند و در عمل هیچ تغییری نمی‌ماند. */
+        $ch = curl_init("http://127.0.0.1:{$port}/login");
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => 6,
