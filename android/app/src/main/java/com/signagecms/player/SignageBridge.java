@@ -18,13 +18,20 @@ public class SignageBridge {
     private final Context ctx;
     private final MainActivity activity;
     private final KioskManager kiosk;
-    private final ExternalInputManager inputs;
+    private ExternalInputManager inputs;
 
     public SignageBridge(MainActivity act) {
         this.ctx = act;
         this.activity = act;
         this.kiosk = new KioskManager(act);
-        this.inputs = new ExternalInputManager(act);
+        /* ورودی‌های HDMI روی TvInputManager سوارند که از API 21 است.
+           روی اندروید ۴ این کلاس وجود ندارد، پس اصلا ساخته نمی‌شود —
+           ساختنش می‌تواند بارگذاری کلاس را با NoClassDefFoundError
+           بشکند. */
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            try { this.inputs = new ExternalInputManager(act); }
+            catch (Throwable t) { this.inputs = null; }
+        }
     }
 
     @JavascriptInterface
@@ -124,7 +131,7 @@ public class SignageBridge {
      */
     @JavascriptInterface
     public String listInputs() {
-        return inputs.listJson();
+        return inputs != null ? inputs.listJson() : "[]";
     }
 
     /**
@@ -134,7 +141,7 @@ public class SignageBridge {
      */
     @JavascriptInterface
     public boolean switchInput(String inputId) {
-        if (!inputs.isKnownInput(inputId)) return false;
+        if (inputs == null || !inputs.isKnownInput(inputId)) return false;
         final boolean[] ok = { false };
         final java.util.concurrent.CountDownLatch done =
             new java.util.concurrent.CountDownLatch(1);

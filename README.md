@@ -44,12 +44,39 @@
 |--------|------|-------|
 | 🏨 **Server — هتل مدیا (فارسی)** | [⬇️ Setup-HotelMedia.exe](https://github.com/kish210/hotel-media/releases/latest/download/Setup-HotelMedia.exe) | ⭐ Windows — تک‌فایل، UI فارسی، کاملاً خودکار |
 | 🟢 **Server — All-in-One** | [⬇️ HotelMedia-setup.exe](https://github.com/kish210/hotel-media/releases/latest/download/HotelMedia-setup.exe) | Windows 10/11 / Server — دابل‌کلیک، انگلیسی |
-| 🤖 **Android / Android TV** | [⬇️ APK](https://github.com/kish210/hotel-media/releases/latest/download/HotelMedia-android.apk) | Android 5.0+ — نصب مستقیم |
+| 🤖 **Android / Android TV** | [⬇️ APK](https://github.com/kish210/hotel-media/releases/latest/download/HotelMedia-android.apk) | Android 4.1+ — نصب مستقیم |
 | 🖥️ **Windows Player** | [⬇️ EXE](https://github.com/kish210/hotel-media/releases/latest/download/HotelMedia-windows-player-setup.exe) | Windows 10/11 — پلیر |
+| 🍓 **Raspberry Pi Player** | [⬇️ راهنمای نصب](rpi/hotel-media-player/README.md) | Raspberry Pi OS — `install.sh` |
 
 > 📦 **همه نسخه‌ها و تاریخچه:** [github.com/kish210/hotel-media/releases](https://github.com/kish210/hotel-media/releases)
 >
 > ✅ **آخرین نسخه:** ![Release](https://img.shields.io/github/v/release/kish210/hotel-media?label=&color=brightgreen) — نصب‌کننده‌ی فارسی هتل مدیا + All-in-One + Android + Windows Player
+
+---
+
+## 🖥️ کلاینت‌ها
+
+همه‌ی دستگاه‌ها یک پورتال را نشان می‌دهند: `http://<server>/player/<CODE>`. کلاینت بومی
+فقط تجربه‌ی کیوسک، اجرای خودکار و تنظیمات محلی را اضافه می‌کند.
+
+| کلاینت | حداقل سیستم | اجرای خودکار | تنظیمات محلی | راهنما |
+|---|---|---|---|---|
+| 🪟 **ویندوز** (Electron ۱.۶) | Windows 10/11 | با روشن شدن ویندوز | ✅ | [README](windows-player/README.md) |
+| 🤖 **اندروید** (۱.۷) | Android 4.1+ (API 16) | بعد از بوت | ✅ | [README](android/README.md) |
+| 🍓 **رزبری‌پای** (۱.۰) | Raspberry Pi OS + Chromium | سرویس systemd | ✅ | [README](rpi/hotel-media-player/README.md) |
+| 📺 **تلویزیون هتلی** | webOS / Tizen / Orsay | از پنل Pro:Centric / LYNK | — | [سازگاری تلویزیون](docs/TV-COMPAT-SIGNAGE.md) |
+| 🌐 **مرورگر / کیوسک** | هر مرورگر مدرن | — | — | — |
+
+**در بخش تنظیمات هر کلاینت** (پنجره‌ی راه‌اندازی ویندوز، صفحه‌ی تنظیمات اندروید با پنج بار
+BACK، یا `config.json` روی رزبری‌پای):
+
+- اجرای خودکار بعد از روشن شدن دستگاه
+- بیدار ماندن صفحه و پنهان ماندن نشانگر ماوس
+- قفل‌گاه: مهمان از اپ خارج نشود (Device Owner در اندروید، kiosk در ویندوز/کرومیوم)
+- بررسی خودکار بروزرسانی، فاصله‌ی تلاش دوباره و تازه‌سازی دوره‌ای
+
+جزئیات کامل: [docs/CLIENTS.md](docs/CLIENTS.md) — پلتفرم جدید `rpi` در مهاجرت
+`061_rpi_platform.sql` اضافه شده و پنل آن را می‌شناسد.
 
 ---
 
@@ -466,7 +493,8 @@ FIDS_HTTP_PROXY=          # http://proxy-ip:port (برای سرور خارج ا�
 - **Real-time:** Ratchet WebSocket
 - **Auth:** JWT + Session (dual)
 - **Runtime:** PHP built-in server / Nginx (سرویس ویندوز)
-- **Player Profiles:** modern, android_tv, lg_tv, samsung_tv, kiosk, minimal, legacy
+- **Player Profiles:** modern, android_tv, lg_tv, samsung_tv, orsay_tv, kiosk, minimal, legacy
+- **Clients:** Windows (Electron 29), Android (WebView — API 16+), Raspberry Pi (Python 3 + Chromium kiosk)
 
 ---
 
