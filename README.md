@@ -509,6 +509,10 @@ FIDS_HTTP_PROXY=          # http://proxy-ip:port (برای سرور خارج ا�
   **پشتیبانی اندروید ۴.۱ تا ۴.۴** (minSdk 16؛ همه‌ی APIهای تازه محافظت‌شده) — [README](android/README.md)
 - 🍓 **کلاینت رزبری‌پای** — پلیر کیوسک پایتون + سرویس systemd + نصب‌کننده — [README](rpi/hotel-media-player/README.md)
 - 🗄️ **دیتابیس** — پلتفرم `rpi` در `screens.platform` (مهاجرت ۰۶۱) و تشخیص خودکار آن در `DeviceService`
+- 🐛 **ورود API** — `POST /api/v1/auth/login` همیشه ۴۰۱ برمی‌گرداند (رمز بررسی نمی‌شد و
+  `loginWithToken` وجود نداشت)؛ حالا JWT معتبر می‌دهد — با تست عملیاتی روی نصب تازه
+- 🐛 **ثبت دستگاه** — `POST /api/v1/devices/tokens` با بدنهٔ فرم خالی برمی‌گرداند و
+  `screen_type` پیش‌فرض نداشت (خطای ۵۰۰)؛ هر دو رفع شدند (پشتیبانی فرم+JSON و مقدار پیش‌فرض `iptv`)
 - 📀 **ISO ۱.۳۶.۰** — `dist/HotelMedia-1.36.0-amd64.iso` + چک‌سام؛ راهنمای کامل نسخه: [docs/RELEASE-1.36.0.md](docs/RELEASE-1.36.0.md)
 
 ### v1.35.0 — مهاجرت از سیستم قدیمی + دیزاین‌سیستم سماع

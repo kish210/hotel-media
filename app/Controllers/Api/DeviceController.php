@@ -384,7 +384,7 @@ class DeviceController extends Controller
     public function storeToken(Request $req): void
     {
         $tid  = Auth::tenantId();
-        $data = $req->json() ?: [];
+        $data = $req->json() ?: $req->post() ?: [];
 
         $label = trim((string)($data['label'] ?? ''));
         if ($label === '') { Response::error('عنوان توکن الزامی است', 422); return; }
@@ -408,7 +408,7 @@ class DeviceController extends Controller
             'group_id'     => $groupId,
             'menu_id'      => $menuId,
             'screen_type'  => in_array($data['screen_type'] ?? 'iptv', ['iptv', 'signage'], true)
-                                ? $data['screen_type'] : 'iptv',
+                                ? ($data['screen_type'] ?? 'iptv') : 'iptv',
             'auto_approve' => isset($data['auto_approve']) ? (int)(bool)$data['auto_approve'] : 0,
             'max_devices'  => (int)($data['max_devices'] ?? 0) ?: null,
             'expires_at'   => date('Y-m-d H:i:s', time() + $days * 86400),
