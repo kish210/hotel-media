@@ -143,13 +143,36 @@ if (-not (Test-Path $OutDir)) {
     New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
 }
 
+Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-[System.IO.Compression.ZipFile]::CreateFromDirectory(
-    $TempDir,
-    $ZipPath,
-    [System.IO.Compression.CompressionLevel]::Optimal,
-    $false
+
+# ── چرا دستی و نه CreateFromDirectory ────────────────────────
+# روی PowerShell 5.1 (دات‌نت فریم‌ورک) این متد نام ورودی‌ها را با
+# بک‌اسلش (`docs\API.md`) می‌نویسد. چنین ZIPی روی لینوکس به یک پوشهٔ
+# تخت باز می‌شود و نصب‌کننده هیچ فایلی سر جایش پیدا نمی‌کند. تست روی
+# سرور آزمایشی همین را نشان داد، پس ورودی‌ها را خودمان با «/» می‌نویسیم.
+# مسیر نسبی از روی نام پوشهٔ موقت بریده می‌شود، نه طول مسیر: TEMP ویندوز
+# می‌تواند نام کوتاه 8.3 باشد و FullName بلندتر برگردد؛ آن‌وقت برش با
+# طول، حرفی از ابتدای نام نسبی را می‌خورد (تست روی سرور همین را داد).
+$leaf = Split-Path $TempDir -Leaf
+$zipStream = [System.IO.File]::Open($ZipPath, [System.IO.FileMode]::Create)
+$archive   = New-Object System.IO.Compression.ZipArchive(
+    $zipStream,
+    [System.IO.Compression.ZipArchiveMode]::Create
 )
+try {
+    foreach ($f in Get-ChildItem $TempDir -Recurse -File -Force) {
+        $tail = $f.FullName.Substring($f.FullName.IndexOf($leaf + '\') + $leaf.Length + 1)
+        $name = $tail.Replace('\', '/')
+        $entry = $archive.CreateEntry($name, [System.IO.Compression.CompressionLevel]::Optimal)
+        $es = $entry.Open()
+        $fs = [System.IO.File]::OpenRead($f.FullName)
+        try { $fs.CopyTo($es) } finally { $fs.Dispose(); $es.Dispose() }
+    }
+} finally {
+    $archive.Dispose()
+    $zipStream.Dispose()
+}
 
 # ── پاک‌سازی temp ─────────────────────────────────────────────
 Remove-Item $TempDir -Recurse -Force
