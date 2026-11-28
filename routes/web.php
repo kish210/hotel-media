@@ -277,6 +277,7 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class, \A
     $r->get('/system/ai',              [\App\Controllers\Web\AiController::class, 'index']);
     $r->get('/system/ai/models',       [\App\Controllers\Web\AiController::class, 'models']);
     $r->post('/system/ai/model',       [\App\Controllers\Web\AiController::class, 'setModel'], [CsrfMiddleware::class]);
+    $r->post('/system/ai/config',      [\App\Controllers\Web\AiController::class, 'saveConfig'], [CsrfMiddleware::class]);
     $r->post('/system/ai/ask',         [\App\Controllers\Web\AiController::class, 'ask'],      [CsrfMiddleware::class]);
     $r->post('/system/ai/apply',       [\App\Controllers\Web\AiController::class, 'apply'],    [CsrfMiddleware::class]);
     // ── OpenHand — عامل اجرایی (فقط super_admin) ─────────────

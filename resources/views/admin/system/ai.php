@@ -32,18 +32,32 @@
 <div class="ai-card">
   <div class="ai-h"><i class="fas fa-plug ml-1" style="color:#22c55e;"></i>اتصال</div>
   <?php if (!$status['enabled']): ?>
-    <div class="ai-note" style="color:#fbbf24;">
-      تنظیم نشده. در فایل <code>.env</code> سرور این‌ها را بگذارید و صفحه را تازه کنید:
-      <div class="ai-ltr" style="margin-top:8px;font-family:ui-monospace,monospace;font-size:11.5px;">
-        AI_ENABLED=true<br>AI_BASE_URL=https://…/v1<br>AI_API_KEY=…<br>AI_MODEL=
-      </div>
+    <div class="ai-note" style="color:#fbbf24;margin-bottom:12px;">
+      هنوز به سرویس مدل وصل نشده. آدرس و کلید را همین‌جا وارد کنید (در فایل <code>.env</code> سرور ذخیره می‌شود).
+      کلید بعد از ذخیره هیچ‌جا نمایش داده نمی‌شود.
     </div>
-  <?php else: ?>
-    <div class="ai-note">
-      آدرس: <span class="ai-ltr"><?= e($status['base_url']) ?></span><br>
-      کلید: <span class="ai-ltr"><?= e($status['key_hint']) ?></span>
+  <?php endif; ?>
+  <div class="ai-row" style="margin-top:4px;">
+    <input id="ai-base" class="form-input ai-ltr" style="flex:1;min-width:240px;" dir="ltr"
+           placeholder="https://gateway.example.com/v1" value="<?= e($status['base_url']) ?>">
+  </div>
+  <div class="ai-row" style="margin-top:8px;">
+    <input id="ai-key" class="form-input ai-ltr" style="flex:1;min-width:240px;" dir="ltr" type="password"
+           autocomplete="off" placeholder="<?= $status['key_hint'] !== '' ? 'کلید ذخیره شده — برای تغییر مقدار تازه بدهید' : 'کلید API' ?>">
+    <input id="ai-model-in" class="form-input ai-ltr" style="max-width:260px;" dir="ltr"
+           placeholder="نام مدل" value="<?= e($status['model']) ?>">
+  </div>
+  <div class="ai-row" style="margin-top:10px;">
+    <label class="ai-note"><input type="checkbox" id="ai-on" <?= $status['enabled'] ? 'checked' : '' ?>> دستیار فعال باشد</label>
+    <button class="btn-primary text-sm" onclick="saveConfig()"><i class="fas fa-floppy-disk ml-1"></i>ذخیرهٔ اتصال</button>
+    <span id="ai-cstat" class="ai-note"></span>
+  </div>
+
+  <?php if ($status['enabled']): ?>
+    <div class="ai-note" style="margin-top:12px;">
+      کلید ذخیره‌شده: <span class="ai-ltr"><?= e($status['key_hint']) ?></span>
     </div>
-    <div class="ai-row" style="margin-top:12px;">
+    <div class="ai-row" style="margin-top:10px;">
       <select id="ai-model" class="form-input ai-ltr" style="max-width:320px;">
         <option value=""><?= $status['model'] !== '' ? e($status['model']) : '— مدل را انتخاب کنید —' ?></option>
       </select>
@@ -141,6 +155,23 @@ async function ask() {
     $('ai-out').innerHTML = '<div class="ai-note" style="color:#f87171;">✗ ' + esc(e.message) + '</div>';
   }
   btn.disabled = false;
+}
+
+async function saveConfig() {
+  const st = $('ai-cstat');
+  st.textContent = ' در حال ذخیره…';
+  try {
+    const d = await call('/admin/system/ai/config', new URLSearchParams({
+      base_url: $('ai-base').value.trim(),
+      api_key:  $('ai-key').value.trim(),
+      model:    $('ai-model-in').value.trim(),
+      enabled:  $('ai-on').checked ? '1' : '0',
+    }));
+    st.textContent = ' ✓ ' + (d.message || 'ذخیره شد');
+    setTimeout(() => location.reload(), 700);
+  } catch (e) {
+    st.textContent = ' ✗ ' + e.message;
+  }
 }
 
 async function applySug(i, s) {
