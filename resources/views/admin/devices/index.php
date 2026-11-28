@@ -16,6 +16,7 @@ $PLATFORMS = [
   'tizen'   => ['Samsung Tizen', 'tv',       '#3b82f6'],
   'orsay'   => ['Samsung Orsay', 'tv',       '#6366f1'],
   'windows' => ['Windows',       'desktop',  '#0ea5e9'],
+  'rpi'     => ['Raspberry Pi',  'microchip','#f472b6'],
   'browser' => ['مرورگر',        'globe',    '#a855f7'],
   'unknown' => ['نامشخص',        'question', '#64748b'],
 ];

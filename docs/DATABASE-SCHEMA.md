@@ -6,7 +6,7 @@
 منبع حقیقت، خود مهاجرت‌هاست. هر نصب با اجرای ترتیبی `database/migrations/*.sql` ساخته می‌شود
 (`php artisan db:migrate`). مهاجرت‌ها **قابل اجرای دوباره** نوشته شده‌اند: ستونی که هست دوباره اضافه نمی‌شود.
 
-جمع: **93 جدول**، **1341 ستون**، از 33 فایل مهاجرت.
+جمع: **96 جدول**، **1373 ستون**، از 34 فایل مهاجرت.
 
 ## فهرست
 
@@ -17,6 +17,7 @@
 - [ویدیو درخواستی (VOD)](#ویدیو-درخواستی-VOD-) — 6 جدول
 - [هتل و مهمان](#هتل-و-مهمان) — 23 جدول
 - [پرواز و شرکتی](#پرواز-و-شرکتی) — 7 جدول
+- [دسته‌بندی‌نشده](#دسته-بندی-نشده) — 3 جدول
 
 ## پایه و دسترسی
 
@@ -860,7 +861,7 @@
 
 ### `iptv_channels`
 
-<sub>از مهاجرت 004_iptv_channels · 26 ستون</sub>
+<sub>از مهاجرت 004_iptv_channels · 27 ستون</sub>
 
 | ستون | نوع | توضیح |
 |---|---|---|
@@ -890,6 +891,7 @@
 | `catchup_autorec_uuid` | VARCHAR(64) DEFAULT NULL COMMENT | _(افزوده در 034_dvr_and_catchup)_ |
 | `backup_stream_url` | TEXT DEFAULT NULL COMMENT | _(افزوده در 034_dvr_and_catchup)_ |
 | `srt_url` | TEXT DEFAULT NULL COMMENT | _(افزوده در 034_dvr_and_catchup)_ |
+| `legacy_ref` | VARCHAR(64) DEFAULT NULL | _(افزوده در 060_teletext_legacy)_ |
 
 ### `iptv_channel_groups`
 
@@ -976,7 +978,7 @@
 
 ### `iptv_rooms`
 
-<sub>از مهاجرت 010_iptv_rooms · 21 ستون</sub>
+<sub>از مهاجرت 010_iptv_rooms · 23 ستون</sub>
 
 | ستون | نوع | توضیح |
 |---|---|---|
@@ -1001,6 +1003,8 @@
 | `parental_enabled` | TINYINT(1) NOT NULL DEFAULT 0 | _(افزوده در 025_access_and_content)_ |
 | `location_id` | INT UNSIGNED DEFAULT NULL COMMENT | _(افزوده در 032_flight_board_and_properties)_ |
 | `building` | VARCHAR(50) DEFAULT NULL COMMENT | _(افزوده در 032_flight_board_and_properties)_ |
+| `legacy_ref` | VARCHAR(64) DEFAULT NULL | _(افزوده در 060_teletext_legacy)_ |
+| `legacy_ip` | VARCHAR(45) DEFAULT NULL | _(افزوده در 060_teletext_legacy)_ |
 
 ### `iptv_room_messages`
 
@@ -2035,3 +2039,55 @@
 | `published_at` | TIMESTAMP DEFAULT CURRENT_TIMESTAMP | _(افزوده در 003_module_tables_only)_ |
 | `expires_at` | TIMESTAMP NULL DEFAULT NULL | _(افزوده در 003_module_tables_only)_ |
 | `is_active` | TINYINT(1) NOT NULL DEFAULT 1 | _(افزوده در 003_module_tables_only)_ |
+
+## دسته‌بندی‌نشده
+
+### `legacy_import_runs`
+
+<sub>از مهاجرت 060_teletext_legacy · 12 ستون</sub>
+
+| ستون | نوع | توضیح |
+|---|---|---|
+| `id` | INT UNSIGNED NOT NULL AUTO_INCREMENT |  |
+| `tenant_id` | INT UNSIGNED NOT NULL DEFAULT 1 |  |
+| `source` | VARCHAR(300) NOT NULL |  |
+| `mode` | VARCHAR(30) NOT NULL DEFAULT 'merge' | merge\|replace\|dry |
+| `channels` | INT UNSIGNED NOT NULL DEFAULT 0 |  |
+| `rooms` | INT UNSIGNED NOT NULL DEFAULT 0 |  |
+| `vod` | INT UNSIGNED NOT NULL DEFAULT 0 |  |
+| `logos` | INT UNSIGNED NOT NULL DEFAULT 0 |  |
+| `teletext` | INT UNSIGNED NOT NULL DEFAULT 0 |  |
+| `summary` | TEXT DEFAULT NULL | JSON گزارش کامل |
+| `ok` | TINYINT(1) NOT NULL DEFAULT 1 |  |
+| `created_at` | TIMESTAMP DEFAULT CURRENT_TIMESTAMP |  |
+
+### `legacy_settings`
+
+<sub>از مهاجرت 060_teletext_legacy · 6 ستون</sub>
+
+| ستون | نوع | توضیح |
+|---|---|---|
+| `id` | INT UNSIGNED NOT NULL AUTO_INCREMENT |  |
+| `tenant_id` | INT UNSIGNED NOT NULL DEFAULT 1 |  |
+| `skey` | VARCHAR(120) NOT NULL |  |
+| `sval` | TEXT DEFAULT NULL |  |
+| `source` | VARCHAR(40) NOT NULL DEFAULT 'legacy' |  |
+| `updated_at` | TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP |  |
+
+### `teletext_pages`
+
+<sub>از مهاجرت 060_teletext_legacy · 11 ستون</sub>
+
+| ستون | نوع | توضیح |
+|---|---|---|
+| `id` | INT UNSIGNED NOT NULL AUTO_INCREMENT |  |
+| `tenant_id` | INT UNSIGNED NOT NULL DEFAULT 1 |  |
+| `page_no` | SMALLINT UNSIGNED NOT NULL DEFAULT 100 |  |
+| `lang` | VARCHAR(5) NOT NULL DEFAULT 'fa' | fa\|en\|ar |
+| `title` | VARCHAR(120) DEFAULT NULL |  |
+| `body` | TEXT NOT NULL |  |
+| `color` | VARCHAR(7) DEFAULT NULL |  |
+| `sort_order` | SMALLINT UNSIGNED NOT NULL DEFAULT 0 |  |
+| `is_active` | TINYINT(1) NOT NULL DEFAULT 1 |  |
+| `created_at` | TIMESTAMP DEFAULT CURRENT_TIMESTAMP |  |
+| `updated_at` | TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP |  |

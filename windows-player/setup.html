@@ -12,29 +12,32 @@ html, body {
   font-family:'Segoe UI', Tahoma, sans-serif;
   color:#e2e8f0;
   user-select:none;
-  -webkit-app-region: drag;
 }
+body { overflow-y:auto; }
 .wrap {
   display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  height:100%; padding:32px 28px;
-  -webkit-app-region: no-drag;
+  padding:28px 26px 22px;
+  max-width:520px; margin:0 auto;
 }
-.logo {
-  font-size:28px; font-weight:900; color:#fff;
-  letter-spacing:-1px; margin-bottom:6px;
-}
+.logo { font-size:26px; font-weight:900; color:#fff; letter-spacing:-1px; }
 .logo span { color:#38bdf8; }
-.sub { font-size:12px; color:#475569; margin-bottom:32px; }
+.sub { font-size:11px; color:#475569; margin:4px 0 22px; }
 
-.field { width:100%; margin-bottom:14px; }
+.section-title {
+  font-size:11px; font-weight:700; color:#64748b;
+  letter-spacing:.4px; margin:18px 0 10px;
+  display:flex; align-items:center; gap:8px;
+}
+.section-title::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.06); }
+
+.field { width:100%; margin-bottom:12px; }
 label { display:block; font-size:11px; color:#64748b; margin-bottom:6px; font-weight:600; letter-spacing:.3px; }
-input {
+input[type=url], input[type=text], input[type=number] {
   width:100%;
   background:rgba(255,255,255,.05);
   border:1.5px solid rgba(255,255,255,.1);
   border-radius:10px;
-  padding:11px 14px;
+  padding:10px 13px;
   font-size:13px; color:#fff;
   font-family:inherit;
   outline:none;
@@ -46,38 +49,47 @@ input::placeholder { color:#334155; }
 
 .hint { font-size:10px; color:#475569; margin-top:5px; }
 
+.toggle {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:9px 12px; margin-bottom:8px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:10px;
+  cursor:pointer;
+}
+.toggle .t-label { font-size:12.5px; color:#cbd5e1; }
+.toggle .t-desc  { font-size:10px; color:#475569; margin-top:2px; }
+.toggle input { width:36px; height:20px; accent-color:#38bdf8; cursor:pointer; flex-shrink:0; }
+
+.row { display:flex; gap:10px; }
+.row .field { flex:1; margin-bottom:0; }
+
 .btn {
   width:100%; padding:13px;
   background:linear-gradient(135deg,#38bdf8,#0ea5e9);
   border:none; border-radius:10px;
   color:#fff; font-size:14px; font-weight:700;
   cursor:pointer; font-family:inherit;
-  margin-top:4px;
+  margin-top:16px;
   transition:opacity .2s, transform .1s;
   display:flex; align-items:center; justify-content:center; gap:8px;
 }
 .btn:hover   { opacity:.88; }
 .btn:active  { transform:scale(.98); }
 .btn:disabled { opacity:.4; cursor:not-allowed; }
+.btn-ghost {
+  background:transparent; border:1px solid rgba(255,255,255,.12);
+  color:#94a3b8; font-weight:600; font-size:12px;
+  padding:10px; margin-top:8px;
+}
 
-.err {
+.err, .ok {
   margin-top:12px; padding:10px 14px;
-  background:rgba(239,68,68,.1);
-  border:1px solid rgba(239,68,68,.25);
-  border-radius:8px;
-  font-size:12px; color:#f87171;
-  text-align:center;
-  display:none;
+  border-radius:8px; font-size:12px;
+  text-align:center; display:none;
 }
-.ok {
-  margin-top:12px; padding:10px 14px;
-  background:rgba(34,197,94,.1);
-  border:1px solid rgba(34,197,94,.25);
-  border-radius:8px;
-  font-size:12px; color:#4ade80;
-  text-align:center;
-  display:none;
-}
+.err { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.25); color:#f87171; }
+.ok  { background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.25); color:#4ade80; }
 
 .ping-row { display:flex; align-items:center; gap:8px; margin-top:6px; }
 .ping-dot { width:8px; height:8px; border-radius:50%; background:#334155; flex-shrink:0; transition:.3s; }
@@ -85,13 +97,13 @@ input::placeholder { color:#334155; }
 .ping-dot.err { background:#ef4444; }
 .ping-txt { font-size:10px; color:#475569; }
 
-.version { margin-top:20px; font-size:10px; color:#1e293b; }
+.version { margin-top:18px; text-align:center; font-size:10px; color:#1e293b; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="logo">Signage<span>CMS</span></div>
-  <div class="sub">راه‌اندازی اولیه پلیر Windows</div>
+  <div class="logo">Hotel Media<span> Player</span></div>
+  <div class="sub">راه‌اندازی و تنظیمات پلیر ویندوز</div>
 
   <div class="field">
     <label>آدرس سرور Hotel Media</label>
@@ -104,28 +116,82 @@ input::placeholder { color:#334155; }
 
   <div class="field">
     <label>کد صفحه‌نمایش <span style="color:#334155;font-weight:400;">(اختیاری)</span></label>
-    <input id="screenCode" type="text" placeholder="SCR18DBA یا کد فعال‌سازی" autocomplete="off" spellcheck="false" style="text-transform:uppercase;">
+    <input id="screenCode" type="text" placeholder="SCR18DBA" autocomplete="off" spellcheck="false" style="text-transform:uppercase;">
     <div class="hint">اگر خالی باشد، صفحه pairing نمایش داده می‌شود</div>
   </div>
 
+  <div class="section-title">رفتار دستگاه</div>
+
+  <label class="toggle">
+    <span>
+      <span class="t-label">اجرای خودکار با روشن شدن ویندوز</span>
+      <span class="t-desc">بعد از ورود به ویندوز، پلیر خودش بالا می‌آید</span>
+    </span>
+    <input type="checkbox" id="autoStart">
+  </label>
+
+  <label class="toggle">
+    <span>
+      <span class="t-label">صفحه به خواب نرود</span>
+      <span class="t-desc">جلوگیری از خاموش شدن نمایشگر و اسکرین‌سیور</span>
+    </span>
+    <input type="checkbox" id="keepAwake">
+  </label>
+
+  <label class="toggle">
+    <span>
+      <span class="t-label">نشانگر ماوس پنهان شود</span>
+      <span class="t-desc">مهمان اشاره‌گر ماوس روی تصویر نمی‌بیند</span>
+    </span>
+    <input type="checkbox" id="hideCursor">
+  </label>
+
+  <label class="toggle">
+    <span>
+      <span class="t-label">همیشه بالاتر از پنجره‌های دیگر</span>
+      <span class="t-desc">اگر نرم‌افزار دیگری باز شد، پلیر پشتش نرود</span>
+    </span>
+    <input type="checkbox" id="alwaysOnTop">
+  </label>
+
+  <div class="section-title">بازیابی و تازه‌سازی</div>
+
+  <div class="row">
+    <div class="field">
+      <label>تلاش دوباره بعد از خطا (ثانیه)</label>
+      <input id="retrySeconds" type="number" min="3" max="300" step="1">
+    </div>
+    <div class="field">
+      <label>تازه‌سازی خودکار (دقیقه)</label>
+      <input id="autoReloadMinutes" type="number" min="0" max="1440" step="1">
+    </div>
+  </div>
+  <div class="hint">تازه‌سازی خودکار ۰ = خاموش. برای ۲۴ ساعت بدون بازنشانی، ۰ بگذارید.</div>
+
   <button class="btn" id="launchBtn" onclick="launch()">
-    ▶ اتصال و شروع پلیر
+    ▶ ذخیره و شروع پلیر
+  </button>
+  <button class="btn btn-ghost" id="saveBtn" onclick="saveOnly()">
+    ذخیره تنظیمات (بدون تغییر صفحه‌ی در حال پخش)
   </button>
 
   <div class="err" id="errBox"></div>
   <div class="ok"  id="okBox">در حال اتصال...</div>
 
-  <div class="version">Hotel Media Player v1.5.0</div>
+  <div class="version" id="versionTxt">Hotel Media Player</div>
 </div>
 
 <script>
 const serverInput = document.getElementById('serverUrl');
 const codeInput   = document.getElementById('screenCode');
 const launchBtn   = document.getElementById('launchBtn');
+const saveBtn     = document.getElementById('saveBtn');
 const errBox      = document.getElementById('errBox');
 const okBox       = document.getElementById('okBox');
 const pingDot     = document.getElementById('pingDot');
 const pingTxt     = document.getElementById('pingTxt');
+
+const SWITCHES = ['autoStart', 'keepAwake', 'hideCursor', 'alwaysOnTop'];
 
 let pingTimer = null;
 
@@ -133,7 +199,24 @@ let pingTimer = null;
 window.signage.getConfig().then(cfg => {
   if (cfg.serverUrl)  serverInput.value = cfg.serverUrl;
   if (cfg.screenCode) codeInput.value   = cfg.screenCode;
-  if (cfg.serverUrl)  schedulePing();
+
+  const s = cfg.settings || {};
+  SWITCHES.forEach(k => {
+    const el = document.getElementById(k);
+    if (el && typeof s[k] === 'boolean') el.checked = s[k];
+  });
+  document.getElementById('retrySeconds').value      = s.retrySeconds ?? 10;
+  document.getElementById('autoReloadMinutes').value = s.autoReloadMinutes ?? 0;
+
+  /* اگر ویندوز واقعا اجرای خودکار را رد کرده باشد، صادقانه بگوییم */
+  if (cfg.autoStartActive === false && s.autoStart) {
+    document.getElementById('okBox').style.display = 'none';
+  }
+
+  if (cfg.version) document.getElementById('versionTxt').textContent =
+    'Hotel Media Player v' + cfg.version;
+
+  if (cfg.serverUrl) schedulePing();
 });
 
 serverInput.addEventListener('input', () => {
@@ -147,27 +230,64 @@ codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') launch(); })
 serverInput.addEventListener('keydown', e => { if (e.key === 'Enter') launch(); });
 
 async function schedulePing() {
-  const url = serverInput.value.trim().replace(/\/$/, '');
+  const url = serverInput.value.trim().replace(/\/+$/, '');
   if (!url) return;
   const ok = await window.signage.ping(url + '/player/');
   pingDot.className = 'ping-dot ' + (ok ? 'ok' : 'err');
   pingTxt.textContent = ok ? 'سرور در دسترس است ✓' : 'سرور پاسخ نمی‌دهد';
 }
 
+function collectSettings() {
+  const s = {};
+  SWITCHES.forEach(k => { s[k] = document.getElementById(k).checked; });
+  s.retrySeconds      = parseInt(document.getElementById('retrySeconds').value, 10);
+  s.autoReloadMinutes = parseInt(document.getElementById('autoReloadMinutes').value, 10);
+  if (!Number.isFinite(s.retrySeconds) || s.retrySeconds < 3) s.retrySeconds = 10;
+  if (!Number.isFinite(s.autoReloadMinutes) || s.autoReloadMinutes < 0) s.autoReloadMinutes = 0;
+  return s;
+}
+
+function readForm() {
+  return {
+    serverUrl:  serverInput.value.trim().replace(/\/+$/, ''),
+    screenCode: codeInput.value.trim().toUpperCase().replace(/\s+/g, ''),
+    settings:   collectSettings(),
+  };
+}
+
+async function saveOnly() {
+  errBox.style.display = 'none';
+  okBox.style.display  = 'none';
+
+  const payload = readForm();
+  if (!payload.serverUrl) { showErr('آدرس سرور را وارد کنید'); return; }
+  if (!payload.serverUrl.startsWith('http')) { showErr('آدرس باید با http:// یا https:// شروع شود'); return; }
+
+  saveBtn.disabled = true;
+  const res = await window.signage.saveSettings(payload.settings);
+  saveBtn.disabled = false;
+
+  if (res && res.ok) {
+    okBox.style.display = 'block';
+    okBox.textContent   = '✓ تنظیمات ذخیره شد';
+    setTimeout(() => { okBox.style.display = 'none'; }, 2500);
+  } else {
+    showErr('ذخیره تنظیمات ممکن نشد');
+  }
+}
+
 async function launch() {
   errBox.style.display = 'none';
   okBox.style.display  = 'none';
 
-  const serverUrl  = serverInput.value.trim().replace(/\/$/, '');
-  const screenCode = codeInput.value.trim().toUpperCase().replace(/\s+/g, '');
-
-  if (!serverUrl) { showErr('آدرس سرور را وارد کنید'); return; }
-  if (!serverUrl.startsWith('http')) { showErr('آدرس باید با http:// یا https:// شروع شود'); return; }
+  const payload = readForm();
+  if (!payload.serverUrl) { showErr('آدرس سرور را وارد کنید'); return; }
+  if (!payload.serverUrl.startsWith('http')) { showErr('آدرس باید با http:// یا https:// شروع شود'); return; }
 
   launchBtn.disabled = true;
   launchBtn.textContent = 'در حال اتصال...';
 
-  const res = await window.signage.saveAndLaunch({ serverUrl, screenCode });
+  const res = await window.signage.saveAndLaunch(payload);
 
   if (res.ok) {
     okBox.style.display = 'block';
@@ -175,13 +295,13 @@ async function launch() {
   } else {
     showErr(res.error || 'خطا در اتصال');
     launchBtn.disabled   = false;
-    launchBtn.textContent = '▶ اتصال و شروع پلیر';
+    launchBtn.textContent = '▶ ذخیره و شروع پلیر';
   }
 }
 
 function showErr(msg) {
-  errBox.textContent     = msg;
-  errBox.style.display   = 'block';
+  errBox.textContent   = msg;
+  errBox.style.display = 'block';
 }
 </script>
 </body>

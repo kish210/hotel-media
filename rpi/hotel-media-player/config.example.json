@@ -1,0 +1,16 @@
+{
+  "server_url": "http://192.168.1.100",
+  "screen_code": "SCR001",
+
+  "browser": "auto",
+  "user_agent": "HotelMediaRPi/1.0 (Raspberry Pi; Linux)",
+  "extra_args": [],
+  "kiosk": true,
+
+  "disable_blanking": true,
+  "hide_cursor": true,
+
+  "restart_seconds": 10,
+  "reload_hour": 4,
+  "server_wait": 60
+}

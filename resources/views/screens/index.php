@@ -419,7 +419,8 @@ function renderScreenCard(array $s, string $tab): void {
     }
 
     $platLbl = ['orsay' => 'Orsay', 'tizen' => 'Tizen', 'webos' => 'webOS',
-                'android' => 'Android', 'windows' => 'Windows', 'browser' => 'مرورگر'][$plat] ?? '';
+                'android' => 'Android', 'windows' => 'Windows', 'rpi' => 'Raspberry Pi',
+                'browser' => 'مرورگر'][$plat] ?? '';
     $platTag = $platLbl !== ''
         ? "<span style='font-size:9px;color:#64748b;background:rgba(255,255,255,.05);"
           . "padding:1px 6px;border-radius:5px;'>{$platLbl}</span>"

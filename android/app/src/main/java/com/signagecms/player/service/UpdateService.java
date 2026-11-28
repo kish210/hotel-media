@@ -24,6 +24,9 @@ public class UpdateService extends IntentService {
         String server = intent.getStringExtra("server");
         if (server == null || server.isEmpty()) return;
 
+        /* تکنسین می‌تواند بررسی خودکار را از «تنظیمات» خاموش کند */
+        if (!com.signagecms.player.PlayerSettings.of(this).autoUpdate()) return;
+
         try {
             checkAndUpdate(server);
         } catch (Exception e) {

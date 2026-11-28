@@ -5,10 +5,14 @@ android {
     compileSdk        34
     defaultConfig {
         applicationId   "com.signagecms.player"
-        minSdk          21          // Android 5.0+ (TV سازگار)
+        /* اندروید ۴ (۴.۱ تا ۴.۴) هم باید نصب شود. ۱۶ = Jelly Bean (4.1)؛
+           پایین‌تر از ۱۶ نه AppCompat 1.6 پشتیبانی می‌کند نه ابزار ساخت
+           امروزی. همه‌ی APIهای تازه در کد با Build.VERSION.SDK_INT
+           محافظت شده‌اند تا روی همین دستگاه‌های قدیمی هم کرش نکنند. */
+        minSdk          16
         targetSdk       34
-        versionCode     10600       // 1.6.0 → 1*10000 + 6*100 + 0
-        versionName     "1.6.0"
+        versionCode     10700       // 1.7.0 → 1*10000 + 7*100 + 0
+        versionName     "1.7.0"
     }
     buildTypes {
         release {
@@ -27,6 +31,9 @@ android {
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    implementation 'com.google.code.gson:gson:2.10.1'
+    /* FileProvider برای نصب APK بروزرسانی. صریح نوشته شده تا نسخه‌ی
+       گذرای core با minSdk بالاتر نکشد. */
+    implementation 'androidx.core:core:1.9.0'
+    /* okhttp و gson حذف شدند: هیچ‌جای کد استفاده نمی‌شدند و okhttp 4.x
+       خودش minSdk 21 می‌خواهد — یعنی با اندروید ۴ نصب نمی‌شد. */
 }

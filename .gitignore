@@ -37,3 +37,5 @@ installer/hotelmedia/**/hotelmedia.ico
 
 # نمونه‌های مرجع (حجیم، فقط محلی)
 /sample/
+__pycache__/
+*.pyc

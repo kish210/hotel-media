@@ -56,8 +56,6 @@
             </intent-filter>
 
             <!-- اپ به‌عنوان صفحه‌ی خانه.
-                 بدون این، مهمان با یک بار زدن دکمه‌ی HOME روی منوی خود
-                 تلویزیون است و به همه‌ی تنظیمات دسترسی دارد.
                  با Device Owner، KioskManager این را با
                  addPersistentPreferredActivity پیش‌فرض می‌کند تا
                  دیالوگ «با کدام برنامه؟» هم نیاید. -->
@@ -67,6 +65,15 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
+
+        <!-- بخش تنظیمات دستگاه — فقط از داخل اپ باز می‌شود -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="تنظیمات دستگاه"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:windowSoftInputMode="adjustResize"/>
 
         <!-- OTA Update Service -->
         <service android:name=".service.UpdateService"
@@ -100,9 +107,7 @@
 
                adb shell dpm set-device-owner \
                  com.signagecms.player/.kiosk.KioskAdminReceiver
-
-             اگر انجام نشود اپ باز هم کار می‌کند، فقط قفلش ضعیف‌تر
-             است (اندروید موقع ورود به حالت قفل تایید می‌گیرد). -->
+        -->
         <receiver
             android:name=".kiosk.KioskAdminReceiver"
             android:exported="true"

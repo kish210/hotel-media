@@ -52,6 +52,10 @@ public final class KioskManager {
 
     /** آیا این اپ مالک دستگاه است؟ */
     public boolean isDeviceOwner() {
+        /* isDeviceOwnerApp از API 18 است. روی اندروید ۴.۱ (API 16) این
+           متد روی دستگاه وجود ندارد و NoSuchMethodError می‌دهد — که
+           catch(Exception) نمی‌گیردش. */
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) return false;
         return dpm != null && dpm.isDeviceOwnerApp(activity.getPackageName());
     }
 
@@ -60,6 +64,8 @@ public final class KioskManager {
      * یک‌بار در اولین اجرا صدا می‌شود؛ تکرارش هم بی‌ضرر است.
      */
     public void applyOwnerPolicies() {
+        /* همه‌ی این APIها از API 21 هستند؛ روی اندروید ۴ اصلا وجود ندارند */
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return;
         if (!isDeviceOwner()) {
             Log.i(TAG, "Device Owner نیست — سیاست‌های قوی اعمال نمی‌شوند");
             return;

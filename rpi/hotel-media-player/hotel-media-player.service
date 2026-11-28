@@ -1,0 +1,25 @@
+[Unit]
+Description=Hotel Media Player (Raspberry Pi)
+Documentation=https://github.com/kish210/hotel-media
+# graphical.target لازم است چون مرورگر به X/Wayland نیاز دارد
+After=graphical.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# install.sh این خط را با کاربر واقعی جایگزین می‌کند
+User=pi
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pi/.Xauthority
+Environment=HMP_CONFIG=/etc/hotel-media-player/config.json
+ExecStart=/usr/bin/python3 /opt/hotel-media-player/player.py
+Restart=always
+RestartSec=5
+# بستن پلیر باید خودِ مرورگر را هم ببندد، نه اینکه یتیم بماند
+KillMode=mixed
+TimeoutStopSec=20
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="#09090f">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="36dp">
+
+        <TextView android:text="⚙ تنظیمات دستگاه"
+            android:textSize="24sp" android:textColor="#ffffff" android:textStyle="bold"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"/>
+
+        <TextView android:text="این تنظیمات روی خود این دستگاه ذخیره می‌شود."
+            android:textSize="12sp" android:textColor="#64748b"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- اتصال -->
+        <TextView android:text="اتصال به سرور" android:textSize="13sp"
+            android:textColor="#94a3b8" android:textStyle="bold"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"/>
+
+        <EditText android:id="@+id/etServer"
+            android:hint="http://192.168.1.10"
+            android:inputType="textUri" android:textColor="#ffffff"
+            android:textColorHint="#475569" android:padding="14dp"
+            android:background="@drawable/input_bg"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"/>
+
+        <EditText android:id="@+id/etCode"
+            android:hint="کد صفحه (از پنل مدیریت)"
+            android:inputType="textCapCharacters" android:textColor="#ffffff"
+            android:textColorHint="#475569" android:padding="14dp"
+            android:background="@drawable/input_bg"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- روشن/خاموش‌ها -->
+        <TextView android:text="رفتار دستگاه" android:textSize="13sp"
+            android:textColor="#94a3b8" android:textStyle="bold"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"/>
+
+        <Switch android:id="@+id/swAutoStart"
+            android:text="اجرای خودکار بعد از روشن شدن تلویزیون"
+            android:textColor="#e2e8f0" android:textSize="14sp"
+            android:paddingTop="12dp" android:paddingBottom="12dp"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <Switch android:id="@+id/swKeepScreen"
+            android:text="صفحه خاموش نشود"
+            android:textColor="#e2e8f0" android:textSize="14sp"
+            android:paddingTop="12dp" android:paddingBottom="12dp"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <Switch android:id="@+id/swKiosk"
+            android:text="قفل‌گاه: مهمان از اپ خارج نشود"
+            android:textColor="#e2e8f0" android:textSize="14sp"
+            android:paddingTop="12dp" android:paddingBottom="12dp"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <Switch android:id="@+id/swAutoUpdate"
+            android:text="بررسی خودکار بروزرسانی اپ"
+            android:textColor="#e2e8f0" android:textSize="14sp"
+            android:paddingTop="12dp" android:paddingBottom="24dp"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <!-- زمان‌ها -->
+        <LinearLayout android:orientation="horizontal"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp">
+
+            <LinearLayout android:orientation="vertical" android:layout_weight="1"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp" android:layout_marginRight="8dp">
+                <TextView android:text="مکث بعد از بوت (ثانیه)"
+                    android:textSize="11sp" android:textColor="#64748b"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginBottom="6dp"/>
+                <EditText android:id="@+id/etBootDelay"
+                    android:inputType="number" android:textColor="#ffffff"
+                    android:padding="12dp" android:background="@drawable/input_bg"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"/>
+            </LinearLayout>
+
+            <LinearLayout android:orientation="vertical" android:layout_weight="1"
+                android:layout_width="0dp" android:layout_height="wrap_content">
+                <TextView android:text="تلاش دوباره (ثانیه)"
+                    android:textSize="11sp" android:textColor="#64748b"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginBottom="6dp"/>
+                <EditText android:id="@+id/etRetry"
+                    android:inputType="number" android:textColor="#ffffff"
+                    android:padding="12dp" android:background="@drawable/input_bg"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <Button android:id="@+id/btnSave" android:text="ذخیره تنظیمات"
+            android:background="@drawable/btn_primary"
+            android:textColor="#ffffff" android:textSize="16sp" android:padding="16dp"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"/>
+
+        <Button android:id="@+id/btnPlay" android:text="ذخیره و شروع پلیر"
+            android:background="@drawable/btn_primary"
+            android:textColor="#ffffff" android:textSize="14sp" android:padding="14dp"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"/>
+
+        <Button android:id="@+id/btnClose" android:text="بستن"
+            android:textColor="#94a3b8" android:textSize="14sp" android:padding="12dp"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <TextView android:id="@+id/tvStatus" android:textSize="13sp"
+            android:textColor="#ef4444" android:layout_marginTop="8dp"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:gravity="center"/>
+
+        <TextView android:id="@+id/tvDevice" android:textSize="10sp"
+            android:textColor="#334155" android:layout_marginTop="18dp"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+    </LinearLayout>
+</ScrollView>

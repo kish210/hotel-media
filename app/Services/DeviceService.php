@@ -23,7 +23,7 @@ use App\Core\Database;
  */
 class DeviceService
 {
-    public const PLATFORMS = ['android', 'webos', 'tizen', 'orsay', 'windows', 'browser', 'unknown'];
+    public const PLATFORMS = ['android', 'webos', 'tizen', 'orsay', 'windows', 'rpi', 'browser', 'unknown'];
 
     /** فرمان‌هایی که هر پلتفرم واقعا می‌تواند اجرا کند */
     public const CAPABILITIES = [
@@ -33,6 +33,9 @@ class DeviceService
         // اپ ویندوزی پلیر
         'windows' => ['refresh', 'reboot', 'volume', 'message', 'update_app', 'open_url',
                       'clear_cache', 'screenshot'],
+        // کلاینت رزبری‌پای — مرورگر کیوسک؛ ریبوت/صدا کار سرویس systemd
+        // و خود دستگاه است، نه صفحه‌ی وب
+        'rpi'     => ['refresh', 'message', 'open_url', 'clear_cache'],
         // ‏LG Pro:Centric — صفحه HTML5؛ ریبوت/خاموشی کار سرور Pro:Centric است
         'webos'   => ['refresh', 'volume', 'channel', 'message', 'open_url', 'clear_cache'],
         // ‏Samsung LYNK REACH / URL Launcher — همان محدودیت
@@ -308,6 +311,8 @@ class DeviceService
 
         // ترتیب مهم است: تلویزیون سامسونگ هم رشته‌ی Linux دارد
         return match (true) {
+            // کلاینت اختصاصی رزبری‌پای؛ UA اش را خودمان در player.py می‌گذاریم
+            str_contains($ua, 'hotelmediarpi') || str_contains($ua, 'raspberry') => 'rpi',
             str_contains($ua, 'webos') || str_contains($ua, 'web0s')      => 'webos',
             // ‏Orsay/۲۰۱۳ قبل از Tizen چک شود: UA اش «Maple»/«SmartHub» دارد و «Tizen» ندارد
             str_contains($ua, 'maple') || str_contains($ua, 'smarthub')   => 'orsay',
@@ -327,6 +332,7 @@ class DeviceService
             'tizen'   => 'Samsung Tizen',
             'orsay'   => 'Samsung Orsay (۲۰۱۳)',
             'windows' => 'Windows',
+            'rpi'     => 'Raspberry Pi',
             'browser' => 'مرورگر',
             default   => 'نامشخص',
         };

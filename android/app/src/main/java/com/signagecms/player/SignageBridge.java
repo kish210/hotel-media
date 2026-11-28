@@ -32,7 +32,8 @@ public class SignageBridge {
         return "{\"model\":\"" + android.os.Build.MODEL + "\"," +
                "\"brand\":\"" + android.os.Build.BRAND + "\"," +
                "\"os\":\"Android " + android.os.Build.VERSION.RELEASE + "\"," +
-               "\"app\":\"SignageCMS Android\"}";
+               "\"sdk\":" + android.os.Build.VERSION.SDK_INT + "," +
+               "\"app\":\"SignageCMS Android\",\"appVersion\":\"1.7.0\"}";
     }
 
     @JavascriptInterface
@@ -53,6 +54,20 @@ public class SignageBridge {
     @JavascriptInterface
     public void reloadApp() {
         activity.runOnUiThread(() -> activity.recreate());
+    }
+
+    // ── تنظیمات دستگاه ────────────────────────────────────────────
+
+    /** تنظیمات محلی به صورت JSON (اجرای خودکار، قفل‌گاه، بیدار ماندن…) */
+    @JavascriptInterface
+    public String getSettings() {
+        return PlayerSettings.of(ctx).toJson();
+    }
+
+    /** باز کردن بخش تنظیمات — فقط از پنل تکنسین صدا زده شود */
+    @JavascriptInterface
+    public void openSettings() {
+        activity.runOnUiThread(activity::openSettings);
     }
 
     @JavascriptInterface
